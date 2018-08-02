@@ -63,5 +63,5 @@ You don't need to design your own custom deployment process any more - join us t
 We will also provide non-trivial sample kapps to demonstrate all of the above.
 
 ## Project Status
-Sugarkube is at the inception phase. We shortly expect to have a proof-of-concept, then we'll start documenting the architecture and quickstarts. Once we have all of that we'll be ready for feedback and to roll out to early adopters for on non-critical projects.
+Sugarkube is at the inception phase. We shortly expect to have a proof-of-concept, then we'll start documenting the architecture and quickstarts. Once we have all of that we'll be ready for feedback and to roll out to early adopters for non-critical projects.
 
