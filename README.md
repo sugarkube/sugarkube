@@ -1,16 +1,17 @@
-# SugarKube - Kubernetes Route-to-Live
+# Sugarkube - Kubernetes Route-to-Live
 Sugarkube brings the simplicity of something like a python `requirements.txt` file, npm `package.json` or Java `pom.xml` to Kubernetes clusters. You create `kapps` (Kuberenetes apps) which are versioned artifacts containing a Makefile with some standard targets. They know how to bootstrap themselves and to create any necessary infrastructure (e.g. S3 buckets, RDS databases, etc.). Sugarkube will then deploy the versions you specify onto your target clusters, creating additional infrastructure as necessary.
 
 By following the best practices we've developed, you'll be able to have all of the following with minimal effort:
 
-* Per-developer ephemeral clusters, either local or remote
+* Fully provisioned, per-developer ephemeral clusters, either local or remote
 * Ephemeral test clusters
 * Robust disaster recovery
 * Multiple clusters per AWS/Google Cloud/whatever account
+* Versioned infrastructure kept in lockstep with the Helm charts that need it
 
-Sugarkube is the Kubernetes deployment process you'd probably develop if you had time. It's incredibly flexible because it's a combination of architectural best-practices, and a binary to use them. It's flexible enough to be used with existing infrastructure and is ideal for greenfield projects.
+Sugarkube is the Kubernetes deployment process you'd probably develop if you had time. It's incredibly flexible because it's a combination of architectural best-practices, and a binary to use them. It's flexible enough to be used with existing infrastructure and is ideal for greenfield projects. At it's core it's a set of best-practices and versioning using Make as an interface, so in fact it isn't even restricted to K8s or Helm charts. It's flexible, open and powerful.
 
-You don't need to design your own custom deployment process any more - join us to help create a flexible, secure process that works in the real world for most companies.
+Focus on building your product, not your deployment pipeline. Join us to help create a generic, flexible, secure deployment process that works in the real world for most companies.
 
 ## Features/Summary
 
