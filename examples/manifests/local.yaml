@@ -1,0 +1,47 @@
+# Kapps listed under this key will be installed if they are not currently
+# installed in the target cluster.
+present:
+
+  # Unique identifier. The same kapp can be installed multiple times provided
+  # this is unique per instance.
+  my-cert-manager:
+    installer: helm             # The plugin that know how to install this kapp
+    name: cert-manager          # Defaults to the identifier
+    version: v0.4.0             # version + name = way of determining if it's already installed (somehow)
+    meta:                       # installer-specific values
+      namespace: cert-manager   # Helm-specific value
+
+    # Sources to checkout as siblings in the cache for this kapp. This allows
+    # creating a cache entry from e.g. the actual kapp source, a directory of
+    # shared makefiles, and/or pulling in `values.yaml` files etc. from a
+    # separately versioned source.
+    sources:
+    - url: git@github.com:helm/charts.git
+      branch: master
+      path: charts/stable/cert-manager/
+    - url: git@github.com:sugarkube/sugarkube.git
+      branch: master
+      path: examples/values/cert-manager/
+      # Name of the dest dir to write to in the cache. Defaults to the last
+      # component of the path
+      dest: values
+    - url: git@github.com:sugarkube/sugarkube.git
+      branch: master
+      path: examples/common-makefiles/
+
+  # The below entry demonstrates that most values can come from defaults.
+  wordpress:
+    installer: helm             # The plugin that know how to install this kapp
+    version: 2.1.5              # version + name = way of determining if it's already installed (somehow)
+
+    # Sources to checkout as siblings in the cache for this kapp. This allows
+    # creating a cache entry from e.g. the actual kapp source, a directory of
+    # shared makefiles, and/or pulling in `values.yaml` files etc. from a
+    # separately versioned source.
+    sources:
+    - url: git@github.com:helm/charts.git
+      branch: master
+      path: charts/stable/wordpress/
+    - url: git@github.com:sugarkube/sugarkube.git
+      branch: master
+      path: examples/common-makefiles/
