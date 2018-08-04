@@ -34,9 +34,9 @@ present:
   # Unique identifier. The same kapp can be installed multiple times provided
   # this is unique per instance.
   wordpress-site-1:
-    installer: helm             # The plugin that know how to install this kapp
-    name: wordpress             # Defaults to the identifier
-    meta:                       # installer-specific values
+    installer: helm               # The plugin that know how to install this kapp
+    name: wordpress               # Defaults to the identifier
+    meta:                         # installer-specific values
       namespace: wordpress-sites  # Helm-specific value
 
     # Sources to checkout as siblings in the cache for this kapp. This allows
@@ -45,8 +45,8 @@ present:
     # separately versioned source.
     sources:
     - url: git@github.com:helm/charts.git
-      # if this was our repo a good pattern would be to create a tag for each
-      # release called <chart>-<version>.
+      # if this was our repo a good pattern could be to create a signed tag for
+      # each release called `<chart>-<version>`.
       branch: master
       path: charts/stable/wordpress/
     - url: git@github.com:sugarkube/sugarkube.git
