@@ -29,3 +29,13 @@ present:
     - url: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/common-makefiles/
+
+  nginx-ingress:
+    installer: helm
+    sources:
+    - url: git@github.com:helm/charts.git
+      branch: master
+      path: charts/stable/nginx-ingress/
+    - url: git@github.com:sugarkube/sugarkube.git
+      branch: master
+      path: examples/common-makefiles/
