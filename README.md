@@ -1,6 +1,6 @@
 # Sugarkube
 
-Off-the-shelf deployment process.
+Off-the-shelf deployment process. See `docs/OVERVIEW.md` for more info.
 
 ## Getting started
 
