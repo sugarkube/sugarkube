@@ -21,10 +21,7 @@ present:
       path: charts/stable/cert-manager/
     - url: git@github.com:sugarkube/sugarkube.git
       branch: master
-      path: examples/values/cert-manager/
-      # Name of the dest dir to write to in the cache. Defaults to the last
-      # component of the path
-      dest: values
+      path: examples/values/cert-manager/values/
     - url: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/common-makefiles/
@@ -33,7 +30,7 @@ present:
   #
   # Unique identifier. The same kapp can be installed multiple times provided
   # this is unique per instance.
-  wordpress-site-1:
+  wordpress-site1:
     installer: helm               # The plugin that know how to install this kapp
     name: wordpress               # Defaults to the identifier
     meta:                         # installer-specific values
@@ -51,9 +48,11 @@ present:
       path: charts/stable/wordpress/
     - url: git@github.com:sugarkube/sugarkube.git
       branch: master
-      path: examples/values/wordpress/
+      # this lets us reuse the same kapp parameterised differently per instance
+      path: examples/values/wordpress/site1/values/
       # Name of the dest dir to write to in the cache. Defaults to the last
-      # component of the path
+      # component of the path which in this case is the same as what we're
+      # demonstrating below. But here's how to override it explicitly anyway.
       dest: values
     - url: git@github.com:sugarkube/sugarkube.git
       branch: master
