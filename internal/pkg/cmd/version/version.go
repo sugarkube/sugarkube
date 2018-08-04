@@ -10,7 +10,7 @@ func NewCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version number of sugarkube",
-		Long:  `All software has versions. This is sugarkube's.'`,
+		Long:  `All software has versions. This is sugarkube's.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("Build Date:", version.BuildDate)
 			fmt.Println("Git Commit:", version.GitCommit)
