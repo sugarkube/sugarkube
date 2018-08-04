@@ -1,6 +1,9 @@
 # This manifest is for core services that are only required when running on AWS.
 present:
 
+  # The `kiam` chart will be installed into the `kiam` namespace, the release
+  # will also be called `kiam`. The version number will be set to the version
+  # extracted from `Charts.yaml` in `charts/stable/kiam/`.
   kiam:
     sources:
     - url: git@github.com:helm/charts.git
@@ -8,7 +11,10 @@ present:
       path: charts/stable/kiam/
     - url: git@github.com:sugarkube/sugarkube.git
       branch: master
-      path: examples/values/cert-manager/values/
+      path: examples/values/kiam/values/
     - url: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/common-makefiles/
+      # todo - somehow need to configure all these charts to use the default
+      # Makefile that uses our common-makefiles library since they're all
+      # coming directly from the upstream stable repo...
