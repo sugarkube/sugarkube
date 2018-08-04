@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/boosh/sugarkube/cmd"
-)
+import "github.com/boosh/sugarkube/cmd"
 
 func main() {
 
