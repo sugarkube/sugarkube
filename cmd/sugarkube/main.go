@@ -1,9 +1,9 @@
 package main
 
-import "github.com/boosh/sugarkube/cmd"
+import "github.com/boosh/sugarkube/internal/pkg/cmd/sugarkube"
 
 func main() {
 
-	cmd.Execute()
+	sugarkube.Execute()
 
 }

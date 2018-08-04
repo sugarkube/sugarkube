@@ -25,7 +25,10 @@ help:
 	@echo '    make clean           Clean the directory tree.'
 	@echo
 
-build:
+fmt:
+	go fmt ./...
+
+build: fmt
 	@echo "building ${BIN_NAME} ${VERSION}"
 	@echo "GOPATH=${GOPATH}"
 	@echo "GOBIN=${BINDIR}"
