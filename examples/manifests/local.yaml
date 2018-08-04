@@ -2,14 +2,14 @@
 # installed in the target cluster.
 present:
 
-  # Unique identifier. The same kapp can be installed multiple times provided
-  # this is unique per instance.
-  my-cert-manager:
+  # The simplest manifest entry uses defaults for e.g. the helm namespace,
+  # chart name, etc. when using `helm` as the installer.
+  cert-manager:       # Globally-unique identifier. For helm this corresponds
+                      # to the release name. If that's too restrictive we could
+                      # generate a globally-unique identifier based on the
+                      # manifest, but for now we'll keep it simple.
+
     installer: helm             # The plugin that know how to install this kapp
-    name: cert-manager          # Defaults to the identifier
-    version: v0.4.0             # version + name = way of determining if it's already installed (somehow)
-    meta:                       # installer-specific values
-      namespace: cert-manager   # Helm-specific value
 
     # Sources to checkout as siblings in the cache for this kapp. This allows
     # creating a cache entry from e.g. the actual kapp source, a directory of
@@ -29,10 +29,15 @@ present:
       branch: master
       path: examples/common-makefiles/
 
-  # The below entry demonstrates that most values can come from defaults.
-  wordpress:
+  # This entry demonstrates how to explicitly declare values.
+  #
+  # Unique identifier. The same kapp can be installed multiple times provided
+  # this is unique per instance.
+  wordpress-site-1:
     installer: helm             # The plugin that know how to install this kapp
-    version: 2.1.5              # version + name = way of determining if it's already installed (somehow)
+    name: wordpress             # Defaults to the identifier
+    meta:                       # installer-specific values
+      namespace: wordpress-sites  # Helm-specific value
 
     # Sources to checkout as siblings in the cache for this kapp. This allows
     # creating a cache entry from e.g. the actual kapp source, a directory of
@@ -40,8 +45,16 @@ present:
     # separately versioned source.
     sources:
     - url: git@github.com:helm/charts.git
+      # if this was our repo a good pattern would be to create a tag for each
+      # release called <chart>-<version>.
       branch: master
       path: charts/stable/wordpress/
+    - url: git@github.com:sugarkube/sugarkube.git
+      branch: master
+      path: examples/values/wordpress/
+      # Name of the dest dir to write to in the cache. Defaults to the last
+      # component of the path
+      dest: values
     - url: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/common-makefiles/
