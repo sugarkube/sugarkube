@@ -9,7 +9,6 @@ present:
   # Unique identifier. The same kapp can be installed multiple times provided
   # this is unique per instance.
   wordpress-site1:
-    installer: helm   # The installer plugin that know how to install this kapp
     name: wordpress               # Defaults to the identifier
     meta:                         # installer-specific values
       namespace: wordpress-sites  # Helm-specific value

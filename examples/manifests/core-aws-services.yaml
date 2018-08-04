@@ -2,7 +2,6 @@
 present:
 
   kiam:
-    installer: helm   # The installer plugin that know how to install this kapp
     sources:
     - url: git@github.com:helm/charts.git
       branch: master

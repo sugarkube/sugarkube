@@ -6,14 +6,15 @@
 # installed in the target cluster.
 present:
 
+  # The default installer for manifests is stored in config so we don't need
+  # to add it to every entry.
+
   # The simplest manifest entry uses defaults for e.g. the helm namespace,
   # chart name, etc. when using `helm` as the installer.
   cert-manager:       # Globally-unique identifier. For helm this corresponds
                       # to the release name. If that's too restrictive we could
                       # generate a globally-unique identifier based on the
                       # manifest, but for now we'll keep it simple.
-
-    installer: helm   # The installer plugin that know how to install this kapp
 
     # Sources to checkout as siblings in the cache for this kapp. This allows
     # creating a cache entry from e.g. the actual kapp source, a directory of
@@ -31,7 +32,6 @@ present:
       path: examples/common-makefiles/
 
   nginx-ingress:
-    installer: helm
     sources:
     - url: git@github.com:helm/charts.git
       branch: master
