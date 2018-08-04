@@ -7,7 +7,7 @@
 present:
 
   # The default installer for manifests is stored in config so we don't need
-  # to add it to every entry.
+  # to add it to every entry. But we could in future with e.g. `installer: my-installer`
 
   # The simplest manifest entry uses defaults for e.g. the helm namespace,
   # chart name, etc. when using `helm` as the installer.
@@ -21,6 +21,9 @@ present:
     # shared makefiles, and/or pulling in `values.yaml` files etc. from a
     # separately versioned source.
     sources:
+      # sources are downloaded by `acquirers`. Currently we only have a git
+      # acquirer, and the acquirer to use is inferred from the url. Other
+      # settings are specific to the acquirer.
     - url: git@github.com:helm/charts.git
       branch: master
       path: charts/stable/cert-manager/

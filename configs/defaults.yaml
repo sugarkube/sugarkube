@@ -1,0 +1,3 @@
+kapp_sot: helm        # source-of-truth. Works out what's already installed.
+installer: helm
+acquirer: git
