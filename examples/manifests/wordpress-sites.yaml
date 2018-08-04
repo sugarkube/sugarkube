@@ -1,30 +1,8 @@
+# This manifest contains kapps that represent the actual products you're shipping
+
 # Kapps listed under this key will be installed if they are not currently
 # installed in the target cluster.
 present:
-
-  # The simplest manifest entry uses defaults for e.g. the helm namespace,
-  # chart name, etc. when using `helm` as the installer.
-  cert-manager:       # Globally-unique identifier. For helm this corresponds
-                      # to the release name. If that's too restrictive we could
-                      # generate a globally-unique identifier based on the
-                      # manifest, but for now we'll keep it simple.
-
-    installer: helm   # The installer plugin that know how to install this kapp
-
-    # Sources to checkout as siblings in the cache for this kapp. This allows
-    # creating a cache entry from e.g. the actual kapp source, a directory of
-    # shared makefiles, and/or pulling in `values.yaml` files etc. from a
-    # separately versioned source.
-    sources:
-    - url: git@github.com:helm/charts.git
-      branch: master
-      path: charts/stable/cert-manager/
-    - url: git@github.com:sugarkube/sugarkube.git
-      branch: master
-      path: examples/values/cert-manager/values/
-    - url: git@github.com:sugarkube/sugarkube.git
-      branch: master
-      path: examples/common-makefiles/
 
   # This entry demonstrates how to explicitly declare values.
   #
