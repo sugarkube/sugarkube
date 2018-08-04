@@ -1,6 +1,6 @@
 # Gopkg.toml example
 #
-# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
 # for detailed Gopkg.toml documentation.
 #
 # required = ["github.com/user/thing/cmd/thing"]
@@ -24,19 +24,22 @@
 #   go-tests = true
 #   unused-packages = true
 
-
-[prune]
-  go-tests = true
-  unused-packages = true
+[[constraint]]
+  name = "github.com/Sirupsen/logrus"
+  version = "1.0.6"
 
 [[constraint]]
   name = "github.com/spf13/viper"
   version = "1.0.2"
 
 [[constraint]]
-  version = "v0.0.3"
   name = "github.com/spf13/cobra"
+  version = "0.0.3"
 
-[[constraint]]
-  branch = "master"
-  name = "github.com/juju/errors"
+#[[constraint]]
+#  branch = "master"
+#  name = "github.com/juju/errors"
+
+[prune]
+  go-tests = true
+  unused-packages = true
