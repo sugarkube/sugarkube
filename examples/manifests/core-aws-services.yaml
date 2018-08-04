@@ -1,0 +1,15 @@
+# This manifest is for core services that are only required when running on AWS.
+present:
+
+  kiam:
+    installer: helm   # The installer plugin that know how to install this kapp
+    sources:
+    - url: git@github.com:helm/charts.git
+      branch: master
+      path: charts/stable/kiam/
+    - url: git@github.com:sugarkube/sugarkube.git
+      branch: master
+      path: examples/values/cert-manager/values/
+    - url: git@github.com:sugarkube/sugarkube.git
+      branch: master
+      path: examples/common-makefiles/
