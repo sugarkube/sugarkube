@@ -1,3 +1,3 @@
-package installers
+package installer
 
 // Installs kapps with helm

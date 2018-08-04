@@ -1,3 +1,3 @@
-package acquirers
+package acquirer
 
 // Acquires kapps via git.
