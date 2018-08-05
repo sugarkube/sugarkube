@@ -30,7 +30,13 @@ creds prefixed with `wordpress`).
 ## Refreshing the cache
 Sometimes we'll want to build a cache for all kapps in all manifests for a 
 target cluster, sometimes we'll only want to create one for the kapps to 
-install and destroy.
+install and destroy. 
+
+Caches can be built in named directories so you can maintain a cache for each
+of your clusters. Refreshing a cache allows you to easily update your cache
+when the manifest changes (e.g. by someone else in the team). It uses git 
+sparse checkouts to support storing your kapps in a single repo, but building
+your cache from kapps at different versions of that repo. 
 
 * If no cache dir is given as an option, create a new temp dir for the cache.
 * If a path to an existing cache dir is given, and `refresh_cache=true`, we 
@@ -91,3 +97,7 @@ Regarding running in parallel, the logic is:
 This allows fanning out and back in again.
 
 ### Destroy kapps 
+Do the above but in reverse. I.e.:
+* Get the list of all kapps
+* Filter out the ones that don't exist according to the SOT
+* Destroy them in reverse, applying the same rules around parallelisation
