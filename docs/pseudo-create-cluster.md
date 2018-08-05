@@ -39,8 +39,15 @@ to the target cluster's region, merging values along the way. The root path
 to  the `providers` directory should come from config or on the CLI.
 
 ## Prelaunch phase
-Run any prelaunch kapps. Since these are kapps just go through the usual 
-kapp installation process.
+Run any prelaunch kapps (e.g. to create KMS keys and S3 buckets for terraform
+and kops, as well as shared load balancers). 
+
+These are kapps and should ideally just go through the usual kapp installation 
+process. However, how can we pass, e.g. the values of KMS keys into the kapps
+that create S3 buckets? Perhaps the kapp itself should do that by running 
+terraform multiple times? Also, how can we then update the sugarkube config
+so that we have e.g. the ARN of a KMS key. We'll need that to put it in 
+generated terraform backend files.
 
 ## Cluster creation
 
@@ -95,3 +102,16 @@ kubectl --context {{ kube_context }} -n kube-system get pod -o go-template='{{ '
 ```
 
 ## Post launch actions
+This should also install kapps. They should:
+
+* Install tiller:
+```
+helm --kube-context={{ kube_context }} --service-account tiller init
+```
+* Wait for the cluster to be ready by running this again (how can we get a kapp to do that?):
+```
+kubectl --context {{ kube_context }} -n kube-system get pod -o go-template='{{ '{{' }}range .items}}{{ '{{' }} printf "%s\n" .status.phase }}{{ '{{' }} end }}' ~ grep -V Running
+```
+
+Any infrastructure required for the cluster should have been created and the 
+cluster should now be online and initialised. 
