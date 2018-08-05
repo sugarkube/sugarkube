@@ -32,7 +32,7 @@ build: fmt
 	@echo "building ${BIN_NAME} ${VERSION}"
 	@echo "GOPATH=${GOPATH}"
 	@echo "GOBIN=${BINDIR}"
-	GOBIN=$(BINDIR) go install -ldflags "-X github.com/boosh/sugarkube/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/boosh/sugarkube/version.BuildDate=${BUILD_DATE}" ./...
+	GOBIN=$(BINDIR) go install -ldflags "-X github.com/sugarkube/sugarkube/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/sugarkube/sugarkube/version.BuildDate=${BUILD_DATE}" ./...
 
 get-deps:
 	dep ensure
@@ -40,7 +40,7 @@ get-deps:
 build-alpine:
 	@echo "building ${BIN_NAME} ${VERSION}"
 	@echo "GOPATH=${GOPATH}"
-	GOBIN=$(BINDIR) go install -ldflags '-w -linkmode external -extldflags "-static" -X github.com/boosh/sugarkube/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/boosh/sugarkube/version.BuildDate=${BUILD_DATE}' ./...
+	GOBIN=$(BINDIR) go install -ldflags '-w -linkmode external -extldflags "-static" -X github.com/sugarkube/sugarkube/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/sugarkube/sugarkube/version.BuildDate=${BUILD_DATE}' ./...
 
 package:
 	@echo "building image ${BIN_NAME} ${VERSION} $(GIT_COMMIT)"

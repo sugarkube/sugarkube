@@ -1,8 +1,8 @@
 package sugarkube
 
 import (
-	"github.com/boosh/sugarkube/internal/pkg/cmd/version"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/version"
 )
 
 func NewCommand(name string) *cobra.Command {

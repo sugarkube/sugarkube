@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/boosh/sugarkube/config"
+	"github.com/sugarkube/sugarkube/config"
 )
 
 // Logger defines a set of methods for writing application logs. Derived from and

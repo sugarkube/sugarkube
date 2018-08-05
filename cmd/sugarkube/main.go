@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/boosh/sugarkube/internal/pkg/cmd"
-	"github.com/boosh/sugarkube/internal/pkg/cmd/sugarkube"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/sugarkube"
 	"os"
 	"path/filepath"
 )
