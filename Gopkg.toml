@@ -37,8 +37,8 @@
   version = "0.0.3"
 
 [[constraint]]
-  name = "github.com/juju/errors"
-  branch = "master"
+  name = "github.com/pkg/errors"
+  version = "v0.8.0"
 
 [[constraint]]
   name = "github.com/go-yaml/yaml"
