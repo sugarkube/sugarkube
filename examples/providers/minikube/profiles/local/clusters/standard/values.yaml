@@ -1,0 +1,2 @@
+# The standard cluster uses the defaults. This blank file is necessary to
+# allow sugarkube to spot typos from valid cluster names.

@@ -1,0 +1,5 @@
+kube_context: minikube          # todo - this should be an overrideable default for this provider
+
+memory: 2048
+cpus: 2
+disk_size: 30g
