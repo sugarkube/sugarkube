@@ -26,12 +26,17 @@ aws_dev1:
   profile: dev
   cluster: dev1
   region: eu-west-1   # could optionally define here or supply on the CLI
+  manifests:
+  - git@.../manifest1.yaml
+  - git@.../manifest2.yaml
 
 gcp_dev1:
   ...
 ```
 
-These named configs would need unique names obviously.
+These named configs would need unique names obviously. We should probably call
+this a `cluster default` since these settings should be overrideable from the
+command line.
 
 ## Config loading
 Load all `values.yaml` files from the root of the `providers` directory
@@ -112,6 +117,8 @@ helm --kube-context={{ kube_context }} --service-account tiller init
 ```
 kubectl --context {{ kube_context }} -n kube-system get pod -o go-template='{{ '{{' }}range .items}}{{ '{{' }} printf "%s\n" .status.phase }}{{ '{{' }} end }}' ~ grep -V Running
 ```
+
+* Install a kapp to configure tiller, e.g. create service accounts, role bindings, etc.
 
 Any infrastructure required for the cluster should have been created and the 
 cluster should now be online and initialised. 
