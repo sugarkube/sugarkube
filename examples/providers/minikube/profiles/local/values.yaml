@@ -1,5 +1,9 @@
 kube_context: minikube          # todo - this should be an overrideable default for this provider
 
-memory: 2048
-cpus: 2
-disk_size: 30g
+# Values passed to `minikube start`. Underscores are converted to hyphens and
+# values keys prepended with two dashes. So e.g. `disk_size` is passed as `--disk-size`.
+start_settings:
+  bootstrapper: kubeadm
+  memory: 2048
+  cpus: 2
+  disk_size: 30g
