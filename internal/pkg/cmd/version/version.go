@@ -3,7 +3,7 @@ package version
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/sugarkube/sugarkube/version"
+	"github.com/sugarkube/sugarkube/internal/pkg/version"
 )
 
 func NewCommand() *cobra.Command {

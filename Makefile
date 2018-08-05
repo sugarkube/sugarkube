@@ -1,12 +1,12 @@
 .PHONY: build build-alpine clean test help default
 
-BIN_NAME=sugarkube
+BIN_NAME = sugarkube
 BINDIR := $(CURDIR)/bin
 
-VERSION := $(shell grep "const Version " version/version.go | sed -E 's/.*"(.+)"$$/\1/')
-GIT_COMMIT=$(shell git rev-parse HEAD)
-GIT_DIRTY=$(shell test -n "`git status --porcelain`" && echo "+CHANGES" || true)
-BUILD_DATE=$(shell date '+%Y-%m-%d-%H:%M:%S')
+VERSION ?= master
+GIT_COMMIT = $(shell git rev-parse HEAD)
+GIT_DIRTY = $(shell test -n "`git status --porcelain`" && echo "+CHANGES" || true)
+BUILD_DATE = $(shell date '+%Y-%m-%d-%H:%M:%S')
 IMAGE_NAME := "boosh/sugarkube"
 
 default: test
@@ -29,10 +29,14 @@ fmt:
 	go fmt ./...
 
 build: fmt
-	@echo "building ${BIN_NAME} ${VERSION}"
+	@echo "building ${BIN_NAME} version=${VERSION}"
 	@echo "GOPATH=${GOPATH}"
 	@echo "GOBIN=${BINDIR}"
-	GOBIN=$(BINDIR) go install -ldflags "-X github.com/sugarkube/sugarkube/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/sugarkube/sugarkube/version.BuildDate=${BUILD_DATE}" ./...
+	GOBIN=$(BINDIR) go install -ldflags \
+		"-X github.com/sugarkube/sugarkube/internal/pkg/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} \
+		 -X github.com/sugarkube/sugarkube/internal/pkg/version.BuildDate=${BUILD_DATE} \
+		 -X github.com/sugarkube/sugarkube/internal/pkg/version.Version=${VERSION} \
+		 " ./...
 
 get-deps:
 	dep ensure
