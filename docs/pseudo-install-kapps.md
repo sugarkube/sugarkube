@@ -44,10 +44,50 @@ install and destroy.
 
 ## Applying changes
 ### Install kapps
-For each kapp to install from the plan (and for the `helm` installer):
+For each kapp to install from the plan (and for the `helm` installer) do the 
+following. Run each kapp in parallel, except ones with a value of 
+`parallel: false` in the manifest:
 * Find the dir in the cache containing `Chart.yaml`
 * Expect the Makefile to be in the same dir
-* Search for `values.yaml` files specific to the profile, and/or cluster (but 
-  these could be in a sibling directory... how do we find them?)
+* Search for `values.yaml`, and `values-<profile/cluster>.yaml` (but 
+  these could be in a sibling directory... how do we find them? Maybe have
+  some key under `sources` in the manifest to call out where they are when 
+  they're not in the kapp itself).
+* Template/generate any values.yaml files into the same location
+* Find the terraform directory (if there is one)
+* Generate terraform files (backend and any others)
+* Search for terraform vars files specific to the profile and/or cluster as 
+  well as defaults
+* Run `make all` passing things specific to the installer and cloud provider
+  (it'd be good if the params can be standardised though so the same kapp can 
+  be used with different providers, e.g. minikube, aws, gcp). Set `APPROVED` to 
+  the value passed in on the CLI. 
+  * For AWS/Helm pass the following env vars:
+    * KUBE_CONTEXT
+    * NAMESPACE
+    * RELEASE
+    * CLUSTER_PROFILE
+    * CLUSTER
+    * REGION
+    * APPROVED
+  * For the safest pipelines, run first with `APPROVED=false`, collect the 
+    log output and check to see if terraform plans to destroy any infra. If
+    so, wait for manual approval then rerun with `APPROVED=true` and the 
+    same plan to apply the plan.
+  * Alternatively, run with `--require-approval=false` in which case sugarkube
+    will immediately run the task with `APPROVED=true` after first running 
+    with `APPROVED=false` (to generate terraform plans, etc)
+* Log all stdout to one file and all stderr to another file.
+* By default, abort the kapp if anything was written on stderr (configurable 
+  to ignore this, either globally or per kapp?)
+
+Regarding running in parallel, the logic is:
+1. Iterate through the kapps slated for installation
+2. Add them all to a queue until any are seen that have `parallel: false`
+3. Execute all in the queue in parallel
+4. Run the kapp with `parallel: false` on its own
+5. Return to 1 to process the full list.
+
+This allows fanning out and back in again.
 
 ### Destroy kapps 
