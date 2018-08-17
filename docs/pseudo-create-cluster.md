@@ -37,8 +37,8 @@ gcp_dev1:
   ...
 ```
 
-These named configs would need unique names obviously. We should probably call
-this a `cluster default` since these settings should be overrideable from the
+These named configs would need unique names obviously. Let's call
+this a `stack`. These settings should be overrideable from the
 command line.
 
 ## Config loading

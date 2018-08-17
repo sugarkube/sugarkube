@@ -2,7 +2,7 @@
 Describes how installing kapps works at a high level.
 
 ## Manifest loading
-* Load all manifests from either the `cluster default` or given on the CLI.
+* Load all manifests from either the `stack` or given on the CLI.
 
 ## Planning
 * Build a plan:
