@@ -30,17 +30,17 @@ func (v *files) Set(value string) error {
 }
 
 type createCmd struct {
-	out         io.Writer
-	stackName   string
-	stackFile   string
-	provider    string
-	provisioner string
-	varsFiles   files
-	profile     string
-	account     string
-	cluster     string
-	region      string
-	manifests   files
+	out           io.Writer
+	stackName     string
+	stackFile     string
+	provider      string
+	provisioner   string
+	varsFilesDirs files
+	profile       string
+	account       string
+	cluster       string
+	region        string
+	manifests     files
 }
 
 func newCreateCmd(out io.Writer) *cobra.Command {
@@ -75,7 +75,7 @@ Note: Not all providers require all arguments. See documentation for help.
 	f.StringVarP(&t.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&t.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&t.region, "region", "r", "", "name of region (for providers that support it)")
-	f.VarP(&t.varsFiles, "vars-file", "f", "YAML vars file to load (can specify multiple)")
+	f.VarP(&t.varsFilesDirs, "vars-file-or-dir", "f", "YAML vars file or directory to load (can specify multiple)")
 	f.VarP(&t.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
 	return cmd
 }
@@ -103,12 +103,12 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		stack = &vars.Stack{
-			Provider:    c.provider,
-			Provisioner: c.provisioner,
-			Profile:     c.profile,
-			Cluster:     c.cluster,
-			VarsFiles:   c.varsFiles,
-			Manifests:   c.manifests,
+			Provider:      c.provider,
+			Provisioner:   c.provisioner,
+			Profile:       c.profile,
+			Cluster:       c.cluster,
+			VarsFilesDirs: c.varsFilesDirs,
+			Manifests:     c.manifests,
 		}
 	}
 
