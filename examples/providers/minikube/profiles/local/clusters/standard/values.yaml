@@ -1,2 +1,5 @@
 # The standard cluster uses the defaults. This blank file is necessary to
 # allow sugarkube to spot typos from valid cluster names.
+memory: 2048
+cpus: 2
+disk_size: 30g

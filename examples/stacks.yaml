@@ -1,0 +1,10 @@
+local-standard:
+  provider: minikube
+  provisioner: minikube
+  profile: local
+  cluster: standard
+  vars:               # paths to yaml files to load data from. Keys will be merged.
+  - providers/minikube/
+#  manifests:
+#  - git@.../manifest1.yaml
+#  - git@.../manifest2.yaml
