@@ -1,5 +1,3 @@
-# The standard cluster uses the defaults. This blank file is necessary to
-# allow sugarkube to spot typos from valid cluster names.
-memory: 2048
-cpus: 2
-disk_size: 30g
+# The standard cluster uses the defaults. This blank file is just a
+# placeholder so the directory (which represents a cluster name) will be
+# committed to git.
