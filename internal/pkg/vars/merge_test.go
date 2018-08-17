@@ -122,8 +122,8 @@ func TestMerge(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := *Merge(test.paths...)
+		result, _ := Merge(test.paths...)
 
-		assert.Equal(t, test.expectValues, result, "unexpected merge result for %s", test.name)
+		assert.Equal(t, test.expectValues, *result, "unexpected merge result for %s", test.name)
 	}
 }

@@ -28,7 +28,7 @@ help:
 fmt:
 	go fmt ./...
 
-build: fmt
+build: fmt test
 	@echo "building ${BIN_NAME} version=${VERSION}"
 	@echo "GOPATH=${GOPATH}"
 	@echo "GOBIN=${BINDIR}"
