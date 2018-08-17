@@ -80,7 +80,7 @@ Note: Not all providers require all arguments. See documentation for help.
 	return cmd
 }
 
-func (t *createCmd) run(cmd *cobra.Command, args []string) error {
+func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
 	var (
 		stack *vars.Stack
@@ -88,27 +88,27 @@ func (t *createCmd) run(cmd *cobra.Command, args []string) error {
 	)
 
 	// make sure both stack name and stack file are supplied if either are supplied
-	if t.stackName != "" || t.stackFile != "" {
-		if t.stackName == "" {
+	if c.stackName != "" || c.stackFile != "" {
+		if c.stackName == "" {
 			return errors.New("A stack name is required when supplying the path to a stack file.")
 		}
 
-		if t.stackFile == "" {
+		if c.stackFile == "" {
 			return errors.New("A stack file is required when supplying a stack name.")
 		}
 
-		stack, err = vars.LoadStack(t.stackName, t.stackFile)
+		stack, err = vars.LoadStack(c.stackName, c.stackFile)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	} else {
 		stack = &vars.Stack{
-			Provider:    t.provider,
-			Provisioner: t.provisioner,
-			Profile:     t.profile,
-			Cluster:     t.cluster,
-			VarsFiles:   t.varsFiles,
-			Manifests:   t.manifests,
+			Provider:    c.provider,
+			Provisioner: c.provisioner,
+			Profile:     c.profile,
+			Cluster:     c.cluster,
+			VarsFiles:   c.varsFiles,
+			Manifests:   c.manifests,
 		}
 	}
 
