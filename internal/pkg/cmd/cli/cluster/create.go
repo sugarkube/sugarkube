@@ -2,7 +2,10 @@ package cluster
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"io"
 	"strings"
 )
@@ -28,7 +31,7 @@ func (v *varsFiles) Set(value string) error {
 
 type createCmd struct {
 	out       io.Writer
-	stack     string
+	stackName string
 	stackFile string
 	provider  string
 	varsFiles varsFiles
@@ -49,10 +52,10 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 		Short: fmt.Sprintf("Create a cluster"),
 		Long: `Create a new cluster, either local or remote.
 
-If creating a named stack, just pass the stack name and path to the file it's
+If creating a named stackName, just pass the stackName name and path to the file it's
 defined in, e.g.
 
-	$ sugarkube cluster create --stack dev1 --stack-file /path/to/stacks.yaml
+	$ sugarkube cluster create --stackName dev1 --stackName-file /path/to/stacks.yaml
 
 Otherwise specify the provider, profile, etc. on the command line.
 
@@ -62,7 +65,7 @@ Note: Not all providers require all arguments. See documentation for help.
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&t.stack, "stack", "n", "", "name of a stack to launch")
+	f.StringVarP(&t.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-file)")
 	f.StringVarP(&t.stackFile, "stack-file", "s", "", "path to file defining stacks (required when passing --stack)")
 	f.StringVarP(&t.provider, "provider", "p", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVarP(&t.profile, "profile", "l", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -74,6 +77,24 @@ Note: Not all providers require all arguments. See documentation for help.
 }
 
 func (t *createCmd) run(cmd *cobra.Command, args []string) error {
+
+	// make sure both stack name and stack file are supplied if either are supplied
+	if t.stackName != "" || t.stackFile != "" {
+		if t.stackName == "" {
+			return errors.New("A stack name is required when supplying the path to a stack file")
+		}
+
+		if t.stackFile == "" {
+			return errors.New("A stack file is required when supplying a stack name")
+		}
+
+		stack, err := vars.LoadStack(t.stackName, t.stackFile)
+		if err != nil {
+			errors.WithStack(err)
+		}
+
+		log.Debugf("Loaded stack: %#v", stack)
+	}
 
 	return nil
 }
