@@ -53,7 +53,7 @@ func GroupFiles(dir string) map[string][]string {
 		}
 
 		// prepend to the array
-		filesForBase = append([]string{path}, filesForBase...)
+		filesForBase = append([]string{filepath.Clean(path)}, filesForBase...)
 		groupedFiles[baseName] = filesForBase
 
 		return nil
