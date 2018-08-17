@@ -1,5 +1,5 @@
 local-standard:
-  provider: minikube
+  provider: local
   provisioner: minikube
   profile: local
   cluster: standard
