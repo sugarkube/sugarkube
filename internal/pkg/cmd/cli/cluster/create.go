@@ -39,13 +39,13 @@ type createCmd struct {
 	region     string
 }
 
-func newCreateCmd(out io.Writer) *cobra.Command {
+func NewCreateCmd(out io.Writer) *cobra.Command {
 
 	t := &createCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "create [flags]",
-		Short: fmt.Sprintf("locally render templates"),
+		Short: fmt.Sprintf("Create a cluster"),
 		Long:  createDesc,
 		RunE:  t.run,
 	}

@@ -2,12 +2,13 @@ package sugarkube
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/version"
 )
 
 func NewCommand(name string) *cobra.Command {
 
-	c := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   name,
 		Short: "Route-to-Live deployment manager",
 		Long: `A longer description that spans multiple lines and likely contains
@@ -21,11 +22,14 @@ to quickly create a Cobra application.`,
 		//      Run: func(cmd *cobra.Command, args []string) { },
 	}
 
-	c.AddCommand(
+	out := cmd.OutOrStdout()
+
+	cmd.AddCommand(
 		version.NewCommand(),
+		cluster.NewCreateCmd(out),
 	)
 
-	return c
+	return cmd
 }
 
 //func init() {
