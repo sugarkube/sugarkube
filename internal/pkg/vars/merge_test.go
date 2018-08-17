@@ -57,8 +57,13 @@ func TestMerge(t *testing.T) {
 			name:       "check_overriding",
 			desc:       "check overriding a single subkey works",
 			paths:      []string{topAbsPath, sub1AbsPath},
-			filterKeys: []string{"sub1"},
+			filterKeys: []string{"topString", "topBool", "topInt", "topFloat", "sub1"},
 			expectValues: map[string]interface{}{
+				"topString": "hello",
+				"topBool":   true,
+				"topInt":    999,
+				"topFloat":  3.14,
+
 				"sub1": map[interface{}]interface{}{
 					"subString": "subhello1",
 					"subBool":   true,
