@@ -6,6 +6,7 @@ import (
 )
 
 func TestGroupFiles(t *testing.T) {
+	// we may want to mock filepath.Walk in future...
 	result := GroupFiles("./testdata")
 
 	expected := map[string][]string{

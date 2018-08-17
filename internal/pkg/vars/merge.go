@@ -17,7 +17,7 @@ func Merge(paths ...string) *map[string]interface{} {
 
 		yamlFile, err := ioutil.ReadFile(path)
 		if err != nil {
-			// todo - raise an error
+			// todo - raise an error; structured logging?
 			log.Fatalf("Error reading YAML file: %v ", err)
 		}
 
@@ -25,7 +25,7 @@ func Merge(paths ...string) *map[string]interface{} {
 
 		err = yaml.Unmarshal(yamlFile, loaded)
 		if err != nil {
-			// todo - raise an error
+			// todo - raise an error; structured logging?
 			log.Fatalf("Error loading YAML: %v", err)
 		}
 
