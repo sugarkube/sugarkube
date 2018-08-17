@@ -48,6 +48,10 @@
   name = "github.com/imdario/mergo"
   version = "v0.3.6"
 
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "v1.2.2"
+
 [prune]
   go-tests = true
   unused-packages = true

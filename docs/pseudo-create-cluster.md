@@ -2,7 +2,7 @@
 Describes how creating a cluster works at a high level.
 
 ## Invocation
-* Invoke with different args depending on the provider. 
+* Invoke with different args depending on the provider (e.g. AWS, GCP, local, etc.). 
 
 If AWS we need:
 * the provider name
@@ -26,6 +26,9 @@ aws_dev1:
   profile: dev
   cluster: dev1
   region: eu-west-1   # could optionally define here or supply on the CLI
+  vars:               # paths to yaml files to load data from. Keys will be merged. 
+  - base-project/clusters/
+  - project1/clusters/
   manifests:
   - git@.../manifest1.yaml
   - git@.../manifest2.yaml
@@ -41,7 +44,9 @@ command line.
 ## Config loading
 Load all `values.yaml` files from the root of the `providers` directory
 to the target cluster's region, merging values along the way. The root path
-to  the `providers` directory should come from config or on the CLI.
+to  the `providers` directory should come from config or on the CLI. In the 
+above they're listed under the `vars` key and will be merged depth-first in 
+order.
 
 ## Prelaunch phase
 Run any prelaunch kapps (e.g. to create KMS keys and S3 buckets for terraform
@@ -52,7 +57,8 @@ process. However, how can we pass, e.g. the values of KMS keys into the kapps
 that create S3 buckets? Perhaps the kapp itself should do that by running 
 terraform multiple times? Also, how can we then update the sugarkube config
 so that we have e.g. the ARN of a KMS key. We'll need that to put it in 
-generated terraform backend files.
+generated terraform backend files. Perhaps we need to maintain some state
+somewhere ourselves.
 
 ## Cluster creation
 
