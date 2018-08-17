@@ -51,7 +51,8 @@ func GroupFiles(dir string) map[string][]string {
 			filesForBase = make([]string, 0)
 		}
 
-		filesForBase = append(filesForBase, path)
+		// prepend to the array
+		filesForBase = append([]string{path}, filesForBase...)
 		groupedFiles[baseName] = filesForBase
 
 		return nil
