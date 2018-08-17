@@ -1,0 +1,5 @@
+sub1:
+  subStringOvr: "subgoodbye"
+  subBoolOvr: false
+  subIntOvr: 444
+  subFloatOvr: 3.33
