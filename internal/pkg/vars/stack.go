@@ -55,7 +55,11 @@ func LoadStack(name string, path string) (*Stack, error) {
 	log.Debugf("String stack config:\n%s", stackConfigString)
 
 	stack := Stack{Name: name}
+
 	err = yaml.Unmarshal(stackConfigString, &stack)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 
 	log.Debugf("Loaded stack config: %#v", stack)
 
