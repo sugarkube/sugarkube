@@ -11,7 +11,7 @@ func NewClusterCmds(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cluster [command]",
 		Short: fmt.Sprintf("Work with clusters"),
-		Long:  `Work with clusters`,
+		Long:  `Create and delete clusters`,
 	}
 
 	cmd.AddCommand(

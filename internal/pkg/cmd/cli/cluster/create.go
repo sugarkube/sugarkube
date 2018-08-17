@@ -9,10 +9,6 @@ import (
 
 // Launches a cluster, either local or remote.
 
-const createDesc = `
-Create a new cluster.
-`
-
 type valueFiles []string
 
 func (v *valueFiles) String() string {
@@ -49,7 +45,7 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create [flags]",
 		Short: fmt.Sprintf("Create a cluster"),
-		Long:  createDesc,
+		Long:  `Create a new cluster, either local or remote.`,
 		RunE:  t.run,
 	}
 
