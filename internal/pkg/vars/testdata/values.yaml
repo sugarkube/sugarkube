@@ -4,7 +4,13 @@ topInt: 999
 topFloat: 3.14
 
 sub1:
-  subString: "subhello"
+  subString: "subhello1"
   subBool: true
   subInt: 777
   subFloat: 6.22
+
+  # will be overridden by subdir1
+  subStringOvr: "subhello2"
+  subBoolOvr: true
+  subIntOvr: 777
+  subFloatOvr: 6.22

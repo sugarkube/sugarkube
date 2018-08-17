@@ -13,19 +13,25 @@ func Merge(paths ...string) *map[string]interface{} {
 
 	for _, path := range paths {
 
+		log.Debug("Loading path", path)
+
 		yamlFile, err := ioutil.ReadFile(path)
 		if err != nil {
-			log.Debug("yamlFile.Get err   #%v ", err)
+			// todo - raise an error
+			log.Fatalf("Error reading YAML file: %v ", err)
 		}
 
 		var loaded = map[string]interface{}{}
 
 		err = yaml.Unmarshal(yamlFile, loaded)
 		if err != nil {
-			log.Fatalf("Unmarshal: %v", err)
+			// todo - raise an error
+			log.Fatalf("Error loading YAML: %v", err)
 		}
 
-		mergo.Merge(&result, loaded)
+		log.Debugf("Merging %v with %v", result, loaded)
+
+		mergo.Merge(&result, loaded, mergo.WithOverride)
 	}
 
 	return &result
