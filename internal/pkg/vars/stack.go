@@ -29,6 +29,7 @@ func LoadStack(name string, path string) (*Stack, error) {
 	}
 
 	if _, err := os.Stat(absPath); err != nil {
+		log.Debugf("Stack file doesn't exist: %s", absPath)
 		return nil, errors.WithStack(err)
 	}
 
@@ -41,14 +42,14 @@ func LoadStack(name string, path string) (*Stack, error) {
 
 	err = yaml.Unmarshal(yamlFile, loaded)
 	if err != nil {
-		errors.Wrapf(err, "Error loading stack file %s", path)
+		return nil, errors.Wrapf(err, "Error loading stack file %s", path)
 	}
 
 	log.Debugf("Loaded stack: %#v", loaded)
 
 	stackConfigString, err := yaml.Marshal(loaded[name])
 	if err != nil {
-		errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	log.Debugf("String stack config:\n%s", stackConfigString)
