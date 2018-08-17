@@ -26,7 +26,7 @@ to quickly create a Cobra application.`,
 
 	cmd.AddCommand(
 		version.NewCommand(),
-		cluster.NewCreateCmd(out),
+		cluster.NewClusterCmds(out),
 	)
 
 	return cmd

@@ -31,6 +31,7 @@ func (v *valueFiles) Set(value string) error {
 }
 
 type createCmd struct {
+	out        io.Writer
 	provider   string
 	valueFiles valueFiles
 	profile    string
@@ -39,9 +40,11 @@ type createCmd struct {
 	region     string
 }
 
-func NewCreateCmd(out io.Writer) *cobra.Command {
+func newCreateCmd(out io.Writer) *cobra.Command {
 
-	t := &createCmd{}
+	t := &createCmd{
+		out: out,
+	}
 
 	cmd := &cobra.Command{
 		Use:   "create [flags]",
