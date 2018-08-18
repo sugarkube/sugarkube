@@ -15,6 +15,9 @@ func TestGroupFilesWithDir(t *testing.T) {
 			"testdata/subdir1/values.yaml",
 			"testdata/subdir1/subdir2/values.yaml",
 		},
+		"stacks.yaml": {
+			"testdata/stacks.yaml",
+		},
 	}
 
 	assert.Equal(t, expected, result, "Failed to group files")

@@ -1,6 +1,7 @@
 package vars
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
@@ -10,13 +11,13 @@ import (
 )
 
 type Stack struct {
-	Name        string
-	Provider    string
-	Provisioner string
-	Profile     string
-	Cluster     string
-	VarsFiles   []string
-	Manifests   []string
+	Name          string
+	Provider      string
+	Provisioner   string
+	Profile       string
+	Cluster       string
+	VarsFilesDirs []string `yaml:"vars"`
+	Manifests     []string
 }
 
 // Loads a stack from a YAML file and returns it or an error
@@ -47,7 +48,14 @@ func LoadStack(name string, path string) (*Stack, error) {
 
 	log.Debugf("Loaded stack: %#v", loaded)
 
-	stackConfigString, err := yaml.Marshal(loaded[name])
+	stackConfig, ok := loaded[name]
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("No stack called '%s' found in stack file %s", name, path))
+	}
+
+	log.Debugf("Loaded stack '%s' from file '%s'", name, path)
+
+	stackConfigString, err := yaml.Marshal(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -64,4 +72,12 @@ func LoadStack(name string, path string) (*Stack, error) {
 	log.Debugf("Loaded stack config: %#v", stack)
 
 	return &stack, nil
+}
+
+// Parses and merges all specified vars files and returns the groups of vars
+func (s *Stack) Vars() {
+	for _, varFile := range s.VarsFilesDirs {
+		groupedFiles := GroupFiles(varFile)
+		log.Debugf("Grouped: %#v", groupedFiles)
+	}
 }
