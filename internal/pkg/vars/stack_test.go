@@ -22,12 +22,12 @@ func TestLoadStackConfigDir(t *testing.T) {
 
 func TestLoadStackConfig(t *testing.T) {
 	expected := &StackConfig{
-		Name:           "local-large-test",
-		ConfigFilePath: "./testdata/stacks.yaml",
-		Provider:       "local",
-		Provisioner:    "minikube",
-		Profile:        "local",
-		Cluster:        "large",
+		Name:        "local-large-test",
+		FilePath:    "./testdata/stacks.yaml",
+		Provider:    "local",
+		Provisioner: "minikube",
+		Profile:     "local",
+		Cluster:     "large",
 		VarsFilesDirs: []string{
 			"./stacks/",
 		},
@@ -49,7 +49,7 @@ func TestLoadStackConfigMissingStackName(t *testing.T) {
 
 func TestDir(t *testing.T) {
 	stack := StackConfig{
-		ConfigFilePath: "./testdata/stacks.yaml",
+		FilePath: "./testdata/stacks.yaml",
 	}
 
 	expected := "testdata"
