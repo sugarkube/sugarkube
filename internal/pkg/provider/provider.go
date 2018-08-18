@@ -7,7 +7,7 @@ import (
 )
 
 type Provider interface {
-	VarsDirs(stackConfig *vars.StackConfig) []string
+	VarsDirs(sc *vars.StackConfig) []string
 }
 
 // Factory that creates providers
