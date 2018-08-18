@@ -16,6 +16,9 @@ type Provisioner interface {
 	Update(sc *vars.StackConfig, values *provider.Values) error
 }
 
+// key in Values that relates to this provisioner
+const PROVISIONER_KEY = "provisioner"
+
 // Factory that creates providers
 func NewProvisioner(name string) (Provisioner, error) {
 	if name == "minikube" {
@@ -26,7 +29,7 @@ func NewProvisioner(name string) (Provisioner, error) {
 		return KopsProvisioner{}, nil
 	}
 
-	return nil, errors.New(fmt.Sprintf("Provider '%s' doesn't exist", name))
+	return nil, errors.New(fmt.Sprintf("Provisioner '%s' doesn't exist", name))
 }
 
 // Creates a cluster using an implementation of a Provisioner
