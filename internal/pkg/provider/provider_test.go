@@ -10,7 +10,7 @@ func TestStackConfigVars(t *testing.T) {
 	sc, err := vars.LoadStackConfig("local-large-test", "../vars/testdata/stacks.yaml")
 	assert.Nil(t, err)
 
-	expected := map[string]interface{}{
+	expected := Values{
 		"provisioner": map[interface{}]interface{}{
 			"memory":    4096,
 			"cpus":      4,

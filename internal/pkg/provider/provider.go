@@ -11,6 +11,8 @@ import (
 
 const valuesFile = "values.yaml"
 
+type Values = map[string]interface{}
+
 type Provider interface {
 	// Method that returns all paths in a config directory relevant to the
 	// target profile/cluster/region, etc. that should be searched for values
@@ -33,8 +35,8 @@ func NewProvider(name string) (Provider, error) {
 
 // Searches for values.yaml files in configured directories and returns the
 // result of merging them.
-func StackConfigVars(p Provider, sc *vars.StackConfig) (map[string]interface{}, error) {
-	stackConfigVars := map[string]interface{}{}
+func StackConfigVars(p Provider, sc *vars.StackConfig) (Values, error) {
+	stackConfigVars := Values{}
 
 	for _, varFile := range p.VarsDirs(sc) {
 		valuePath := filepath.Join(sc.Dir(), varFile, valuesFile)
