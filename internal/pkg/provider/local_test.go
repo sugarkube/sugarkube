@@ -17,10 +17,11 @@ func TestLocalVarsDirs(t *testing.T) {
 
 	expected := []string{
 		"testdata",
-		"testdata/profiles",
-		"testdata/profiles/test-profile",
-		"testdata/profiles/test-profile/clusters",
-		"testdata/profiles/test-profile/clusters/test-cluster",
+		"testdata/local",
+		"testdata/local/profiles",
+		"testdata/local/profiles/test-profile",
+		"testdata/local/profiles/test-profile/clusters",
+		"testdata/local/profiles/test-profile/clusters/test-cluster",
 	}
 
 	provider := LocalProvider{}

@@ -3,8 +3,8 @@ package provider
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
+	"os"
 	"path/filepath"
 )
 
@@ -36,24 +36,16 @@ func StackConfigVars(p Provider, sc *vars.StackConfig) (map[string]interface{}, 
 	stackConfigVars := map[string]interface{}{}
 
 	for _, varFile := range p.VarsDirs(sc) {
-		varDir := filepath.Join(sc.Dir(), varFile)
-		groupedFiles, err := vars.GroupFiles(varDir)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
+		valuePath := filepath.Join(sc.Dir(), varFile, valuesFile)
 
-		valuesPaths, ok := groupedFiles[valuesFile]
-		if !ok {
-			log.Debugf("Skipping loading vars from directory %s. No %s file",
-				varDir, valuesFile)
+		_, err := os.Stat(valuePath)
+		if err != nil {
 			continue
 		}
 
-		for _, path := range valuesPaths {
-			err := vars.Merge(&stackConfigVars, path)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
+		err = vars.Merge(&stackConfigVars, valuePath)
+		if err != nil {
+			return nil, errors.WithStack(err)
 		}
 	}
 
