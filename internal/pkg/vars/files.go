@@ -63,5 +63,7 @@ func GroupFiles(dir string) map[string][]string {
 		log.Warnf("Error walking directory tree %s", dir)
 	}
 
+	log.Debugf("Grouped files: %#v", groupedFiles)
+
 	return groupedFiles
 }

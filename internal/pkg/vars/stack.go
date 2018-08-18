@@ -21,6 +21,8 @@ type StackConfig struct {
 	Manifests     []string
 }
 
+const valuesFile = "values.yaml"
+
 // Loads a stack config from a YAML file and returns it or an error
 func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
@@ -94,14 +96,26 @@ func (s *StackConfig) dir() string {
 	}
 }
 
-// Parses and merges all specified vars files and returns the groups of vars
+// Searches for values.yaml files in configured directories and returns the
+// result of merging them.
 func (s *StackConfig) Vars() map[string]interface{} {
-	for _, varFile := range s.VarsFilesDirs {
-		groupedFiles := GroupFiles(varFile)
-		log.Debugf("Grouped: %#v", groupedFiles)
-	}
-
 	vars := map[string]interface{}{}
+
+	for _, varFile := range s.VarsFilesDirs {
+		varDir := filepath.Join(s.dir(), varFile)
+		groupedFiles := GroupFiles(varDir)
+
+		valuesPaths, ok := groupedFiles[valuesFile]
+		if !ok {
+			log.Debugf("Skipping loading vars from directory %s. No %s file",
+				varDir, valuesFile)
+			continue
+		}
+
+		for _, path := range valuesPaths {
+			Merge(&vars, path)
+		}
+	}
 
 	return vars
 }
