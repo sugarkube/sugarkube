@@ -22,7 +22,7 @@ func TestLoadStackDir(t *testing.T) {
 
 func TestLoadStack(t *testing.T) {
 	expected := &Stack{
-		Name:        "local-large",
+		Name:        "local-large-test",
 		Provider:    "local",
 		Provisioner: "minikube",
 		Profile:     "local",
@@ -30,9 +30,13 @@ func TestLoadStack(t *testing.T) {
 		VarsFilesDirs: []string{
 			"providers/minikube/",
 		},
+		Manifests: []string{
+			"./testdata/manifest1.yaml",
+			"./testdata/manifest2.yaml",
+		},
 	}
 
-	actual, err := LoadStack("local-large", "./testdata/stacks.yaml")
+	actual, err := LoadStack("local-large-test", "./testdata/stacks.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual, "unexpected stack")
 }

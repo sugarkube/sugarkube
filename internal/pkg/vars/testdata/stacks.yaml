@@ -1,4 +1,4 @@
-local-standard:
+local-standard-test:
   provider: local
   provisioner: minikube
   profile: local
@@ -9,13 +9,13 @@ local-standard:
 #  - git@.../manifest1.yaml
 #  - git@.../manifest2.yaml
 
-local-large:
+local-large-test:
   provider: local
   provisioner: minikube
   profile: local
   cluster: large
   vars:               # paths to yaml files to load data from. Keys will be merged.
   - providers/minikube/
-#  manifests:
-#  - git@.../manifest1.yaml
-#  - git@.../manifest2.yaml
+  manifests:
+  - ./testdata/manifest1.yaml
+  - ./testdata/manifest2.yaml
