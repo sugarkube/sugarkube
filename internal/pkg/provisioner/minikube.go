@@ -32,12 +32,13 @@ func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values
 		args = append(args, fmt.Sprintf("%v", v))
 	}
 
-	log.Infof("Launching Minikube cluster with args %s", strings.Join(args, " "))
+	log.Infof("Launching Minikube cluster... Executing %s %s", MINIKUBE_PATH,
+		strings.Join(args, " "))
 
 	cmd := exec.Command("minikube", args...)
 
 	// todo - pass in
-	dryRun := true
+	dryRun := false
 
 	if dryRun {
 		log.Infof("Dry run. Skipping invoking Minikube.")
@@ -47,6 +48,8 @@ func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values
 		if err != nil {
 			return errors.Wrap(err, "Failed to start a Minikube cluster")
 		}
+
+		log.Infof("Minikube cluster successfully started")
 	}
 
 	return nil
