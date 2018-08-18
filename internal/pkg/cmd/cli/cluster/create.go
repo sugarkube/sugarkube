@@ -46,7 +46,7 @@ type createCmd struct {
 
 func newCreateCmd(out io.Writer) *cobra.Command {
 
-	t := &createCmd{
+	c := &createCmd{
 		out: out,
 	}
 
@@ -64,20 +64,20 @@ Otherwise specify the provider, profile, etc. on the command line.
 
 Note: Not all providers require all arguments. See documentation for help.
 `,
-		RunE: t.run,
+		RunE: c.run,
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&t.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-file)")
-	f.StringVarP(&t.stackFile, "stack-config", "s", "", "path to file defining stacks (required when passing --stack)")
-	f.StringVarP(&t.provider, "provider", "p", "", "name of provider, e.g. aws, local, etc.")
-	f.StringVarP(&t.provisioner, "provisioner", "v", "", "name of provisioner, e.g. kops, minikube, etc.")
-	f.StringVarP(&t.profile, "profile", "l", "", "launch profile, e.g. dev, test, prod, etc.")
-	f.StringVarP(&t.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
-	f.StringVarP(&t.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
-	f.StringVarP(&t.region, "region", "r", "", "name of region (for providers that support it)")
-	f.VarP(&t.varsFilesDirs, "vars-file-or-dir", "f", "YAML vars file or directory to load (can specify multiple)")
-	f.VarP(&t.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
+	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-file)")
+	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks (required when passing --stack)")
+	f.StringVarP(&c.provider, "provider", "p", "", "name of provider, e.g. aws, local, etc.")
+	f.StringVarP(&c.provisioner, "provisioner", "v", "", "name of provisioner, e.g. kops, minikube, etc.")
+	f.StringVarP(&c.profile, "profile", "l", "", "launch profile, e.g. dev, test, prod, etc.")
+	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
+	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
+	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
+	f.VarP(&c.varsFilesDirs, "vars-file-or-dir", "f", "YAML vars file or directory to load (can specify multiple)")
+	f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
 	return cmd
 }
 
