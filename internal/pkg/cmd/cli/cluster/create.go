@@ -45,6 +45,8 @@ type createCmd struct {
 	cluster       string
 	region        string
 	manifests     files
+	onlineTimeout uint32
+	readyTimeout  uint32
 }
 
 func newCreateCmd(out io.Writer) *cobra.Command {
@@ -58,12 +60,14 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 		Short: fmt.Sprintf("Create a cluster"),
 		Long: `Create a new cluster, either local or remote.
 
-If creating a named stackName, just pass the stackName name and path to the file it's
-defined in, e.g.
+If creating a named stack, just pass the stack name and path to the config file 
+it's defined in, e.g.
 
-	$ sugarkube cluster create --stackName dev1 --stackName-file /path/to/stacks.yaml
+	$ sugarkube cluster create --stack-name dev1 --stack-config /path/to/stacks.yaml
 
-Otherwise specify the provider, profile, etc. on the command line.
+Otherwise specify the provider, profile, etc. on the command line, or to override
+values in a stack config file. CLI args take precedence over values in stack 
+config files.
 
 Note: Not all providers require all arguments. See documentation for help.
 `,
@@ -72,8 +76,8 @@ Note: Not all providers require all arguments. See documentation for help.
 
 	f := cmd.Flags()
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
-	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-file)")
-	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks (required when passing --stack)")
+	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
+	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
 	f.StringVarP(&c.provider, "provider", "p", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVarP(&c.provisioner, "provisioner", "v", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVarP(&c.profile, "profile", "l", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -82,6 +86,8 @@ Note: Not all providers require all arguments. See documentation for help.
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
 	f.VarP(&c.varsFilesDirs, "vars-file-or-dir", "f", "YAML vars file or directory to load (can specify multiple)")
 	f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
+	f.Uint32Var(&c.onlineTimeout, "online-timeout", 600, "max number of seconds to wait for the cluster to come online")
+	f.Uint32Var(&c.readyTimeout, "ready-timeout", 600, "max number of seconds to wait for the cluster to become ready")
 	return cmd
 }
 
@@ -96,13 +102,11 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 			return errors.New("A stack name is required when supplying the path to a stack config file.")
 		}
 
-		if c.stackFile == "" {
-			return errors.New("A stack config file is required when supplying a stack name.")
-		}
-
-		stackConfig, err = vars.LoadStackConfig(c.stackName, c.stackFile)
-		if err != nil {
-			return errors.WithStack(err)
+		if c.stackFile != "" {
+			stackConfig, err = vars.LoadStackConfig(c.stackName, c.stackFile)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
 	}
 
@@ -156,6 +160,13 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig, stackConfigVars)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	log.Infof("Cluster '%s' is ready for one-time post-create configuration", stackConfig.Cluster)
 
 	return nil
 }

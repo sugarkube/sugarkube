@@ -25,3 +25,15 @@ func TestStackConfigVars(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual, "Mismatching vars")
 }
+
+func TestNewLocalProvider(t *testing.T) {
+	actual, err := NewProvider(LOCAL)
+	assert.Nil(t, err)
+	assert.Equal(t, LocalProvider{}, actual)
+}
+
+func TestNewAWSProvider(t *testing.T) {
+	actual, err := NewProvider(AWS)
+	assert.Nil(t, err)
+	assert.Equal(t, AwsProvider{}, actual)
+}

@@ -28,6 +28,8 @@ type StackConfig struct {
 	VarsFilesDirs []string `yaml:"vars"`
 	Manifests     []string
 	Status        ClusterStatus
+	OnlineTimeout uint8
+	ReadyTimeout  uint8
 }
 
 // Loads a stack config from a YAML file and returns it or an error

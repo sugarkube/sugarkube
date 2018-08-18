@@ -20,13 +20,17 @@ type Provider interface {
 	VarsDirs(sc *vars.StackConfig) ([]string, error)
 }
 
+// implemented providers
+const LOCAL = "local"
+const AWS = "aws"
+
 // Factory that creates providers
 func NewProvider(name string) (Provider, error) {
-	if name == "local" {
+	if name == LOCAL {
 		return LocalProvider{}, nil
 	}
 
-	if name == "aws" {
+	if name == AWS {
 		return AwsProvider{}, nil
 	}
 

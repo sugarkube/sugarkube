@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/provisioner/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"os/exec"
 	"strings"
@@ -12,6 +13,7 @@ import (
 
 type MinikubeProvisioner struct {
 	Provisioner
+	clusterSot clustersot.ClusterSot
 }
 
 // todo - make configurable
@@ -19,6 +21,19 @@ const MINIKUBE_PATH = "minikube"
 
 // seconds to sleep after the cluster is online but before checking whether it's ready
 const SLEEP_SECONDS_BEFORE_READY_CHECK = 30
+
+func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
+	if p.clusterSot == nil {
+		clusterSot, err := clustersot.NewClusterSot(clustersot.KUBECTL)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		p.clusterSot = clusterSot
+	}
+
+	return p.clusterSot, nil
+}
 
 func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values, dryRun bool) error {
 
@@ -41,7 +56,7 @@ func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values
 		log.Infof("Dry run. Skipping invoking Minikube, but would execute: %s %s",
 			MINIKUBE_PATH, strings.Join(args, " "))
 	} else {
-		log.Infof("Launching Minikube cluster... Executing %s %s", MINIKUBE_PATH,
+		log.Infof("Launching Minikube cluster... Executing: %s %s", MINIKUBE_PATH,
 			strings.Join(args, " "))
 
 		err := cmd.Run()
