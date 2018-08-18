@@ -32,21 +32,20 @@ Sugarkube can also create Kubernetes clusters on various backends
 Use Sugarkube to:
 
   * Fully version your applications and infrastructure as "Kapps".
-  * Automate creation and configuration of your infrastructure and kapps from 
-    scratch on multiple backends for full disaster recovery and reproducible/
-    ephemeral environments.
+  * Automate creation and configuration of your infrastructure and Kapps from 
+    scratch on multiple backends for full disaster recovery and reproducible/ephemeral environments.
   * Automate building differently specced ephemeral dev/test environments fully 
     configured with your core dependencies (e.g. Cert Manager, Vault, etc.) so 
     you can get straight to work.
   * Push your Kapps through a sane release pipeline. Develop locally or
-    on (ephemeral) dev clusters, test on staging, then release to one or 
+    on (possibly ephemeral) dev clusters, test on staging, then release to one or 
     multiple target prod clusters. The process is up to you and Sugarkube is
     compatible with Jenkins.
   * Provide a multi-cloud and/or cloud exit strategy.
   * Split your infra/Kapps into layers. Create manifests for your core Kapps
     and for different dev teams to reflect how your organisation uses your 
-    clusters. E.g. Dev Team A develop with 'core' + 'KappA', but in staging & 
-    prod you run 'Core' + 'KappA' + 'KappB' + 'Monitoring'.
+    clusters. E.g. Dev Team A's dev/test clusters use 'Core' + 'KappA', but in 
+    staging & prod you run 'Core' + 'KappA' + 'KappB' + 'Monitoring'.
   * Use community Kapps to immediately install e.g. a monitoring stack with
     Prometheus, Grafana, ElasticSearch, etc. then choose which alerting 
     Kapps to install on top. Because you can layer your manifests, this 
