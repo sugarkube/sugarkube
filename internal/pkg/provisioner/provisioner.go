@@ -78,7 +78,8 @@ func WaitForClusterReadiness(p Provisioner, sc *vars.StackConfig, values provide
 	// only check whether the cluster is online if we started it, otherwise assume it is so
 	// we don't wait pointlessly when resuming previous runs/working with existing clusters.
 	if sc.Status.StartedThisRun {
-		log.Infof("Checking whether the cluster is online...")
+		log.Infof("Checking whether the cluster is online... Will try for %d seconds",
+			sc.OnlineTimeout)
 
 		timeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
 		for time.Now().Before(timeoutTime) {

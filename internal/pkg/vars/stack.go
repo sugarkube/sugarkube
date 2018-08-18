@@ -12,10 +12,10 @@ import (
 
 // Hold information about the status of the cluster
 type ClusterStatus struct {
-	IsOnline              bool  // If true the cluster is online but may not be ready yet
-	IsReady               bool  // if true, the cluster is ready to have kapps installed
-	StartedThisRun        bool  // if true, the cluster was launched by a provisioner on this invocation
-	SleepBeforeReadyCheck uint8 // number of seconds to sleep before polling the cluster for readiness
+	IsOnline              bool   // If true the cluster is online but may not be ready yet
+	IsReady               bool   // if true, the cluster is ready to have kapps installed
+	StartedThisRun        bool   // if true, the cluster was launched by a provisioner on this invocation
+	SleepBeforeReadyCheck uint32 // number of seconds to sleep before polling the cluster for readiness
 }
 
 type StackConfig struct {

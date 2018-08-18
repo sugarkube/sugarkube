@@ -118,6 +118,8 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		Cluster:       c.cluster,
 		VarsFilesDirs: c.varsFilesDirs,
 		Manifests:     c.manifests,
+		ReadyTimeout:  c.readyTimeout,
+		OnlineTimeout: c.onlineTimeout,
 	}
 
 	mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
