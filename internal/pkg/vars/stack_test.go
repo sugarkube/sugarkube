@@ -22,13 +22,14 @@ func TestLoadStackConfigDir(t *testing.T) {
 
 func TestLoadStackConfig(t *testing.T) {
 	expected := &StackConfig{
-		Name:        "local-large-test",
-		Provider:    "local",
-		Provisioner: "minikube",
-		Profile:     "local",
-		Cluster:     "large",
+		Name:           "local-large-test",
+		ConfigFilePath: "./testdata/stacks.yaml",
+		Provider:       "local",
+		Provisioner:    "minikube",
+		Profile:        "local",
+		Cluster:        "large",
 		VarsFilesDirs: []string{
-			"providers/minikube/",
+			"./stacks/",
 		},
 		Manifests: []string{
 			"./testdata/manifest1.yaml",
@@ -44,6 +45,27 @@ func TestLoadStackConfig(t *testing.T) {
 func TestLoadStackConfigMissingStackName(t *testing.T) {
 	_, err := LoadStackConfig("missing-stack-name", "./testdata/stacks.yaml")
 	assert.Error(t, err)
+}
+
+func TestDir(t *testing.T) {
+	stack := StackConfig{
+		ConfigFilePath: "./testdata/stacks.yaml",
+	}
+
+	expected := "testdata"
+	actual := stack.dir()
+
+	assert.Equal(t, expected, actual, "Unexpected config dir")
+}
+
+// this should return the path to the current working dir, but it's difficult
+// to meaningfully test.
+func TestDirBlank(t *testing.T) {
+	stack := StackConfig{}
+	actual := stack.dir()
+
+	assert.NotNil(t, actual, "Unexpected config dir")
+	assert.NotEmpty(t, actual, "Unexpected config dir")
 }
 
 func TestStackConfigVars(t *testing.T) {

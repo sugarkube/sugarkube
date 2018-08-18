@@ -11,13 +11,14 @@ import (
 )
 
 type StackConfig struct {
-	Name          string
-	Provider      string
-	Provisioner   string
-	Profile       string
-	Cluster       string
-	VarsFilesDirs []string `yaml:"vars"`
-	Manifests     []string
+	Name           string
+	ConfigFilePath string
+	Provider       string
+	Provisioner    string
+	Profile        string
+	Cluster        string
+	VarsFilesDirs  []string `yaml:"vars"`
+	Manifests      []string
 }
 
 // Loads a stack config from a YAML file and returns it or an error
@@ -62,7 +63,10 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
 	log.Debugf("String stack config:\n%s", stackConfigString)
 
-	stack := StackConfig{Name: name}
+	stack := StackConfig{
+		Name:           name,
+		ConfigFilePath: path,
+	}
 
 	err = yaml.Unmarshal(stackConfigString, &stack)
 	if err != nil {
@@ -72,6 +76,22 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 	log.Debugf("Loaded stack config: %#v", stack)
 
 	return &stack, nil
+}
+
+// Returns the directory the stack config was loaded from, or the current
+// working directory. This can be used to build relative paths.
+func (s *StackConfig) dir() string {
+	if s.ConfigFilePath != "" {
+		return filepath.Dir(s.ConfigFilePath)
+	} else {
+		executable, err := os.Executable()
+		if err != nil {
+			log.Fatal("Failed to get the path of this binary.")
+			panic(err)
+		}
+
+		return executable
+	}
 }
 
 // Parses and merges all specified vars files and returns the groups of vars
