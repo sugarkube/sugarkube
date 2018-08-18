@@ -21,8 +21,6 @@ type StackConfig struct {
 	Manifests     []string
 }
 
-const valuesFile = "values.yaml"
-
 // Loads a stack config from a YAML file and returns it or an error
 func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
@@ -82,7 +80,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
 // Returns the directory the stack config was loaded from, or the current
 // working directory. This can be used to build relative paths.
-func (s *StackConfig) dir() string {
+func (s *StackConfig) Dir() string {
 	if s.FilePath != "" {
 		return filepath.Dir(s.FilePath)
 	} else {
@@ -94,28 +92,4 @@ func (s *StackConfig) dir() string {
 
 		return executable
 	}
-}
-
-// Searches for values.yaml files in configured directories and returns the
-// result of merging them.
-func (s *StackConfig) Vars() map[string]interface{} {
-	vars := map[string]interface{}{}
-
-	for _, varFile := range s.VarsFilesDirs {
-		varDir := filepath.Join(s.dir(), varFile)
-		groupedFiles := GroupFiles(varDir)
-
-		valuesPaths, ok := groupedFiles[valuesFile]
-		if !ok {
-			log.Debugf("Skipping loading vars from directory %s. No %s file",
-				varDir, valuesFile)
-			continue
-		}
-
-		for _, path := range valuesPaths {
-			Merge(&vars, path)
-		}
-	}
-
-	return vars
 }

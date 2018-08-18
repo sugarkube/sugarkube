@@ -120,8 +120,12 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	stackVars := providerImpl.VarsDirs(stackConfig)
-	log.Debugf("Provider returned vars: %#v", stackVars)
+	stackConfigVars, err := provider.StackConfigVars(providerImpl, stackConfig)
+	if err != nil {
+		log.Warn("Error loading stack config variables")
+		return errors.WithStack(err)
+	}
+	log.Debugf("Provider returned vars: %#v", stackConfigVars)
 
 	return nil
 }

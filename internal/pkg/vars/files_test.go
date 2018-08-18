@@ -7,7 +7,8 @@ import (
 
 func TestGroupFilesWithDir(t *testing.T) {
 	// we may want to mock filepath.Walk in future...
-	result := GroupFiles("./testdata/value-merging/")
+	result, err := GroupFiles("./testdata/value-merging/")
+	assert.Nil(t, err)
 
 	expected := map[string][]string{
 		"values.yaml": {
@@ -22,7 +23,8 @@ func TestGroupFilesWithDir(t *testing.T) {
 
 func TestGroupFilesWithFile(t *testing.T) {
 	// we may want to mock filepath.Walk in future...
-	result := GroupFiles("./testdata/value-merging/values.yaml")
+	result, err := GroupFiles("./testdata/value-merging/values.yaml")
+	assert.Nil(t, err)
 
 	expected := map[string][]string{
 		"values.yaml": {

@@ -1,6 +1,7 @@
 package vars
 
 import (
+	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"path/filepath"
@@ -30,7 +31,7 @@ import (
 //	},
 // }
 //
-func GroupFiles(dir string) map[string][]string {
+func GroupFiles(dir string) (map[string][]string, error) {
 	groupedFiles := make(map[string][]string, 0)
 
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -61,9 +62,10 @@ func GroupFiles(dir string) map[string][]string {
 	if err != nil {
 		// todo - raise an error; structured logging?
 		log.Warnf("Error walking directory tree %s", dir)
+		return nil, errors.Wrapf(err, "Error walking directory tree %s", dir)
 	}
 
 	log.Debugf("Grouped files: %#v", groupedFiles)
 
-	return groupedFiles
+	return groupedFiles, nil
 }

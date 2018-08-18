@@ -53,7 +53,7 @@ func TestDir(t *testing.T) {
 	}
 
 	expected := "testdata"
-	actual := stack.dir()
+	actual := stack.Dir()
 
 	assert.Equal(t, expected, actual, "Unexpected config dir")
 }
@@ -62,24 +62,8 @@ func TestDir(t *testing.T) {
 // to meaningfully test.
 func TestDirBlank(t *testing.T) {
 	stack := StackConfig{}
-	actual := stack.dir()
+	actual := stack.Dir()
 
 	assert.NotNil(t, actual, "Unexpected config dir")
 	assert.NotEmpty(t, actual, "Unexpected config dir")
-}
-
-func TestStackConfigVars(t *testing.T) {
-	stack, err := LoadStackConfig("local-large-test", "./testdata/stacks.yaml")
-	assert.Nil(t, err)
-
-	expected := map[string]interface{}{
-		"provisioner_params": map[interface{}]interface{}{
-			"memory":    4096,
-			"cpus":      4,
-			"disk_size": "120g",
-		},
-	}
-
-	actual := stack.Vars()
-	assert.Equal(t, expected, actual, "Mismatching vars")
 }
