@@ -142,7 +142,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	online, err := provisioner.IsOnline(provisionerImpl, stackConfig, stackConfigVars)
+	online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig, stackConfigVars)
 	if err != nil {
 		return errors.WithStack(err)
 	}

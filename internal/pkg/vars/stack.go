@@ -10,6 +10,14 @@ import (
 	"path/filepath"
 )
 
+// Hold information about the status of the cluster
+type ClusterStatus struct {
+	IsOnline              bool  // If true the cluster is online but may not be ready yet
+	IsReady               bool  // if true, the cluster is ready to have kapps installed
+	StartedThisRun        bool  // if true, the cluster was launched by a provisioner on this invocation
+	SleepBeforeReadyCheck uint8 // number of seconds to sleep before polling the cluster for readiness
+}
+
 type StackConfig struct {
 	Name          string
 	FilePath      string
@@ -19,6 +27,7 @@ type StackConfig struct {
 	Cluster       string
 	VarsFilesDirs []string `yaml:"vars"`
 	Manifests     []string
+	Status        ClusterStatus
 }
 
 // Loads a stack config from a YAML file and returns it or an error
@@ -66,6 +75,13 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 	stack := StackConfig{
 		Name:     name,
 		FilePath: path,
+		// no-op defaults. Values will be modified by provisioners
+		Status: ClusterStatus{
+			IsOnline:              false,
+			IsReady:               false,
+			SleepBeforeReadyCheck: 0,
+			StartedThisRun:        false,
+		},
 	}
 
 	err = yaml.Unmarshal(stackConfigString, &stack)

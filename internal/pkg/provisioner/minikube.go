@@ -17,6 +17,9 @@ type MinikubeProvisioner struct {
 // todo - make configurable
 const MINIKUBE_PATH = "minikube"
 
+// seconds to sleep after the cluster is online but before checking whether it's ready
+const SLEEP_SECONDS_BEFORE_READY_CHECK = 30
+
 func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values, dryRun bool) error {
 
 	log.Debugf("Creating stack with Minikube and values: %#v", values)
@@ -50,10 +53,14 @@ func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values
 		log.Infof("Minikube cluster successfully started")
 	}
 
+	sc.Status.StartedThisRun = true
+	// only sleep before checking the cluster fo readiness if we started it
+	sc.Status.SleepBeforeReadyCheck = SLEEP_SECONDS_BEFORE_READY_CHECK
+
 	return nil
 }
 
-func (p MinikubeProvisioner) IsOnline(sc *vars.StackConfig, values provider.Values) (bool, error) {
+func (p MinikubeProvisioner) IsAlreadyOnline(sc *vars.StackConfig, values provider.Values) (bool, error) {
 	cmd := exec.Command(MINIKUBE_PATH, "status")
 	err := cmd.Run()
 

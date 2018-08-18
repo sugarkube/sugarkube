@@ -11,7 +11,7 @@ type Provisioner interface {
 	// Creates a cluster
 	Create(sc *vars.StackConfig, values provider.Values, dryRun bool) error
 	// Returns whether the cluster is already running
-	IsOnline(sc *vars.StackConfig, values provider.Values) (bool, error)
+	IsAlreadyOnline(sc *vars.StackConfig, values provider.Values) (bool, error)
 	// Update the cluster config if supported by the provisioner
 	Update(sc *vars.StackConfig, values provider.Values) error
 }
@@ -38,6 +38,12 @@ func Create(p Provisioner, sc *vars.StackConfig, values provider.Values, dryRun 
 }
 
 // Return whether the cluster is already online
-func IsOnline(p Provisioner, sc *vars.StackConfig, values provider.Values) (bool, error) {
-	return p.IsOnline(sc, values)
+func IsAlreadyOnline(p Provisioner, sc *vars.StackConfig, values provider.Values) (bool, error) {
+	online, err := p.IsAlreadyOnline(sc, values)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	sc.Status.IsOnline = online
+	return online, nil
 }
