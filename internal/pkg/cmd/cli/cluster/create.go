@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"io"
 	"strings"
@@ -129,10 +130,17 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	}
 	log.Debugf("Provider returned vars: %#v", stackConfigVars)
 
-	if len(stackConfigVars) == 0 {
+	if len(*stackConfigVars) == 0 {
 		log.Fatal("No values loaded for stack")
 		return errors.New("Failed to load values for stack")
 	}
+
+	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	provisioner.Create(provisionerImpl, stackConfig, stackConfigVars)
 
 	return nil
 }

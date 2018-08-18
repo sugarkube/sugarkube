@@ -35,7 +35,7 @@ func NewProvider(name string) (Provider, error) {
 
 // Searches for values.yaml files in configured directories and returns the
 // result of merging them.
-func StackConfigVars(p Provider, sc *vars.StackConfig) (Values, error) {
+func StackConfigVars(p Provider, sc *vars.StackConfig) (*Values, error) {
 	stackConfigVars := Values{}
 
 	varsDirs, err := p.VarsDirs(sc)
@@ -58,5 +58,5 @@ func StackConfigVars(p Provider, sc *vars.StackConfig) (Values, error) {
 		}
 	}
 
-	return stackConfigVars, nil
+	return &stackConfigVars, nil
 }
