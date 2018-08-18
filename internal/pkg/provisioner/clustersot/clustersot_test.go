@@ -28,18 +28,18 @@ func (m MockClusterSot) IsReady(sc *vars.StackConfig, values provider.Values) (b
 	return args.Bool(0), args.Error(1)
 }
 
-func TestIsOnline(t *testing.T) {
-	returnTrue := "return-true"
+func TestIsOnlineTrue(t *testing.T) {
+	clusterName := "myCluster"
 
 	// create an instance of our test object
 	testObj := MockClusterSot{}
 
 	// setup expectations
-	testObj.On("IsOnline", returnTrue).Return(true, nil)
+	testObj.On("IsOnline", clusterName).Return(true, nil)
 
 	status := vars.ClusterStatus{IsOnline: false}
 	sc := vars.StackConfig{
-		Cluster: returnTrue,
+		Cluster: clusterName,
 		Status:  status,
 	}
 
@@ -52,4 +52,30 @@ func TestIsOnline(t *testing.T) {
 	testObj.AssertExpectations(t)
 
 	assert.True(t, sc.Status.IsOnline)
+}
+
+func TestIsOnlineFalse(t *testing.T) {
+	clusterName := "myCluster"
+
+	// create an instance of our test object
+	testObj := MockClusterSot{}
+
+	// setup expectations
+	testObj.On("IsOnline", clusterName).Return(false, nil)
+
+	status := vars.ClusterStatus{IsOnline: false}
+	sc := vars.StackConfig{
+		Cluster: clusterName,
+		Status:  status,
+	}
+
+	assert.False(t, sc.Status.IsOnline)
+
+	// call the code we are testing
+	IsOnline(testObj, &sc, provider.Values{})
+
+	// assert that the expectations were met
+	testObj.AssertExpectations(t)
+
+	assert.False(t, sc.Status.IsOnline)
 }
