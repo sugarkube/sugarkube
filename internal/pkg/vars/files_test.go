@@ -11,9 +11,9 @@ func TestGroupFilesWithDir(t *testing.T) {
 
 	expected := map[string][]string{
 		"values.yaml": {
-			"testdata/values.yaml",
-			"testdata/subdir1/values.yaml",
-			"testdata/subdir1/subdir2/values.yaml",
+			"testdata/values/values.yaml",
+			"testdata/values/subdir1/values.yaml",
+			"testdata/values/subdir1/subdir2/values.yaml",
 		},
 		"stacks.yaml": {
 			"testdata/stacks.yaml",
@@ -25,11 +25,11 @@ func TestGroupFilesWithDir(t *testing.T) {
 
 func TestGroupFilesWithFile(t *testing.T) {
 	// we may want to mock filepath.Walk in future...
-	result := GroupFiles("./testdata/values.yaml")
+	result := GroupFiles("./testdata/values/values.yaml")
 
 	expected := map[string][]string{
 		"values.yaml": {
-			"testdata/values.yaml",
+			"testdata/values/values.yaml",
 		},
 	}
 
