@@ -4,7 +4,7 @@ local-standard:
   profile: local
   cluster: standard
   vars:               # paths to yaml files to load data from. Keys will be merged.
-  - providers/minikube/
+  - providers/
 #  manifests:
 #  - /path/to/manifest1.yaml        # todo - support pulling these from git repos, etc.
 #  - /path/to/manifest2.yaml
@@ -15,7 +15,7 @@ local-large:
   profile: local
   cluster: large
   vars:               # paths to yaml files to load data from. Keys will be merged.
-  - providers/minikube/
+  - providers/
 #  manifests:
 #  - /path/to/manifest1.yaml
 #  - /path/to/manifest2.yaml

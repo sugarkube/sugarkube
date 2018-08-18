@@ -127,5 +127,10 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	}
 	log.Debugf("Provider returned vars: %#v", stackConfigVars)
 
+	if len(stackConfigVars) == 0 {
+		log.Fatal("No values loaded for stack")
+		return errors.New("Failed to load values for stack")
+	}
+
 	return nil
 }

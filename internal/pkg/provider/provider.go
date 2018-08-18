@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"os"
 	"path/filepath"
@@ -40,6 +41,7 @@ func StackConfigVars(p Provider, sc *vars.StackConfig) (map[string]interface{}, 
 
 		_, err := os.Stat(valuePath)
 		if err != nil {
+			log.Debugf("Skipping merging non-existent path %s", valuePath)
 			continue
 		}
 
