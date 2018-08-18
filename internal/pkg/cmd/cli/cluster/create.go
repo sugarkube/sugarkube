@@ -142,6 +142,16 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
+	online, err := provisioner.IsOnline(provisionerImpl, stackConfig, stackConfigVars)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if online {
+		log.Infof("Target cluster is already online. Aborting.")
+		return nil
+	}
+
 	err = provisioner.Create(provisionerImpl, stackConfig, stackConfigVars, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)

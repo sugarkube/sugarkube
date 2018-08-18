@@ -36,3 +36,8 @@ func NewProvisioner(name string) (Provisioner, error) {
 func Create(p Provisioner, sc *vars.StackConfig, values provider.Values, dryRun bool) error {
 	return p.Create(sc, values, dryRun)
 }
+
+// Return whether the cluster is already online
+func IsOnline(p Provisioner, sc *vars.StackConfig, values provider.Values) (bool, error) {
+	return p.IsOnline(sc, values)
+}

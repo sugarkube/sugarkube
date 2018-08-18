@@ -54,7 +54,21 @@ func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values
 }
 
 func (p MinikubeProvisioner) IsOnline(sc *vars.StackConfig, values provider.Values) (bool, error) {
-	panic("not implemented")
+	cmd := exec.Command(MINIKUBE_PATH, "status")
+	err := cmd.Run()
+
+	if err != nil {
+		// assume no cluster is up if the command starts but doesn't complete successfully
+		if _, ok := err.(*exec.ExitError); ok {
+			return false, nil
+		} else {
+			// something else, so return an error
+			return false, errors.WithStack(err)
+		}
+	}
+
+	// otherwise assume a cluster is online
+	return true, nil
 }
 
 func (p MinikubeProvisioner) Update(sc *vars.StackConfig, values provider.Values) error {
