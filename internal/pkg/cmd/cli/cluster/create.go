@@ -142,7 +142,10 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	provisioner.Create(provisionerImpl, stackConfig, stackConfigVars, c.dryRun)
+	err = provisioner.Create(provisionerImpl, stackConfig, stackConfigVars, c.dryRun)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	return nil
 }
