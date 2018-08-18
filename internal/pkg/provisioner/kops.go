@@ -10,7 +10,7 @@ type KopsProvisioner struct {
 	Provisioner
 }
 
-func (p KopsProvisioner) Create(sc *vars.StackConfig, values *provider.Values) error {
+func (p KopsProvisioner) Create(sc *vars.StackConfig, values provider.Values) error {
 
 	log.Debugf("Creating stack with Kops and config: %#v", sc)
 

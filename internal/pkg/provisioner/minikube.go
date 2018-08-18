@@ -16,14 +16,12 @@ type MinikubeProvisioner struct {
 // todo - make configurable
 const MINIKUBE_PATH = "minikube"
 
-func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values *provider.Values) error {
+func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values) error {
 
 	log.Debugf("Creating stack with Minikube and values: %#v", values)
 
 	args := make([]string, 0)
-
-	vals := *values
-	provisionerValues := vals[PROVISIONER_KEY].(map[interface{}]interface{})
+	provisionerValues := values[PROVISIONER_KEY].(map[interface{}]interface{})
 
 	for k, v := range provisionerValues {
 		args = append(args, k.(string))
@@ -50,10 +48,10 @@ func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values *provider.Value
 	return nil
 }
 
-func (p MinikubeProvisioner) IsOnline(sc *vars.StackConfig, values *provider.Values) (bool, error) {
+func (p MinikubeProvisioner) IsOnline(sc *vars.StackConfig, values provider.Values) (bool, error) {
 	panic("not implemented")
 }
 
-func (p MinikubeProvisioner) Update(sc *vars.StackConfig, values *provider.Values) error {
+func (p MinikubeProvisioner) Update(sc *vars.StackConfig, values provider.Values) error {
 	panic("not implemented")
 }
