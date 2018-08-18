@@ -1,5 +1,10 @@
 # Sugarkube - Infrastructure Dependency Management
 
+**TLDR;** Basically like `requirements.txt` or `package.json` but for 
+infrastructure and applications. Not specific to Kubernetes but that's its
+primary target.
+
+## Overview
 Sugarkube is dependency management for your infrastructure. 
 While its focus is Kubernetes-based clusters, it can be used to deploy your
 applications onto any scriptable backend.
@@ -23,6 +28,7 @@ a single Kapp should be put into its own Kapp to simplify dependency management.
 Sugarkube can also create Kubernetes clusters on various backends
 (e.g. AWS, local, etc.) using a variety of provisioners (e.g. Kops, Minikube).
 
+## Features
 Use Sugarkube to:
 
   * Fully version your applications and infrastructure as "Kapps".
@@ -50,4 +56,6 @@ Use Sugarkube to:
 Sugarkube is great for new projects, but even legacy applications can be 
 migrated into Kapps. You can migrate a bit at a time to see how it helps you.
 
-See https://sugarkube.io for more info and documentation.
+## More info
+See https://sugarkube.io for more info and documentation. Sugarkube is a 
+work in progress and not ready for production use just yet.
