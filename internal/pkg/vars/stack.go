@@ -75,9 +75,13 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 }
 
 // Parses and merges all specified vars files and returns the groups of vars
-func (s *StackConfig) Vars() {
+func (s *StackConfig) Vars() map[string]interface{} {
 	for _, varFile := range s.VarsFilesDirs {
 		groupedFiles := GroupFiles(varFile)
 		log.Debugf("Grouped: %#v", groupedFiles)
 	}
+
+	vars := map[string]interface{}{}
+
+	return vars
 }

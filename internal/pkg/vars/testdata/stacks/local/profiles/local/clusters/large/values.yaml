@@ -1,4 +1,3 @@
-# defines a higher-specced local cluster
 provisioner_params:
   memory: 4096
   cpus: 4

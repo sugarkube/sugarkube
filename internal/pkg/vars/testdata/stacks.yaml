@@ -15,7 +15,7 @@ local-large-test:
   profile: local
   cluster: large
   vars:               # paths to yaml files to load data from. Keys will be merged.
-  - providers/minikube/
+  - ./stacks/
   manifests:
   - ./testdata/manifest1.yaml
   - ./testdata/manifest2.yaml

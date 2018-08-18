@@ -46,6 +46,18 @@ func TestLoadStackConfigMissingStackName(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestVars(t *testing.T) {
+func TestStackConfigVars(t *testing.T) {
+	stack, err := LoadStackConfig("local-large-test", "./testdata/stacks.yaml")
+	assert.Nil(t, err)
 
+	expected := map[string]interface{}{
+		"provisioner_params": map[string]interface{}{
+			"memory":    4096,
+			"cpus":      4,
+			"disk_size": "120g",
+		},
+	}
+
+	actual := stack.Vars()
+	assert.Equal(t, expected, actual, "Mismatching vars")
 }
