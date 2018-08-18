@@ -6,13 +6,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/version"
 )
 
-type rootCmd struct {
-	dryRun bool
-}
-
 func NewCommand(name string) *cobra.Command {
-
-	c := &rootCmd{}
 
 	cmd := &cobra.Command{
 		Use:   name,
@@ -80,9 +74,6 @@ See https://sugarkube.io for more info and documentation.
 		version.NewCommand(),
 		cluster.NewClusterCmds(out),
 	)
-
-	f := cmd.Flags()
-	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't perform any destructive actions")
 
 	return cmd
 }

@@ -34,6 +34,7 @@ func (v *files) Set(value string) error {
 
 type createCmd struct {
 	out           io.Writer
+	dryRun        bool
 	stackName     string
 	stackFile     string
 	provider      string
@@ -70,6 +71,7 @@ Note: Not all providers require all arguments. See documentation for help.
 	}
 
 	f := cmd.Flags()
+	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-file)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks (required when passing --stack)")
 	f.StringVarP(&c.provider, "provider", "p", "", "name of provider, e.g. aws, local, etc.")
@@ -140,7 +142,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	provisioner.Create(provisionerImpl, stackConfig, stackConfigVars)
+	provisioner.Create(provisionerImpl, stackConfig, stackConfigVars, c.dryRun)
 
 	return nil
 }

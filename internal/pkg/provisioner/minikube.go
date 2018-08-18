@@ -17,7 +17,7 @@ type MinikubeProvisioner struct {
 // todo - make configurable
 const MINIKUBE_PATH = "minikube"
 
-func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values) error {
+func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values, dryRun bool) error {
 
 	log.Debugf("Creating stack with Minikube and values: %#v", values)
 
@@ -32,17 +32,15 @@ func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values
 		args = append(args, fmt.Sprintf("%v", v))
 	}
 
-	log.Infof("Launching Minikube cluster... Executing %s %s", MINIKUBE_PATH,
-		strings.Join(args, " "))
-
-	cmd := exec.Command("minikube", args...)
-
-	// todo - pass in
-	dryRun := false
+	cmd := exec.Command(MINIKUBE_PATH, args...)
 
 	if dryRun {
-		log.Infof("Dry run. Skipping invoking Minikube.")
+		log.Infof("Dry run. Skipping invoking Minikube, but would execute: %s %s",
+			MINIKUBE_PATH, strings.Join(args, " "))
 	} else {
+		log.Infof("Launching Minikube cluster... Executing %s %s", MINIKUBE_PATH,
+			strings.Join(args, " "))
+
 		err := cmd.Run()
 
 		if err != nil {
