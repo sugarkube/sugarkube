@@ -78,10 +78,11 @@ func WaitForClusterReadiness(p Provisioner, sc *vars.StackConfig, values provide
 	// only check whether the cluster is online if we started it, otherwise assume it is so
 	// we don't wait pointlessly when resuming previous runs/working with existing clusters.
 	if sc.Status.StartedThisRun {
-		timeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
+		log.Infof("Checking whether the cluster is online...")
 
+		timeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
 		for time.Now().Before(timeoutTime) {
-			online, err := clusterSot.IsOnline(sc, values)
+			online, err := clustersot.IsOnline(clusterSot, sc, values)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -90,6 +91,7 @@ func WaitForClusterReadiness(p Provisioner, sc *vars.StackConfig, values provide
 				log.Info("Cluster is online")
 				break
 			} else {
+				log.Info("Cluster isn't online. Sleeping...")
 				time.Sleep(time.Duration(5) * time.Second)
 			}
 		}
@@ -104,9 +106,11 @@ func WaitForClusterReadiness(p Provisioner, sc *vars.StackConfig, values provide
 		time.Sleep(time.Second * time.Duration(sleepTime))
 	}
 
+	log.Infof("Checking whether the cluster is ready...")
+
 	readinessTimeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
 	for time.Now().Before(readinessTimeoutTime) {
-		ready, err := clusterSot.IsReady(sc, values)
+		ready, err := clustersot.IsReady(clusterSot, sc, values)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -115,6 +119,7 @@ func WaitForClusterReadiness(p Provisioner, sc *vars.StackConfig, values provide
 			log.Info("Cluster is ready")
 			break
 		} else {
+			log.Info("Cluster isn't ready. Sleeping...")
 			time.Sleep(time.Duration(5) * time.Second)
 		}
 	}

@@ -2,6 +2,7 @@ package clustersot
 
 import (
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"os/exec"
@@ -22,6 +23,7 @@ func (c KubeCtlClusterSot) IsOnline(sc *vars.StackConfig, values provider.Values
 	err := cmd.Run()
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
+			log.Debug("Cluster isn't online yet - kubectl not getting results")
 			return false, nil
 		}
 
@@ -32,6 +34,8 @@ func (c KubeCtlClusterSot) IsOnline(sc *vars.StackConfig, values provider.Values
 }
 
 func (c KubeCtlClusterSot) IsReady(sc *vars.StackConfig, values provider.Values) (bool, error) {
+
+	// todo implement
 
 	//context := values["kube_context"].(string)
 
