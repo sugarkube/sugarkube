@@ -83,26 +83,26 @@ Note: Not all providers require all arguments. See documentation for help.
 func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
 	var (
-		stack *vars.Stack
-		err   error
+		stackConfig *vars.StackConfig
+		err         error
 	)
 
 	// make sure both stack name and stack file are supplied if either are supplied
 	if c.stackName != "" || c.stackFile != "" {
 		if c.stackName == "" {
-			return errors.New("A stack name is required when supplying the path to a stack file.")
+			return errors.New("A stack name is required when supplying the path to a stack config file.")
 		}
 
 		if c.stackFile == "" {
-			return errors.New("A stack file is required when supplying a stack name.")
+			return errors.New("A stack config file is required when supplying a stack name.")
 		}
 
-		stack, err = vars.LoadStack(c.stackName, c.stackFile)
+		stackConfig, err = vars.LoadStackConfig(c.stackName, c.stackFile)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	} else {
-		stack = &vars.Stack{
+		stackConfig = &vars.StackConfig{
 			Provider:      c.provider,
 			Provisioner:   c.provisioner,
 			Profile:       c.profile,
@@ -112,7 +112,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	log.Debugf("Loaded stack: %#v", stack)
+	log.Debugf("Loaded stack config: %#v", stackConfig)
 
 	return nil
 }

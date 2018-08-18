@@ -5,23 +5,23 @@ import (
 	"testing"
 )
 
-func TestLoadStackGarbagePath(t *testing.T) {
-	_, err := LoadStack("fake-path", "/fake/~/some?/~/garbage")
+func TestLoadStackConfigGarbagePath(t *testing.T) {
+	_, err := LoadStackConfig("fake-path", "/fake/~/some?/~/garbage")
 	assert.Error(t, err)
 }
 
-func TestLoadStackNonExistentPath(t *testing.T) {
-	_, err := LoadStack("missing-path", "/missing/stacks.yaml")
+func TestLoadStackConfigNonExistentPath(t *testing.T) {
+	_, err := LoadStackConfig("missing-path", "/missing/stacks.yaml")
 	assert.Error(t, err)
 }
 
-func TestLoadStackDir(t *testing.T) {
-	_, err := LoadStack("dir-path", "./testdata")
+func TestLoadStackConfigDir(t *testing.T) {
+	_, err := LoadStackConfig("dir-path", "./testdata")
 	assert.Error(t, err)
 }
 
-func TestLoadStack(t *testing.T) {
-	expected := &Stack{
+func TestLoadStackConfig(t *testing.T) {
+	expected := &StackConfig{
 		Name:        "local-large-test",
 		Provider:    "local",
 		Provisioner: "minikube",
@@ -36,12 +36,16 @@ func TestLoadStack(t *testing.T) {
 		},
 	}
 
-	actual, err := LoadStack("local-large-test", "./testdata/stacks.yaml")
+	actual, err := LoadStackConfig("local-large-test", "./testdata/stacks.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual, "unexpected stack")
 }
 
-func TestLoadStackMissingStackName(t *testing.T) {
-	_, err := LoadStack("missing-stack-name", "./testdata/stacks.yaml")
+func TestLoadStackConfigMissingStackName(t *testing.T) {
+	_, err := LoadStackConfig("missing-stack-name", "./testdata/stacks.yaml")
 	assert.Error(t, err)
+}
+
+func TestVars(t *testing.T) {
+
 }

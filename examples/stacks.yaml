@@ -6,8 +6,8 @@ local-standard:
   vars:               # paths to yaml files to load data from. Keys will be merged.
   - providers/minikube/
 #  manifests:
-#  - git@.../manifest1.yaml
-#  - git@.../manifest2.yaml
+#  - /path/to/manifest1.yaml        # todo - support pulling these from git repos, etc.
+#  - /path/to/manifest2.yaml
 
 local-large:
   provider: local
@@ -17,5 +17,5 @@ local-large:
   vars:               # paths to yaml files to load data from. Keys will be merged.
   - providers/minikube/
 #  manifests:
-#  - git@.../manifest1.yaml
-#  - git@.../manifest2.yaml
+#  - /path/to/manifest1.yaml
+#  - /path/to/manifest2.yaml

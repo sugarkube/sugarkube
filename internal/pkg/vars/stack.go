@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 )
 
-type Stack struct {
+type StackConfig struct {
 	Name          string
 	Provider      string
 	Provisioner   string
@@ -20,8 +20,8 @@ type Stack struct {
 	Manifests     []string
 }
 
-// Loads a stack from a YAML file and returns it or an error
-func LoadStack(name string, path string) (*Stack, error) {
+// Loads a stack config from a YAML file and returns it or an error
+func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
 	// make sure the file exists
 	absPath, err := filepath.Abs(path)
@@ -62,7 +62,7 @@ func LoadStack(name string, path string) (*Stack, error) {
 
 	log.Debugf("String stack config:\n%s", stackConfigString)
 
-	stack := Stack{Name: name}
+	stack := StackConfig{Name: name}
 
 	err = yaml.Unmarshal(stackConfigString, &stack)
 	if err != nil {
@@ -75,7 +75,7 @@ func LoadStack(name string, path string) (*Stack, error) {
 }
 
 // Parses and merges all specified vars files and returns the groups of vars
-func (s *Stack) Vars() {
+func (s *StackConfig) Vars() {
 	for _, varFile := range s.VarsFilesDirs {
 		groupedFiles := GroupFiles(varFile)
 		log.Debugf("Grouped: %#v", groupedFiles)
