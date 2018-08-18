@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"io"
 	"strings"
@@ -113,6 +114,14 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	log.Debugf("Loaded stack config: %#v", stackConfig)
+
+	providerImpl, err := provider.NewProvider(stackConfig.Provider)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	stackVars := providerImpl.VarsDirs(stackConfig)
+	log.Debugf("Provider returned vars: %#v", stackVars)
 
 	return nil
 }
