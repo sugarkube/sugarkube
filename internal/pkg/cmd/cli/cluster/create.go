@@ -68,7 +68,7 @@ Note: Not all providers require all arguments. See documentation for help.
 
 	f := cmd.Flags()
 	f.StringVarP(&t.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-file)")
-	f.StringVarP(&t.stackFile, "stack-file", "s", "", "path to file defining stacks (required when passing --stack)")
+	f.StringVarP(&t.stackFile, "stack-config", "s", "", "path to file defining stacks (required when passing --stack)")
 	f.StringVarP(&t.provider, "provider", "p", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVarP(&t.provisioner, "provisioner", "v", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVarP(&t.profile, "profile", "l", "", "launch profile, e.g. dev, test, prod, etc.")
