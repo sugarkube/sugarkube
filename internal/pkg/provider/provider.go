@@ -17,7 +17,7 @@ type Provider interface {
 	// Method that returns all paths in a config directory relevant to the
 	// target profile/cluster/region, etc. that should be searched for values
 	// files to merge.
-	VarsDirs(sc *vars.StackConfig) []string
+	VarsDirs(sc *vars.StackConfig) ([]string, error)
 }
 
 // Factory that creates providers
@@ -38,8 +38,13 @@ func NewProvider(name string) (Provider, error) {
 func StackConfigVars(p Provider, sc *vars.StackConfig) (Values, error) {
 	stackConfigVars := Values{}
 
-	for _, varFile := range p.VarsDirs(sc) {
-		valuePath := filepath.Join(sc.Dir(), varFile, valuesFile)
+	varsDirs, err := p.VarsDirs(sc)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	for _, varFile := range varsDirs {
+		valuePath := filepath.Join(varFile, valuesFile)
 
 		_, err := os.Stat(valuePath)
 		if err != nil {

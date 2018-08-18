@@ -1,4 +1,4 @@
-local-standard-test:
+standard:
   provider: local
   provisioner: minikube
   profile: local
@@ -9,7 +9,7 @@ local-standard-test:
 #  - git@.../manifest1.yaml
 #  - git@.../manifest2.yaml
 
-local-large-test:
+large:
   provider: local
   provisioner: minikube
   profile: local

@@ -22,7 +22,7 @@ func TestLoadStackConfigDir(t *testing.T) {
 
 func TestLoadStackConfig(t *testing.T) {
 	expected := &StackConfig{
-		Name:        "local-large-test",
+		Name:        "large",
 		FilePath:    "./testdata/stacks.yaml",
 		Provider:    "local",
 		Provisioner: "minikube",
@@ -37,7 +37,7 @@ func TestLoadStackConfig(t *testing.T) {
 		},
 	}
 
-	actual, err := LoadStackConfig("local-large-test", "./testdata/stacks.yaml")
+	actual, err := LoadStackConfig("large", "./testdata/stacks.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual, "unexpected stack")
 }

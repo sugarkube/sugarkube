@@ -6,9 +6,9 @@ type AwsProvider struct {
 	Provider
 }
 
-func (p AwsProvider) VarsDirs(stackConfig *vars.StackConfig) []string {
+func (p AwsProvider) VarsDirs(stackConfig *vars.StackConfig) ([]string, error) {
 	return []string{
 		"/cat",
 		"/dog",
-	}
+	}, nil
 }

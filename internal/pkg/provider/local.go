@@ -1,7 +1,11 @@
 package provider
 
 import (
+	"fmt"
+	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
+	"os"
 	"path/filepath"
 )
 
@@ -9,23 +13,58 @@ type LocalProvider struct {
 	Provider
 }
 
-const providerName = "local"
-const profileDir = "profiles"
-const clusterDir = "clusters"
+const PROVIDER_NAME = "local"
+const PROFILE_DIR = "profiles"
+const CLUSTER_DIR = "clusters"
 
 // Returns directories to look for values files in specific to this provider
-func (p LocalProvider) VarsDirs(sc *vars.StackConfig) []string {
+func (p LocalProvider) VarsDirs(sc *vars.StackConfig) ([]string, error) {
 
 	paths := make([]string, 0)
 
+	prefix := sc.Dir()
+
 	for _, path := range sc.VarsFilesDirs {
+		// prepend the directory of the stack config file if the path is relative
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(prefix, path)
+			log.Debugf("Prepended dir of stack config to relative path. New path %s", path)
+		}
+
+		profileDir := filepath.Join(path, PROVIDER_NAME, PROFILE_DIR, sc.Profile)
+		clusterDir := filepath.Join(path, PROVIDER_NAME, PROFILE_DIR, sc.Profile, CLUSTER_DIR, sc.Cluster)
+
+		if err := abortIfNotDir(profileDir,
+			fmt.Sprintf("No profile directory found at %s", profileDir)); err != nil {
+			return nil, err
+		}
+
+		if err := abortIfNotDir(clusterDir,
+			fmt.Sprintf("No cluster directory found at %s", clusterDir)); err != nil {
+			return nil, err
+		}
+
 		paths = append(paths, filepath.Join(path))
-		paths = append(paths, filepath.Join(path, providerName))
-		paths = append(paths, filepath.Join(path, providerName, profileDir))
-		paths = append(paths, filepath.Join(path, providerName, profileDir, sc.Profile))
-		paths = append(paths, filepath.Join(path, providerName, profileDir, sc.Profile, clusterDir))
-		paths = append(paths, filepath.Join(path, providerName, profileDir, sc.Profile, clusterDir, sc.Cluster))
+		paths = append(paths, filepath.Join(path, PROVIDER_NAME))
+		paths = append(paths, filepath.Join(path, PROVIDER_NAME, PROFILE_DIR))
+		paths = append(paths, profileDir)
+		paths = append(paths, filepath.Join(path, PROVIDER_NAME, PROFILE_DIR, sc.Profile, CLUSTER_DIR))
+		paths = append(paths, clusterDir)
 	}
 
-	return paths
+	return paths, nil
+}
+
+// Returns an error if the given path doesn't exist or isn't a directory
+func abortIfNotDir(path string, errorMessage string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return errors.Wrap(err, errorMessage)
+	}
+
+	if !info.IsDir() {
+		return errors.New(fmt.Sprintf("Path '%s' is not a directory", path))
+	}
+
+	return nil
 }

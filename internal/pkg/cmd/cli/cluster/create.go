@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"fmt"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -83,10 +84,8 @@ Note: Not all providers require all arguments. See documentation for help.
 
 func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
-	var (
-		stackConfig *vars.StackConfig
-		err         error
-	)
+	stackConfig := &vars.StackConfig{}
+	var err error
 
 	// make sure both stack name and stack file are supplied if either are supplied
 	if c.stackName != "" || c.stackFile != "" {
@@ -102,18 +101,21 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
-	} else {
-		stackConfig = &vars.StackConfig{
-			Provider:      c.provider,
-			Provisioner:   c.provisioner,
-			Profile:       c.profile,
-			Cluster:       c.cluster,
-			VarsFilesDirs: c.varsFilesDirs,
-			Manifests:     c.manifests,
-		}
 	}
 
-	log.Debugf("Loaded stack config: %#v", stackConfig)
+	// CLI args override configured args, so merge them in
+	cliStackConfig := &vars.StackConfig{
+		Provider:      c.provider,
+		Provisioner:   c.provisioner,
+		Profile:       c.profile,
+		Cluster:       c.cluster,
+		VarsFilesDirs: c.varsFilesDirs,
+		Manifests:     c.manifests,
+	}
+
+	mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
+
+	log.Debugf("Final stack config: %#v", stackConfig)
 
 	providerImpl, err := provider.NewProvider(stackConfig.Provider)
 	if err != nil {

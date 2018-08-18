@@ -7,25 +7,21 @@ import (
 )
 
 func TestLocalVarsDirs(t *testing.T) {
-	sc := vars.StackConfig{
-		Profile: "test-profile",
-		Cluster: "test-cluster",
-		VarsFilesDirs: []string{
-			"./testdata",
-		},
-	}
+	sc, err := vars.LoadStackConfig("large", "../vars/testdata/stacks.yaml")
+	assert.Nil(t, err)
 
 	expected := []string{
-		"testdata",
-		"testdata/local",
-		"testdata/local/profiles",
-		"testdata/local/profiles/test-profile",
-		"testdata/local/profiles/test-profile/clusters",
-		"testdata/local/profiles/test-profile/clusters/test-cluster",
+		"../vars/testdata/stacks",
+		"../vars/testdata/stacks/local",
+		"../vars/testdata/stacks/local/profiles",
+		"../vars/testdata/stacks/local/profiles/local",
+		"../vars/testdata/stacks/local/profiles/local/clusters",
+		"../vars/testdata/stacks/local/profiles/local/clusters/large",
 	}
 
 	provider := LocalProvider{}
-	actual := provider.VarsDirs(&sc)
+	actual, err := provider.VarsDirs(sc)
+	assert.Nil(t, err)
 
 	assert.Equal(t, expected, actual, "Incorrect vars dirs returned")
 }

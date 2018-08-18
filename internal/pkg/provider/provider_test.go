@@ -7,7 +7,7 @@ import (
 )
 
 func TestStackConfigVars(t *testing.T) {
-	sc, err := vars.LoadStackConfig("local-large-test", "../vars/testdata/stacks.yaml")
+	sc, err := vars.LoadStackConfig("large", "../vars/testdata/stacks.yaml")
 	assert.Nil(t, err)
 
 	expected := Values{
