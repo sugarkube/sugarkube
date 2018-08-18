@@ -1,4 +1,4 @@
-provisioner_params:
+provisioner:
   memory: 2048
   cpus: 2
   disk_size: 30g

@@ -15,3 +15,11 @@ func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values map[string]inte
 
 	return nil
 }
+
+func (p MinikubeProvisioner) IsOnline(sc *vars.StackConfig, values map[string]interface{}) (bool, error) {
+	panic("not implemented")
+}
+
+func (p MinikubeProvisioner) Update(sc *vars.StackConfig, values map[string]interface{}) error {
+	panic("not implemented")
+}

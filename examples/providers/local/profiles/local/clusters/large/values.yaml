@@ -1,5 +1,5 @@
 # defines a higher-specced local cluster
-provisioner_params:
+provisioner:
   memory: 4096
   cpus: 4
   disk_size: 120g

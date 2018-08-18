@@ -11,7 +11,7 @@ func TestStackConfigVars(t *testing.T) {
 	assert.Nil(t, err)
 
 	expected := map[string]interface{}{
-		"provisioner_params": map[interface{}]interface{}{
+		"provisioner": map[interface{}]interface{}{
 			"memory":    4096,
 			"cpus":      4,
 			"disk_size": "120g",

@@ -7,10 +7,12 @@ import (
 )
 
 type Provisioner interface {
-	// Method that returns all paths in a config directory relevant to the
-	// target profile/cluster/region, etc. that should be searched for values
-	// files to merge.
+	// Creates a cluster
 	Create(sc *vars.StackConfig, values map[string]interface{}) error
+	// Returns whether the cluster is already running
+	IsOnline(sc *vars.StackConfig, values map[string]interface{}) (bool, error)
+	// Update the cluster config if supported by the provisioner
+	Update(sc *vars.StackConfig, values map[string]interface{}) error
 }
 
 // Factory that creates providers
