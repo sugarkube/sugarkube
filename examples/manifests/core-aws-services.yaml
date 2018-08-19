@@ -3,7 +3,8 @@ present:
 
   # The `kiam` chart will be installed into the `kiam` namespace, the release
   # will also be called `kiam`. The version number will be set to the version
-  # extracted from `Charts.yaml` in `charts/stable/kiam/`.
+  # extracted from `Charts.yaml` in `charts/stable/kiam/`. No `installer` block
+  # is defined so defaults are used.
   kiam:
     sources:
     - url: git@github.com:helm/charts.git

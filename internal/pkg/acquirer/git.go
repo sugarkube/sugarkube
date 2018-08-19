@@ -96,6 +96,9 @@ func (a GitAcquirer) Acquire(dest string) error {
 			strings.Join(checkoutCmd.Args, " "), stderrBuf.String())
 	}
 
+	// we could optionally verify tags with:
+	// git tag -v a.branch 2>&1 >/dev/null | grep -E '{{ trusted_gpg_keys|join('|') }}'
+
 	return nil
 }
 

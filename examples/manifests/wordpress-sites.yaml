@@ -3,15 +3,21 @@
 # Kapps listed under this key will be installed if they are not currently
 # installed in the target cluster.
 present:
-
   # This entry demonstrates how to explicitly declare values.
   #
   # Unique identifier. The same kapp can be installed multiple times provided
-  # this is unique per instance.
+  # this is unique per instance. This will be the release name when using Helm.
   wordpress-site1:
-    name: wordpress               # Defaults to the identifier
-    meta:                         # installer-specific values
-      namespace: wordpress-sites  # Helm-specific value
+    installer:              # installer-specific values
+      kapp: wordpress       # The source (defined below) to run the makefile
+                            # for to install this kapp. Defaults to the
+                            # identifier (i.e. wordpress-site1)
+      values:
+      - site1-values        # A list of sources to search for cluster-specific
+                            # values files. Defaults to the main source
+                            # directory (in this case wordpress)
+      params:               # key values to set as env vars when calling the Makefile
+        namespace: wordpress-sites    # Explicitly set a parameter used by Helm
 
     # Sources to checkout as siblings in the cache for this kapp. This allows
     # creating a cache entry from e.g. the actual kapp source, a directory of
@@ -22,15 +28,17 @@ present:
       # if this was our repo a good pattern could be to create a signed tag for
       # each release called `<chart>-<version>`.
       branch: master
+      # the name of this source defaults to `wordpress` because it's the last
+      # component of the path. The name can also be set explicitly as
+      # illustrated below.
       path: stable/wordpress/
     - url: git@github.com:sugarkube/sugarkube.git
       branch: master
       # this lets us reuse the same kapp parameterised differently per instance
       path: examples/values/wordpress/site1/
-      # Name of the dest dir to write to in the cache. Defaults to the last
-      # component of the path which in this case is the same as what we're
-      # demonstrating below. But here's how to override it explicitly anyway.
-      dest: site1-values
+      # Name of the source. Defaults to the last component of the path (in this
+      # case `site1`). Also used as a key
+      name: site1-values
     - url: git@github.com:sugarkube/sample-kapps.git
       branch: master
       path: common-makefiles/
