@@ -2,6 +2,9 @@ package acquirer
 
 type GitAcquirer struct {
 	Acquirer
+	url    string
+	branch string
+	path   string
 }
 
 // Acquires kapps via git.
