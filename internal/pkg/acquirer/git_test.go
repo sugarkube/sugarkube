@@ -9,7 +9,7 @@ import (
 )
 
 func TestGitAcquire(t *testing.T) {
-	acquirer, err := NewAcquirerForPath("git@github.com:sugarkube/sugarkube.git",
+	acquirer, err := NewAcquirerForPath(defaultSettings[URL],
 		defaultSettings)
 	assert.Nil(t, err)
 

@@ -20,13 +20,13 @@ func TestNewGitAcquirerPartial(t *testing.T) {
 }
 
 var defaultSettings = map[string]string{
-	"url":    "git@github.com:sugarkube/sugarkube.git",
+	"url":    "git@github.com:sugarkube/sample-kapps.git",
 	"branch": "tiller-0.1.0",
 	"path":   "tiller/",
 }
 
 var expectedAcquirer = GitAcquirer{
-	url:    "git@github.com:sugarkube/sugarkube.git",
+	url:    "git@github.com:sugarkube/sample-kapps.git",
 	branch: "tiller-0.1.0",
 	path:   "tiller/",
 }
@@ -39,17 +39,17 @@ func TestNewGitAcquirerFull(t *testing.T) {
 }
 
 func TestNewAcquirerForPathGit(t *testing.T) {
-	actual, err := NewAcquirerForPath("git@github.com:sugarkube/sugarkube.git",
+	actual, err := NewAcquirerForPath(defaultSettings[URL],
 		defaultSettings)
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual)
 }
 
 func TestNewAcquirerForPathGitExplicit(t *testing.T) {
-	actual, err := NewAcquirerForPath("https://github.com/sugarkube/sugarkube.git",
+	actual, err := NewAcquirerForPath("https://github.com/sugarkube/sample-kapps.git",
 		map[string]string{
 			ACQUIRER_KEY: GIT,
-			"url":        "git@github.com:sugarkube/sugarkube.git",
+			"url":        "git@github.com:sugarkube/sample-kapps.git",
 			"branch":     "tiller-0.1.0",
 			"path":       "tiller/",
 		})
