@@ -119,10 +119,7 @@ This should also install kapps. They should:
 ```
 helm --kube-context={{ kube_context }} --service-account tiller init
 ```
-* Wait for the cluster to be ready by running this again (how can we get a kapp to do that?):
-```
-kubectl --context {{ kube_context }} -n kube-system get pod -o go-template='{{ '{{' }}range .items}}{{ '{{' }} printf "%s\n" .status.phase }}{{ '{{' }} end }}' ~ grep -V Running
-```
+* Sleep a little to give tiller a chance to be installed
 
 * Install a kapp to configure tiller, e.g. create service accounts, role bindings, etc.
 

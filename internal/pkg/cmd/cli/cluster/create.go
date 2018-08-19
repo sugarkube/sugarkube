@@ -168,7 +168,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	log.Infof("Cluster '%s' is ready for one-time post-create configuration", stackConfig.Cluster)
+	log.Infof("Cluster '%s' is ready for use.", stackConfig.Cluster)
 
 	return nil
 }
