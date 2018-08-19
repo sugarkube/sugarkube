@@ -5,32 +5,15 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"io"
-	"strings"
 )
 
 // Launches a cluster, either local or remote.
-
-type files []string
-
-func (v *files) String() string {
-	return fmt.Sprint(*v)
-}
-
-func (v *files) Type() string {
-	return "files"
-}
-
-func (v *files) Set(value string) error {
-	for _, filePath := range strings.Split(value, ",") {
-		*v = append(*v, filePath)
-	}
-	return nil
-}
 
 type createCmd struct {
 	out           io.Writer
@@ -39,12 +22,12 @@ type createCmd struct {
 	stackFile     string
 	provider      string
 	provisioner   string
-	varsFilesDirs files
+	varsFilesDirs cmd.Files
 	profile       string
 	account       string
 	cluster       string
 	region        string
-	manifests     files
+	manifests     cmd.Files
 	onlineTimeout uint32
 	readyTimeout  uint32
 }

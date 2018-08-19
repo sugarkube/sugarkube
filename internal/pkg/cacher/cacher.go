@@ -1,6 +1,8 @@
 package cacher
 
+import "github.com/sugarkube/sugarkube/internal/pkg/kapp"
+
 // Checks out and builds a cache for all sources in a manifest
-func CacheManifest(manifest string) {
+func CacheKapp(kapp kapp.Kapp) {
 
 }
