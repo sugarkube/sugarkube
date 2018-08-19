@@ -75,34 +75,35 @@ func WaitForClusterReadiness(p Provisioner, sc *vars.StackConfig, values provide
 		return errors.WithStack(err)
 	}
 
-	// only check whether the cluster is online if we started it, otherwise assume it is so
-	// we don't wait pointlessly when resuming previous runs/working with existing clusters.
-	if sc.Status.StartedThisRun {
-		log.Infof("Checking whether the cluster is online... Will try for %d seconds",
-			sc.OnlineTimeout)
+	log.Infof("Checking whether the cluster is online... Will try for %d seconds",
+		sc.OnlineTimeout)
 
-		timeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
-		for time.Now().Before(timeoutTime) {
-			online, err := clustersot.IsOnline(clusterSot, sc, values)
-			if err != nil {
-				return errors.WithStack(err)
-			}
+	clusterWasOffline := false
 
-			if online {
-				log.Info("Cluster is online")
-				break
-			} else {
-				log.Info("Cluster isn't online. Sleeping...")
-				time.Sleep(time.Duration(5) * time.Second)
-			}
+	timeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
+	for time.Now().Before(timeoutTime) {
+		online, err := clustersot.IsOnline(clusterSot, sc, values)
+		if err != nil {
+			return errors.WithStack(err)
 		}
 
-		if !sc.Status.IsOnline {
-			return errors.New("Timed out waiting for the cluster to come online")
+		if online {
+			log.Info("Cluster is online")
+			break
+		} else {
+			clusterWasOffline = true
+			log.Info("Cluster isn't online. Sleeping...")
+			time.Sleep(time.Duration(5) * time.Second)
 		}
+	}
 
-		// sleep for sc.Status.SleepBeforeReadyCheck seconds before proceeding
-		sleepTime := sc.Status.SleepBeforeReadyCheck
+	if !sc.Status.IsOnline {
+		return errors.New("Timed out waiting for the cluster to come online")
+	}
+
+	// only sleep before checking readiness if the cluster was initially offline
+	sleepTime := sc.Status.SleepBeforeReadyCheck
+	if clusterWasOffline && sleepTime > 0 {
 		log.Infof("Sleeping for %d seconds before checking cluster readiness", sleepTime)
 		time.Sleep(time.Second * time.Duration(sleepTime))
 	}
