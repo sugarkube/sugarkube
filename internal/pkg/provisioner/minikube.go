@@ -19,6 +19,8 @@ type MinikubeProvisioner struct {
 // todo - make configurable
 const MINIKUBE_PATH = "minikube"
 
+// todo read docs re `minikube profile` to run multiple instances on the same host
+
 // Seconds to sleep after the cluster is online but before checking whether it's ready.
 // This gives pods a chance to be launched. If we check immediately there are no pods.
 const SLEEP_SECONDS_BEFORE_READY_CHECK = 30
