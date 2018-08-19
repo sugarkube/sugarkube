@@ -5,7 +5,7 @@ By following the best practices we've developed, you'll be able to have all of t
 
 * Fully provisioned, per-developer ephemeral clusters, either local or remote
 * Ephemeral test clusters
-* Robust disaster recovery
+* Robust disaster recovery (we can't help with data at this point though)
 * Multiple clusters per AWS/Google Cloud/whatever account
 * Versioned infrastructure kept in lockstep with the Helm charts that need it
 
@@ -18,7 +18,7 @@ Focus on building your product, not your deployment pipeline. Join us to help cr
 * Kapps - Standalone, versionable deployment artifacts.
   * Plugins can fetch kapps from several backends, initially just from git repos but in future backends like S3, chart museum, artifactory, etc.
   * Kapps can specify dependencies to allow you to pull different requirements from different locations. E.g. you might want to version your Helm `values.yaml` files separately to your kapps, or pull in some shared makefile targets, etc. 
-  * Kapps know how to bootstrap themselves which makes it easy to install them into new clusters (both prod and non-prod) and perform full disaster recovery. E.g. if they require SSL certificates they must provide scripts to generate them. These can be then be passed as parameters to e.g. Helm. 
+  * Kapps know how to bootstrap themselves which makes it easy to install them into new clusters (both prod and non-prod) and perform disaster recovery. E.g. if they require SSL certificates they must provide scripts to generate them. These can be then be passed as parameters to e.g. Helm. 
   * They are responsible for creating any infrastructure that will be solely used by that kapp, e.g. S3 buckets, RDS databases, etc.
     * Shared infrastructure (i.e. used by more than a single kapp) should be deployed as a kapp as well. These kapps can be configured to run before other kapps are installed, and can be used to e.g. create shared load balancers, CloudFront distributions, etc.
   * Creating infrastructure first per kapp means that dynamic values, e.g. RDS hostnames, can be created by e.g. terraform, then exported as env vars and passed as values into Helm to configure the Helm chart.
@@ -44,7 +44,7 @@ Focus on building your product, not your deployment pipeline. Join us to help cr
     * This allows you to have:
       * Per-developer local/remote k8s clusters
       * Ephemeral testing/staging/performance testing clusters that could be, for example, brought up in the morning, used throughout the day, then terminated at night.
-      * Regular fully-automated disaster recovery drills
+      * Regular fully-automated disaster recovery drills (excluding data)
     * Creating a cluster begins by running a configurable initialisation step. This can be used to e.g. provision the infrastructure you'll install kops into, or create load balancers to feed into kops. It then invokes the configured cluster provisioner to bring a cluster online.
   * A command which reads manifests and idempotently installs kapps into the specified target cluster:
     * It can query cluster state via several plugins, by default by directly invoking the `Helm` binary. In future this could be through backends like Consul. After determining which kapps are already installed it will create a plan describing which kapps will be installed at which versions, and which credentials each needs from each secret provider. 

@@ -40,8 +40,8 @@ Use Sugarkube to:
 
   * Fully version your applications and infrastructure as "Kapps".
   * Automate creation and configuration of your infrastructure and kapps from 
-    scratch on multiple backends for full disaster recovery and reproducible/
-    ephemeral environments.
+    scratch on multiple backends to aid disaster recovery and to create 
+    reproducible/ephemeral environments.
   * Automate building differently specced ephemeral dev/test environments fully 
     configured with your core dependencies (e.g. Cert Manager, Vault, etc.) so 
     you can get straight to work.
