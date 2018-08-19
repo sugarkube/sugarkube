@@ -41,7 +41,7 @@ build: fmt test
 get-deps:
 	dep ensure
 
-build-alpine:
+build-alpine: test-all
 	@echo "building ${BIN_NAME} ${VERSION}"
 	@echo "GOPATH=${GOPATH}"
 	GOBIN=$(BINDIR) go install -ldflags '-w -linkmode external -extldflags "-static" -X github.com/sugarkube/sugarkube/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} -X github.com/sugarkube/sugarkube/version.BuildDate=${BUILD_DATE}' ./...
