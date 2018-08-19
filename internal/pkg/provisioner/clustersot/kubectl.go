@@ -40,19 +40,20 @@ func (c KubeCtlClusterSot) IsOnline(sc *vars.StackConfig, values provider.Values
 func (c KubeCtlClusterSot) IsReady(sc *vars.StackConfig, values provider.Values) (bool, error) {
 	context := values["kube_context"].(string)
 
+	var kubeCtlStderr, grepStdout bytes.Buffer
+
 	kubeCtlCmd := exec.Command(KUBECTL_PATH, "--context", context, "-n", "kube-system",
 		"get", "pod", "-o", "go-template=\"{{ range .items }}{{ printf \"%%s\\n\" .status.phase }}{{ end }}\"")
 	kubeCtlStdout, err := kubeCtlCmd.StdoutPipe()
-
-	var kubeCtlStderr bytes.Buffer
 	kubeCtlCmd.Stderr = &kubeCtlStderr
 
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
 
-	grepCmd := exec.Command("grep", "-V", "Running")
+	grepCmd := exec.Command("grep", "-v", "Running")
 	grepCmd.Stdin = kubeCtlStdout
+	grepCmd.Stdout = &grepStdout
 
 	err = grepCmd.Start()
 	if err != nil {
@@ -84,5 +85,8 @@ func (c KubeCtlClusterSot) IsReady(sc *vars.StackConfig, values provider.Values)
 		return false, errors.Wrap(err, "grep terminated badly")
 	}
 
-	return true, nil
+	// some funkiness probably with new lines means that even if grep return
+	// no output, the length of its stdout buffer isn't 0, but this is
+	// good enough...
+	return grepStdout.Len() < 5, nil
 }
