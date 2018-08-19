@@ -36,6 +36,7 @@ func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 	return p.clusterSot, nil
 }
 
+// Creates a new minikube cluster
 func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values, dryRun bool) error {
 
 	log.Debugf("Creating stack with Minikube and values: %#v", values)
@@ -76,6 +77,7 @@ func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values
 	return nil
 }
 
+// Returns whether a minikube cluster is already online
 func (p MinikubeProvisioner) IsAlreadyOnline(sc *vars.StackConfig, values provider.Values) (bool, error) {
 	cmd := exec.Command(MINIKUBE_PATH, "status")
 	err := cmd.Run()
@@ -94,6 +96,8 @@ func (p MinikubeProvisioner) IsAlreadyOnline(sc *vars.StackConfig, values provid
 	return true, nil
 }
 
+// No-op function, required to fully implement the Provisioner interface
 func (p MinikubeProvisioner) Update(sc *vars.StackConfig, values provider.Values) error {
-	panic("not implemented")
+	log.Infof("Updating minikube clusters has no effect. Ignoring.")
+	return nil
 }
