@@ -37,7 +37,7 @@ func (a GitAcquirer) Acquire(dest string) error {
 	initCmd.Dir = dest
 	err = initCmd.Run()
 	if err != nil {
-		return errors.Wrapf(err, "Error running: %s %s", initCmd.Path,
+		return errors.Wrapf(err, "Error running: %s",
 			strings.Join(initCmd.Args, " "))
 	}
 
@@ -46,7 +46,7 @@ func (a GitAcquirer) Acquire(dest string) error {
 	remoteAddCmd.Dir = dest
 	err = remoteAddCmd.Run()
 	if err != nil {
-		return errors.Wrapf(err, "Error running: %s %s", initCmd.Path,
+		return errors.Wrapf(err, "Error running: %s",
 			strings.Join(initCmd.Args, " "))
 	}
 
@@ -54,7 +54,7 @@ func (a GitAcquirer) Acquire(dest string) error {
 	fetchCmd.Dir = dest
 	err = fetchCmd.Run()
 	if err != nil {
-		return errors.Wrapf(err, "Error running: %s %s", initCmd.Path,
+		return errors.Wrapf(err, "Error running: %s",
 			strings.Join(initCmd.Args, " "))
 	}
 
@@ -62,7 +62,7 @@ func (a GitAcquirer) Acquire(dest string) error {
 	configCmd.Dir = dest
 	err = configCmd.Run()
 	if err != nil {
-		return errors.Wrapf(err, "Error running: %s %s", initCmd.Path,
+		return errors.Wrapf(err, "Error running: %s",
 			strings.Join(initCmd.Args, " "))
 	}
 
@@ -76,7 +76,7 @@ func (a GitAcquirer) Acquire(dest string) error {
 	checkoutCmd.Dir = dest
 	err = checkoutCmd.Run()
 	if err != nil {
-		return errors.Wrapf(err, "Error running: %s %s", initCmd.Path,
+		return errors.Wrapf(err, "Error running: %s",
 			strings.Join(initCmd.Args, " "))
 	}
 
@@ -85,7 +85,8 @@ func (a GitAcquirer) Acquire(dest string) error {
 
 // Appends text to a file
 func appendToFile(filename string, text string) error {
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0744)
+	// create the file if it doesn't exist
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0744)
 	if err != nil {
 		return errors.Wrapf(err, "Error opening file %s", filename)
 	}
