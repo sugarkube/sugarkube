@@ -41,7 +41,7 @@ func (c KubeCtlClusterSot) IsReady(sc *vars.StackConfig, values provider.Values)
 	context := values["kube_context"].(string)
 
 	kubeCtlCmd := exec.Command(KUBECTL_PATH, "--context", context, "-n", "kube-system",
-		"get", "pod", "-o", "go-template={{ \"{{\" }}range .items}}{{ \"{{\" }} printf '%s\\n' .status.phase }}{{ \"{{\" }} end }}")
+		"get", "pod", "-o", "go-template=\"{{ range .items }}{{ printf \"%%s\\n\" .status.phase }}{{ end }}\"")
 	kubeCtlStdout, err := kubeCtlCmd.StdoutPipe()
 
 	var kubeCtlStderr bytes.Buffer

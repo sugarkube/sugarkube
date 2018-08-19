@@ -109,7 +109,7 @@ kops update cluster --name {{ cluster_name }} --state {{ state }} --yes
 * Sleep for 30 seconds to let pods start to be installed
 * Poll for all pods to be running. The following will return no stdout and a return code of 1 when the cluster is ready:
 ```
-kubectl --context {{ kube_context }} -n kube-system get pod -o go-template='{{ '{{' }}range .items}}{{ '{{' }} printf "%s\n" .status.phase }}{{ '{{' }} end }}' ~ grep -V Running
+kubectl --context {{ kube_context }} -n kube-system get pod -o go-template='{{ range .items }}{{ printf "%s\n" .status.phase }}{{ end }}' | grep -V Running
 ```
 
 ## Post launch actions

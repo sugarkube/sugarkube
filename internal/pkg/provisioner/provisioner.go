@@ -103,8 +103,8 @@ func WaitForClusterReadiness(p Provisioner, sc *vars.StackConfig, values provide
 
 	// only sleep before checking readiness if the cluster was initially offline
 	sleepTime := sc.Status.SleepBeforeReadyCheck
-	if clusterWasOffline && sleepTime > 0 {
-		log.Infof("Sleeping for %d seconds before checking cluster readiness", sleepTime)
+	if clusterWasOffline || sc.Status.StartedThisRun && sleepTime > 0 {
+		log.Infof("Sleeping for %d seconds before checking cluster readiness...", sleepTime)
 		time.Sleep(time.Second * time.Duration(sleepTime))
 	}
 

@@ -19,7 +19,8 @@ type MinikubeProvisioner struct {
 // todo - make configurable
 const MINIKUBE_PATH = "minikube"
 
-// seconds to sleep after the cluster is online but before checking whether it's ready
+// Seconds to sleep after the cluster is online but before checking whether it's ready.
+// This gives pods a chance to be launched. If we check immediately there are no pods.
 const SLEEP_SECONDS_BEFORE_READY_CHECK = 30
 
 func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
