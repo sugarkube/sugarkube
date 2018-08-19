@@ -17,7 +17,7 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "install [flags]",
-		Short: fmt.Sprintf("Install a kapp"),
+		Short: fmt.Sprintf("Install kapps"),
 		Long:  `Install kapps from a manifest(s) into a target cluster.`,
 		RunE:  c.run,
 	}

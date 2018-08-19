@@ -9,14 +9,14 @@ import (
 func NewCacheCmds(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "kapps cache [command]",
+		Use:   "cache [command]",
 		Short: fmt.Sprintf("Work with kapp caches"),
 		Long:  `Create and refresh kapp caches`,
 	}
 
 	cmd.AddCommand(
-	//newCreateCmd(out),
-	//newRefreshCmd(out),
+		newCreateCmd(out),
+		newRefreshCmd(out),
 	)
 
 	return cmd

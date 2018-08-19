@@ -6,10 +6,6 @@ import (
 	"io"
 )
 
-// Initialises kapps by generating necessary files, e.g. terraform backends
-// configured for the region the target cluster is in, generating Helm
-// `values.yaml` files, etc.
-
 type cmdConfig struct {
 	out io.Writer
 }
@@ -21,9 +17,11 @@ func newInitCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "init [flags]",
-		Short: fmt.Sprintf("Initialise a kapp"),
-		Long:  `Generates files required to install a kapp.`,
-		RunE:  c.run,
+		Short: fmt.Sprintf("Initialise kapps"),
+		Long: `Initialises kapps by generating necessary files, e.g. terraform backends
+configured for the region the target cluster is in, generating Helm
+'values.yaml' files, etc.`,
+		RunE: c.run,
 	}
 
 	return cmd
