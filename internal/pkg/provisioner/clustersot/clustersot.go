@@ -51,7 +51,15 @@ func IsReady(c ClusterSot, sc *vars.StackConfig, values provider.Values) (bool, 
 		return true, nil
 	}
 
-	// todo implement
+	ready, err := c.IsReady(sc, values)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
 
-	return c.IsReady(sc, values)
+	if ready {
+		log.Debug("Cluster is ready. Updating cluster status.")
+		sc.Status.IsReady = true
+	}
+
+	return ready, nil
 }

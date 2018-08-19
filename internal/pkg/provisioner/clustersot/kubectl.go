@@ -1,6 +1,8 @@
 package clustersot
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
@@ -15,6 +17,7 @@ type KubeCtlClusterSot struct {
 // todo - make configurable
 const KUBECTL_PATH = "kubectl"
 
+// Tests whether the cluster is online
 func (c KubeCtlClusterSot) IsOnline(sc *vars.StackConfig, values provider.Values) (bool, error) {
 	context := values["kube_context"].(string)
 
@@ -33,15 +36,53 @@ func (c KubeCtlClusterSot) IsOnline(sc *vars.StackConfig, values provider.Values
 	return true, nil
 }
 
+// Tests whether all pods are Ready
 func (c KubeCtlClusterSot) IsReady(sc *vars.StackConfig, values provider.Values) (bool, error) {
+	context := values["kube_context"].(string)
 
-	// todo implement
+	kubeCtlCmd := exec.Command(KUBECTL_PATH, "--context", context, "-n", "kube-system",
+		"get", "pod", "-o", "go-template={{ \"{{\" }}range .items}}{{ \"{{\" }} printf '%s\\n' .status.phase }}{{ \"{{\" }} end }}")
+	kubeCtlStdout, err := kubeCtlCmd.StdoutPipe()
 
-	//context := values["kube_context"].(string)
+	var kubeCtlStderr bytes.Buffer
+	kubeCtlCmd.Stderr = &kubeCtlStderr
 
-	// poll `kubectl --context {{ kube_context }} get namespace`
-	//cmd := exec.Command(KUBECTL_PATH, "--context", context, "get", "namespace")
-	//err := cmd.Run()
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	grepCmd := exec.Command("grep", "-V", "Running")
+	grepCmd.Stdin = kubeCtlStdout
+
+	err = grepCmd.Start()
+	if err != nil {
+		return false, errors.Wrap(err, "Failed to run grep")
+	}
+
+	err = kubeCtlCmd.Start()
+	if err != nil {
+		return false, errors.Wrap(err, "Failed to run kubectl")
+	}
+
+	err = kubeCtlCmd.Wait()
+	if err != nil {
+		if _, ok := err.(*exec.ExitError); ok {
+			if kubeCtlStderr.String() != "" {
+				errMsg := fmt.Sprintf("kubectl exited with %s", kubeCtlStderr.String())
+				log.Fatalf(errMsg)
+				return false, errors.Wrap(err, errMsg)
+			} else {
+				return false, nil
+			}
+		}
+
+		return false, errors.Wrap(err, "kubectl terminated badly")
+	}
+
+	err = grepCmd.Wait()
+	if err != nil {
+		return false, errors.Wrap(err, "grep terminated badly")
+	}
 
 	return true, nil
 }
