@@ -19,10 +19,15 @@ func newAcquirer(name string, settings map[string]string) (Acquirer, error) {
 	log.Debugf("Returning new %s acquirer", name)
 
 	if name == GIT {
+		if settings[URL] == "" || settings[BRANCH] == "" || settings[PATH] == "" {
+			return nil, errors.New("Invalid git parameters. The url, " +
+				"branch and path are all mandatory.")
+		}
+
 		return GitAcquirer{
-			url:    settings["url"],
-			branch: settings["branch"],
-			path:   settings["path"],
+			url:    settings[URL],
+			branch: settings[BRANCH],
+			path:   settings[PATH],
 		}, nil
 	}
 

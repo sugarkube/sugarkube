@@ -19,6 +19,10 @@ type GitAcquirer struct {
 // todo - make configurable
 const GIT_PATH = "git"
 
+const URL = "url"
+const BRANCH = "branch"
+const PATH = "path"
+
 // Acquires kapps via git and saves them to `dest`.
 func (a GitAcquirer) Acquire(dest string) error {
 
