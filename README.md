@@ -1,8 +1,9 @@
 # Sugarkube - Infrastructure Dependency Management
 
 **TLDR;** Basically like `requirements.txt` or `package.json` but for 
-infrastructure and applications. Not specific to Kubernetes but that's its
-primary target.
+infrastructure and applications. Can be used to spin up and provision cloud
+infrastructure from scratch and to deploy your applications into production. 
+Not specific to Kubernetes.
 
 ## Overview
 Sugarkube is dependency management for your infrastructure. 

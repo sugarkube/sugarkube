@@ -8,9 +8,10 @@ import (
 )
 
 type Acquirer interface {
-	Acquire(path string) error
+	Acquire(dest string) error
 }
 
+const ACQUIRER_KEY = "acquirer"
 const GIT = "git"
 
 // Factory that creates acquirers
@@ -30,7 +31,10 @@ func newAcquirer(name string, settings map[string]string) (Acquirer, error) {
 
 // Identifies the requirer for a given path, and returns a new instance of it
 func NewAcquirerForPath(path string, settings map[string]string) (Acquirer, error) {
-	if strings.HasPrefix(path, "git") {
+	// perhaps the acquirer is explicitly declared in settings
+	acquirer := settings[ACQUIRER_KEY]
+
+	if strings.HasPrefix(path, GIT) || acquirer == GIT {
 		return newAcquirer(GIT, settings)
 	}
 

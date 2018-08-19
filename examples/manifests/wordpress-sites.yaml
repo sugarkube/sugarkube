@@ -22,15 +22,15 @@ present:
       # if this was our repo a good pattern could be to create a signed tag for
       # each release called `<chart>-<version>`.
       branch: master
-      path: charts/stable/wordpress/
+      path: stable/wordpress/
     - url: git@github.com:sugarkube/sugarkube.git
       branch: master
       # this lets us reuse the same kapp parameterised differently per instance
-      path: examples/values/wordpress/site1/values/
+      path: examples/values/wordpress/site1/
       # Name of the dest dir to write to in the cache. Defaults to the last
       # component of the path which in this case is the same as what we're
       # demonstrating below. But here's how to override it explicitly anyway.
-      dest: values
-    - url: git@github.com:sugarkube/sugarkube.git
+      dest: site1-values
+    - url: git@github.com:sugarkube/sample-kapps.git
       branch: master
-      path: examples/common-makefiles/
+      path: common-makefiles/

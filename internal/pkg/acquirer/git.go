@@ -7,7 +7,11 @@ type GitAcquirer struct {
 	path   string
 }
 
-// Acquires kapps via git.
-func (a GitAcquirer) Acquire(path string) error {
+// todo - make configurable
+const GIT_PATH = "git"
+
+// Acquires kapps via git and saves them to `dest`.
+func (a GitAcquirer) Acquire(dest string) error {
+
 	return nil
 }

@@ -42,6 +42,15 @@ func TestNewAcquirerForPathGit(t *testing.T) {
 	assert.Equal(t, GitAcquirer{}, actual)
 }
 
+func TestNewAcquirerForPathGitExplicit(t *testing.T) {
+	actual, err := NewAcquirerForPath("https://github.com/sugarkube/sugarkube.git",
+		map[string]string{
+			ACQUIRER_KEY: GIT,
+		})
+	assert.Nil(t, err)
+	assert.Equal(t, GitAcquirer{}, actual)
+}
+
 func TestNewAcquirerForPathError(t *testing.T) {
 	actual, err := NewAcquirerForPath("nonsense", map[string]string{})
 	assert.NotNil(t, err)
