@@ -56,6 +56,84 @@ Use Sugarkube to:
 Sugarkube is great for new projects, but even legacy applications can be 
 migrated into Kapps. You can migrate a bit at a time to see how it helps you.
 
+## FAQ
+### How does this compare to Helm?
+Helm installs individual applications (e.g. Wordpress) but doesn't let you 
+install a suite of related applications (e.g. a monitoring stack with 
+Prometheus, Grafana, Elastic Search and various beats like filebeat, 
+metricbeat, etc.). You could create a 'superchart' that defines all these as
+dependencies, but then you have no control over just installing a subset of 
+your charts.
+
+Sugarkube gives you a simple way to specify, for example, that ChartA at 
+version a.b.c should be installed alongside ChartB at version x.y.z.
+
+Helm charts also don't create any required infrastructure. An application
+like Chart Museum should probably be backed by S3 in production (if you're on
+AWS), but Helm leaves it up to you to work out how to create that S3 bucket.
+This gets more complicated if you have further dependencies like needing to 
+first create KMS keys for S3 bucket encryption.
+
+Because Sugarkube was written with provisioning from bare metal in mind you 
+can configure it to install kapps that create shared infrastructure resources 
+like load balancers, CloudFront distributions and KMS keys. These can then be 
+used by e.g. Chart Museum, which could use the KMS key to create it's own S3 
+bucket using Terraform/awscli.  
+
+### How does this compare to Terraform?
+Terraform is great for creating infrastructure, but using it to install Helm
+charts should be an anti-pattern: 
+
+  * Local development becomes a pain because you need to continually change
+    the CLI args to make it reinstall a chart since it has no other way of 
+    knowing whether a chart has changed and needs reinstalling.
+  * You lose the ability to run `helm lint` because templating needs to be 
+    done through Terraform.
+  * You often end up with lots of related repositories that are a pain to
+    version together if you want to split out your values from your terraform
+    code/modules.
+
+Sugarkube's sample kapps use Terraform for what it's good for - managing 
+infrastructure, e.g. creating buckets, Route53 entries, load balancers, etc.
+
+This means that it becomes possible to easily version your Terraform configs 
+alongside the chart that needs them. E.g. if your Wordpress chart changes from 
+being backed by Postgres on an EC2 to using RDS, the point at which that change
+happens is tightly bound to actually creating the RDS instance. Since Sugarkube
+kapps create the infrastructure they need, and manifests allow multiple kapps
+to be versioned alongside each other, you could either update your Wordpress
+kapp to create an RDS instance just for its own use, or create it in a shared 
+kapp for multiple Wordpress instances to use.
+
+Another benefit is that since Sugarkube delegates to `make`, Makefiles can be 
+written that don't create any infrastructure at all when running on local 
+minikube clusters, or that create smaller instances of, e.g. RDS databases while
+developing.
+
+### What if I don't use Kubernetes?
+Sugarkube is really several things:
+
+  * A set of conventions for creating applications with standard `make` targets 
+    ("kapps").
+  * A system for checking out related versions of related kapps from manifest files.
+  * A process for checking which kapps need installing/deleting based on the 
+    input manifest(s) and what's running on the target cluster, and running 
+    `make all` or `make destroy` on each one. It generates a few files first 
+    and passes some extra parameters so the kapp has all the info it needs to 
+    install/destroy itself the right way. 
+
+There's no hard dependency on Kubernetes. If you can install something with 
+`make`, you should be able to convert it to a kapp to be installed by Sugarkube.
+
+Sugarkube does treat Helm & Terraform code as first-class citizens so that, e.g. 
+environment-specific `values-<env>.yaml` files can be passed as parameters, but 
+these are extra benefits, not requirements to use Helm or Terraform.
+
+As a convenience it can also launch clusters parameterised hierarchically. I.e.
+values for launching clusters can be defined and overridden at various levels
+to allow all dev clusters to have similar defaults different from your staging 
+and prod clusters, but for everything to be overrideable.
+
 ## More info
 See https://sugarkube.io for more info and documentation. 
 
