@@ -67,3 +67,9 @@ clean:
 
 test:
 	go test ./...
+
+# slower tests
+integration-test:
+	go test -tags=integration ./...
+
+test-all: test integration-test

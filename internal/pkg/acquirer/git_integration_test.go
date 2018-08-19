@@ -1,3 +1,5 @@
+// +build integration
+
 package acquirer
 
 import (
@@ -16,7 +18,7 @@ func TestGitAcquire(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "git-")
 	assert.Nil(t, err)
 
-	log.Infof("Testing the git acquirer with tempdir: %s", tempDir)
+	log.Infof("Testing the git acquirer with temp dir: %s", tempDir)
 	defer os.RemoveAll(tempDir)
 
 	err = acquirer.Acquire(tempDir)
