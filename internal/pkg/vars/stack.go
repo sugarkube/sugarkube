@@ -5,7 +5,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -35,32 +34,12 @@ type StackConfig struct {
 // Loads a stack config from a YAML file and returns it or an error
 func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
-	// make sure the file exists
-	absPath, err := filepath.Abs(path)
+	data, err := LoadYamlFile(path)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	if _, err := os.Stat(absPath); err != nil {
-		log.Debugf("Stack file doesn't exist: %s", absPath)
-		return nil, errors.WithStack(err)
-	}
-
-	yamlFile, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error reading YAML file %s", path)
-	}
-
-	loaded := map[string]interface{}{}
-
-	err = yaml.Unmarshal(yamlFile, loaded)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error loading stack file %s", path)
-	}
-
-	log.Debugf("Loaded stack: %#v", loaded)
-
-	stackConfig, ok := loaded[name]
+	stackConfig, ok := data[name]
 	if !ok {
 		return nil, errors.New(fmt.Sprintf("No stack called '%s' found in stack file %s", name, path))
 	}

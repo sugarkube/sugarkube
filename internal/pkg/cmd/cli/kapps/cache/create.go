@@ -39,7 +39,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	log.Debugf("Loaded %d kapps", len(kapps))
+	log.Debugf("Loaded %d kapp(s)", len(kapps))
 
 	return nil
 }
