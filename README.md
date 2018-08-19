@@ -56,5 +56,7 @@ Sugarkube is great for new projects, but even legacy applications can be
 migrated into Kapps. You can migrate a bit at a time to see how it helps you.
 
 ## More info
-See https://sugarkube.io for more info and documentation. Sugarkube is a 
-work in progress and not ready for production use just yet.
+See https://sugarkube.io for more info and documentation. 
+
+## Status
+Sugarkube is a work in progress and not ready for production use just yet.

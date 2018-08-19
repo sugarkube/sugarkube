@@ -26,6 +26,12 @@ func TestStackConfigVars(t *testing.T) {
 	assert.Equal(t, expected, actual, "Mismatching vars")
 }
 
+func TestNewProviderError(t *testing.T) {
+	actual, err := NewProvider("nonsense")
+	assert.NotNil(t, err)
+	assert.Nil(t, actual)
+}
+
 func TestNewLocalProvider(t *testing.T) {
 	actual, err := NewProvider(LOCAL)
 	assert.Nil(t, err)
