@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	topPath  = "./testdata/value-merging/values.yaml"
-	subPath1 = "./testdata/value-merging/subdir1/values.yaml"
-	subPath2 = "./testdata/value-merging/subdir1/subdir2/values.yaml"
+	topPath  = "../../testdata/value-merging/values.yaml"
+	subPath1 = "../../testdata/value-merging/subdir1/values.yaml"
+	subPath2 = "../../testdata/value-merging/subdir1/subdir2/values.yaml"
 )
 
 func getAbsPath(t *testing.T, path string) string {

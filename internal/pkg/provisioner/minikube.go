@@ -3,10 +3,10 @@ package provisioner
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner/clustersot"
-	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"os/exec"
 	"strings"
 )
@@ -38,7 +38,7 @@ func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 }
 
 // Creates a new minikube cluster
-func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values, dryRun bool) error {
+func (p MinikubeProvisioner) Create(sc *kapp.StackConfig, values provider.Values, dryRun bool) error {
 
 	log.Debugf("Creating stack with Minikube and values: %#v", values)
 
@@ -79,7 +79,7 @@ func (p MinikubeProvisioner) Create(sc *vars.StackConfig, values provider.Values
 }
 
 // Returns whether a minikube cluster is already online
-func (p MinikubeProvisioner) IsAlreadyOnline(sc *vars.StackConfig, values provider.Values) (bool, error) {
+func (p MinikubeProvisioner) IsAlreadyOnline(sc *kapp.StackConfig, values provider.Values) (bool, error) {
 	cmd := exec.Command(MINIKUBE_PATH, "status")
 	err := cmd.Run()
 
@@ -98,7 +98,7 @@ func (p MinikubeProvisioner) IsAlreadyOnline(sc *vars.StackConfig, values provid
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p MinikubeProvisioner) Update(sc *vars.StackConfig, values provider.Values) error {
+func (p MinikubeProvisioner) Update(sc *kapp.StackConfig, values provider.Values) error {
 	log.Infof("Updating minikube clusters has no effect. Ignoring.")
 	return nil
 }

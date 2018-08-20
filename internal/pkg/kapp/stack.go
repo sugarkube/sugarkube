@@ -1,9 +1,10 @@
-package vars
+package kapp
 
 import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
@@ -34,7 +35,7 @@ type StackConfig struct {
 // Loads a stack config from a YAML file and returns it or an error
 func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
-	data, err := LoadYamlFile(path)
+	data, err := vars.LoadYamlFile(path)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

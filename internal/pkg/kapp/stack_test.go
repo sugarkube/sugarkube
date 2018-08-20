@@ -1,4 +1,4 @@
-package vars
+package kapp
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -16,14 +16,14 @@ func TestLoadStackConfigNonExistentPath(t *testing.T) {
 }
 
 func TestLoadStackConfigDir(t *testing.T) {
-	_, err := LoadStackConfig("dir-path", "./testdata")
+	_, err := LoadStackConfig("dir-path", "../../testdata")
 	assert.Error(t, err)
 }
 
 func TestLoadStackConfig(t *testing.T) {
 	expected := &StackConfig{
 		Name:        "large",
-		FilePath:    "./testdata/stacks.yaml",
+		FilePath:    "../../testdata/stacks.yaml",
 		Provider:    "local",
 		Provisioner: "minikube",
 		Profile:     "local",
@@ -37,22 +37,22 @@ func TestLoadStackConfig(t *testing.T) {
 		},
 	}
 
-	actual, err := LoadStackConfig("large", "./testdata/stacks.yaml")
+	actual, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual, "unexpected stack")
 }
 
 func TestLoadStackConfigMissingStackName(t *testing.T) {
-	_, err := LoadStackConfig("missing-stack-name", "./testdata/stacks.yaml")
+	_, err := LoadStackConfig("missing-stack-name", "../../testdata/stacks.yaml")
 	assert.Error(t, err)
 }
 
 func TestDir(t *testing.T) {
 	stack := StackConfig{
-		FilePath: "./testdata/stacks.yaml",
+		FilePath: "../../testdata/stacks.yaml",
 	}
 
-	expected := "testdata"
+	expected := "../../testdata"
 	actual := stack.Dir()
 
 	assert.Equal(t, expected, actual, "Unexpected config dir")

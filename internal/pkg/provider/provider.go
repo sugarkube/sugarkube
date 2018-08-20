@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"os"
@@ -17,7 +18,7 @@ type Provider interface {
 	// Method that returns all paths in a config directory relevant to the
 	// target profile/cluster/region, etc. that should be searched for values
 	// files to merge.
-	VarsDirs(sc *vars.StackConfig) ([]string, error)
+	VarsDirs(sc *kapp.StackConfig) ([]string, error)
 }
 
 // implemented providers
@@ -39,7 +40,7 @@ func NewProvider(name string) (Provider, error) {
 
 // Searches for values.yaml files in configured directories and returns the
 // result of merging them.
-func StackConfigVars(p Provider, sc *vars.StackConfig) (Values, error) {
+func StackConfigVars(p Provider, sc *kapp.StackConfig) (Values, error) {
 	stackConfigVars := Values{}
 
 	varsDirs, err := p.VarsDirs(sc)

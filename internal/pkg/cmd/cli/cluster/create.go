@@ -6,10 +6,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
+	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
-	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"io"
 )
 
@@ -76,7 +76,7 @@ Note: Not all providers require all arguments. See documentation for help.
 
 func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
-	stackConfig := &vars.StackConfig{}
+	stackConfig := &kapp.StackConfig{}
 	var err error
 
 	// make sure both stack name and stack file are supplied if either are supplied
@@ -86,7 +86,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		}
 
 		if c.stackFile != "" {
-			stackConfig, err = vars.LoadStackConfig(c.stackName, c.stackFile)
+			stackConfig, err = kapp.LoadStackConfig(c.stackName, c.stackFile)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -94,7 +94,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// CLI args override configured args, so merge them in
-	cliStackConfig := &vars.StackConfig{
+	cliStackConfig := &kapp.StackConfig{
 		Provider:      c.provider,
 		Provisioner:   c.provisioner,
 		Profile:       c.profile,

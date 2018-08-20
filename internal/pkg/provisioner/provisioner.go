@@ -3,10 +3,10 @@ package provisioner
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner/clustersot"
-	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"time"
 )
 
@@ -14,11 +14,11 @@ type Provisioner interface {
 	// Returns the ClusterSot for this provisioner
 	ClusterSot() (clustersot.ClusterSot, error)
 	// Creates a cluster
-	Create(sc *vars.StackConfig, values provider.Values, dryRun bool) error
+	Create(sc *kapp.StackConfig, values provider.Values, dryRun bool) error
 	// Returns whether the cluster is already running
-	IsAlreadyOnline(sc *vars.StackConfig, values provider.Values) (bool, error)
+	IsAlreadyOnline(sc *kapp.StackConfig, values provider.Values) (bool, error)
 	// Update the cluster config if supported by the provisioner
-	Update(sc *vars.StackConfig, values provider.Values) error
+	Update(sc *kapp.StackConfig, values provider.Values) error
 }
 
 // key in Values that relates to this provisioner
@@ -42,12 +42,12 @@ func NewProvisioner(name string) (Provisioner, error) {
 }
 
 // Creates a cluster using an implementation of a Provisioner
-func Create(p Provisioner, sc *vars.StackConfig, values provider.Values, dryRun bool) error {
+func Create(p Provisioner, sc *kapp.StackConfig, values provider.Values, dryRun bool) error {
 	return p.Create(sc, values, dryRun)
 }
 
 // Return whether the cluster is already online
-func IsAlreadyOnline(p Provisioner, sc *vars.StackConfig, values provider.Values) (bool, error) {
+func IsAlreadyOnline(p Provisioner, sc *kapp.StackConfig, values provider.Values) (bool, error) {
 
 	log.Infof("Checking whether cluster '%s' is already online...", sc.Cluster)
 
@@ -67,7 +67,7 @@ func IsAlreadyOnline(p Provisioner, sc *vars.StackConfig, values provider.Values
 }
 
 // Wait for a cluster to come online, then to become ready.
-func WaitForClusterReadiness(p Provisioner, sc *vars.StackConfig, values provider.Values) error {
+func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, values provider.Values) error {
 	clusterSot, err := p.ClusterSot()
 	if err != nil {
 		return errors.WithStack(err)

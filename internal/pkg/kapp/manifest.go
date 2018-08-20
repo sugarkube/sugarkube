@@ -12,14 +12,15 @@ type Manifest struct {
 	// defaults to the file basename, but can be explicitly specified to avoid
 	// clashes. This is also used to namespace entries in the cache
 	id    string
+	path  string
 	kapps []Kapp
 }
 
 // Load a single manifest file and parse the kapps it defines
-func parseManifestFile(manifestPath string) (*Manifest, error) {
-	log.Debugf("Parsing manifest: %s", manifestPath)
+func parseManifestFile(path string) (*Manifest, error) {
+	log.Debugf("Parsing manifest: %s", path)
 
-	data, err := vars.LoadYamlFile(manifestPath)
+	data, err := vars.LoadYamlFile(path)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -29,7 +30,8 @@ func parseManifestFile(manifestPath string) (*Manifest, error) {
 	kapps, err := parseManifestYaml(data)
 
 	manifest := Manifest{
-		id:    filepath.Base(manifestPath),
+		id:    filepath.Base(path),
+		path:  path,
 		kapps: kapps,
 	}
 

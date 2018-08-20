@@ -3,14 +3,14 @@ package clustersot
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
-	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 )
 
 type ClusterSot interface {
-	IsOnline(sc *vars.StackConfig, values provider.Values) (bool, error)
-	IsReady(sc *vars.StackConfig, values provider.Values) (bool, error)
+	IsOnline(sc *kapp.StackConfig, values provider.Values) (bool, error)
+	IsReady(sc *kapp.StackConfig, values provider.Values) (bool, error)
 }
 
 // Implemented ClusterSot names
@@ -27,7 +27,7 @@ func NewClusterSot(name string) (ClusterSot, error) {
 
 // Uses an implementation to determine whether the cluster is reachable/online, but it
 // may not be ready to install Kapps into yet.
-func IsOnline(c ClusterSot, sc *vars.StackConfig, values provider.Values) (bool, error) {
+func IsOnline(c ClusterSot, sc *kapp.StackConfig, values provider.Values) (bool, error) {
 	if sc.Status.IsOnline {
 		return true, nil
 	}
@@ -46,7 +46,7 @@ func IsOnline(c ClusterSot, sc *vars.StackConfig, values provider.Values) (bool,
 }
 
 // Uses an implementation to determine whether the cluster is ready to install kapps into
-func IsReady(c ClusterSot, sc *vars.StackConfig, values provider.Values) (bool, error) {
+func IsReady(c ClusterSot, sc *kapp.StackConfig, values provider.Values) (bool, error) {
 	if sc.Status.IsReady {
 		return true, nil
 	}

@@ -2,21 +2,21 @@ package provider
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/sugarkube/sugarkube/internal/pkg/vars"
+	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"testing"
 )
 
 func TestLocalVarsDirs(t *testing.T) {
-	sc, err := vars.LoadStackConfig("large", "../vars/testdata/stacks.yaml")
+	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
 	assert.Nil(t, err)
 
 	expected := []string{
-		"../vars/testdata/stacks",
-		"../vars/testdata/stacks/local",
-		"../vars/testdata/stacks/local/profiles",
-		"../vars/testdata/stacks/local/profiles/local",
-		"../vars/testdata/stacks/local/profiles/local/clusters",
-		"../vars/testdata/stacks/local/profiles/local/clusters/large",
+		"../../testdata/stacks",
+		"../../testdata/stacks/local",
+		"../../testdata/stacks/local/profiles",
+		"../../testdata/stacks/local/profiles/local",
+		"../../testdata/stacks/local/profiles/local/clusters",
+		"../../testdata/stacks/local/profiles/local/clusters/large",
 	}
 
 	provider := LocalProvider{}

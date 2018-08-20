@@ -2,12 +2,12 @@ package provider
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/sugarkube/sugarkube/internal/pkg/vars"
+	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"testing"
 )
 
 func TestStackConfigVars(t *testing.T) {
-	sc, err := vars.LoadStackConfig("large", "../vars/testdata/stacks.yaml")
+	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
 	assert.Nil(t, err)
 
 	expected := Values{

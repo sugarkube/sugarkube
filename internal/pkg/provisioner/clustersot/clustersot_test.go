@@ -3,8 +3,8 @@ package clustersot
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
-	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"testing"
 )
 
@@ -18,12 +18,12 @@ type MockClusterSot struct {
 	mock.Mock
 }
 
-func (m MockClusterSot) IsOnline(sc *vars.StackConfig, values provider.Values) (bool, error) {
+func (m MockClusterSot) IsOnline(sc *kapp.StackConfig, values provider.Values) (bool, error) {
 	args := m.Called(sc.Cluster)
 	return args.Bool(0), args.Error(1)
 }
 
-func (m MockClusterSot) IsReady(sc *vars.StackConfig, values provider.Values) (bool, error) {
+func (m MockClusterSot) IsReady(sc *kapp.StackConfig, values provider.Values) (bool, error) {
 	args := m.Called(sc.Cluster)
 	return args.Bool(0), args.Error(1)
 }
@@ -37,8 +37,8 @@ func TestIsOnlineTrue(t *testing.T) {
 	// setup expectations
 	testObj.On("IsOnline", clusterName).Return(true, nil)
 
-	status := vars.ClusterStatus{IsOnline: false}
-	sc := vars.StackConfig{
+	status := kapp.ClusterStatus{IsOnline: false}
+	sc := kapp.StackConfig{
 		Cluster: clusterName,
 		Status:  status,
 	}
@@ -63,8 +63,8 @@ func TestIsOnlineFalse(t *testing.T) {
 	// setup expectations
 	testObj.On("IsOnline", clusterName).Return(false, nil)
 
-	status := vars.ClusterStatus{IsOnline: false}
-	sc := vars.StackConfig{
+	status := kapp.ClusterStatus{IsOnline: false}
+	sc := kapp.StackConfig{
 		Cluster: clusterName,
 		Status:  status,
 	}
@@ -89,8 +89,8 @@ func TestIsReadyTrue(t *testing.T) {
 	// setup expectations
 	testObj.On("IsReady", clusterName).Return(true, nil)
 
-	status := vars.ClusterStatus{IsReady: false}
-	sc := vars.StackConfig{
+	status := kapp.ClusterStatus{IsReady: false}
+	sc := kapp.StackConfig{
 		Cluster: clusterName,
 		Status:  status,
 	}
@@ -115,8 +115,8 @@ func TestIsReadyFalse(t *testing.T) {
 	// setup expectations
 	testObj.On("IsReady", clusterName).Return(false, nil)
 
-	status := vars.ClusterStatus{IsReady: false}
-	sc := vars.StackConfig{
+	status := kapp.ClusterStatus{IsReady: false}
+	sc := kapp.StackConfig{
 		Cluster: clusterName,
 		Status:  status,
 	}
