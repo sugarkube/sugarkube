@@ -31,9 +31,15 @@ func TestLoadStackConfig(t *testing.T) {
 		VarsFilesDirs: []string{
 			"./stacks/",
 		},
-		Manifests: []string{
-			"./testdata/manifest1.yaml",
-			"./testdata/manifest2.yaml",
+		Manifests: []Manifest{
+			{
+				Id:   "manifest1",
+				Path: "./testdata/manifest1.yaml",
+			},
+			{
+				Id:   "exampleManifest2",
+				Path: "./testdata/manifest2.yaml",
+			},
 		},
 	}
 

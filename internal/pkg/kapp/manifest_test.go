@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestValidateKapps(t *testing.T) {
+func TestValidateManifest(t *testing.T) {
 	tests := []struct {
 		name          string
 		desc          string
@@ -16,7 +16,7 @@ func TestValidateKapps(t *testing.T) {
 			name: "good",
 			desc: "kapp IDs should be unique",
 			input: Manifest{
-				kapps: []Kapp{
+				Kapps: []Kapp{
 					{id: "example1"},
 					{id: "example2"},
 				},
@@ -26,7 +26,7 @@ func TestValidateKapps(t *testing.T) {
 			name: "error_multiple_kapps_same_id",
 			desc: "error when kapp IDs aren't unique",
 			input: Manifest{
-				kapps: []Kapp{
+				Kapps: []Kapp{
 					{id: "example1"},
 					{id: "example2"},
 					{id: "example1"},

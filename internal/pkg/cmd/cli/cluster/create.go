@@ -93,6 +93,13 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	manifests := make([]kapp.Manifest, 0)
+
+	for _, manifestPath := range c.manifests {
+		manifest := kapp.NewManifest(manifestPath)
+		manifests = append(manifests, manifest)
+	}
+
 	// CLI args override configured args, so merge them in
 	cliStackConfig := &kapp.StackConfig{
 		Provider:      c.provider,
@@ -100,7 +107,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		Profile:       c.profile,
 		Cluster:       c.cluster,
 		VarsFilesDirs: c.varsFilesDirs,
-		Manifests:     c.manifests,
+		Manifests:     manifests,
 		ReadyTimeout:  c.readyTimeout,
 		OnlineTimeout: c.onlineTimeout,
 	}

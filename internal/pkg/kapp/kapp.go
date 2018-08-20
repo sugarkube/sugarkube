@@ -6,6 +6,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
+	"sort"
 )
 
 type installerConfig struct {
@@ -81,6 +82,12 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 
 			acquirers = append(acquirers, acquirerImpl)
 		}
+
+		// sort the acquirers for determinism. We'll run them in parallel anyway
+		// so the order isn't important
+		sort.Slice(acquirers, func(i, j int) bool {
+			return acquirers[i].Id() < acquirers[j].Id()
+		})
 
 		kapp.sources = acquirers
 

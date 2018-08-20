@@ -6,14 +6,34 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"path/filepath"
+	"strings"
 )
 
 type Manifest struct {
 	// defaults to the file basename, but can be explicitly specified to avoid
 	// clashes. This is also used to namespace entries in the cache
-	id    string
-	path  string
-	kapps []Kapp
+	Id    string
+	Path  string
+	Kapps []Kapp
+}
+
+func NewManifest(path string) Manifest {
+	manifest := Manifest{
+		Path: path,
+	}
+
+	SetManifestDefaults(&manifest)
+	return manifest
+}
+
+// Sets fields to default values
+func SetManifestDefaults(manifest *Manifest) {
+	// use the basename after stripping the extension by default
+	defaultId := strings.Replace(filepath.Base(manifest.Path), filepath.Ext(manifest.Path), "", 1)
+
+	if manifest.Id == "" {
+		manifest.Id = defaultId
+	}
 }
 
 // Load a single manifest file and parse the kapps it defines
@@ -30,9 +50,9 @@ func parseManifestFile(path string) (*Manifest, error) {
 	kapps, err := parseManifestYaml(data)
 
 	manifest := Manifest{
-		id:    filepath.Base(path),
-		path:  path,
-		kapps: kapps,
+		Id:    filepath.Base(path),
+		Path:  path,
+		Kapps: kapps,
 	}
 
 	return &manifest, nil
@@ -61,7 +81,7 @@ func ParseManifests(manifestPaths []string) ([]Manifest, error) {
 func ValidateManifest(manifest *Manifest) error {
 	ids := map[string]bool{}
 
-	for _, kapp := range manifest.kapps {
+	for _, kapp := range manifest.Kapps {
 		id := kapp.id
 
 		if _, ok := ids[id]; ok {

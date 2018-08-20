@@ -26,10 +26,27 @@ type StackConfig struct {
 	Profile       string
 	Cluster       string
 	VarsFilesDirs []string `yaml:"vars"`
-	Manifests     []string
+	Manifests     []Manifest
 	Status        ClusterStatus
 	OnlineTimeout uint32
 	ReadyTimeout  uint32
+}
+
+// Validates that there aren't multiple manifests in the stack config with the
+// same ID, which would break creating caches
+func ValidateStackConfig(sc *StackConfig) error {
+	ids := map[string]bool{}
+
+	for _, manifest := range sc.Manifests {
+		id := manifest.Id
+
+		if _, ok := ids[id]; ok {
+			return errors.New(fmt.Sprintf("Multiple manifests exist with "+
+				"the same id: %s", id))
+		}
+	}
+
+	return nil
 }
 
 // Loads a stack config from a YAML file and returns it or an error
@@ -73,6 +90,12 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 	}
 
 	log.Debugf("Loaded stack config: %#v", stack)
+
+	log.Debug("Setting default values on structs")
+	for i, manifest := range stack.Manifests {
+		SetManifestDefaults(&manifest)
+		stack.Manifests[i] = manifest
+	}
 
 	return &stack, nil
 }
