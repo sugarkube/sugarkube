@@ -28,23 +28,9 @@ const PRESENT_KEY = "present"
 const ABSENT_KEY = "absent"
 const SOURCES_KEY = "sources"
 
-// Parses a manifest file and returns a list of kapps on success
-func parseManifest(manifestPath string) ([]Kapp, error) {
-	log.Debugf("Parsing manifest: %s", manifestPath)
-
-	kapps := make([]Kapp, 0)
-
-	data, err := vars.LoadYamlFile(manifestPath)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	log.Debugf("Loaded manifest data: %#v", data)
-
-	presentKapps := data[PRESENT_KEY]
-
+func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shouldBePresent bool) error {
 	// parse each kapp definition
-	for k, v := range presentKapps.(map[interface{}]interface{}) {
+	for k, v := range kappDefinitions {
 		kapp := Kapp{
 			id:              k.(string),
 			shouldBePresent: true,
@@ -55,13 +41,13 @@ func parseManifest(manifestPath string) ([]Kapp, error) {
 		// parse the list of sources
 		valuesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(v.(map[interface{}]interface{}))
 		if err != nil {
-			return nil, errors.Wrapf(err, "Error converting manifest value to map")
+			return errors.Wrapf(err, "Error converting manifest value to map")
 		}
 
 		// marshal and unmarshal the list of sources
 		sourcesBytes, err := yaml.Marshal(valuesMap[SOURCES_KEY])
 		if err != nil {
-			return nil, errors.Wrapf(err, "Error marshalling sources yaml: %#v", v)
+			return errors.Wrapf(err, "Error marshalling sources yaml: %#v", v)
 		}
 
 		log.Debugf("Marshalled sources YAML: %s", sourcesBytes)
@@ -69,7 +55,7 @@ func parseManifest(manifestPath string) ([]Kapp, error) {
 		sourcesMaps := []map[interface{}]interface{}{}
 		err = yaml.UnmarshalStrict(sourcesBytes, &sourcesMaps)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Error unmarshalling yaml: %s", sourcesBytes)
+			return errors.Wrapf(err, "Error unmarshalling yaml: %s", sourcesBytes)
 		}
 
 		log.Debugf("sourcesMaps=%#v", sourcesMaps)
@@ -79,12 +65,12 @@ func parseManifest(manifestPath string) ([]Kapp, error) {
 		for _, sourceMap := range sourcesMaps {
 			sourceStringMap, err := convert.MapInterfaceInterfaceToMapStringString(sourceMap)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return errors.WithStack(err)
 			}
 
 			acquirerImpl, err := acquirer.NewAcquirer(sourceStringMap)
 			if err != nil {
-				return nil, errors.WithStack(err)
+				return errors.WithStack(err)
 			}
 
 			log.Debugf("Got acquirer %#v", acquirerImpl)
@@ -96,13 +82,42 @@ func parseManifest(manifestPath string) ([]Kapp, error) {
 
 		log.Debugf("Parsed kapp=%#v", kapp)
 
-		kapps = append(kapps, kapp)
+		*kapps = append(*kapps, kapp)
 	}
 
-	log.Debugf("Parsed kapps to install: %#v", kapps)
+	return nil
+}
 
-	// todo - implement
-	//absentKapps := data[ABSENT_KEY]
+// Parses a manifest file and returns a list of kapps on success
+func parseManifest(manifestPath string) ([]Kapp, error) {
+	log.Debugf("Parsing manifest: %s", manifestPath)
+
+	data, err := vars.LoadYamlFile(manifestPath)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	log.Debugf("Loaded manifest data: %#v", data)
+
+	kapps := make([]Kapp, 0)
+
+	presentKapps, ok := data[PRESENT_KEY]
+	if ok {
+		err = parseKapps(&kapps, presentKapps.(map[interface{}]interface{}), true)
+		if err != nil {
+			return nil, errors.Wrap(err, "Error parsing present kapps")
+		}
+	}
+
+	absentKapps, ok := data[ABSENT_KEY]
+	if ok {
+		err = parseKapps(&kapps, absentKapps.(map[interface{}]interface{}), false)
+		if err != nil {
+			return nil, errors.Wrap(err, "Error parsing absent kapps")
+		}
+	}
+
+	log.Debugf("Parsed kapps to install and remove: %#v", kapps)
 
 	return kapps, nil
 }
