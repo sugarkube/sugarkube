@@ -41,5 +41,10 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
 	log.Debugf("Loaded %d kapp(s)", len(kapps))
 
+	err = kapp.ValidateKapps(&kapps)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	return nil
 }

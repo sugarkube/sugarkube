@@ -1,6 +1,7 @@
 package kapp
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
@@ -30,6 +31,7 @@ const SOURCES_KEY = "sources"
 
 // Parses kapps and adds them to an array
 func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shouldBePresent bool) error {
+
 	// parse each kapp definition
 	for k, v := range kappDefinitions {
 		kapp := Kapp{
@@ -146,4 +148,21 @@ func ParseManifests(manifests []string) ([]Kapp, error) {
 	}
 
 	return kapps, nil
+}
+
+// Validates that the list of kapps doesn't multiple kapps with the same ID, or
+// it'll break creating a cache
+func ValidateKapps(kapps *[]Kapp) error {
+	ids := map[string]bool{}
+
+	for _, kapp := range *kapps {
+		id := kapp.id
+
+		if _, ok := ids[id]; ok {
+			return errors.New(fmt.Sprintf("Multiple kapps exist with "+
+				"the same id: %s", id))
+		}
+	}
+
+	return nil
 }
