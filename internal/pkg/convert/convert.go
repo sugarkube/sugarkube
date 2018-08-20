@@ -1,4 +1,4 @@
-package vars
+package convert
 
 import (
 	"fmt"
@@ -21,8 +21,9 @@ func convertStringable(input interface{}) (string, error) {
 	return fmt.Sprintf("%v", input), nil
 }
 
-// Converts a map with keys and values as interfaces to a map with keys and values as strings
-func InterfaceMapToStringMap(input map[interface{}]interface{}) (map[string]string, error) {
+// Converts a map with keys and values as interfaces to a map with keys and values as strings or
+// returns an error if types can't be sanely converted
+func MapInterfaceInterfaceToMapStringString(input map[interface{}]interface{}) (map[string]string, error) {
 
 	log.Debugf("Converting map of interfaces to map of strings. Input=%#v", input)
 
@@ -43,6 +44,28 @@ func InterfaceMapToStringMap(input map[interface{}]interface{}) (map[string]stri
 	}
 
 	log.Debugf("Converted map of interfaces to map of strings. Output=%#v", output)
+
+	return output, nil
+}
+
+// Converts a map with keys and values as interfaces to a map with string keys and values unchanged or
+// returns an error if types can't be sanely converted
+func MapInterfaceInterfaceToMapStringInterface(input map[interface{}]interface{}) (map[string]interface{}, error) {
+
+	log.Debugf("Converting map of interfaces to map with string keys. Input=%#v", input)
+
+	output := make(map[string]interface{})
+
+	for k, v := range input {
+		strKey, err := convertStringable(k)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		output[strKey] = v
+	}
+
+	log.Debugf("Converted map of interfaces to map with string keys. Output=%#v", output)
 
 	return output, nil
 }
