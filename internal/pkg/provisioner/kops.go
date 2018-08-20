@@ -16,9 +16,7 @@ func (p KopsProvisioner) Create(sc *vars.StackConfig, values provider.Values,
 	dryRun bool) error {
 	log.Debugf("Creating stack with Kops and config: %#v", sc)
 
-	// todo - implement
-
-	return nil
+	panic("not implemented")
 }
 
 func (p KopsProvisioner) ClusterSot() (clustersot.ClusterSot, error) {

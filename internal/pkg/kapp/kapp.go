@@ -28,12 +28,13 @@ const PRESENT_KEY = "present"
 const ABSENT_KEY = "absent"
 const SOURCES_KEY = "sources"
 
+// Parse kapps from config and mark them as whether or not they should be installed
 func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shouldBePresent bool) error {
 	// parse each kapp definition
 	for k, v := range kappDefinitions {
 		kapp := Kapp{
 			id:              k.(string),
-			shouldBePresent: true,
+			shouldBePresent: shouldBePresent,
 		}
 
 		log.Debugf("kapp=%s, v=%#v", kapp, v)
