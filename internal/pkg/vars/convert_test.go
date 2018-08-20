@@ -31,8 +31,21 @@ func TestInterfaceMapToStringMap(t *testing.T) {
 			expectedError: false,
 		},
 		{
-			name: "unexpected_conversion",
-			desc: "check converting unexpected input causes an error",
+			name: "good_conversion",
+			desc: "check converting expected input works",
+			input: map[interface{}]interface{}{
+				3:   "hello",
+				1.2: "world",
+			},
+			expectValues: map[string]string{
+				"3":   "hello",
+				"1.2": "world",
+			},
+			expectedError: false,
+		},
+		{
+			name: "error_converting_sub_map",
+			desc: "check converting map with sub-map causes an error",
 			input: map[interface{}]interface{}{
 				"testStr":   "hello",
 				"testInt":   3,
@@ -40,6 +53,23 @@ func TestInterfaceMapToStringMap(t *testing.T) {
 				"testBool":  true,
 				"sub": map[interface{}]interface{}{
 					"subStr": "world",
+				},
+			},
+			expectValues:  nil,
+			expectedError: true,
+		},
+		{
+			name: "error_converting_sub_array",
+			desc: "check converting map with sub-array causes an error",
+			input: map[interface{}]interface{}{
+				"testStr":   "hello",
+				"testInt":   3,
+				"testFloat": 1.11,
+				"testBool":  true,
+				"sub": []string{
+					"subStr1",
+					"subStr2",
+					"subStr3",
 				},
 			},
 			expectValues:  nil,
