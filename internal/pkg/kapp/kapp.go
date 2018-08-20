@@ -15,9 +15,15 @@ type installerConfig struct {
 
 type Kapp struct {
 	id              string
+	shouldBePresent bool // if true, this kapp should be present
+	// after completing, otherwise it should
+	// be absent
 	installerConfig installerConfig
 	sources         []acquirer.Acquirer
 }
+
+const PRESENT_KEY = "present"
+const ABSENT_KEY = "absent"
 
 // Parses a manifest file and returns a list of kapps on success
 func parseManifest(manifest string) ([]Kapp, error) {
@@ -31,6 +37,16 @@ func parseManifest(manifest string) ([]Kapp, error) {
 	}
 
 	log.Debugf("Loaded manifest data: %#v", data)
+
+	presentKapps := data[PRESENT_KEY]
+	for k, v := range presentKapps.(map[interface{}]interface{}) {
+		log.Debugf("k=%s, v=%#v", k.(string), v)
+
+		// todo - marshal and unmarshal each kapp into a struct then append to the array
+	}
+
+	// todo - implement
+	//absentKapps := data[ABSENT_KEY]
 
 	return kapps, nil
 }

@@ -46,12 +46,13 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
 	log.Debugf("Loaded stack '%s' from file '%s'", name, path)
 
-	stackConfigString, err := yaml.Marshal(stackConfig)
+	// marshal the data we want so we can unmarshal it again into a struct
+	stackConfigBytes, err := yaml.Marshal(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	log.Debugf("String stack config:\n%s", stackConfigString)
+	log.Debugf("Stack config bytes:\n%s", stackConfigBytes)
 
 	stack := StackConfig{
 		Name:     name,
@@ -65,7 +66,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 		},
 	}
 
-	err = yaml.Unmarshal(stackConfigString, &stack)
+	err = yaml.Unmarshal(stackConfigBytes, &stack)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
