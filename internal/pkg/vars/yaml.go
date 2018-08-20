@@ -21,14 +21,14 @@ func LoadYamlFile(path string) (map[string]interface{}, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	yamlFile, err := ioutil.ReadFile(path)
+	yamlData, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error reading YAML file %s", path)
 	}
 
 	data := map[string]interface{}{}
 
-	err = yaml.Unmarshal(yamlFile, data)
+	err = yaml.Unmarshal(yamlData, data)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error loading YAML file %s", path)
 	}

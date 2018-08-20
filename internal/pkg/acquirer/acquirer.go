@@ -24,11 +24,7 @@ func acquirerFactory(name string, settings map[string]string) (Acquirer, error) 
 				"branch and path are all mandatory.")
 		}
 
-		return GitAcquirer{
-			uri:    settings[URI],
-			branch: settings[BRANCH],
-			path:   settings[PATH],
-		}, nil
+		return NewGitAcquirer(settings[URI], settings[BRANCH], settings[PATH]), nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("Acquirer '%s' doesn't exist", name))

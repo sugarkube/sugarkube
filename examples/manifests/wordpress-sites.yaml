@@ -9,7 +9,7 @@ present:
   # this is unique per instance. This will be the release name when using Helm.
   wordpress-site1:
     installer:              # installer-specific values
-      kapp: wordpress       # The source (defined below) to run the makefile
+      target: wordpress     # The target source (defined below) to run the makefile
                             # for to install this kapp. Defaults to the
                             # identifier (i.e. wordpress-site1)
       values:

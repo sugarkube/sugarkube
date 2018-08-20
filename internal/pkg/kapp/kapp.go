@@ -28,7 +28,7 @@ const PRESENT_KEY = "present"
 const ABSENT_KEY = "absent"
 const SOURCES_KEY = "sources"
 
-// Parse kapps from config and mark them as whether or not they should be installed
+// Parses kapps and adds them to an array
 func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shouldBePresent bool) error {
 	// parse each kapp definition
 	for k, v := range kappDefinitions {
@@ -89,8 +89,33 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 	return nil
 }
 
-// Parses a manifest file and returns a list of kapps on success
-func parseManifest(manifestPath string) ([]Kapp, error) {
+// Parses manifest YAML data and returns a list of kapps
+func parseManifestYaml(data map[string]interface{}) ([]Kapp, error) {
+	kapps := make([]Kapp, 0)
+
+	presentKapps, ok := data[PRESENT_KEY]
+	if ok {
+		err := parseKapps(&kapps, presentKapps.(map[interface{}]interface{}), true)
+		if err != nil {
+			return nil, errors.Wrap(err, "Error parsing present kapps")
+		}
+	}
+
+	absentKapps, ok := data[ABSENT_KEY]
+	if ok {
+		err := parseKapps(&kapps, absentKapps.(map[interface{}]interface{}), false)
+		if err != nil {
+			return nil, errors.Wrap(err, "Error parsing absent kapps")
+		}
+	}
+
+	log.Debugf("Parsed kapps to install and remove: %#v", kapps)
+
+	return kapps, nil
+}
+
+// Load a single manifest file and parse the kapps it defines
+func parseManifestFile(manifestPath string) ([]Kapp, error) {
 	log.Debugf("Parsing manifest: %s", manifestPath)
 
 	data, err := vars.LoadYamlFile(manifestPath)
@@ -100,25 +125,7 @@ func parseManifest(manifestPath string) ([]Kapp, error) {
 
 	log.Debugf("Loaded manifest data: %#v", data)
 
-	kapps := make([]Kapp, 0)
-
-	presentKapps, ok := data[PRESENT_KEY]
-	if ok {
-		err = parseKapps(&kapps, presentKapps.(map[interface{}]interface{}), true)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error parsing present kapps")
-		}
-	}
-
-	absentKapps, ok := data[ABSENT_KEY]
-	if ok {
-		err = parseKapps(&kapps, absentKapps.(map[interface{}]interface{}), false)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error parsing absent kapps")
-		}
-	}
-
-	log.Debugf("Parsed kapps to install and remove: %#v", kapps)
+	kapps, err := parseManifestYaml(data)
 
 	return kapps, nil
 }
@@ -130,7 +137,7 @@ func ParseManifests(manifests []string) ([]Kapp, error) {
 	kapps := make([]Kapp, 0)
 
 	for _, manifest := range manifests {
-		manifestKapps, err := parseManifest(manifest)
+		manifestKapps, err := parseManifestFile(manifest)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

@@ -23,6 +23,16 @@ const URI = "uri"
 const BRANCH = "branch"
 const PATH = "path"
 
+// Returns an instance. This allows us to build objects for testing instead of
+// directly instantiating objects in the acquirer factory.
+func NewGitAcquirer(uri string, branch string, path string) GitAcquirer {
+	return GitAcquirer{
+		uri:    uri,
+		branch: branch,
+		path:   path,
+	}
+}
+
 // Acquires kapps via git and saves them to `dest`.
 func (a GitAcquirer) Acquire(dest string) error {
 
