@@ -19,8 +19,6 @@ type Provisioner interface {
 	IsAlreadyOnline(sc *vars.StackConfig, values provider.Values) (bool, error)
 	// Update the cluster config if supported by the provisioner
 	Update(sc *vars.StackConfig, values provider.Values) error
-	// Wait for a cluster to become ready to install Kapps into
-	WaitForClusterReadiness(sc *vars.StackConfig, values provider.Values) error
 }
 
 // key in Values that relates to this provisioner

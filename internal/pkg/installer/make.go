@@ -5,9 +5,7 @@ import (
 )
 
 // Installs kapps with make
-type MakeInstaller struct {
-	Installer
-}
+type MakeInstaller struct{}
 
 func (i MakeInstaller) Install(kapp *kapp.Kapp) error {
 	panic("to do: Implement MakeInstaller")

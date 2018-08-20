@@ -12,7 +12,6 @@ import (
 )
 
 type MinikubeProvisioner struct {
-	Provisioner
 	clusterSot clustersot.ClusterSot
 }
 

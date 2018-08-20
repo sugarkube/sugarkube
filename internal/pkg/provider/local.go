@@ -9,9 +9,7 @@ import (
 	"path/filepath"
 )
 
-type LocalProvider struct {
-	Provider
-}
+type LocalProvider struct{}
 
 const PROVIDER_NAME = "local"
 const PROFILE_DIR = "profiles"

@@ -11,7 +11,6 @@ import (
 )
 
 type GitAcquirer struct {
-	Acquirer
 	uri    string
 	branch string
 	path   string
