@@ -11,6 +11,7 @@ import (
 )
 
 type GitAcquirer struct {
+	name   string
 	uri    string
 	branch string
 	path   string
@@ -19,14 +20,20 @@ type GitAcquirer struct {
 // todo - make configurable
 const GIT_PATH = "git"
 
+const NAME = "name"
 const URI = "uri"
 const BRANCH = "branch"
 const PATH = "path"
 
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
-func NewGitAcquirer(uri string, branch string, path string) GitAcquirer {
+func NewGitAcquirer(name string, uri string, branch string, path string) GitAcquirer {
+	if name == "" {
+		name = filepath.Base(path)
+	}
+
 	return GitAcquirer{
+		name:   name,
 		uri:    uri,
 		branch: branch,
 		path:   path,

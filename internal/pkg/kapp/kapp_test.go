@@ -29,16 +29,58 @@ present:
     - uri: git@github.com:exampleB/repoB.git
       branch: branchB
       path: example/pathB
+      name: sampleNameB
+
+  example2:
+    sources:
+    - uri: git@github.com:exampleA/repoA.git
+      branch: branchA
+      path: example/pathA
+
+absent:
+  example3:
+    sources:
+    - uri: git@github.com:exampleA/repoA.git
+      branch: branchA
+      path: example/pathA
 `,
 			expectValues: []Kapp{
 				{
 					id:              "example1",
 					shouldBePresent: true,
 					sources: []acquirer.Acquirer{
-						acquirer.NewGitAcquirer("git@github.com:exampleA/repoA.git",
-							"branchA", "example/pathA"),
-						acquirer.NewGitAcquirer("git@github.com:exampleB/repoB.git",
-							"branchB", "example/pathB"),
+						acquirer.NewGitAcquirer(
+							"pathA",
+							"git@github.com:exampleA/repoA.git",
+							"branchA",
+							"example/pathA"),
+						acquirer.NewGitAcquirer(
+							"sampleNameB",
+							"git@github.com:exampleB/repoB.git",
+							"branchB",
+							"example/pathB"),
+					},
+				},
+				{
+					id:              "example2",
+					shouldBePresent: true,
+					sources: []acquirer.Acquirer{
+						acquirer.NewGitAcquirer(
+							"pathA",
+							"git@github.com:exampleA/repoA.git",
+							"branchA",
+							"example/pathA"),
+					},
+				},
+				{
+					id:              "example3",
+					shouldBePresent: false, // should be absent
+					sources: []acquirer.Acquirer{
+						acquirer.NewGitAcquirer(
+							"pathA",
+							"git@github.com:exampleA/repoA.git",
+							"branchA",
+							"example/pathA"),
 					},
 				},
 			},
