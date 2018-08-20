@@ -7,13 +7,14 @@ import (
 
 func TestInterfaceMapToStringMap(t *testing.T) {
 	tests := []struct {
-		name         string
-		desc         string
-		input        map[interface{}]interface{}
-		expectValues map[string]string
+		name          string
+		desc          string
+		input         map[interface{}]interface{}
+		expectValues  map[string]string
+		expectedError bool
 	}{
 		{
-			name: "good_converstion",
+			name: "good_conversion",
 			desc: "check converting expected input works",
 			input: map[interface{}]interface{}{
 				"testStr":   "hello",
@@ -27,11 +28,33 @@ func TestInterfaceMapToStringMap(t *testing.T) {
 				"testFloat": "1.11",
 				"testBool":  "true",
 			},
+			expectedError: false,
+		},
+		{
+			name: "unexpected_conversion",
+			desc: "check converting unexpected input causes an error",
+			input: map[interface{}]interface{}{
+				"testStr":   "hello",
+				"testInt":   3,
+				"testFloat": 1.11,
+				"testBool":  true,
+				"sub": map[interface{}]interface{}{
+					"subStr": "world",
+				},
+			},
+			expectValues:  nil,
+			expectedError: true,
 		},
 	}
 
 	for _, test := range tests {
-		result := InterfaceMapToStringMap(test.input)
-		assert.Equal(t, test.expectValues, result, "unexpected conversion result for %s", test.name)
+		result, err := InterfaceMapToStringMap(test.input)
+		if test.expectedError {
+			assert.NotNil(t, err)
+			assert.Nil(t, result)
+		} else {
+			assert.Equal(t, test.expectValues, result, "unexpected conversion result for %s", test.name)
+			assert.Nil(t, err)
+		}
 	}
 }
