@@ -1,12 +1,10 @@
 package kapp
 
 import (
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"gopkg.in/yaml.v2"
 )
 
@@ -17,10 +15,13 @@ type installerConfig struct {
 }
 
 type Kapp struct {
-	id              string
-	shouldBePresent bool // if true, this kapp should be present
-	// after completing, otherwise it should
-	// be absent
+	id string
+	// if true, this kapp should be present after completing, otherwise it
+	// should be absent. This is here instead of e.g. putting all kapps into
+	// an enclosing struct with 'present' and 'absent' properties so we can
+	// preserve ordering. This approach lets users strictly define the ordering
+	// of installation and deletion operations.
+	shouldBePresent bool
 	installerConfig installerConfig
 	sources         []acquirer.Acquirer
 }
@@ -114,55 +115,4 @@ func parseManifestYaml(data map[string]interface{}) ([]Kapp, error) {
 	log.Debugf("Parsed kapps to install and remove: %#v", kapps)
 
 	return kapps, nil
-}
-
-// Load a single manifest file and parse the kapps it defines
-func parseManifestFile(manifestPath string) ([]Kapp, error) {
-	log.Debugf("Parsing manifest: %s", manifestPath)
-
-	data, err := vars.LoadYamlFile(manifestPath)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	log.Debugf("Loaded manifest data: %#v", data)
-
-	kapps, err := parseManifestYaml(data)
-
-	return kapps, nil
-}
-
-// Parses manifest files and returns a list of kapps on success
-func ParseManifests(manifests []string) ([]Kapp, error) {
-	log.Debugf("Parsing %d manifest(s)", len(manifests))
-
-	kapps := make([]Kapp, 0)
-
-	for _, manifest := range manifests {
-		manifestKapps, err := parseManifestFile(manifest)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		kapps = append(kapps, manifestKapps...)
-	}
-
-	return kapps, nil
-}
-
-// Validates that the list of kapps doesn't multiple kapps with the same ID, or
-// it'll break creating a cache
-func ValidateKapps(kapps *[]Kapp) error {
-	ids := map[string]bool{}
-
-	for _, kapp := range *kapps {
-		id := kapp.id
-
-		if _, ok := ids[id]; ok {
-			return errors.New(fmt.Sprintf("Multiple kapps exist with "+
-				"the same id: %s", id))
-		}
-	}
-
-	return nil
 }

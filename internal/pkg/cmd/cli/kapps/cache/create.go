@@ -34,17 +34,21 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 }
 
 func (c *createCmd) run(cmd *cobra.Command, args []string) error {
-	kapps, err := kapp.ParseManifests(c.manifests)
+	manifests, err := kapp.ParseManifests(c.manifests)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	log.Debugf("Loaded %d kapp(s)", len(kapps))
+	log.Debugf("Loaded %d manifest(s)", len(manifests))
 
-	err = kapp.ValidateKapps(&kapps)
-	if err != nil {
-		return errors.WithStack(err)
+	for _, manifest := range manifests {
+		err = kapp.ValidateManifest(&manifest)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
+
+	log.Debug("Kapps validated")
 
 	return nil
 }
