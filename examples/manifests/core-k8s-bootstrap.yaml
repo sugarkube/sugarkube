@@ -7,6 +7,6 @@
 present:
   tiller:
     sources:
-    - url: git@github.com:sugarkube/sample-kapps.git
+    - uri: git@github.com:sugarkube/sample-kapps.git
       branch: tiller-0.1.0
       path: tiller

@@ -7,13 +7,13 @@ present:
   # is defined so defaults are used.
   kiam:
     sources:
-    - url: git@github.com:helm/charts.git
+    - uri: git@github.com:helm/charts.git
       branch: master
       path: charts/stable/kiam/
-    - url: git@github.com:sugarkube/sugarkube.git
+    - uri: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/values/kiam/values/
-    - url: git@github.com:sugarkube/sugarkube.git
+    - uri: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/common-makefiles/
       # todo - somehow need to configure all these charts to use the default

@@ -45,8 +45,12 @@ func parseManifest(manifestPath string) ([]Kapp, error) {
 
 	// parse each kapp definition
 	for k, v := range presentKapps.(map[interface{}]interface{}) {
-		kappName := k.(string)
-		log.Debugf("kappName=%s, v=%#v", kappName, v)
+		kapp := Kapp{
+			id:              k.(string),
+			shouldBePresent: true,
+		}
+
+		log.Debugf("kapp=%s, v=%#v", kapp, v)
 
 		// parse the list of sources
 		valuesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(v.(map[interface{}]interface{}))
@@ -62,17 +66,40 @@ func parseManifest(manifestPath string) ([]Kapp, error) {
 
 		log.Debugf("Marshalled sources YAML: %s", sourcesBytes)
 
-		sourcesList := []map[interface{}]interface{}{}
-		err = yaml.UnmarshalStrict(sourcesBytes, &sourcesList)
+		sourcesMaps := []map[interface{}]interface{}{}
+		err = yaml.UnmarshalStrict(sourcesBytes, &sourcesMaps)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error unmarshalling yaml: %s", sourcesBytes)
 		}
 
-		log.Debugf("sourcesList=%#v", sourcesList)
+		log.Debugf("sourcesMaps=%#v", sourcesMaps)
 
-		// now we have a list of sources, get the acquirer for it
+		acquirers := make([]acquirer.Acquirer, 0)
+		// now we have a list of sources, get the acquirer for each one
+		for _, sourceMap := range sourcesMaps {
+			sourceStringMap, err := convert.MapInterfaceInterfaceToMapStringString(sourceMap)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
 
+			acquirerImpl, err := acquirer.NewAcquirer(sourceStringMap)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+
+			log.Debugf("Got acquirer %#v", acquirerImpl)
+
+			acquirers = append(acquirers, acquirerImpl)
+		}
+
+		kapp.sources = acquirers
+
+		log.Debugf("Parsed kapp=%#v", kapp)
+
+		kapps = append(kapps, kapp)
 	}
+
+	log.Debugf("Parsed kapps to install: %#v", kapps)
 
 	// todo - implement
 	//absentKapps := data[ABSENT_KEY]

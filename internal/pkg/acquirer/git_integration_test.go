@@ -11,7 +11,7 @@ import (
 )
 
 func TestGitAcquire(t *testing.T) {
-	acquirer, err := NewAcquirerForPath(defaultSettings[URL],
+	acquirer, err := NewAcquirer(defaultSettings[URL],
 		defaultSettings)
 	assert.Nil(t, err)
 

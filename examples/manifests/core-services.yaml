@@ -22,23 +22,23 @@ present:
     # separately versioned source.
     sources:
       # sources are downloaded by `acquirers`. Currently we only have a git
-      # acquirer, and the acquirer to use is inferred from the url. Other
+      # acquirer, and the acquirer to use is inferred from the uri. Other
       # settings are specific to the acquirer.
-    - url: git@github.com:helm/charts.git
+    - uri: git@github.com:helm/charts.git
       branch: master
       path: charts/stable/cert-manager/
-    - url: git@github.com:sugarkube/sugarkube.git
+    - uri: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/values/cert-manager/values/
-    - url: git@github.com:sugarkube/sugarkube.git
+    - uri: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/common-makefiles/
 
   nginx-ingress:
     sources:
-    - url: git@github.com:helm/charts.git
+    - uri: git@github.com:helm/charts.git
       branch: master
       path: charts/stable/nginx-ingress/
-    - url: git@github.com:sugarkube/sugarkube.git
+    - uri: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/common-makefiles/

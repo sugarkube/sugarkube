@@ -12,7 +12,7 @@ import (
 
 type GitAcquirer struct {
 	Acquirer
-	url    string
+	uri    string
 	branch string
 	path   string
 }
@@ -20,7 +20,7 @@ type GitAcquirer struct {
 // todo - make configurable
 const GIT_PATH = "git"
 
-const URL = "url"
+const URI = "uri"
 const BRANCH = "branch"
 const PATH = "path"
 
@@ -48,7 +48,7 @@ func (a GitAcquirer) Acquire(dest string) error {
 	stderrBuf.Reset()
 
 	// add origin
-	remoteAddCmd := exec.Command(GIT_PATH, "remote", "add", "origin", a.url)
+	remoteAddCmd := exec.Command(GIT_PATH, "remote", "add", "origin", a.uri)
 	remoteAddCmd.Dir = dest
 	remoteAddCmd.Stderr = &stderrBuf
 	err = remoteAddCmd.Run()

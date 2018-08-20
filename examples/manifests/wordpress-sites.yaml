@@ -24,7 +24,7 @@ present:
     # shared makefiles, and/or pulling in `values.yaml` files etc. from a
     # separately versioned source.
     sources:
-    - url: git@github.com:helm/charts.git
+    - uri: git@github.com:helm/charts.git
       # if this was our repo a good pattern could be to create a signed tag for
       # each release called `<chart>-<version>`.
       branch: master
@@ -32,13 +32,13 @@ present:
       # component of the path. The name can also be set explicitly as
       # illustrated below.
       path: stable/wordpress/
-    - url: git@github.com:sugarkube/sugarkube.git
+    - uri: git@github.com:sugarkube/sugarkube.git
       branch: master
       # this lets us reuse the same kapp parameterised differently per instance
       path: examples/values/wordpress/site1/
       # Name of the source. Defaults to the last component of the path (in this
       # case `site1`). Also used as a key
       name: site1-values
-    - url: git@github.com:sugarkube/sample-kapps.git
+    - uri: git@github.com:sugarkube/sample-kapps.git
       branch: master
       path: common-makefiles/
