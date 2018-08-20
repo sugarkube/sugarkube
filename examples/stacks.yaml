@@ -6,12 +6,8 @@ local-standard:
   vars:               # paths to yaml files to load data from. Keys will be merged.
   - providers/
   manifests:
-  - path: manifests/core-k8s-bootstrap.yaml
-# todo - support pulling these from git repos
-#  - name: org-base         # use the path basename by default
-#    path: git@github.com:example/manifests/organisation/base.yaml
-#  - name: team-base
-#    path: manifests/organisation/base.yaml
+  # todo - support pulling these from git repos
+  - uri: manifests/core-k8s-bootstrap.yaml
 
 local-large:
   provider: local
@@ -21,4 +17,4 @@ local-large:
   vars:               # paths to yaml files to load data from. Keys will be merged.
   - providers/
   manifests:
-  - manifests/core-k8s-bootstrap.yaml
+  - uri: manifests/core-k8s-bootstrap.yaml

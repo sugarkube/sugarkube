@@ -13,13 +13,13 @@ type Manifest struct {
 	// defaults to the file basename, but can be explicitly specified to avoid
 	// clashes. This is also used to namespace entries in the cache
 	Id    string
-	Path  string
+	Uri   string
 	Kapps []Kapp
 }
 
-func NewManifest(path string) Manifest {
+func NewManifest(uri string) Manifest {
 	manifest := Manifest{
-		Path: path,
+		Uri: uri,
 	}
 
 	SetManifestDefaults(&manifest)
@@ -29,7 +29,8 @@ func NewManifest(path string) Manifest {
 // Sets fields to default values
 func SetManifestDefaults(manifest *Manifest) {
 	// use the basename after stripping the extension by default
-	defaultId := strings.Replace(filepath.Base(manifest.Path), filepath.Ext(manifest.Path), "", 1)
+	// todo - get this from the acquirer for the manifest
+	defaultId := strings.Replace(filepath.Base(manifest.Uri), filepath.Ext(manifest.Uri), "", 1)
 
 	if manifest.Id == "" {
 		manifest.Id = defaultId
@@ -51,7 +52,7 @@ func parseManifestFile(path string) (*Manifest, error) {
 
 	manifest := Manifest{
 		Id:    filepath.Base(path),
-		Path:  path,
+		Uri:   path,
 		Kapps: kapps,
 	}
 

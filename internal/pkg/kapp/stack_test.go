@@ -33,12 +33,12 @@ func TestLoadStackConfig(t *testing.T) {
 		},
 		Manifests: []Manifest{
 			{
-				Id:   "manifest1",
-				Path: "./testdata/manifest1.yaml",
+				Id:  "manifest1",
+				Uri: "./testdata/manifest1.yaml",
 			},
 			{
-				Id:   "exampleManifest2",
-				Path: "./testdata/manifest2.yaml",
+				Id:  "exampleManifest2",
+				Uri: "./testdata/manifest2.yaml",
 			},
 		},
 	}

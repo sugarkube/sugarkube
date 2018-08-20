@@ -17,6 +17,6 @@ large:
   vars:               # paths to yaml files to load data from. Keys will be merged.
   - ./stacks/
   manifests:
-  - path: ./testdata/manifest1.yaml
-  - path: ./testdata/manifest2.yaml
+  - uri: ./testdata/manifest1.yaml
+  - uri: ./testdata/manifest2.yaml
     id: exampleManifest2
