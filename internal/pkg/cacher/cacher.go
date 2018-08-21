@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-const CACHE_DIR = "_cache"
+const CACHE_DIR = ".sugarkube"
 
 // Build a cache for a manifest into a directory
 func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {

@@ -11,7 +11,7 @@ import (
 
 type Manifest struct {
 	// defaults to the file basename, but can be explicitly specified to avoid
-	// clashes. This is also used to namespace entries in the cache
+	// clashes. This is also used to namespace entries in the cache.
 	Id    string
 	Uri   string
 	Kapps []Kapp

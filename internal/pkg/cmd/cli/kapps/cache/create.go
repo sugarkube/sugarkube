@@ -63,7 +63,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		cacheDir = tempDir
 	}
 
-	log.Debug("Kapps validated. Caching manifests into %s...", cacheDir)
+	log.Debugf("Kapps validated. Caching manifests into %s...", cacheDir)
 
 	for _, manifest := range manifests {
 		cacher.CacheManifest(manifest, cacheDir, c.dryRun)
