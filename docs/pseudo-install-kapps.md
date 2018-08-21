@@ -63,7 +63,7 @@ Process each manifest sequentially, processing all kapps in it in parallel. For
 * Generate terraform files (backend and any others)
 * Search for terraform vars files specific to the profile and/or cluster as 
   well as defaults
-* Run `make all` passing things specific to the installer and cloud provider
+* Run `make install` passing things specific to the installer and cloud provider
   (it'd be good if the params can be standardised though so the same kapp can 
   be used with different providers, e.g. minikube, aws, gcp). Set `APPROVED` to 
   the value passed in on the CLI. 

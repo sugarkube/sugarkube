@@ -51,7 +51,7 @@ Focus on building your product, not your deployment pipeline. Join us to help cr
       * Sugarkube won't reinstall kapps that are already installed at the target versions. This makes installing kapps fast and idempotent.
     * The plan can be used by e.g. Jenkins to make required credentials available to the kapp at deployment time, as well as to provide a clear audit trail.
     * Once the plan is approved, it builds a kapp cache for all candidate kapps. 
-    * Then `make all` is run against each kapp in the cache. 
+    * Then `make install` is run against each kapp in the cache. 
       * By default kapps are installed in parallel, but single-threading can be specified per kapp in each manifest. This means that e.g. shared infrastructure can be installed first and can block the installation of all other kapps. Once the shared infra is up, the remaining kapps can be installed in parallel to reduce the amount of time necessary to provision clusters and apply the manifests.
       * Each kapp is also run in a planning mode and output is logged. This means that any kapps that use e.g. terraform can run `terraform plan`. 
       * After each kapp has been planned, all the log output can be merged and parsed. The CI pipeline can then halt the deployment and require manual approval if, e.g. any infrastructure is planned to be deleted.

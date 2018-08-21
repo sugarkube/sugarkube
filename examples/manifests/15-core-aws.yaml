@@ -13,9 +13,9 @@ present:
     - uri: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/values/kiam/values/
-    - uri: git@github.com:sugarkube/sample-kapps.git
+    - uri: git@github.com:sugarkube/kapps.git
       branch: master
-      path: common-makefiles/
+      path: incubator/common-makefiles
       # todo - somehow need to configure all these charts to use the default
       # Makefile that uses our common-makefiles library since they're all
       # coming directly from the upstream stable repo...

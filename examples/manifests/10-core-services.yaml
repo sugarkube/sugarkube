@@ -1,12 +1,40 @@
+# This manifest is for core services used by several different charts. This
+# shows how you can use one manifest to install shared services then layer on
+# top other applications stored in a different manifest.
+
+# Kapps listed under this key will be installed if they are not currently
+# installed in the target cluster.
 present:
-  cert-manager:
+  # The default installer for manifests is stored in config so we don't need
+  # to add it to every entry. But we could in future with e.g. `installer: my-installer`
+
+  # The simplest manifest entry uses defaults for e.g. the helm namespace,
+  # chart name, etc. when using `helm` as the installer.
+  cert-manager:       # Globally-unique identifier. For helm this corresponds
+    # to the release name. If that's too restrictive we could
+    # generate a globally-unique identifier based on the
+    # manifest, but for now we'll keep it simple.
+
+    # Sources to checkout as siblings in the cache for this kapp. This allows
+    # creating a cache entry from e.g. the actual kapp source, a directory of
+    # shared makefiles, and/or pulling in `values.yaml` files etc. from a
+    # separately versioned source.
     sources:
+    # sources are downloaded by `acquirers`. Currently we only have a git
+    # acquirer, and the acquirer to use is inferred from the uri. Other
+    # settings are specific to the acquirer.
     - uri: git@github.com:sugarkube/kapps.git
       branch: cert-manager-0.1.0
       path: incubator/cert-manager
+    - uri: git@github.com:sugarkube/kapps.git
+      branch: master
+      path: incubator/common-makefiles
 
   nginx-ingress:
     sources:
     - uri: git@github.com:sugarkube/kapps.git
       branch: nginx-ingress-0.1.0
       path: incubator/nginx-ingress
+    - uri: git@github.com:sugarkube/kapps.git
+      branch: master
+      path: incubator/common-makefiles

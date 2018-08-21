@@ -123,7 +123,7 @@ Sugarkube is really several things:
   * A system for checking out related versions of related kapps from manifest files.
   * A process for checking which kapps need installing/deleting based on the 
     input manifest(s) and what's running on the target cluster, and running 
-    `make all` or `make destroy` on each one. It generates a few files first 
+    `make install` or `make destroy` on each one. It generates a few files first 
     and passes some extra parameters so the kapp has all the info it needs to 
     install/destroy itself the right way. 
 
