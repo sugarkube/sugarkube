@@ -41,7 +41,7 @@ func NewAcquirer(settings map[string]string) (Acquirer, error) {
 
 	uri := settings[URI]
 
-	if strings.HasPrefix(uri, GIT) || acquirer == GIT {
+	if strings.Contains(uri, ".git") || acquirer == GIT {
 		return acquirerFactory(GIT, settings)
 	}
 

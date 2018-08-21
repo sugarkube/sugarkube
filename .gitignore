@@ -3,3 +3,4 @@ vendor
 .idea/
 *.iml
 .DS_Store
+.sugarkube/
