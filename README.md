@@ -144,3 +144,24 @@ See https://sugarkube.io for more info and documentation.
 
 ## Status
 Sugarkube is a work in progress and not ready for production use just yet.
+
+# Installation
+Clone and build with:
+```
+  git clone git@github.com:sugarkube/sugarkube.git
+  cd sugarkube
+  make deps
+  make test-all
+  make build
+```
+Launch a minikube cluster:
+```
+  ./bin/sugarkube cluster create -s ./examples/stacks.yaml -n local-standard
+```
+
+Try building a cache:
+```
+  ./bin/sugarkube cache create -m examples/manifests/wordpress-sites.yaml \ 
+    -m examples/manifests/core-services.yaml \
+    -d ./cache-test 
+```
