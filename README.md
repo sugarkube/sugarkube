@@ -39,7 +39,7 @@ Use Sugarkube to:
   * Automate building differently specced ephemeral dev/test environments fully 
     configured with your core dependencies (e.g. Cert Manager, Vault, etc.) so 
     you can get straight to work.
-  * Push your kapps through a sane release pipeline. Develop locally or
+  * Push your kapps through a sane, idempotent release pipeline. Develop locally or
     on (possibly ephemeral) dev clusters, test on staging, then release to one or 
     multiple target prod clusters. The process is up to you and Sugarkube is
     compatible with Jenkins.
@@ -58,6 +58,10 @@ Sugarkube is great for new projects, but even legacy applications can be
 migrated into kapps. You can migrate a bit at a time to see how it helps you.
 
 ## FAQ
+### Does this depend on containers?
+Nope. Sugarkube just acquires and runs versioned Makefiles. It's up to you 
+what they do. 
+
 ### How does this compare to Helm?
 Helm installs individual applications (e.g. Wordpress) but doesn't let you 
 install a suite of related applications (e.g. a monitoring stack with 

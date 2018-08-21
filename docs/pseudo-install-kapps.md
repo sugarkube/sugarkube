@@ -87,14 +87,12 @@ following. Run each kapp in parallel, except ones with a value of
 * By default, abort the kapp if anything was written on stderr (configurable 
   to ignore this, either globally or per kapp?)
 
-Regarding running in parallel, the logic is:
-1. Iterate through the kapps slated for installation
-2. Add them all to a queue until any are seen that have `parallel: false`
-3. Execute all in the queue in parallel
-4. Run the kapp with `parallel: false` on its own
-5. Return to 1 to process the full list.
-
-This allows fanning out and back in again.
+All kapps in a manifest are run in parallel, and processing of all kapps in the
+manifest must finish before Sugarkube will move on to the next manifest. This
+makes it simple to control fanning out and in again by just creating multiple
+manifests. E.g. if you want kapps A, B & C to run in parallel, D to be run 
+after all of them, and then E & F to be run again in parallel, create 3 
+manifests, one for A, B & C, the next just for D, and then one more for E & F.
 
 ### Destroy kapps 
 Do the above but in reverse. I.e.:

@@ -17,4 +17,5 @@ local-large:
   vars:               # paths to yaml files to load data from. Keys will be merged.
   - providers/
   manifests:
+  # if no protocol is given, file:// is assumed.
   - uri: manifests/core-k8s-bootstrap.yaml
