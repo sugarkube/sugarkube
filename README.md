@@ -159,7 +159,7 @@ Launch a minikube cluster:
   ./bin/sugarkube cluster create -s ./examples/stacks.yaml -n local-standard
 ```
 
-Try building a cache:
+Cache some manifests to be installed:
 ```
   ./bin/sugarkube cache create -m examples/manifests/wordpress-sites.yaml \ 
     -m examples/manifests/core-services.yaml \

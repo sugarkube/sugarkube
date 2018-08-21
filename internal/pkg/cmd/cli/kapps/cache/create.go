@@ -72,5 +72,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	log.Infof("Manifests cached to: %s", cacheDir)
+
 	return nil
 }

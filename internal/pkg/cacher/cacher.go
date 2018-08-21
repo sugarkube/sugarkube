@@ -7,6 +7,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const CACHE_DIR = ".sugarkube"
@@ -69,20 +70,16 @@ func acquireSource(acquirers []acquirer.Acquirer, kappDir string,
 				}
 			}
 
-			// it'd be nice to create a relative symlink here so the cache is portable,
-			// but it's not clear how to change the CWD of go for os.Symlink. We may
-			// need to use `exec.Command` setting the `Dir` to `kappDir`
-			sourcePath, err := filepath.Abs(filepath.Join(sourceDest, a.Path()))
-			if err != nil {
-				errCh <- errors.WithStack(err)
-			}
+			sourcePath := filepath.Join(sourceDest, a.Path())
+			sourcePath = strings.TrimPrefix(sourcePath, kappDir)
+			sourcePath = strings.TrimPrefix(sourcePath, "/")
 
 			symLinkTarget := filepath.Join(kappDir, a.Name())
 
 			if dryRun {
 				log.Debugf("Dry run. Would symlink cached source %s to %s", sourcePath, symLinkTarget)
 			} else {
-				if _, err := os.Stat(sourcePath); err != nil {
+				if _, err := os.Stat(filepath.Join(kappDir, sourcePath)); err != nil {
 					errCh <- errors.Wrapf(err, "Symlink source '%s' doesn't exist", sourcePath)
 				}
 
