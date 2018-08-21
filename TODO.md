@@ -15,6 +15,8 @@
   main binary.
 * Add support for verifying signed tags
 * More tests 
+* See if we can suppress warning in overridden makefiles by using the technique
+  by mpb [described here](https://stackoverflow.com/questions/11958626/make-file-warning-overriding-commands-for-target)
 
 ## Docs
 * Create web site
