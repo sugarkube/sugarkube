@@ -16,7 +16,7 @@ help:
 	@echo
 	@echo 'Usage:'
 	@echo '    make build           Compile the project.'
-	@echo '    make get-deps        runs dep ensure, mostly used for ci.'
+	@echo '    make deps            runs dep ensure, mostly used for ci.'
 	@echo '    make build-alpine    Compile optimized for alpine linux.'
 	@echo '    make package         Build final docker image with just the go binary inside'
 	@echo '    make tag             Tag image created by package with latest, git commit and version'
@@ -38,7 +38,7 @@ build: fmt test
 		 -X github.com/sugarkube/sugarkube/internal/pkg/version.Version=${VERSION} \
 		 " ./...
 
-get-deps:
+deps:
 	dep ensure
 
 build-alpine: test-all
