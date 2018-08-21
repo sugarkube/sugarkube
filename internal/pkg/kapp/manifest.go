@@ -50,11 +50,8 @@ func parseManifestFile(path string) (*Manifest, error) {
 
 	kapps, err := parseManifestYaml(data)
 
-	manifest := Manifest{
-		Id:    filepath.Base(path),
-		Uri:   path,
-		Kapps: kapps,
-	}
+	manifest := NewManifest(path)
+	manifest.Kapps = kapps
 
 	return &manifest, nil
 }

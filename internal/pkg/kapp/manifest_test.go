@@ -44,3 +44,24 @@ func TestValidateManifest(t *testing.T) {
 		}
 	}
 }
+
+func TestSetManifestDefaults(t *testing.T) {
+	tests := []struct {
+		name     string
+		desc     string
+		input    Manifest
+		expected string
+	}{
+		{
+			name:     "good",
+			desc:     "default manifest IDs should be the URI basename minus extension",
+			input:    NewManifest("example/manifest.yaml"),
+			expected: "manifest",
+		},
+	}
+
+	for _, test := range tests {
+		SetManifestDefaults(&test.input)
+		assert.Equal(t, test.expected, test.input.Id)
+	}
+}
