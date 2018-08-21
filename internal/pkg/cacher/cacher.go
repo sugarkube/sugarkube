@@ -69,12 +69,23 @@ func acquireSource(acquirers []acquirer.Acquirer, kappDir string,
 				}
 			}
 
-			sourcePath := filepath.Join(sourceDest, a.Path())
+			// it'd be nice to create a relative symlink here so the cache is portable,
+			// but it's not clear how to change the CWD of go for os.Symlink. We may
+			// need to use `exec.Command` setting the `Dir` to `kappDir`
+			sourcePath, err := filepath.Abs(filepath.Join(sourceDest, a.Path()))
+			if err != nil {
+				errCh <- errors.WithStack(err)
+			}
+
 			symLinkTarget := filepath.Join(kappDir, a.Name())
 
 			if dryRun {
 				log.Debugf("Dry run. Would symlink cached source %s to %s", sourcePath, symLinkTarget)
 			} else {
+				if _, err := os.Stat(sourcePath); err != nil {
+					errCh <- errors.Wrapf(err, "Symlink source '%s' doesn't exist", sourcePath)
+				}
+
 				log.Debugf("Symlinking cached source %s to %s", sourcePath, symLinkTarget)
 				err := os.Symlink(sourcePath, symLinkTarget)
 				if err != nil {
