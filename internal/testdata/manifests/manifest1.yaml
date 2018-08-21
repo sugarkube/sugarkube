@@ -1,0 +1,6 @@
+present:
+  kappA:
+    sources:
+    - uri: git@github.com:sugarkube/sample-kapps-A.git
+      branch: kappA-0.1.0
+      path: some/pathA

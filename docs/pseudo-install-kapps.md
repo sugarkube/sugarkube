@@ -12,7 +12,7 @@ Describes how installing kapps works at a high level.
   * Use the configured `Source of Truth` to find out what's already installed 
     in the target cluster.
   * Refresh (or build) the cache (see below)
-  * Read `credentials.yaml` from each kapp so we know what creds each one needs
+  * Read `sugarkube.yaml` from each kapp so we know what creds each one needs
   * Write the plan as YAML to the root of the kapp cache (by default 
     `_generated_plan.yaml`, or to a supplied path).
 
@@ -20,7 +20,7 @@ Also support loading a previously generated plan instead of always having to
 go through this process.
 
 ### Where to declare which creds a kapp needs?
-If we store `credentials.yaml` we need to build/refresh the cache while 
+If we store `sugarkube.yaml` we need to build/refresh the cache while 
 generating the plan. If they're somewhere else we won't need to. What's 
 better? It's probably clearer to store them in kapps, then people can configure
 their CD pipelines to throw warnings if someone uses a credential †hat doesn't
@@ -50,9 +50,8 @@ your cache from kapps at different versions of that repo.
 
 ## Applying changes
 ### Install kapps
-For each kapp to install from the plan (and for the `helm` installer) do the 
-following. Run each kapp in parallel, except ones with a value of 
-`parallel: false` in the manifest:
+Process each manifest sequentially, processing all kapps in it in parallel. For
+`helm` charts, do the following:
 * Find the dir in the cache containing `Chart.yaml`
 * Expect the Makefile to be in the same dir
 * Search for `values.yaml`, and `values-<profile/cluster>.yaml` (but 

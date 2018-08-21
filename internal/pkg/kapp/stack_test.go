@@ -2,6 +2,7 @@ package kapp
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"testing"
 )
 
@@ -34,11 +35,37 @@ func TestLoadStackConfig(t *testing.T) {
 		Manifests: []Manifest{
 			{
 				Id:  "manifest1",
-				Uri: "./testdata/manifest1.yaml",
+				Uri: "../../testdata/manifests/manifest1.yaml",
+				Kapps: []Kapp{
+					{
+						Id:              "kappA",
+						shouldBePresent: true,
+						Sources: []acquirer.Acquirer{
+							acquirer.NewGitAcquirer(
+								"pathA",
+								"git@github.com:sugarkube/sample-kapps-A.git",
+								"kappA-0.1.0",
+								"some/pathA"),
+						},
+					},
+				},
 			},
 			{
 				Id:  "exampleManifest2",
-				Uri: "./testdata/manifest2.yaml",
+				Uri: "../../testdata/manifests/manifest2.yaml",
+				Kapps: []Kapp{
+					{
+						Id:              "kappB",
+						shouldBePresent: true,
+						Sources: []acquirer.Acquirer{
+							acquirer.NewGitAcquirer(
+								"pathB",
+								"git@github.com:sugarkube/sample-kapps-B.git",
+								"kappB-0.2.0",
+								"some/pathB"),
+						},
+					},
+				},
 			},
 		},
 	}
