@@ -9,7 +9,7 @@ import (
 
 type Acquirer interface {
 	Acquire(dest string) error
-	Id() string
+	Id() (string, error)
 }
 
 const ACQUIRER_KEY = "acquirer"

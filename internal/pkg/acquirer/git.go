@@ -40,9 +40,22 @@ func NewGitAcquirer(name string, uri string, branch string, path string) GitAcqu
 	}
 }
 
-// Return the ID
-func (a GitAcquirer) Id() string {
-	return a.name
+// Generate an ID
+func (a GitAcquirer) Id() (string, error) {
+	// testing here simplifies testing but does mean invalid objects can be created...
+	if strings.Count(a.uri, ":") != 1 {
+		return "", errors.New(
+			fmt.Sprintf("Unexpected git URI. Expected a single ':' "+
+				"character in URI %s", a.uri))
+	}
+
+	orgRepo := strings.SplitAfter(a.uri, ":")
+	hyphenatedOrg := strings.Replace(orgRepo[1], "/", "-", -1)
+	hyphenatedOrg = strings.TrimSuffix(hyphenatedOrg, ".git")
+	hyphenatedBranc := strings.Replace(a.branch, "/", "-", -1)
+	hyphenatedName := strings.Replace(a.name, "/", "-", -1)
+
+	return strings.Join([]string{hyphenatedOrg, hyphenatedBranc, hyphenatedName}, "-"), nil
 }
 
 // Acquires kapps via git and saves them to `dest`.

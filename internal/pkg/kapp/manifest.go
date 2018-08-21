@@ -89,6 +89,14 @@ func ValidateManifest(manifest *Manifest) error {
 			return errors.New(fmt.Sprintf("Multiple kapps exist with "+
 				"the same id: %s", id))
 		}
+
+		for _, acquirer := range kapp.Sources {
+			// verify all IDs can be generated successfully
+			_, err := acquirer.Id()
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
 	}
 
 	return nil

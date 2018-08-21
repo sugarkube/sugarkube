@@ -86,7 +86,9 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 		// sort the acquirers for determinism. We'll run them in parallel anyway
 		// so the order isn't important
 		sort.Slice(acquirers, func(i, j int) bool {
-			return acquirers[i].Id() < acquirers[j].Id()
+			leftId, _ := acquirers[i].Id()
+			rightId, _ := acquirers[j].Id()
+			return leftId < rightId
 		})
 
 		kapp.Sources = acquirers

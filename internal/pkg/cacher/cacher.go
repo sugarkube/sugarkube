@@ -35,7 +35,12 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string) error {
 
 		// acquire each source
 		for _, acquirer := range kapp.Sources {
-			sourceDest := filepath.Join(kappCacheDir, acquirer.Id())
+			acquirerId, err := acquirer.Id()
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			sourceDest := filepath.Join(kappCacheDir, acquirerId)
 			acquirer.Acquire(sourceDest)
 		}
 	}
