@@ -13,5 +13,4 @@ func main() {
 
 	err := sugarkube.NewCommand(baseName).Execute()
 	cmd.CheckError(err)
-
 }

@@ -91,10 +91,30 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
 	log.Debugf("Loaded stack config: %#v", stack)
 
-	log.Debug("Setting default values on structs")
+	// at this point stack.Manifest only contains a list of URIs. We need to
+	// acquire and parse them.
+	log.Debug("Parsing manifests")
+
 	for i, manifest := range stack.Manifests {
+		// todo - convert these to be managed by acquirers. The file acquirer
+		// needs to convert relative paths to absolute.
+		uri := manifest.Uri
+		if !filepath.IsAbs(uri) {
+			uri = filepath.Join(stack.Dir(), uri)
+		}
+
+		// parse the manifests and add them back to the stack
+		parsedManifest, err := ParseManifestFile(uri)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		// this is a mess because the YAML parser requires all fields to be
+		// public so we can't enforce a setter :-(
 		SetManifestDefaults(&manifest)
-		stack.Manifests[i] = manifest
+		parsedManifest.Id = manifest.Id
+
+		stack.Manifests[i] = *parsedManifest
 	}
 
 	return &stack, nil

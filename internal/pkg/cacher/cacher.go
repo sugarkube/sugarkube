@@ -72,6 +72,8 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, kappDi
 				}
 			}
 
+			// todo - this doesn't actually create relative symlinks. Probably need
+			// need to use exec.Command and set `command.Dir`, using `ln` directly.
 			sourcePath := filepath.Join(sourceDest, a.Path())
 			sourcePath = strings.TrimPrefix(sourcePath, kappDir)
 			sourcePath = strings.TrimPrefix(sourcePath, "/")

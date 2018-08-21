@@ -38,7 +38,7 @@ func SetManifestDefaults(manifest *Manifest) {
 }
 
 // Load a single manifest file and parse the kapps it defines
-func parseManifestFile(path string) (*Manifest, error) {
+func ParseManifestFile(path string) (*Manifest, error) {
 	log.Debugf("Parsing manifest: %s", path)
 
 	data, err := vars.LoadYamlFile(path)
@@ -63,7 +63,7 @@ func ParseManifests(manifestPaths []string) ([]Manifest, error) {
 	manifests := make([]Manifest, 0)
 
 	for _, manifestPath := range manifestPaths {
-		manifest, err := parseManifestFile(manifestPath)
+		manifest, err := ParseManifestFile(manifestPath)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

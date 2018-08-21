@@ -76,28 +76,13 @@ Note: Not all providers require all arguments. See documentation for help.
 
 func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
-	stackConfig := &kapp.StackConfig{}
-	var err error
+	stackConfig, err := ParseStackCliArgs(c.stackName, c.stackFile)
 
-	// make sure both stack name and stack file are supplied if either are supplied
-	if c.stackName != "" || c.stackFile != "" {
-		if c.stackName == "" {
-			return errors.New("A stack name is required when supplying the path to a stack config file.")
-		}
-
-		if c.stackFile != "" {
-			stackConfig, err = kapp.LoadStackConfig(c.stackName, c.stackFile)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-		}
-	}
-
-	manifests := make([]kapp.Manifest, 0)
+	cliManifests := make([]kapp.Manifest, 0)
 
 	for _, manifestPath := range c.manifests {
 		manifest := kapp.NewManifest(manifestPath)
-		manifests = append(manifests, manifest)
+		cliManifests = append(cliManifests, manifest)
 	}
 
 	// CLI args override configured args, so merge them in
@@ -107,7 +92,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		Profile:       c.profile,
 		Cluster:       c.cluster,
 		VarsFilesDirs: c.varsFilesDirs,
-		Manifests:     manifests,
+		Manifests:     cliManifests,
 		ReadyTimeout:  c.readyTimeout,
 		OnlineTimeout: c.onlineTimeout,
 	}
@@ -165,4 +150,29 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// Reads CLI args for a stack file, name and manifests and returns a pointer
+// to a StackConfig or an error.
+func ParseStackCliArgs(stackName string, stackFile string) (*kapp.StackConfig, error) {
+	stackConfig := &kapp.StackConfig{}
+	var err error
+
+	// make sure both stack name and stack file are supplied if either are supplied
+	if stackName != "" || stackFile != "" {
+		if stackName == "" {
+			return nil, errors.New("A stack name is required when supplying the path to a stack config file.")
+		}
+
+		if stackFile != "" {
+			stackConfig, err = kapp.LoadStackConfig(stackName, stackFile)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+		}
+	}
+
+	log.Debugf("Parsed stack CLI args to stack config: %#v", stackConfig)
+
+	return stackConfig, nil
 }
