@@ -36,7 +36,7 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 			return errors.WithStack(err)
 		}
 
-		err = acquireSource(kapp.Sources, kappDir, kappCacheDir, dryRun)
+		err = acquireSource(manifest, kapp.Sources, kappDir, kappCacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -47,10 +47,12 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 
 // Acquires each source and symlinks it to the target path in the cache directory.
 // Runs all acquirers in parallel.
-func acquireSource(acquirers []acquirer.Acquirer, kappDir string,
+func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, kappDir string,
 	kappCacheDir string, dryRun bool) error {
 	doneCh := make(chan bool)
 	errCh := make(chan error)
+
+	log.Debugf("Acquiring sources for manifest: %s", manifest.Id)
 
 	for _, acquirerImpl := range acquirers {
 		go func(a acquirer.Acquirer) {
@@ -99,11 +101,15 @@ func acquireSource(acquirers []acquirer.Acquirer, kappDir string,
 		case err := <-errCh:
 			close(doneCh)
 			log.Warnf("Error in acquirer goroutines: %s", err)
-			return errors.Wrap(err, "Error running acquirer in goroutine")
+			return errors.Wrapf(err, "Error running acquirer in goroutine "+
+				"for manifest '%s'", manifest.Id)
 		case <-doneCh:
-			log.Debugf("%d acquirers successfully completed", success+1)
+			log.Debugf("%d acquirer(s) successfully completed for manifest '%s'",
+				success+1, manifest.Id)
 		}
 	}
+
+	log.Debugf("Finished acquiring sources for manifest: %s", manifest.Id)
 
 	return nil
 }
