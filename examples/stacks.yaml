@@ -7,7 +7,8 @@ local-standard:
   - providers/
   manifests:
   # todo - support pulling these from git repos
-  - uri: manifests/core-k8s-bootstrap.yaml
+  - uri: manifests/05-core-k8s-bootstrap.yaml
+  - uri: manifests/10-core-universal-services.yaml
 
 local-large:
   provider: local
@@ -18,4 +19,21 @@ local-large:
   - providers/
   manifests:
   # if no protocol is given, file:// is assumed.
-  - uri: manifests/core-k8s-bootstrap.yaml
+  - uri: manifests/05-core-k8s-bootstrap.yaml
+  - uri: manifests/10-core-universal-services.yaml
+
+aws-dev:
+  provider: aws
+  provisioner: kops
+  account: dev
+  profile: dev
+  cluster: dev1
+  regions:
+  - eu-west-1
+  vars:               # paths to yaml files to load data from. Keys will be merged.
+  - providers/
+  manifests:
+  # if no protocol is given, file:// is assumed.
+  - uri: manifests/05-core-k8s-bootstrap.yaml
+  - uri: manifests/10-core-universal-services.yaml
+  - uri: manifests/15-core-aws-services.yaml

@@ -1,0 +1,12 @@
+present:
+  cert-manager:
+    sources:
+    - uri: git@github.com:sugarkube/kapps.git
+      branch: cert-manager-0.1.0
+      path: incubator/cert-manager
+
+  nginx-ingress:
+    sources:
+    - uri: git@github.com:sugarkube/kapps.git
+      branch: nginx-ingress-0.1.0
+      path: incubator/nginx-ingress
