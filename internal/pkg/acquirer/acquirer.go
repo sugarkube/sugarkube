@@ -10,6 +10,8 @@ import (
 type Acquirer interface {
 	Acquire(dest string) error
 	Id() (string, error)
+	Name() string
+	Path() string
 }
 
 const ACQUIRER_KEY = "acquirer"

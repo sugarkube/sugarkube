@@ -25,7 +25,8 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 	// acquire each kapp and cache it
 	for _, kapp := range manifest.Kapps {
 		// create a cache directory for the kapp
-		kappCacheDir := filepath.Join(manifestCacheDir, kapp.Id, CACHE_DIR)
+		kappDir := filepath.Join(manifestCacheDir, kapp.Id)
+		kappCacheDir := filepath.Join(kappDir, CACHE_DIR)
 
 		log.Debugf("Creating kapp cache dir: %s", kappCacheDir)
 		err := os.MkdirAll(manifestCacheDir, 0755)
@@ -47,6 +48,19 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 				log.Debugf("Dry run: Would acquire source into %s", sourceDest)
 			} else {
 				acquirer.Acquire(sourceDest)
+			}
+
+			sourcePath := filepath.Join(sourceDest, acquirer.Path())
+			symLinkTarget := filepath.Join(kappDir, acquirer.Name())
+
+			if dryRun {
+				log.Debugf("Dry run. Would symlink cached source %s to %s", sourcePath, symLinkTarget)
+			} else {
+				log.Debugf("Symlinking cached source %s to %s", sourcePath, symLinkTarget)
+				err := os.Symlink(sourcePath, symLinkTarget)
+				if err != nil {
+					errors.Wrapf(err, "Error symlinking kapp source")
+				}
 			}
 		}
 	}

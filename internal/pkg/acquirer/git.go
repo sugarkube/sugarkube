@@ -59,6 +59,16 @@ func (a GitAcquirer) Id() (string, error) {
 	return strings.Join([]string{hyphenatedOrg, hyphenatedBranc, hyphenatedName}, "-"), nil
 }
 
+// return the name
+func (a GitAcquirer) Name() string {
+	return a.name
+}
+
+// return the path
+func (a GitAcquirer) Path() string {
+	return a.path
+}
+
 // Acquires kapps via git and saves them to `dest`.
 func (a GitAcquirer) Acquire(dest string) error {
 
