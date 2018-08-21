@@ -153,12 +153,16 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig, stackConfigVars)
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	if c.dryRun {
+		log.Infof("Dry run. Skipping cluster readiness check.")
+	} else {
+		err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig, stackConfigVars)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 
-	log.Infof("Cluster '%s' is ready for use.", stackConfig.Cluster)
+		log.Infof("Cluster '%s' is ready for use.", stackConfig.Cluster)
+	}
 
 	return nil
 }
