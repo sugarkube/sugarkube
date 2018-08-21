@@ -37,8 +37,8 @@ present:
       # this lets us reuse the same kapp parameterised differently per instance
       path: examples/values/wordpress/site1/
       # Name of the source. Defaults to the last component of the path (in this
-      # case `site1`). Also used as a key
-      id: site1-values
+      # case `site1`). Also used as a key.
+      name: site1-values
     - uri: git@github.com:sugarkube/sample-kapps.git
       branch: master
       path: common-makefiles/

@@ -26,7 +26,7 @@ var defaultSettings = map[string]string{
 }
 
 var expectedAcquirer = GitAcquirer{
-	id:     "tiller",
+	name:   "tiller",
 	uri:    "git@github.com:sugarkube/sample-kapps.git",
 	branch: "tiller-0.1.0",
 	path:   "tiller/",

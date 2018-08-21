@@ -39,4 +39,6 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string) error {
 			acquirer.Acquire(sourceDest)
 		}
 	}
+
+	return nil
 }

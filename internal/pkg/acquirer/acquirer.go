@@ -25,7 +25,7 @@ func acquirerFactory(name string, settings map[string]string) (Acquirer, error) 
 				"branch and path are all mandatory.")
 		}
 
-		return NewGitAcquirer(settings[ID], settings[URI], settings[BRANCH],
+		return NewGitAcquirer(settings[NAME], settings[URI], settings[BRANCH],
 			settings[PATH]), nil
 	}
 

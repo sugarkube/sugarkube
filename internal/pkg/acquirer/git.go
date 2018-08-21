@@ -11,7 +11,7 @@ import (
 )
 
 type GitAcquirer struct {
-	id     string
+	name   string
 	uri    string
 	branch string
 	path   string
@@ -20,20 +20,20 @@ type GitAcquirer struct {
 // todo - make configurable
 const GIT_PATH = "git"
 
-const ID = "id"
+const NAME = "name"
 const URI = "uri"
 const BRANCH = "branch"
 const PATH = "path"
 
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
-func NewGitAcquirer(id string, uri string, branch string, path string) GitAcquirer {
-	if id == "" {
-		id = filepath.Base(path)
+func NewGitAcquirer(name string, uri string, branch string, path string) GitAcquirer {
+	if name == "" {
+		name = filepath.Base(path)
 	}
 
 	return GitAcquirer{
-		id:     id,
+		name:   name,
 		uri:    uri,
 		branch: branch,
 		path:   path,
@@ -42,7 +42,7 @@ func NewGitAcquirer(id string, uri string, branch string, path string) GitAcquir
 
 // Return the ID
 func (a GitAcquirer) Id() string {
-	return a.id
+	return a.name
 }
 
 // Acquires kapps via git and saves them to `dest`.

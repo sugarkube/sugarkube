@@ -29,7 +29,7 @@ present:
     - uri: git@github.com:exampleB/repoB.git
       branch: branchB
       path: example/pathB
-      id: sampleNameB
+      name: sampleNameB
 
   example2:
     sources:
