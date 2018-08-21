@@ -14,6 +14,7 @@ import (
 
 type createCmd struct {
 	out       io.Writer
+	dryRun    bool
 	manifests cmd.Files
 	cacheDir  string
 }
@@ -31,6 +32,7 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	}
 
 	f := cmd.Flags()
+	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
 	f.StringVarP(&c.cacheDir, "dir", "d", "", "Directory to build the cache in. A temp directory will be generated if not supplied.")
 	f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
 
@@ -64,7 +66,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	log.Debug("Kapps validated. Caching manifests into %s...", cacheDir)
 
 	for _, manifest := range manifests {
-		cacher.CacheManifest(manifest, cacheDir)
+		cacher.CacheManifest(manifest, cacheDir, c.dryRun)
 	}
 
 	return nil

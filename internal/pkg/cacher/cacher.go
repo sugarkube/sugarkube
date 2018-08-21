@@ -11,7 +11,7 @@ import (
 const CACHE_DIR = "_cache"
 
 // Build a cache for a manifest into a directory
-func CacheManifest(manifest kapp.Manifest, cacheDir string) error {
+func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 
 	// create a directory to cache all kapps in this manifest in
 	manifestCacheDir := filepath.Join(cacheDir, manifest.Id)
@@ -34,6 +34,7 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string) error {
 		}
 
 		// acquire each source
+		// todo - run in goroutines
 		for _, acquirer := range kapp.Sources {
 			acquirerId, err := acquirer.Id()
 			if err != nil {
@@ -41,7 +42,12 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string) error {
 			}
 
 			sourceDest := filepath.Join(kappCacheDir, acquirerId)
-			acquirer.Acquire(sourceDest)
+
+			if dryRun {
+				log.Debugf("Dry run: Would acquire source into %s", sourceDest)
+			} else {
+				acquirer.Acquire(sourceDest)
+			}
 		}
 	}
 
