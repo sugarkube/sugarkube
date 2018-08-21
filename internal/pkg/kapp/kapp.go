@@ -16,7 +16,7 @@ type installerConfig struct {
 }
 
 type Kapp struct {
-	id string
+	Id string
 	// if true, this kapp should be present after completing, otherwise it
 	// should be absent. This is here instead of e.g. putting all kapps into
 	// an enclosing struct with 'present' and 'absent' properties so we can
@@ -24,7 +24,7 @@ type Kapp struct {
 	// of installation and deletion operations.
 	shouldBePresent bool
 	installerConfig installerConfig
-	sources         []acquirer.Acquirer
+	Sources         []acquirer.Acquirer
 }
 
 const PRESENT_KEY = "present"
@@ -37,7 +37,7 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 	// parse each kapp definition
 	for k, v := range kappDefinitions {
 		kapp := Kapp{
-			id:              k.(string),
+			Id:              k.(string),
 			shouldBePresent: shouldBePresent,
 		}
 
@@ -89,7 +89,7 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 			return acquirers[i].Id() < acquirers[j].Id()
 		})
 
-		kapp.sources = acquirers
+		kapp.Sources = acquirers
 
 		log.Debugf("Parsed kapp=%#v", kapp)
 

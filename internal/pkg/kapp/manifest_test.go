@@ -17,8 +17,8 @@ func TestValidateManifest(t *testing.T) {
 			desc: "kapp IDs should be unique",
 			input: Manifest{
 				Kapps: []Kapp{
-					{id: "example1"},
-					{id: "example2"},
+					{Id: "example1"},
+					{Id: "example2"},
 				},
 			},
 		},
@@ -27,9 +27,9 @@ func TestValidateManifest(t *testing.T) {
 			desc: "error when kapp IDs aren't unique",
 			input: Manifest{
 				Kapps: []Kapp{
-					{id: "example1"},
-					{id: "example2"},
-					{id: "example1"},
+					{Id: "example1"},
+					{Id: "example2"},
+					{Id: "example1"},
 				},
 			},
 		},

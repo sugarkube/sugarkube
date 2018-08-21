@@ -4,15 +4,18 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io"
+	"io/ioutil"
 )
 
 type createCmd struct {
 	out       io.Writer
 	manifests cmd.Files
+	cacheDir  string
 }
 
 func newCreateCmd(out io.Writer) *cobra.Command {
@@ -28,6 +31,7 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	}
 
 	f := cmd.Flags()
+	f.StringVarP(&c.cacheDir, "dir", "d", "", "Directory to build the cache in. A temp directory will be generated if not supplied.")
 	f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
 
 	return cmd
@@ -48,7 +52,20 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	log.Debug("Kapps validated")
+	cacheDir := c.cacheDir
+	if cacheDir == "" {
+		tempDir, err := ioutil.TempDir("", "sugarkube-cache-")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		cacheDir = tempDir
+	}
+
+	log.Debug("Kapps validated. Caching manifests into %s...", cacheDir)
+
+	for _, manifest := range manifests {
+		cacher.CacheManifest(manifest, cacheDir)
+	}
 
 	return nil
 }

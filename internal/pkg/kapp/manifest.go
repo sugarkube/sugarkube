@@ -83,7 +83,7 @@ func ValidateManifest(manifest *Manifest) error {
 	ids := map[string]bool{}
 
 	for _, kapp := range manifest.Kapps {
-		id := kapp.id
+		id := kapp.Id
 
 		if _, ok := ids[id]; ok {
 			return errors.New(fmt.Sprintf("Multiple kapps exist with "+

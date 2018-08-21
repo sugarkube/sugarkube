@@ -46,9 +46,9 @@ absent:
 `,
 			expectValues: []Kapp{
 				{
-					id:              "example1",
+					Id:              "example1",
 					shouldBePresent: true,
-					sources: []acquirer.Acquirer{
+					Sources: []acquirer.Acquirer{
 						acquirer.NewGitAcquirer(
 							"pathA",
 							"git@github.com:exampleA/repoA.git",
@@ -62,9 +62,9 @@ absent:
 					},
 				},
 				{
-					id:              "example2",
+					Id:              "example2",
 					shouldBePresent: true,
-					sources: []acquirer.Acquirer{
+					Sources: []acquirer.Acquirer{
 						acquirer.NewGitAcquirer(
 							"pathA",
 							"git@github.com:exampleA/repoA.git",
@@ -73,9 +73,9 @@ absent:
 					},
 				},
 				{
-					id:              "example3",
+					Id:              "example3",
 					shouldBePresent: false, // should be absent
-					sources: []acquirer.Acquirer{
+					Sources: []acquirer.Acquirer{
 						acquirer.NewGitAcquirer(
 							"pathA",
 							"git@github.com:exampleA/repoA.git",
