@@ -26,19 +26,19 @@ present:
       # settings are specific to the acquirer.
     - uri: git@github.com:helm/charts.git
       branch: master
-      path: charts/stable/cert-manager/
+      path: stable/cert-manager/
     - uri: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/values/cert-manager/values/
-    - uri: git@github.com:sugarkube/sugarkube.git
+    - uri: git@github.com:sugarkube/sample-kapps.git
       branch: master
-      path: examples/common-makefiles/
+      path: common-makefiles/
 
   nginx-ingress:
     sources:
     - uri: git@github.com:helm/charts.git
       branch: master
-      path: charts/stable/nginx-ingress/
-    - uri: git@github.com:sugarkube/sugarkube.git
+      path: stable/nginx-ingress/
+    - uri: git@github.com:sugarkube/sample-kapps.git
       branch: master
-      path: examples/common-makefiles/
+      path: common-makefiles/

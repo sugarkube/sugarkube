@@ -9,13 +9,13 @@ present:
     sources:
     - uri: git@github.com:helm/charts.git
       branch: master
-      path: charts/stable/kiam/
+      path: stable/kiam/
     - uri: git@github.com:sugarkube/sugarkube.git
       branch: master
       path: examples/values/kiam/values/
-    - uri: git@github.com:sugarkube/sugarkube.git
+    - uri: git@github.com:sugarkube/sample-kapps.git
       branch: master
-      path: examples/common-makefiles/
+      path: common-makefiles/
       # todo - somehow need to configure all these charts to use the default
       # Makefile that uses our common-makefiles library since they're all
       # coming directly from the upstream stable repo...

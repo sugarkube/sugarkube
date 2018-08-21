@@ -63,7 +63,10 @@ func acquireSource(acquirers []acquirer.Acquirer, kappDir string,
 			if dryRun {
 				log.Debugf("Dry run: Would acquire source into: %s", sourceDest)
 			} else {
-				a.Acquire(sourceDest)
+				err := a.Acquire(sourceDest)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+				}
 			}
 
 			sourcePath := filepath.Join(sourceDest, a.Path())

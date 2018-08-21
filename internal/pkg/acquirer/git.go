@@ -139,8 +139,9 @@ func (a GitAcquirer) Acquire(dest string) error {
 	checkoutCmd.Stderr = &stderrBuf
 	err = checkoutCmd.Run()
 	if err != nil {
-		return errors.Wrapf(err, "Error running: %s. Stderr=%s",
-			strings.Join(checkoutCmd.Args, " "), stderrBuf.String())
+		return errors.Wrapf(err, "Error running: '%s' on %s with path '%s'. "+
+			"Stderr=%s", strings.Join(
+			checkoutCmd.Args, " "), a.uri, a.path, stderrBuf.String())
 	}
 
 	// we could optionally verify tags with:
