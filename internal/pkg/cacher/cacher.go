@@ -2,6 +2,7 @@ package cacher
 
 import (
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
@@ -29,29 +30,44 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 		kappCacheDir := filepath.Join(kappDir, CACHE_DIR)
 
 		log.Debugf("Creating kapp cache dir: %s", kappCacheDir)
-		err := os.MkdirAll(manifestCacheDir, 0755)
+		err := os.MkdirAll(kappCacheDir, 0755)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		// acquire each source
-		// todo - run in goroutines
-		for _, acquirer := range kapp.Sources {
-			acquirerId, err := acquirer.Id()
+		err = acquireSource(kapp.Sources, kappDir, kappCacheDir, dryRun)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	return nil
+}
+
+// Acquires each source and symlinks it to the target path in the cache directory.
+// Runs all acquirers in parallel.
+func acquireSource(acquirers []acquirer.Acquirer, kappDir string,
+	kappCacheDir string, dryRun bool) error {
+	doneCh := make(chan bool)
+	errCh := make(chan error)
+
+	for _, acquirerImpl := range acquirers {
+		go func(a acquirer.Acquirer) {
+			acquirerId, err := a.Id()
 			if err != nil {
-				return errors.WithStack(err)
+				errCh <- errors.Wrap(err, "Invalid acquirer ID")
 			}
 
 			sourceDest := filepath.Join(kappCacheDir, acquirerId)
 
 			if dryRun {
-				log.Debugf("Dry run: Would acquire source into %s", sourceDest)
+				log.Debugf("Dry run: Would acquire source into: %s", sourceDest)
 			} else {
-				acquirer.Acquire(sourceDest)
+				a.Acquire(sourceDest)
 			}
 
-			sourcePath := filepath.Join(sourceDest, acquirer.Path())
-			symLinkTarget := filepath.Join(kappDir, acquirer.Name())
+			sourcePath := filepath.Join(sourceDest, a.Path())
+			symLinkTarget := filepath.Join(kappDir, a.Name())
 
 			if dryRun {
 				log.Debugf("Dry run. Would symlink cached source %s to %s", sourcePath, symLinkTarget)
@@ -59,9 +75,22 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 				log.Debugf("Symlinking cached source %s to %s", sourcePath, symLinkTarget)
 				err := os.Symlink(sourcePath, symLinkTarget)
 				if err != nil {
-					errors.Wrapf(err, "Error symlinking kapp source")
+					errCh <- errors.Wrapf(err, "Error symlinking kapp source")
 				}
 			}
+
+			doneCh <- true
+		}(acquirerImpl)
+	}
+
+	for success := 0; success < len(acquirers); success++ {
+		select {
+		case err := <-errCh:
+			close(doneCh)
+			log.Warnf("Error in acquirer goroutines: %s", err)
+			return errors.Wrap(err, "Error running acquirer in goroutine")
+		case <-doneCh:
+			log.Debugf("%d acquirers successfully completed", success+1)
 		}
 	}
 

@@ -66,7 +66,10 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	log.Debugf("Kapps validated. Caching manifests into %s...", cacheDir)
 
 	for _, manifest := range manifests {
-		cacher.CacheManifest(manifest, cacheDir, c.dryRun)
+		err := cacher.CacheManifest(manifest, cacheDir, c.dryRun)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil
