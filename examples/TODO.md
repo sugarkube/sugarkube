@@ -17,9 +17,10 @@ Come up with a few different manifests for different layers, e.g.:
 
 * Core ✔
   * Nginx-ingress ✔
+  * Cert manager ✔
 
 * AWS ✔
-  * Kiam ✔
+  * Kiam ✔ (untested)
 
 * Monitoring
   * Prometheus
@@ -31,7 +32,8 @@ Come up with a few different manifests for different layers, e.g.:
 
 * Security
   * Keycloak
-  * Cert manager ✔
+    * Uses H2 DB locally
+    * Uses RDS on AWS specced differently per environment (e.g. dev/prod, etc.)
   * Vault
   * Kuberos
 
