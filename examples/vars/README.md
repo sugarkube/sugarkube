@@ -19,7 +19,12 @@ cluster, and will merge variables following the following rules:
   * provisioner
   * profile
   * cluster
-  * installer (default `make`)  
+  * installer (default `make`)
+  * manifest
+  * `<KAPP_ID>.yaml`      
+  
+In the above, `KAPP_ID` could be `wordpress-site1.yaml` for example if there 
+are multiple Wordpress instances.
 
 E.g. so an example `stack.yaml` file that defines the following cluster:
 ```
@@ -46,7 +51,8 @@ of the file containing the variable. The exception is the file `values.yaml`
 which are passed without any prefix. All variable names are upper-cased and have
 hyphens converted to underscores.
 
-Here's an example that illustrates the variable merging logic:
+Here's an example that illustrates the variable merging logic for a kapp with
+an ID of `wordpress`:
 ```
 vars
 |-- local
@@ -65,5 +71,6 @@ and `local/standard/wordpress.yaml` contains:
 ```
 hosted-zone: example.com
 ```
-Then the kapp will be passed `WORDPRESS_HOSTED_ZONE=example.com` when being 
-installed into the `standard` cluster.
+Then the `wordpress` kapp will be passed `WORDPRESS_HOSTED_ZONE=example.com` 
+when being installed into the `standard` cluster. It's up to the kapp's 
+`Makefile` to use this value e.g. as a parameter to Terraform or Helm.

@@ -2,4 +2,4 @@
 provisioner:
   memory: 4096
   cpus: 4
-  disk_size: 120g
+  disk_size: 100g
