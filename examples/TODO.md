@@ -12,11 +12,14 @@ Create some sample stacks:
 ## Manifests
 Come up with a few different manifests for different layers, e.g.:
 
-* Core
-  * Nginx-ingress
+* K8s bootstrap ✔
+  * Tiller ✔
 
-* AWS
-  * Kiam
+* Core ✔
+  * Nginx-ingress ✔
+
+* AWS ✔
+  * Kiam ✔
 
 * Monitoring
   * Prometheus
@@ -28,7 +31,7 @@ Come up with a few different manifests for different layers, e.g.:
 
 * Security
   * Keycloak
-  * Cert manager
+  * Cert manager ✔
   * Vault
   * Kuberos
 
@@ -39,4 +42,6 @@ Come up with a few different manifests for different layers, e.g.:
   * Wordpress (multiple instances sharing the same DB, plus multiple with 
     their own DBs)
     * Backed by RDS and/or MariaDB
-  * Memcached locally, elasticache on AWS
+  * Memcached 
+    * locally  ✔
+    * elasticache on AWS
