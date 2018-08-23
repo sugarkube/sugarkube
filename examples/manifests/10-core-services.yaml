@@ -24,7 +24,8 @@ present:
     # acquirer, and the acquirer to use is inferred from the uri. Other
     # settings are specific to the acquirer.
     - uri: git@github.com:sugarkube/kapps.git
-      branch: cert-manager-0.1.0
+      branch: master
+      # branch: cert-manager-0.1.0
       path: incubator/cert-manager
     - uri: git@github.com:sugarkube/kapps.git
       branch: master
@@ -33,7 +34,8 @@ present:
   nginx-ingress:
     sources:
     - uri: git@github.com:sugarkube/kapps.git
-      branch: nginx-ingress-0.1.0
+      branch: master
+      #branch: nginx-ingress-0.1.0
       path: incubator/nginx-ingress
     - uri: git@github.com:sugarkube/kapps.git
       branch: master

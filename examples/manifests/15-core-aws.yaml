@@ -7,15 +7,10 @@ present:
   # is defined so defaults are used.
   kiam:
     sources:
-    - uri: git@github.com:helm/charts.git
+    - uri: git@github.com:sugarkube/kapps.git
       branch: master
-      path: stable/kiam/
-    - uri: git@github.com:sugarkube/sugarkube.git
-      branch: master
-      path: examples/values/kiam/values/
+      #      branch: kiam-0.1.0
+      path: incubator/kiam/
     - uri: git@github.com:sugarkube/kapps.git
       branch: master
       path: incubator/common-makefiles
-      # todo - somehow need to configure all these charts to use the default
-      # Makefile that uses our common-makefiles library since they're all
-      # coming directly from the upstream stable repo...

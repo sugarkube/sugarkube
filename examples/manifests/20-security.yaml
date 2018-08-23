@@ -2,7 +2,8 @@ present:
   keycloak:
     sources:
     - uri: git@github.com:sugarkube/kapps.git
-      branch: keycloak-0.1.0
+      branch: master
+      #branch: keycloak-0.1.0
       path: incubator/keycloak
     - uri: git@github.com:sugarkube/kapps.git
       branch: master
