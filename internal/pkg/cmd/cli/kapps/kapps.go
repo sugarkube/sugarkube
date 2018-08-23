@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-func NewKappsCmd(out io.Writer) *cobra.Command {
+func NewKappsCmds(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "kapps [command]",

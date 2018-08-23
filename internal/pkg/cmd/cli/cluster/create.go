@@ -77,6 +77,9 @@ Note: Not all providers require all arguments. See documentation for help.
 func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
 	stackConfig, err := ParseStackCliArgs(c.stackName, c.stackFile)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	cliManifests := make([]kapp.Manifest, 0)
 

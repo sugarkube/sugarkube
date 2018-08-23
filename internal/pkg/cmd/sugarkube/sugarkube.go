@@ -75,7 +75,7 @@ See https://sugarkube.io for more info and documentation.
 	cmd.AddCommand(
 		version.NewCommand(),
 		cluster.NewClusterCmds(out),
-		kapps.NewKappsCmd(out),
+		kapps.NewKappsCmds(out),
 		cache.NewCacheCmds(out),
 	)
 
