@@ -10,6 +10,7 @@ local-standard:
   # todo - support pulling these from git repos
   - uri: manifests/05-k8s-bootstrap.yaml
   - uri: manifests/10-core-services.yaml
+  - uri: manifests/40-wordpress-sites.yaml
 
 # todo - make sure we can run these stacks while overriding e.g. just the cluster
 # name to deploy there. Then we could have stacks for different tasks (e.g. opsy-stuff,
@@ -29,6 +30,7 @@ local-large:
   - uri: manifests/10-core-services.yaml
   - uri: manifests/20-security.yaml
   - uri: manifests/30-ci-cd.yaml
+  - uri: manifests/40-wordpress-sites.yaml
 
 aws-dev:
   provider: aws
@@ -48,3 +50,4 @@ aws-dev:
   - uri: manifests/15-core-aws.yaml
   - uri: manifests/20-security.yaml
   - uri: manifests/30-ci-cd.yaml
+  - uri: manifests/40-wordpress-sites.yaml
