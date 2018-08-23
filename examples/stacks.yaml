@@ -12,7 +12,7 @@ local-standard:
   - uri: manifests/10-core-services.yaml
   - uri: manifests/40-wordpress-sites.yaml
 
-# todo - make sure we can run these stacks while overriding e.g. just the cluster
+# todo - document it's possible to run these stacks while overriding e.g. just the cluster
 # name to deploy there. Then we could have stacks for different tasks (e.g. opsy-stuff,
 # ci-cd, monitoring) and devs could just deploy them to their own cluster without
 # duplicating these different stacks, one per developer).

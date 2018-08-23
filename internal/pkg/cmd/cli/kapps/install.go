@@ -27,7 +27,15 @@ type installCmd struct {
 	region        string
 	// todo - add a command to validate that the cache matches the desired
 	// state as defined in the manifest(s).
-	//manifests     cmd.Files
+	manifests cmd.Files
+	// todo - document that the above will replace manifests declared in a
+	// stack config, not be additive
+
+	// todo - add options to :
+	// * create the cache into a target directory
+	// * refresh the cache (i.e. modify it so it matches the manifests if it fails validation)
+	// * filter the kapps to be processed (use strings like e.g. manifest:kapp-id to refer to kapps)
+	// * exclude manifests / kapps from being processed
 }
 
 func newInstallCmd(out io.Writer) *cobra.Command {
@@ -60,7 +68,7 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
 	f.VarP(&c.varsFilesDirs, "vars-file-or-dir", "f", "YAML vars file or directory to load (can specify multiple)")
-	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
+	f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
 	return cmd
 }
 
@@ -71,12 +79,12 @@ func (c *installCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	//cliManifests := make([]kapp.Manifest, 0)
-	//
-	//for _, manifestPath := range c.manifests {
-	//	manifest := kapp.NewManifest(manifestPath)
-	//	cliManifests = append(cliManifests, manifest)
-	//}
+	cliManifests := make([]kapp.Manifest, 0)
+
+	for _, manifestPath := range c.manifests {
+		manifest := kapp.NewManifest(manifestPath)
+		cliManifests = append(cliManifests, manifest)
+	}
 
 	// CLI args override configured args, so merge them in
 	cliStackConfig := &kapp.StackConfig{
@@ -85,12 +93,17 @@ func (c *installCmd) run() error {
 		Profile:       c.profile,
 		Cluster:       c.cluster,
 		VarsFilesDirs: c.varsFilesDirs,
-		//Manifests:     cliManifests,
+		Manifests:     cliManifests,
 	}
 
 	mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
 
 	log.Debugf("Final stack config: %#v", stackConfig)
+
+	// todo - validate the cache dir
+
+	// todo - process the kapps. Run each manifest sequentially, but each
+	// kapp in each manifest in parallel.
 
 	return nil
 }
