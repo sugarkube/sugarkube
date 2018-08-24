@@ -18,15 +18,17 @@ type MockClusterSot struct {
 	mock.Mock
 }
 
-func (m MockClusterSot) isOnline(sc *kapp.StackConfig, values provider.Values) (bool, error) {
+func (m MockClusterSot) isOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 	args := m.Called(sc.Cluster)
 	return args.Bool(0), args.Error(1)
 }
 
-func (m MockClusterSot) isReady(sc *kapp.StackConfig, values provider.Values) (bool, error) {
+func (m MockClusterSot) isReady(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 	args := m.Called(sc.Cluster)
 	return args.Bool(0), args.Error(1)
 }
+
+var testProvider = provider.LocalProvider{}
 
 func TestIsOnlineTrue(t *testing.T) {
 	clusterName := "myCluster"
@@ -46,7 +48,7 @@ func TestIsOnlineTrue(t *testing.T) {
 	assert.False(t, sc.Status.IsOnline)
 
 	// call the code we are testing
-	IsOnline(testObj, &sc, provider.Values{})
+	IsOnline(testObj, &sc, testProvider)
 
 	// assert that the expectations were met
 	testObj.AssertExpectations(t)
@@ -72,7 +74,7 @@ func TestIsOnlineFalse(t *testing.T) {
 	assert.False(t, sc.Status.IsOnline)
 
 	// call the code we are testing
-	IsOnline(testObj, &sc, provider.Values{})
+	IsOnline(testObj, &sc, testProvider)
 
 	// assert that the expectations were met
 	testObj.AssertExpectations(t)
@@ -98,7 +100,7 @@ func TestIsReadyTrue(t *testing.T) {
 	assert.False(t, sc.Status.IsReady)
 
 	// call the code we are testing
-	IsReady(testObj, &sc, provider.Values{})
+	IsReady(testObj, &sc, testProvider)
 
 	// assert that the expectations were met
 	testObj.AssertExpectations(t)
@@ -124,7 +126,7 @@ func TestIsReadyFalse(t *testing.T) {
 	assert.False(t, sc.Status.IsReady)
 
 	// call the code we are testing
-	IsReady(testObj, &sc, provider.Values{})
+	IsReady(testObj, &sc, testProvider)
 
 	// assert that the expectations were met
 	testObj.AssertExpectations(t)

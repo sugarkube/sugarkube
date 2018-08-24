@@ -82,7 +82,7 @@ func (p *Plan) Apply(dryRun bool) error {
 		return nil
 	}
 
-	providerImpl, stackConfigVars, err := provider.NewProviderAndVars(p.stackConfig)
+	providerImpl, err := provider.NewProvider(p.stackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -97,12 +97,12 @@ func (p *Plan) Apply(dryRun bool) error {
 
 		for _, installable := range tranche.installables {
 			go processKapp(installable, p.stackConfig, manifestCacheDir, true,
-				providerImpl, stackConfigVars, doneCh, errCh, dryRun)
+				providerImpl, doneCh, errCh, dryRun)
 		}
 
 		for _, destroyable := range tranche.destroyables {
 			go processKapp(destroyable, p.stackConfig, manifestCacheDir, false,
-				providerImpl, stackConfigVars, doneCh, errCh, dryRun)
+				providerImpl, doneCh, errCh, dryRun)
 		}
 
 		totalOperations := len(tranche.installables) + len(tranche.destroyables)
@@ -129,7 +129,7 @@ func (p *Plan) Apply(dryRun bool) error {
 // Installs or destroys a kapp using the appropriate Installer
 func processKapp(kappObj kapp.Kapp, stackConfig *kapp.StackConfig,
 	manifestCacheDir string, install bool, providerImpl provider.Provider,
-	stackConfigVars provider.Values, doneCh chan bool, errCh chan error, dryRun bool) {
+	doneCh chan bool, errCh chan error, dryRun bool) {
 
 	kappRootDir := cacher.GetKappRootPath(manifestCacheDir, kappObj)
 
@@ -144,7 +144,7 @@ func processKapp(kappObj kapp.Kapp, stackConfig *kapp.StackConfig,
 	}
 
 	// kapp exists, run the appropriate installer method
-	installerImpl, err := installer.NewInstaller(installer.MAKE, providerImpl, stackConfigVars)
+	installerImpl, err := installer.NewInstaller(installer.MAKE, providerImpl)
 	if err != nil {
 		errCh <- errors.Wrapf(err, "Error instantiating installer for "+
 			"kapp '%s'", kappObj.Id)

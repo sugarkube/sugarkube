@@ -14,11 +14,11 @@ type Provisioner interface {
 	// Returns the ClusterSot for this provisioner
 	ClusterSot() (clustersot.ClusterSot, error)
 	// Creates a cluster
-	create(sc *kapp.StackConfig, values provider.Values, dryRun bool) error
+	create(sc *kapp.StackConfig, providerImpl provider.Provider, dryRun bool) error
 	// Returns whether the cluster is already running
-	isAlreadyOnline(sc *kapp.StackConfig, values provider.Values) (bool, error)
+	isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error)
 	// Update the cluster config if supported by the provisioner
-	update(sc *kapp.StackConfig, values provider.Values) error
+	update(sc *kapp.StackConfig, providerImpl provider.Provider) error
 }
 
 // key in Values that relates to this provisioner
@@ -42,16 +42,16 @@ func NewProvisioner(name string) (Provisioner, error) {
 }
 
 // Creates a cluster using an implementation of a Provisioner
-func Create(p Provisioner, sc *kapp.StackConfig, values provider.Values, dryRun bool) error {
-	return p.create(sc, values, dryRun)
+func Create(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider, dryRun bool) error {
+	return p.create(sc, providerImpl, dryRun)
 }
 
 // Return whether the cluster is already online
-func IsAlreadyOnline(p Provisioner, sc *kapp.StackConfig, values provider.Values) (bool, error) {
+func IsAlreadyOnline(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 
 	log.Infof("Checking whether cluster '%s' is already online...", sc.Cluster)
 
-	online, err := p.isAlreadyOnline(sc, values)
+	online, err := p.isAlreadyOnline(sc, providerImpl)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -67,7 +67,7 @@ func IsAlreadyOnline(p Provisioner, sc *kapp.StackConfig, values provider.Values
 }
 
 // Wait for a cluster to come online, then to become ready.
-func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, values provider.Values) error {
+func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider) error {
 	clusterSot, err := p.ClusterSot()
 	if err != nil {
 		return errors.WithStack(err)
@@ -80,7 +80,7 @@ func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, values provide
 
 	timeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
 	for time.Now().Before(timeoutTime) {
-		online, err := clustersot.IsOnline(clusterSot, sc, values)
+		online, err := clustersot.IsOnline(clusterSot, sc, providerImpl)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -110,7 +110,7 @@ func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, values provide
 
 	readinessTimeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
 	for time.Now().Before(readinessTimeoutTime) {
-		ready, err := clustersot.IsReady(clusterSot, sc, values)
+		ready, err := clustersot.IsReady(clusterSot, sc, providerImpl)
 		if err != nil {
 			return errors.WithStack(err)
 		}

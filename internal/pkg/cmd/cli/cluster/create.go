@@ -102,14 +102,14 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
 	log.Debugf("Final stack config: %#v", stackConfig)
 
-	_, stackConfigVars, err := provider.NewProviderAndVars(stackConfig)
+	providerImpl, err := provider.NewProvider(stackConfig)
 
 	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig, stackConfigVars)
+	online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig, providerImpl)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -119,7 +119,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	err = provisioner.Create(provisionerImpl, stackConfig, stackConfigVars, c.dryRun)
+	err = provisioner.Create(provisionerImpl, stackConfig, providerImpl, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -127,7 +127,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	if c.dryRun {
 		log.Infof("Dry run. Skipping cluster readiness check.")
 	} else {
-		err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig, stackConfigVars)
+		err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig, providerImpl)
 		if err != nil {
 			return errors.WithStack(err)
 		}

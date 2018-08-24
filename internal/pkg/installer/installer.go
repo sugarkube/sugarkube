@@ -17,12 +17,10 @@ type Installer interface {
 const MAKE = "make"
 
 // Factory that creates installers
-func NewInstaller(name string, providerImpl provider.Provider,
-	stackConfigVars provider.Values) (Installer, error) {
+func NewInstaller(name string, providerImpl provider.Provider) (Installer, error) {
 	if name == MAKE {
 		return MakeInstaller{
-			provider:        providerImpl,
-			stackConfigVars: stackConfigVars,
+			provider: providerImpl,
 		}, nil
 	}
 

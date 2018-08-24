@@ -12,7 +12,7 @@ type KopsProvisioner struct {
 	clusterSot clustersot.ClusterSot
 }
 
-func (p KopsProvisioner) create(sc *kapp.StackConfig, values provider.Values,
+func (p KopsProvisioner) create(sc *kapp.StackConfig, providerImpl provider.Provider,
 	dryRun bool) error {
 	log.Debugf("Creating stack with Kops and config: %#v", sc)
 
@@ -32,11 +32,11 @@ func (p KopsProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 	return p.clusterSot, nil
 }
 
-func (p KopsProvisioner) isAlreadyOnline(sc *kapp.StackConfig, values provider.Values) (bool, error) {
+func (p KopsProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 	panic("not implemented")
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p KopsProvisioner) update(sc *kapp.StackConfig, values provider.Values) error {
+func (p KopsProvisioner) update(sc *kapp.StackConfig, providerImpl provider.Provider) error {
 	panic("not implemented")
 }

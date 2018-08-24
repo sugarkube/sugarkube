@@ -9,11 +9,23 @@ import (
 	"path/filepath"
 )
 
-type LocalProvider struct{}
+type LocalProvider struct {
+	stackConfigVars Values
+}
 
 const PROVIDER_NAME = "local"
 const PROFILE_DIR = "profiles"
 const CLUSTER_DIR = "clusters"
+
+// Associate provider variables with the provider
+func (p LocalProvider) setVars(values Values) {
+	p.stackConfigVars = values
+}
+
+// Returns the variables loaded by the Provider
+func (p LocalProvider) GetVars() Values {
+	return p.stackConfigVars
+}
 
 // Returns directories to look for values files in specific to this provider
 func (p LocalProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {

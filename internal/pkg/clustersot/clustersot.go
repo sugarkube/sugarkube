@@ -9,8 +9,8 @@ import (
 )
 
 type ClusterSot interface {
-	isOnline(sc *kapp.StackConfig, values provider.Values) (bool, error)
-	isReady(sc *kapp.StackConfig, values provider.Values) (bool, error)
+	isOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error)
+	isReady(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error)
 }
 
 // Implemented ClusterSot names
@@ -27,12 +27,12 @@ func NewClusterSot(name string) (ClusterSot, error) {
 
 // Uses an implementation to determine whether the cluster is reachable/online, but it
 // may not be ready to install Kapps into yet.
-func IsOnline(c ClusterSot, sc *kapp.StackConfig, values provider.Values) (bool, error) {
+func IsOnline(c ClusterSot, sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 	if sc.Status.IsOnline {
 		return true, nil
 	}
 
-	online, err := c.isOnline(sc, values)
+	online, err := c.isOnline(sc, providerImpl)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -46,12 +46,12 @@ func IsOnline(c ClusterSot, sc *kapp.StackConfig, values provider.Values) (bool,
 }
 
 // Uses an implementation to determine whether the cluster is ready to install kapps into
-func IsReady(c ClusterSot, sc *kapp.StackConfig, values provider.Values) (bool, error) {
+func IsReady(c ClusterSot, sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 	if sc.Status.IsReady {
 		return true, nil
 	}
 
-	ready, err := c.isReady(sc, values)
+	ready, err := c.isReady(sc, providerImpl)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
