@@ -20,34 +20,71 @@ type Plan struct {
 	// each kapp in the tranche will be processed in parallel
 	tranche []Tranche
 	// contains details of the target cluster
-	stackConfig kapp.StackConfig
+	stackConfig *kapp.StackConfig
 	// a cache dir to run the (make) installer over. It should already have
 	// been validated to match the stack config.
 	cacheDir string
 }
 
 func Create(stackConfig *kapp.StackConfig) (*Plan, error) {
+
+	// build a plan containing all kapps, then filter out the ones that don't
+	// need running based on responses from SOTs
+	tranches := make([]Tranche, 0)
+
+	for _, manifest := range stackConfig.Manifests {
+		installables := make([]kapp.Kapp, 0)
+		destroyables := make([]kapp.Kapp, 0)
+
+		for _, kapp := range manifest.Kapps {
+			if kapp.ShouldBePresent {
+				installables = append(installables, kapp)
+			} else {
+				destroyables = append(destroyables, kapp)
+			}
+		}
+
+		tranche := Tranche{
+			installables: installables,
+			destroyables: destroyables,
+		}
+
+		tranches = append(tranches, tranche)
+	}
+
+	plan := Plan{
+		tranche:     tranches,
+		stackConfig: stackConfig,
+	}
+
 	// todo - use Sources of Truth (SOTs) to discover the current set of kapps installed
 	// todo - diff the cluster state with the desired state from the manifests to create a plan
-	return nil, nil
+
+	return &plan, nil
 }
 
 // Apply a plan to make a target cluster have the necessary kapps installed/
 // destroyed to match the input manifests. Each tranche is run sequentially,
 // and each kapp in each tranche is processed in parallel.
-func Apply(plan *Plan, dryRun bool) error {
+func (p *Plan) Apply(dryRun bool) error {
+
+	if p.tranche == nil {
+		log.Info("No tranches in plan to process")
+		return nil
+	}
+
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 
-	log.Debugf("Applying plan: %#v", plan)
+	log.Debugf("Applying plan: %#v", p)
 
-	for i, tranche := range plan.tranche {
-		for _, trancheKapp := range tranche.installables {
-			go processKapp(trancheKapp, doneCh, errCh, dryRun)
+	for i, tranche := range p.tranche {
+		for _, installable := range tranche.installables {
+			go processKapp(installable, doneCh, errCh, dryRun)
 		}
 
-		for _, trancheKapp := range tranche.destroyables {
-			go processKapp(trancheKapp, doneCh, errCh, dryRun)
+		for _, destroyable := range tranche.destroyables {
+			go processKapp(destroyable, doneCh, errCh, dryRun)
 		}
 
 		totalOperations := len(tranche.installables) + len(tranche.destroyables)
@@ -56,12 +93,12 @@ func Apply(plan *Plan, dryRun bool) error {
 			select {
 			case err := <-errCh:
 				close(doneCh)
-				log.Warnf("Error processing kapp in tranche %d of plan: %s", i, err)
+				log.Warnf("Error processing kapp in tranche %d of plan: %s", i+1, err)
 				return errors.Wrapf(err, "Error processing kapp goroutine "+
-					"in tranche %d of plan", i)
+					"in tranche %d of plan", i+1)
 			case <-doneCh:
 				log.Debugf("%d kapp(s) successfully processed in tranche %d",
-					success+1, i)
+					success+1, i+1)
 			}
 		}
 	}

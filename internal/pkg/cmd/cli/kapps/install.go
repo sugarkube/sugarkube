@@ -126,7 +126,7 @@ func (c *installCmd) run() error {
 	//}
 
 	// if not in planning mode, apply plan
-	plan.Apply(changePlan, c.dryRun)
+	changePlan.Apply(c.dryRun)
 
 	return nil
 }

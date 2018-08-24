@@ -22,7 +22,7 @@ type Kapp struct {
 	// an enclosing struct with 'present' and 'absent' properties so we can
 	// preserve ordering. This approach lets users strictly define the ordering
 	// of installation and deletion operations.
-	shouldBePresent bool
+	ShouldBePresent bool
 	installerConfig installerConfig
 	Sources         []acquirer.Acquirer
 }
@@ -38,7 +38,7 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 	for k, v := range kappDefinitions {
 		kapp := Kapp{
 			Id:              k.(string),
-			shouldBePresent: shouldBePresent,
+			ShouldBePresent: shouldBePresent,
 		}
 
 		log.Debugf("kapp=%s, v=%#v", kapp, v)

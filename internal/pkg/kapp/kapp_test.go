@@ -47,7 +47,7 @@ absent:
 			expectValues: []Kapp{
 				{
 					Id:              "example1",
-					shouldBePresent: true,
+					ShouldBePresent: true,
 					Sources: []acquirer.Acquirer{
 						acquirer.NewGitAcquirer(
 							"pathA",
@@ -63,7 +63,7 @@ absent:
 				},
 				{
 					Id:              "example2",
-					shouldBePresent: true,
+					ShouldBePresent: true,
 					Sources: []acquirer.Acquirer{
 						acquirer.NewGitAcquirer(
 							"pathA",
@@ -74,7 +74,7 @@ absent:
 				},
 				{
 					Id:              "example3",
-					shouldBePresent: false, // should be absent
+					ShouldBePresent: false, // should be absent
 					Sources: []acquirer.Acquirer{
 						acquirer.NewGitAcquirer(
 							"pathA",

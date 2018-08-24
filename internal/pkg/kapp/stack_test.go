@@ -39,7 +39,7 @@ func TestLoadStackConfig(t *testing.T) {
 				Kapps: []Kapp{
 					{
 						Id:              "kappA",
-						shouldBePresent: true,
+						ShouldBePresent: true,
 						Sources: []acquirer.Acquirer{
 							acquirer.NewGitAcquirer(
 								"pathA",
@@ -56,7 +56,7 @@ func TestLoadStackConfig(t *testing.T) {
 				Kapps: []Kapp{
 					{
 						Id:              "kappB",
-						shouldBePresent: true,
+						ShouldBePresent: true,
 						Sources: []acquirer.Acquirer{
 							acquirer.NewGitAcquirer(
 								"pathB",
