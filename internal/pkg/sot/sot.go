@@ -1,6 +1,6 @@
 package sot
 
 type Sot interface {
-	Refresh() error
-	IsInstalled(name string, version string) (bool, error)
+	refresh() error
+	isInstalled(name string, version string) (bool, error)
 }

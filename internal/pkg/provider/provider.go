@@ -18,7 +18,7 @@ type Provider interface {
 	// Method that returns all paths in a config directory relevant to the
 	// target profile/cluster/region, etc. that should be searched for values
 	// files to merge.
-	VarsDirs(sc *kapp.StackConfig) ([]string, error)
+	varsDirs(sc *kapp.StackConfig) ([]string, error)
 }
 
 // implemented providers
@@ -43,7 +43,7 @@ func NewProvider(name string) (Provider, error) {
 func StackConfigVars(p Provider, sc *kapp.StackConfig) (Values, error) {
 	stackConfigVars := Values{}
 
-	varsDirs, err := p.VarsDirs(sc)
+	varsDirs, err := p.varsDirs(sc)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

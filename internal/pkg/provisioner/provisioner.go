@@ -14,11 +14,11 @@ type Provisioner interface {
 	// Returns the ClusterSot for this provisioner
 	ClusterSot() (clustersot.ClusterSot, error)
 	// Creates a cluster
-	Create(sc *kapp.StackConfig, values provider.Values, dryRun bool) error
+	create(sc *kapp.StackConfig, values provider.Values, dryRun bool) error
 	// Returns whether the cluster is already running
-	IsAlreadyOnline(sc *kapp.StackConfig, values provider.Values) (bool, error)
+	isAlreadyOnline(sc *kapp.StackConfig, values provider.Values) (bool, error)
 	// Update the cluster config if supported by the provisioner
-	Update(sc *kapp.StackConfig, values provider.Values) error
+	update(sc *kapp.StackConfig, values provider.Values) error
 }
 
 // key in Values that relates to this provisioner
@@ -43,7 +43,7 @@ func NewProvisioner(name string) (Provisioner, error) {
 
 // Creates a cluster using an implementation of a Provisioner
 func Create(p Provisioner, sc *kapp.StackConfig, values provider.Values, dryRun bool) error {
-	return p.Create(sc, values, dryRun)
+	return p.create(sc, values, dryRun)
 }
 
 // Return whether the cluster is already online
@@ -51,7 +51,7 @@ func IsAlreadyOnline(p Provisioner, sc *kapp.StackConfig, values provider.Values
 
 	log.Infof("Checking whether cluster '%s' is already online...", sc.Cluster)
 
-	online, err := p.IsAlreadyOnline(sc, values)
+	online, err := p.isAlreadyOnline(sc, values)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}

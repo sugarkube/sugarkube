@@ -6,7 +6,7 @@ import (
 
 type AwsProvider struct{}
 
-func (p AwsProvider) VarsDirs(stackConfig *kapp.StackConfig) ([]string, error) {
+func (p AwsProvider) varsDirs(stackConfig *kapp.StackConfig) ([]string, error) {
 	return []string{
 		"/cat",
 		"/dog",

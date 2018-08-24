@@ -16,7 +16,7 @@ const PROFILE_DIR = "profiles"
 const CLUSTER_DIR = "clusters"
 
 // Returns directories to look for values files in specific to this provider
-func (p LocalProvider) VarsDirs(sc *kapp.StackConfig) ([]string, error) {
+func (p LocalProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 
 	paths := make([]string, 0)
 
