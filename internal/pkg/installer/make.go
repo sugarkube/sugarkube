@@ -4,12 +4,16 @@ import (
 	"bytes"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"os/exec"
 	"path/filepath"
 )
 
 // Installs kapps with make
-type MakeInstaller struct{}
+type MakeInstaller struct {
+	provider        provider.Provider
+	stackConfigVars provider.Values
+}
 
 const TARGET_INSTALL = "install"
 const TARGET_DESTROY = "destroy"
@@ -29,10 +33,10 @@ func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig
 		"PROFILE=" + stackConfig.Profile,
 		"PROVIDER=" + stackConfig.Provider,
 		// Provider-specific
-		//"REGION=" + stackConfig.Provider.Region,
-		//// Helm-specific todo
 		// comes from stackConfigVars
-		//"KUBE_CONTEXT=" + stackConfig.Provider.Context(),
+		//"REGION=" + stackConfig.Provider.Region,
+		//"KUBE_CONTEXT=" + stackConfig.Provider.GetInstallerVars(),
+		//// Helm-specific todo
 		//"NAMESPACE=" + ??,
 		//"RELEASE=????,
 		//"CHART_DIR=???"

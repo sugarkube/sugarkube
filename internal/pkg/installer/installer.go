@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 )
 
 type Installer interface {
@@ -16,9 +17,13 @@ type Installer interface {
 const MAKE = "make"
 
 // Factory that creates installers
-func NewInstaller(name string) (Installer, error) {
+func NewInstaller(name string, providerImpl provider.Provider,
+	stackConfigVars provider.Values) (Installer, error) {
 	if name == MAKE {
-		return MakeInstaller{}, nil
+		return MakeInstaller{
+			provider:        providerImpl,
+			stackConfigVars: stackConfigVars,
+		}, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("Installer '%s' doesn't exist", name))
