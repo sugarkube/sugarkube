@@ -9,8 +9,8 @@ import (
 )
 
 type ClusterSot interface {
-	IsOnline(sc *kapp.StackConfig, values provider.Values) (bool, error)
-	IsReady(sc *kapp.StackConfig, values provider.Values) (bool, error)
+	isOnline(sc *kapp.StackConfig, values provider.Values) (bool, error)
+	isReady(sc *kapp.StackConfig, values provider.Values) (bool, error)
 }
 
 // Implemented ClusterSot names
@@ -32,7 +32,7 @@ func IsOnline(c ClusterSot, sc *kapp.StackConfig, values provider.Values) (bool,
 		return true, nil
 	}
 
-	online, err := c.IsOnline(sc, values)
+	online, err := c.isOnline(sc, values)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -51,7 +51,7 @@ func IsReady(c ClusterSot, sc *kapp.StackConfig, values provider.Values) (bool, 
 		return true, nil
 	}
 
-	ready, err := c.IsReady(sc, values)
+	ready, err := c.isReady(sc, values)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}

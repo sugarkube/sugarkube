@@ -18,12 +18,12 @@ type MockClusterSot struct {
 	mock.Mock
 }
 
-func (m MockClusterSot) IsOnline(sc *kapp.StackConfig, values provider.Values) (bool, error) {
+func (m MockClusterSot) isOnline(sc *kapp.StackConfig, values provider.Values) (bool, error) {
 	args := m.Called(sc.Cluster)
 	return args.Bool(0), args.Error(1)
 }
 
-func (m MockClusterSot) IsReady(sc *kapp.StackConfig, values provider.Values) (bool, error) {
+func (m MockClusterSot) isReady(sc *kapp.StackConfig, values provider.Values) (bool, error) {
 	args := m.Called(sc.Cluster)
 	return args.Bool(0), args.Error(1)
 }
@@ -35,7 +35,7 @@ func TestIsOnlineTrue(t *testing.T) {
 	testObj := MockClusterSot{}
 
 	// setup expectations
-	testObj.On("IsOnline", clusterName).Return(true, nil)
+	testObj.On("isOnline", clusterName).Return(true, nil)
 
 	status := kapp.ClusterStatus{IsOnline: false}
 	sc := kapp.StackConfig{
@@ -61,7 +61,7 @@ func TestIsOnlineFalse(t *testing.T) {
 	testObj := MockClusterSot{}
 
 	// setup expectations
-	testObj.On("IsOnline", clusterName).Return(false, nil)
+	testObj.On("isOnline", clusterName).Return(false, nil)
 
 	status := kapp.ClusterStatus{IsOnline: false}
 	sc := kapp.StackConfig{
@@ -87,7 +87,7 @@ func TestIsReadyTrue(t *testing.T) {
 	testObj := MockClusterSot{}
 
 	// setup expectations
-	testObj.On("IsReady", clusterName).Return(true, nil)
+	testObj.On("isReady", clusterName).Return(true, nil)
 
 	status := kapp.ClusterStatus{IsReady: false}
 	sc := kapp.StackConfig{
@@ -113,7 +113,7 @@ func TestIsReadyFalse(t *testing.T) {
 	testObj := MockClusterSot{}
 
 	// setup expectations
-	testObj.On("IsReady", clusterName).Return(false, nil)
+	testObj.On("isReady", clusterName).Return(false, nil)
 
 	status := kapp.ClusterStatus{IsReady: false}
 	sc := kapp.StackConfig{

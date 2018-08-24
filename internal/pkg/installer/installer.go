@@ -8,8 +8,8 @@ import (
 )
 
 type Installer interface {
-	install(kapp *kapp.Kapp, stackConfig *kapp.StackConfig) error
-	destroy(kapp *kapp.Kapp, stackConfig *kapp.StackConfig) error
+	install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig) error
+	destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig) error
 }
 
 // implemented installers
