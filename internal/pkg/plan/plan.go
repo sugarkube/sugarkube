@@ -1,10 +1,12 @@
 package plan
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"os"
 )
 
 type Tranche struct {
@@ -87,13 +89,11 @@ func (p *Plan) Apply(dryRun bool) error {
 		manifestCacheDir := cacher.GetManifestCachePath(p.cacheDir, tranche.manifest)
 
 		for _, installable := range tranche.installables {
-			kappRootPath := cacher.GetKappRootPath(manifestCacheDir, installable)
-			go processKapp(installable, kappRootPath, doneCh, errCh, dryRun)
+			go processKapp(installable, manifestCacheDir, true, doneCh, errCh, dryRun)
 		}
 
 		for _, destroyable := range tranche.destroyables {
-			kappRootPath := cacher.GetKappRootPath(manifestCacheDir, destroyable)
-			go processKapp(destroyable, kappRootPath, doneCh, errCh, dryRun)
+			go processKapp(destroyable, manifestCacheDir, false, doneCh, errCh, dryRun)
 		}
 
 		totalOperations := len(tranche.installables) + len(tranche.destroyables)
@@ -118,33 +118,34 @@ func (p *Plan) Apply(dryRun bool) error {
 }
 
 // Installs or destroys a kapp using the appropriate Installer
-func processKapp(kapp kapp.Kapp, kappRootDir string, doneCh chan bool,
+func processKapp(kappObj kapp.Kapp, manifestCacheDir string, install bool, doneCh chan bool,
 	errCh chan error, dryRun bool) {
 
-	log.Debugf("Processing kapp '%s' in %s", kapp.Id, kappRootDir)
+	kappRootDir := cacher.GetKappRootPath(manifestCacheDir, kappObj)
 
-	//if dryRun {
-	//	log.Debugf("Dry run: Would acquire source into: %s", sourceDest)
-	//} else {
-	//	err := a.Acquire(sourceDest)
-	//	if err != nil {
-	//		errCh <- errors.WithStack(err)
-	//	}
-	//}
-	//
-	//if dryRun {
-	//	log.Debugf("Dry run. Would symlink cached source %s to %s", sourcePath, symLinkTarget)
-	//} else {
-	//	if _, err := os.Stat(filepath.Join(kappDir, sourcePath)); err != nil {
-	//		errCh <- errors.Wrapf(err, "Symlink source '%s' doesn't exist", sourcePath)
-	//	}
-	//
-	//	log.Debugf("Symlinking cached source %s to %s", sourcePath, symLinkTarget)
-	//	err := os.Symlink(sourcePath, symLinkTarget)
-	//	if err != nil {
-	//		errCh <- errors.Wrapf(err, "Error symlinking kapp source")
-	//	}
-	//}
+	log.Debugf("Processing kapp '%s' in %s", kappObj.Id, kappRootDir)
+
+	_, err := os.Stat(kappRootDir)
+	if err != nil {
+		msg := fmt.Sprintf("Kapp '%s' doesn't exist in the cache at '%s'",
+			kappObj.Id, kappRootDir)
+		log.Warn(msg)
+		errCh <- errors.Wrap(err, msg)
+	}
+
+	// kapp exists, run the installer on it in the appropriate mode
+
+	// install the kapp
+	if install {
+
+	} else { // destroy the kapp
+
+	}
+
+	if dryRun {
+		// todo
+		//log.Debugf("Dry run. Would do...")
+	}
 
 	doneCh <- true
 }
