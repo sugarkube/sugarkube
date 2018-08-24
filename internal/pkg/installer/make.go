@@ -22,7 +22,7 @@ const TARGET_INSTALL = "install"
 const TARGET_DESTROY = "destroy"
 
 func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	dryRun bool) error {
+	approved bool, dryRun bool) error {
 	// search for the Makefile
 	makefilePath := "/some/path/Makefile"
 
@@ -32,7 +32,7 @@ func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig
 
 	// create the env vars
 	envVars := []string{
-		"APPROVED=false", // todo - parameterise
+		fmt.Sprintf("APPROVED=%v", approved),
 		"CLUSTER=" + stackConfig.Cluster,
 		"PROFILE=" + stackConfig.Profile,
 		"PROVIDER=" + stackConfig.Provider,
@@ -78,6 +78,7 @@ func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig
 	return nil
 }
 
-func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, dryRun bool) error {
+func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
+	approved bool, dryRun bool) error {
 	return nil
 }

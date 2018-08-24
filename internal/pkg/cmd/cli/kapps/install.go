@@ -17,6 +17,7 @@ type installCmd struct {
 	out           io.Writer
 	dryRun        bool
 	apply         bool
+	approved      bool
 	cacheDir      string
 	stackName     string
 	stackFile     string
@@ -61,6 +62,8 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 	f := cmd.Flags()
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
 	f.BoolVar(&c.apply, "apply", false, "apply a plan to install/destroy kapps")
+	// todo - change this. It's confusing.
+	f.BoolVar(&c.approved, "approved", false, "actually apply a plan to install/destroy kapps")
 	f.StringVarP(&c.cacheDir, "dir", "d", "", "Cache directory to install kapps from")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
@@ -126,7 +129,9 @@ func (c *installCmd) run() error {
 	//}
 
 	// if not in planning mode, apply plan
-	changePlan.Apply(c.dryRun)
+	// todo - think of better names than plan, apply and approved. The difference
+	// between applying and approving isn't obvious.
+	changePlan.Apply(c.approved, c.dryRun)
 
 	return nil
 }

@@ -75,7 +75,7 @@ func Create(stackConfig *kapp.StackConfig, cacheDir string) (*Plan, error) {
 // Apply a plan to make a target cluster have the necessary kapps installed/
 // destroyed to match the input manifests. Each tranche is run sequentially,
 // and each kapp in each tranche is processed in parallel.
-func (p *Plan) Apply(dryRun bool) error {
+func (p *Plan) Apply(approved bool, dryRun bool) error {
 
 	if p.tranche == nil {
 		log.Info("No tranches in plan to process")
@@ -97,12 +97,12 @@ func (p *Plan) Apply(dryRun bool) error {
 
 		for _, installable := range tranche.installables {
 			go processKapp(installable, p.stackConfig, manifestCacheDir, true,
-				providerImpl, doneCh, errCh, dryRun)
+				providerImpl, doneCh, errCh, approved, dryRun)
 		}
 
 		for _, destroyable := range tranche.destroyables {
 			go processKapp(destroyable, p.stackConfig, manifestCacheDir, false,
-				providerImpl, doneCh, errCh, dryRun)
+				providerImpl, doneCh, errCh, approved, dryRun)
 		}
 
 		totalOperations := len(tranche.installables) + len(tranche.destroyables)
@@ -129,7 +129,7 @@ func (p *Plan) Apply(dryRun bool) error {
 // Installs or destroys a kapp using the appropriate Installer
 func processKapp(kappObj kapp.Kapp, stackConfig *kapp.StackConfig,
 	manifestCacheDir string, install bool, providerImpl provider.Provider,
-	doneCh chan bool, errCh chan error, dryRun bool) {
+	doneCh chan bool, errCh chan error, approved bool, dryRun bool) {
 
 	kappRootDir := cacher.GetKappRootPath(manifestCacheDir, kappObj)
 
@@ -152,9 +152,9 @@ func processKapp(kappObj kapp.Kapp, stackConfig *kapp.StackConfig,
 
 	// install the kapp
 	if install {
-		installer.Install(installerImpl, &kappObj, stackConfig, dryRun)
+		installer.Install(installerImpl, &kappObj, stackConfig, approved, dryRun)
 	} else { // destroy the kapp
-		installer.Destroy(installerImpl, &kappObj, stackConfig, dryRun)
+		installer.Destroy(installerImpl, &kappObj, stackConfig, approved, dryRun)
 	}
 
 	doneCh <- true
