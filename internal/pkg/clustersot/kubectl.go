@@ -20,7 +20,7 @@ const KUBE_CONTEXT_KEY = "kube_context"
 
 // Tests whether the cluster is online
 func (c KubeCtlClusterSot) isOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
-	providerVars := providerImpl.GetVars()
+	providerVars := provider.GetVars(providerImpl)
 	context := providerVars[KUBE_CONTEXT_KEY].(string)
 
 	// poll `kubectl --context {{ kube_context }} get namespace`
@@ -40,7 +40,7 @@ func (c KubeCtlClusterSot) isOnline(sc *kapp.StackConfig, providerImpl provider.
 
 // Tests whether all pods are Ready
 func (c KubeCtlClusterSot) isReady(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
-	providerVars := providerImpl.GetVars()
+	providerVars := provider.GetVars(providerImpl)
 	context := providerVars[KUBE_CONTEXT_KEY].(string)
 
 	var kubeCtlStderr, grepStdout bytes.Buffer

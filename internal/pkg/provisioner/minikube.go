@@ -41,7 +41,7 @@ func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.Provider,
 	dryRun bool) error {
 
-	providerVars := providerImpl.GetVars()
+	providerVars := provider.GetVars(providerImpl)
 	log.Debugf("Creating stack with Minikube and values: %#v", providerVars)
 
 	args := make([]string, 0)

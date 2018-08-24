@@ -2,11 +2,13 @@ package installer
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // Installs kapps with make
@@ -32,15 +34,16 @@ func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig
 		"CLUSTER=" + stackConfig.Cluster,
 		"PROFILE=" + stackConfig.Profile,
 		"PROVIDER=" + stackConfig.Provider,
-		// Provider-specific
-		// comes from stackConfigVars
-		//"REGION=" + stackConfig.Provider.Region,
-		//"KUBE_CONTEXT=" + stackConfig.Provider.GetInstallerVars(),
 		//// Helm-specific todo
 		//"NAMESPACE=" + ??,
 		//"RELEASE=????,
 		//"CHART_DIR=???"
+	}
 
+	for k, v := range provider.GetInstallerVars(i.provider) {
+		upperKey := strings.ToUpper(k)
+		kv := fmt.Sprintf("%s=%s", upperKey, v)
+		envVars = append(envVars, kv)
 	}
 
 	// build the command

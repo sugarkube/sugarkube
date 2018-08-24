@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 )
 
+const KUBE_CONTEXT_KEY = "kube_context"
+
 type LocalProvider struct {
 	stackConfigVars Values
 }
@@ -23,8 +25,15 @@ func (p LocalProvider) setVars(values Values) {
 }
 
 // Returns the variables loaded by the Provider
-func (p LocalProvider) GetVars() Values {
+func (p LocalProvider) getVars() Values {
 	return p.stackConfigVars
+}
+
+// Return vars loaded from configs that should be passed on to kapps by Installers
+func (p LocalProvider) getInstallerVars() Values {
+	return Values{
+		"KUBE_CONTEXT": p.stackConfigVars[KUBE_CONTEXT_KEY],
+	}
 }
 
 // Returns directories to look for values files in specific to this provider

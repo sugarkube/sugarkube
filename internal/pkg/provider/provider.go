@@ -16,9 +16,11 @@ type Values = map[string]interface{}
 
 type Provider interface {
 	// Returns the variables loaded by the Provider
-	GetVars() Values
+	getVars() Values
 	// Associate provider variables with the provider
 	setVars(Values)
+	// Returns variables installers should pass on to kapps
+	getInstallerVars() Values
 	// Method that returns all paths in a config directory relevant to the
 	// target profile/cluster/region, etc. that should be searched for values
 	// files to merge.
@@ -93,4 +95,14 @@ func stackConfigVars(p Provider, sc *kapp.StackConfig) (Values, error) {
 	}
 
 	return stackConfigVars, nil
+}
+
+// Return vars loaded from configs
+func GetVars(p Provider) Values {
+	return p.getVars()
+}
+
+// Return vars loaded from configs that should be passed on to kapps by Installers
+func GetInstallerVars(p Provider) Values {
+	return p.getInstallerVars()
 }
