@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
+	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
@@ -89,11 +90,11 @@ func (p *Plan) Apply(dryRun bool) error {
 		manifestCacheDir := cacher.GetManifestCachePath(p.cacheDir, tranche.manifest)
 
 		for _, installable := range tranche.installables {
-			go processKapp(installable, manifestCacheDir, true, doneCh, errCh, dryRun)
+			go processKapp(installable, p.stackConfig, manifestCacheDir, true, doneCh, errCh, dryRun)
 		}
 
 		for _, destroyable := range tranche.destroyables {
-			go processKapp(destroyable, manifestCacheDir, false, doneCh, errCh, dryRun)
+			go processKapp(destroyable, p.stackConfig, manifestCacheDir, false, doneCh, errCh, dryRun)
 		}
 
 		totalOperations := len(tranche.installables) + len(tranche.destroyables)
@@ -118,8 +119,8 @@ func (p *Plan) Apply(dryRun bool) error {
 }
 
 // Installs or destroys a kapp using the appropriate Installer
-func processKapp(kappObj kapp.Kapp, manifestCacheDir string, install bool, doneCh chan bool,
-	errCh chan error, dryRun bool) {
+func processKapp(kappObj kapp.Kapp, stackConfig *kapp.StackConfig,
+	manifestCacheDir string, install bool, doneCh chan bool, errCh chan error, dryRun bool) {
 
 	kappRootDir := cacher.GetKappRootPath(manifestCacheDir, kappObj)
 
@@ -133,18 +134,26 @@ func processKapp(kappObj kapp.Kapp, manifestCacheDir string, install bool, doneC
 		errCh <- errors.Wrap(err, msg)
 	}
 
-	// kapp exists, run the installer on it in the appropriate mode
+	// kapp exists, run the appropriate installer method
+	installerImpl, err := installer.NewInstaller(installer.MAKE)
+	if err != nil {
+		errCh <- errors.Wrapf(err, "Error instantiating installer for "+
+			"kapp '%s'", kappObj.Id)
+	}
 
 	// install the kapp
 	if install {
-
+		if dryRun {
+			log.Debugf("Dry run. Would install kapp '%s'", kappObj.Id)
+		} else {
+			installer.Install(installerImpl, &kappObj, stackConfig)
+		}
 	} else { // destroy the kapp
-
-	}
-
-	if dryRun {
-		// todo
-		//log.Debugf("Dry run. Would do...")
+		if dryRun {
+			log.Debugf("Dry run. Would destroy kapp '%s'", kappObj.Id)
+		} else {
+			installer.Destroy(installerImpl, &kappObj, stackConfig)
+		}
 	}
 
 	doneCh <- true

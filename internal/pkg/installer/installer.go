@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 )
 
 type Installer interface {
-	Install(kapp *kapp.Kapp) error
+	Install(kapp *kapp.Kapp, stackConfig *kapp.StackConfig) error
+	Destroy(kapp *kapp.Kapp, stackConfig *kapp.StackConfig) error
 }
 
 // implemented installers
@@ -22,6 +24,14 @@ func NewInstaller(name string) (Installer, error) {
 	return nil, errors.New(fmt.Sprintf("Installer '%s' doesn't exist", name))
 }
 
-func Install(i Installer, kapp *kapp.Kapp) error {
-	return i.Install(kapp)
+// Installs a kapp by delegating to an Installer implementation
+func Install(i Installer, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig) error {
+	log.Infof("Installing kapp '%s'...", kappObj.Id)
+	return i.Install(kappObj, stackConfig)
+}
+
+// Destroys a kapp by delegating to an Installer implementation
+func Destroy(i Installer, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig) error {
+	log.Infof("Destroying kapp '%s'...", kappObj.Id)
+	return i.Destroy(kappObj, stackConfig)
 }
