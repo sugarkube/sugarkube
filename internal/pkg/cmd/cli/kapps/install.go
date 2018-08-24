@@ -116,7 +116,7 @@ func (c *installCmd) run() error {
 
 	// planning mode, so generate a plan
 	//if !c.apply {
-	changePlan, err := plan.Create(stackConfig)
+	changePlan, err := plan.Create(stackConfig, c.cacheDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -12,11 +12,27 @@ import (
 
 const CACHE_DIR = ".sugarkube"
 
+// Returns the cache dir for a manifest
+func GetManifestCachePath(cacheDir string, manifest kapp.Manifest) string {
+	return filepath.Join(cacheDir, manifest.Id)
+}
+
+// Returns the root path in the cache for a kapp
+func GetKappRootPath(manifestCacheDir string, kappObj kapp.Kapp) string {
+	return filepath.Join(manifestCacheDir, kappObj.Id)
+}
+
+// Returns the path of a kapp's cache dir where the different sources are
+// checked out to
+func getKappCachePath(kappRootPath string) string {
+	return filepath.Join(kappRootPath, CACHE_DIR)
+}
+
 // Build a cache for a manifest into a directory
 func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 
 	// create a directory to cache all kapps in this manifest in
-	manifestCacheDir := filepath.Join(cacheDir, manifest.Id)
+	manifestCacheDir := GetManifestCachePath(cacheDir, manifest)
 
 	log.Debugf("Creating manifest cache dir: %s", manifestCacheDir)
 	err := os.MkdirAll(manifestCacheDir, 0755)
@@ -25,10 +41,11 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 	}
 
 	// acquire each kapp and cache it
-	for _, kapp := range manifest.Kapps {
-		// create a cache directory for the kapp
-		kappDir := filepath.Join(manifestCacheDir, kapp.Id)
-		kappCacheDir := filepath.Join(kappDir, CACHE_DIR)
+	for _, kappObj := range manifest.Kapps {
+		// build a directory path for the kapp in the manifest cache directory
+		kappRootPath := GetKappRootPath(manifestCacheDir, kappObj)
+		// build a directory path for the kapp's .sugarkube cache directory
+		kappCacheDir := getKappCachePath(kappRootPath)
 
 		log.Debugf("Creating kapp cache dir: %s", kappCacheDir)
 		err := os.MkdirAll(kappCacheDir, 0755)
@@ -36,7 +53,7 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 			return errors.WithStack(err)
 		}
 
-		err = acquireSource(manifest, kapp.Sources, kappDir, kappCacheDir, dryRun)
+		err = acquireSource(manifest, kappObj.Sources, kappRootPath, kappCacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

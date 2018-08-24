@@ -2,11 +2,14 @@ package plan
 
 import (
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 )
 
 type Tranche struct {
+	// The manifest associated with this tranche
+	manifest kapp.Manifest
 	// Kapps to install into the target cluster
 	installables []kapp.Kapp
 	// Kapps to destroy from the target cluster
@@ -26,7 +29,7 @@ type Plan struct {
 	cacheDir string
 }
 
-func Create(stackConfig *kapp.StackConfig) (*Plan, error) {
+func Create(stackConfig *kapp.StackConfig, cacheDir string) (*Plan, error) {
 
 	// build a plan containing all kapps, then filter out the ones that don't
 	// need running based on responses from SOTs
@@ -36,15 +39,16 @@ func Create(stackConfig *kapp.StackConfig) (*Plan, error) {
 		installables := make([]kapp.Kapp, 0)
 		destroyables := make([]kapp.Kapp, 0)
 
-		for _, kapp := range manifest.Kapps {
-			if kapp.ShouldBePresent {
-				installables = append(installables, kapp)
+		for _, manifestKapp := range manifest.Kapps {
+			if manifestKapp.ShouldBePresent {
+				installables = append(installables, manifestKapp)
 			} else {
-				destroyables = append(destroyables, kapp)
+				destroyables = append(destroyables, manifestKapp)
 			}
 		}
 
 		tranche := Tranche{
+			manifest:     manifest,
 			installables: installables,
 			destroyables: destroyables,
 		}
@@ -55,6 +59,7 @@ func Create(stackConfig *kapp.StackConfig) (*Plan, error) {
 	plan := Plan{
 		tranche:     tranches,
 		stackConfig: stackConfig,
+		cacheDir:    cacheDir,
 	}
 
 	// todo - use Sources of Truth (SOTs) to discover the current set of kapps installed
@@ -79,12 +84,16 @@ func (p *Plan) Apply(dryRun bool) error {
 	log.Debugf("Applying plan: %#v", p)
 
 	for i, tranche := range p.tranche {
+		manifestCacheDir := cacher.GetManifestCachePath(p.cacheDir, tranche.manifest)
+
 		for _, installable := range tranche.installables {
-			go processKapp(installable, doneCh, errCh, dryRun)
+			kappRootPath := cacher.GetKappRootPath(manifestCacheDir, installable)
+			go processKapp(installable, kappRootPath, doneCh, errCh, dryRun)
 		}
 
 		for _, destroyable := range tranche.destroyables {
-			go processKapp(destroyable, doneCh, errCh, dryRun)
+			kappRootPath := cacher.GetKappRootPath(manifestCacheDir, destroyable)
+			go processKapp(destroyable, kappRootPath, doneCh, errCh, dryRun)
 		}
 
 		totalOperations := len(tranche.installables) + len(tranche.destroyables)
@@ -109,18 +118,11 @@ func (p *Plan) Apply(dryRun bool) error {
 }
 
 // Installs or destroys a kapp using the appropriate Installer
-func processKapp(kapp kapp.Kapp, doneCh chan bool, errCh chan error, dryRun bool) {
+func processKapp(kapp kapp.Kapp, kappRootDir string, doneCh chan bool,
+	errCh chan error, dryRun bool) {
 
-	log.Debugf("Would process kapp: %s", kapp.Id)
+	log.Debugf("Processing kapp '%s' in %s", kapp.Id, kappRootDir)
 
-	// todo - finish
-	//acquirerId, err := a.Id()
-	//if err != nil {
-	//	errCh <- errors.Wrap(err, "Invalid acquirer ID")
-	//}
-	//
-	//sourceDest := filepath.Join(kappCacheDir, acquirerId)
-	//
 	//if dryRun {
 	//	log.Debugf("Dry run: Would acquire source into: %s", sourceDest)
 	//} else {
