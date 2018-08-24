@@ -81,11 +81,9 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	cliManifests := make([]kapp.Manifest, 0)
-
-	for _, manifestPath := range c.manifests {
-		manifest := kapp.NewManifest(manifestPath)
-		cliManifests = append(cliManifests, manifest)
+	cliManifests, err := kapp.ParseManifests(c.manifests)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	// CLI args override configured args, so merge them in

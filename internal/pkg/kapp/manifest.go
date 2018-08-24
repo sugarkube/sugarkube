@@ -17,7 +17,7 @@ type Manifest struct {
 	Kapps []Kapp
 }
 
-func NewManifest(uri string) Manifest {
+func newManifest(uri string) Manifest {
 	manifest := Manifest{
 		Uri: uri,
 	}
@@ -38,6 +38,8 @@ func SetManifestDefaults(manifest *Manifest) {
 }
 
 // Load a single manifest file and parse the kapps it defines
+// todo - change this to use an acquirer. Use the ID defined in the manifest
+// settings YAML, or default to the manifest file basename.
 func ParseManifestFile(path string) (*Manifest, error) {
 	log.Debugf("Parsing manifest: %s", path)
 
@@ -50,13 +52,13 @@ func ParseManifestFile(path string) (*Manifest, error) {
 
 	kapps, err := parseManifestYaml(data)
 
-	manifest := NewManifest(path)
+	manifest := newManifest(path)
 	manifest.Kapps = kapps
 
 	return &manifest, nil
 }
 
-// Parses manifest files and returns a list of kapps on success
+// Parses manifest files and returns a list of manifests on success
 func ParseManifests(manifestPaths []string) ([]Manifest, error) {
 	log.Debugf("Parsing %d manifest(s)", len(manifestPaths))
 

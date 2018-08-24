@@ -55,7 +55,7 @@ func TestSetManifestDefaults(t *testing.T) {
 		{
 			name:     "good",
 			desc:     "default manifest IDs should be the URI basename minus extension",
-			input:    NewManifest("example/manifest.yaml"),
+			input:    newManifest("example/manifest.yaml"),
 			expected: "manifest",
 		},
 	}

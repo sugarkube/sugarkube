@@ -79,11 +79,9 @@ func (c *installCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	cliManifests := make([]kapp.Manifest, 0)
-
-	for _, manifestPath := range c.manifests {
-		manifest := kapp.NewManifest(manifestPath)
-		cliManifests = append(cliManifests, manifest)
+	cliManifests, err := kapp.ParseManifests(c.manifests)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	// CLI args override configured args, so merge them in
@@ -100,7 +98,7 @@ func (c *installCmd) run() error {
 
 	log.Debugf("Final stack config: %#v", stackConfig)
 
-	// todo - validate the cache dir
+	// todo - validate the cache dir. Abort if the cache is out-of-sync with the manifests
 
 	// todo - process the kapps. Run each manifest sequentially, but each
 	// kapp in each manifest in parallel.

@@ -14,6 +14,9 @@ present:
     # to the release name. If that's too restrictive we could
     # generate a globally-unique identifier based on the
     # manifest, but for now we'll keep it simple.
+    # todo - make the above manifest-unique and be the kapp name. Make the
+    # kapp ID be "<manifest_id>-<kapp_id>" and allow kapp IDs to be explicitly overridden..
+    # Make the kapp ID be the helm release name.
 
     # Sources to checkout as siblings in the cache for this kapp. This allows
     # creating a cache entry from e.g. the actual kapp source, a directory of

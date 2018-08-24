@@ -109,8 +109,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 			return nil, errors.WithStack(err)
 		}
 
-		// this is a mess because the YAML parser requires all fields to be
-		// public so we can't enforce a setter :-(
+		// todo - remove this. It should be handled by an acquirer
 		SetManifestDefaults(&manifest)
 		parsedManifest.Id = manifest.Id
 
