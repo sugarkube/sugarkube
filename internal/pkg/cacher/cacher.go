@@ -115,3 +115,8 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, kappDi
 
 	return nil
 }
+
+// Diffs a set of manifests against a cache directory and reports any differences
+//func DiffCache(manifests []kapp.Manifest, cacheDir string) (???, error) {
+// todo - implement
+//}

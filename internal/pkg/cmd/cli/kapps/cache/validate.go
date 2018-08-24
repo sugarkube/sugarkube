@@ -10,6 +10,12 @@ type validateCmd struct {
 	out io.Writer
 }
 
+// todo - change this to `diff`. Validation is implicit if there are no changes.
+// If there are, output what the manifest declares vs the branch in the cache
+// (or any extra/missing kapps in the cache)
+// todo - create a similar command for diffing clusters, to show the difference
+// between a manifest and what's installed, and ideally between any configs for
+// a cluster and it's actual configuration
 func newValidateCmd(out io.Writer) *cobra.Command {
 	c := &validateCmd{
 		out: out,

@@ -98,7 +98,15 @@ func (c *installCmd) run() error {
 
 	log.Debugf("Final stack config: %#v", stackConfig)
 
-	// todo - validate the cache dir. Abort if the cache is out-of-sync with the manifests
+	// todo - diff the cache dir against the manifests. Abort if the cache is
+	// out-of-sync with the manifests
+	//diff, err := cacher.DiffCache(stackConfig.Manifests, c.cacheDir)
+	//if err != nil {
+	//	return errors.WithStack(err)
+	//}
+	//if len(diff) != 0 {
+	//	return errors.New("Cache out-of-sync with manifests: %s", diff)
+	//}
 
 	// todo - process the kapps. Run each manifest sequentially, but each
 	// kapp in each manifest in parallel.
