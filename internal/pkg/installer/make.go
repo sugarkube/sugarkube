@@ -36,12 +36,15 @@ func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig
 		"CLUSTER=" + stackConfig.Cluster,
 		"PROFILE=" + stackConfig.Profile,
 		"PROVIDER=" + stackConfig.Provider,
-		//// Helm-specific todo
-		//"NAMESPACE=" + ??,
-		//"RELEASE=????,
-		//"CHART_DIR=???"
+		// Helm-specific env var names - todo use something that understand helm to add these in
+		"NAMESPACE=" + kappObj.Id, // todo - permit overrides
+		"RELEASE=" + kappObj.Id,
+		//"CHART_DIR=???"			// todo - is this necessary?
 	}
 
+	// todo - there should be something that understand Helm and that takes stuff
+	// from the provider to return the vars that the installer cares about for Helm
+	// kapps. I.e. we shouldn't return the KUBE_CONTEXT for non-k8s/helm kapps.
 	for k, v := range provider.GetInstallerVars(i.provider) {
 		upperKey := strings.ToUpper(k)
 		kv := fmt.Sprintf("%s=%s", upperKey, v)
