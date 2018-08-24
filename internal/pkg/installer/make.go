@@ -31,6 +31,7 @@ func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig
 		// Provider-specific
 		//"REGION=" + stackConfig.Provider.Region,
 		//// Helm-specific todo
+		// comes from stackConfigVars
 		//"KUBE_CONTEXT=" + stackConfig.Provider.Context(),
 		//"NAMESPACE=" + ??,
 		//"RELEASE=????,

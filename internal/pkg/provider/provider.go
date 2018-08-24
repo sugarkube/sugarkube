@@ -26,7 +26,7 @@ const LOCAL = "local"
 const AWS = "aws"
 
 // Factory that creates providers
-func NewProvider(name string) (Provider, error) {
+func newProvider(name string) (Provider, error) {
 	if name == LOCAL {
 		return LocalProvider{}, nil
 	}
@@ -36,6 +36,29 @@ func NewProvider(name string) (Provider, error) {
 	}
 
 	return nil, errors.New(fmt.Sprintf("Provider '%s' doesn't exist", name))
+}
+
+// Instantiates a Provider and returns it along with the stack config vars it can
+// load, or an error.
+func NewProviderAndVars(stackConfig *kapp.StackConfig) (Provider, Values, error) {
+	providerImpl, err := newProvider(stackConfig.Provider)
+	if err != nil {
+		return nil, nil, errors.WithStack(err)
+	}
+
+	stackConfigVars, err := StackConfigVars(providerImpl, stackConfig)
+	if err != nil {
+		log.Warn("Error loading stack config variables")
+		return nil, nil, errors.WithStack(err)
+	}
+	log.Debugf("Provider loaded vars: %#v", stackConfigVars)
+
+	if len(stackConfigVars) == 0 {
+		log.Fatal("No values loaded for stack")
+		return nil, nil, errors.New("Failed to load values for stack")
+	}
+
+	return providerImpl, stackConfigVars, nil
 }
 
 // Searches for values.yaml files in configured directories and returns the

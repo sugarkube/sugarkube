@@ -102,22 +102,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
 	log.Debugf("Final stack config: %#v", stackConfig)
 
-	providerImpl, err := provider.NewProvider(stackConfig.Provider)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	stackConfigVars, err := provider.StackConfigVars(providerImpl, stackConfig)
-	if err != nil {
-		log.Warn("Error loading stack config variables")
-		return errors.WithStack(err)
-	}
-	log.Debugf("Provider returned vars: %#v", stackConfigVars)
-
-	if len(stackConfigVars) == 0 {
-		log.Fatal("No values loaded for stack")
-		return errors.New("Failed to load values for stack")
-	}
+	_, stackConfigVars, err := provider.NewProviderAndVars(stackConfig)
 
 	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner)
 	if err != nil {

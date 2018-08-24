@@ -16,10 +16,11 @@ type KubeCtlClusterSot struct {
 
 // todo - make configurable
 const KUBECTL_PATH = "kubectl"
+const KUBE_CONTEXT_KEY = "kube_context"
 
 // Tests whether the cluster is online
 func (c KubeCtlClusterSot) isOnline(sc *kapp.StackConfig, values provider.Values) (bool, error) {
-	context := values["kube_context"].(string)
+	context := values[KUBE_CONTEXT_KEY].(string)
 
 	// poll `kubectl --context {{ kube_context }} get namespace`
 	cmd := exec.Command(KUBECTL_PATH, "--context", context, "get", "namespace")
@@ -38,7 +39,7 @@ func (c KubeCtlClusterSot) isOnline(sc *kapp.StackConfig, values provider.Values
 
 // Tests whether all pods are Ready
 func (c KubeCtlClusterSot) isReady(sc *kapp.StackConfig, values provider.Values) (bool, error) {
-	context := values["kube_context"].(string)
+	context := values[KUBE_CONTEXT_KEY].(string)
 
 	var kubeCtlStderr, grepStdout bytes.Buffer
 

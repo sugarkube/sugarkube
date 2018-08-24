@@ -18,7 +18,7 @@ func TestStackConfigVars(t *testing.T) {
 		},
 	}
 
-	providerImpl, err := NewProvider(sc.Provider)
+	providerImpl, err := newProvider(sc.Provider)
 	assert.Nil(t, err)
 
 	actual, err := StackConfigVars(providerImpl, sc)
@@ -27,19 +27,19 @@ func TestStackConfigVars(t *testing.T) {
 }
 
 func TestNewProviderError(t *testing.T) {
-	actual, err := NewProvider("nonsense")
+	actual, err := newProvider("nonsense")
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
 
 func TestNewLocalProvider(t *testing.T) {
-	actual, err := NewProvider(LOCAL)
+	actual, err := newProvider(LOCAL)
 	assert.Nil(t, err)
 	assert.Equal(t, LocalProvider{}, actual)
 }
 
 func TestNewAWSProvider(t *testing.T) {
-	actual, err := NewProvider(AWS)
+	actual, err := newProvider(AWS)
 	assert.Nil(t, err)
 	assert.Equal(t, AwsProvider{}, actual)
 }
