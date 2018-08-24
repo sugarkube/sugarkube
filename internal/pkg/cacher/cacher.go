@@ -83,7 +83,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, kappDi
 			if dryRun {
 				log.Debugf("Dry run: Would acquire source into: %s", sourceDest)
 			} else {
-				err := a.Acquire(sourceDest)
+				err := acquirer.Acquire(a, sourceDest)
 				if err != nil {
 					errCh <- errors.WithStack(err)
 				}

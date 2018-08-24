@@ -20,6 +20,6 @@ func TestGitAcquire(t *testing.T) {
 	log.Infof("Testing the git acquirer with temp dir: %s", tempDir)
 	defer os.RemoveAll(tempDir)
 
-	err = acquirer.Acquire(tempDir)
+	err = acquirer.acquire(tempDir)
 	assert.Nil(t, err)
 }

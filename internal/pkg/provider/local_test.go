@@ -20,7 +20,7 @@ func TestLocalVarsDirs(t *testing.T) {
 	}
 
 	provider := LocalProvider{}
-	actual, err := provider.VarsDirs(sc)
+	actual, err := provider.varsDirs(sc)
 	assert.Nil(t, err)
 
 	assert.Equal(t, expected, actual, "Incorrect vars dirs returned")

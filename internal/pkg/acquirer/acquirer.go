@@ -8,7 +8,7 @@ import (
 )
 
 type Acquirer interface {
-	Acquire(dest string) error
+	acquire(dest string) error
 	Id() (string, error)
 	Name() string
 	Path() string
@@ -46,4 +46,9 @@ func NewAcquirer(settings map[string]string) (Acquirer, error) {
 	}
 
 	return nil, errors.New(fmt.Sprintf("Couldn't identify acquirer for URI '%s'", uri))
+}
+
+// Delegate to an acquirer implementation
+func Acquire(a Acquirer, dest string) error {
+	return a.acquire(dest)
 }

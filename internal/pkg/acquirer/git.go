@@ -70,7 +70,7 @@ func (a GitAcquirer) Path() string {
 }
 
 // Acquires kapps via git and saves them to `dest`.
-func (a GitAcquirer) Acquire(dest string) error {
+func (a GitAcquirer) acquire(dest string) error {
 
 	log.Infof("Acquiring git source %s into %s", a.uri, dest)
 
