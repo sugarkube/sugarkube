@@ -9,12 +9,14 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"io"
 )
 
 type installCmd struct {
 	out           io.Writer
 	dryRun        bool
+	apply         bool
 	cacheDir      string
 	stackName     string
 	stackFile     string
@@ -58,6 +60,7 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
+	f.BoolVar(&c.apply, "apply", false, "apply a plan to install/destroy kapps")
 	f.StringVarP(&c.cacheDir, "dir", "d", "", "Cache directory to install kapps from")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
@@ -108,8 +111,22 @@ func (c *installCmd) run() error {
 	//	return errors.New("Cache out-of-sync with manifests: %s", diff)
 	//}
 
-	// todo - process the kapps. Run each manifest sequentially, but each
-	// kapp in each manifest in parallel.
+	// todo - accept a previously generated plan as a CLI arg. If given, load
+	// it and validate that the embedded stack config matches the target cluster.
+
+	// planning mode, so generate a plan
+	//if !c.apply {
+	changePlan, err := plan.Create(stackConfig)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// todo - if autoApply continue, otherwise output a plan of which kapps
+	// will be installed/destroyed and return
+	//}
+
+	// if not in planning mode, apply plan
+	plan.Apply(changePlan, c.dryRun)
 
 	return nil
 }
