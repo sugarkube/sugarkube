@@ -152,17 +152,9 @@ func processKapp(kappObj kapp.Kapp, stackConfig *kapp.StackConfig,
 
 	// install the kapp
 	if install {
-		if dryRun {
-			log.Debugf("Dry run. Would install kapp '%s'", kappObj.Id)
-		} else {
-			installer.Install(installerImpl, &kappObj, stackConfig)
-		}
+		installer.Install(installerImpl, &kappObj, stackConfig, dryRun)
 	} else { // destroy the kapp
-		if dryRun {
-			log.Debugf("Dry run. Would destroy kapp '%s'", kappObj.Id)
-		} else {
-			installer.Destroy(installerImpl, &kappObj, stackConfig)
-		}
+		installer.Destroy(installerImpl, &kappObj, stackConfig, dryRun)
 	}
 
 	doneCh <- true

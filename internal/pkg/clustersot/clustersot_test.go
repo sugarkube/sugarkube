@@ -28,7 +28,7 @@ func (m MockClusterSot) isReady(sc *kapp.StackConfig, providerImpl provider.Prov
 	return args.Bool(0), args.Error(1)
 }
 
-var testProvider = provider.LocalProvider{}
+var testProvider = &provider.LocalProvider{}
 
 func TestIsOnlineTrue(t *testing.T) {
 	clusterName := "myCluster"

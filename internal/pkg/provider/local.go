@@ -20,24 +20,27 @@ const PROFILE_DIR = "profiles"
 const CLUSTER_DIR = "clusters"
 
 // Associate provider variables with the provider
-func (p LocalProvider) setVars(values Values) {
+func (p *LocalProvider) setVars(values Values) {
 	p.stackConfigVars = values
 }
 
 // Returns the variables loaded by the Provider
-func (p LocalProvider) getVars() Values {
+func (p *LocalProvider) getVars() Values {
 	return p.stackConfigVars
 }
 
 // Return vars loaded from configs that should be passed on to kapps by Installers
-func (p LocalProvider) getInstallerVars() Values {
+func (p *LocalProvider) getInstallerVars() Values {
+	// todo - move this into some kind of KappType package. After identifying
+	// what type of kapp we have, then that should pull out this value from
+	// the vars, since it's only relevant to Helm/k8s-based kapps
 	return Values{
 		"KUBE_CONTEXT": p.stackConfigVars[KUBE_CONTEXT_KEY],
 	}
 }
 
 // Returns directories to look for values files in specific to this provider
-func (p LocalProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
+func (p *LocalProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 
 	paths := make([]string, 0)
 

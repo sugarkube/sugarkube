@@ -9,8 +9,8 @@ import (
 )
 
 type Installer interface {
-	install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig) error
-	destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig) error
+	install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, dryRun bool) error
+	destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, dryRun bool) error
 }
 
 // implemented installers
@@ -28,13 +28,13 @@ func NewInstaller(name string, providerImpl provider.Provider) (Installer, error
 }
 
 // Installs a kapp by delegating to an Installer implementation
-func Install(i Installer, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig) error {
+func Install(i Installer, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, dryRun bool) error {
 	log.Infof("Installing kapp '%s'...", kappObj.Id)
-	return i.install(kappObj, stackConfig)
+	return i.install(kappObj, stackConfig, dryRun)
 }
 
 // Destroys a kapp by delegating to an Installer implementation
-func Destroy(i Installer, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig) error {
+func Destroy(i Installer, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, dryRun bool) error {
 	log.Infof("Destroying kapp '%s'...", kappObj.Id)
-	return i.destroy(kappObj, stackConfig)
+	return i.destroy(kappObj, stackConfig, dryRun)
 }

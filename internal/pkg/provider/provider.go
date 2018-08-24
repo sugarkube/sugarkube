@@ -34,11 +34,11 @@ const AWS = "aws"
 // Factory that creates providers
 func newProviderImpl(name string) (Provider, error) {
 	if name == LOCAL {
-		return LocalProvider{}, nil
+		return &LocalProvider{}, nil
 	}
 
 	if name == AWS {
-		return AwsProvider{}, nil
+		return &AwsProvider{}, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("Provider '%s' doesn't exist", name))

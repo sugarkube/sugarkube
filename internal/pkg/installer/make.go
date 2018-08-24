@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"os/exec"
 	"path/filepath"
@@ -20,9 +21,10 @@ type MakeInstaller struct {
 const TARGET_INSTALL = "install"
 const TARGET_DESTROY = "destroy"
 
-func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig) error {
+func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
+	dryRun bool) error {
 	// search for the Makefile
-	makefilePath := "..."
+	makefilePath := "/some/path/Makefile"
 
 	// search for values-<env>.yaml files where env could also be the cluster/
 	// profile/etc. Todo - think where to get the pattern `values-<var>.yaml`
@@ -52,19 +54,27 @@ func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig
 	// make command
 	makeCmd := exec.Command(makefilePath, TARGET_INSTALL)
 	makeCmd.Dir = filepath.Dir(makefilePath)
-	makeCmd.Args = envVars
+	makeCmd.Env = envVars
 	makeCmd.Stderr = &stderrBuf
 
-	// run it
-	err := makeCmd.Run()
-	if err != nil {
-		return errors.Wrapf(err, "Error installing kapp '%s' with "+
-			"command: %#v. Stderr: %s", kappObj.Id, makeCmd, stderrBuf.String())
+	if dryRun {
+		log.Infof("Dry run. Would install kapp '%s' with command: %s %s",
+			kappObj.Id, strings.Join(makeCmd.Env, " "),
+			strings.Join(makeCmd.Args, " "))
+	} else {
+		// run it
+		err := makeCmd.Run()
+		if err != nil {
+			return errors.Wrapf(err, "Error installing kapp '%s' with "+
+				"command: %s %s. Stderr: %s", kappObj.Id,
+				strings.Join(makeCmd.Env, " "), strings.Join(makeCmd.Args, " "),
+				stderrBuf.String())
+		}
 	}
 
 	return nil
 }
 
-func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig) error {
+func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, dryRun bool) error {
 	return nil
 }

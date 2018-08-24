@@ -35,11 +35,11 @@ func TestNewProviderError(t *testing.T) {
 func TestNewLocalProvider(t *testing.T) {
 	actual, err := newProviderImpl(LOCAL)
 	assert.Nil(t, err)
-	assert.Equal(t, LocalProvider{}, actual)
+	assert.Equal(t, &LocalProvider{}, actual)
 }
 
 func TestNewAWSProvider(t *testing.T) {
 	actual, err := newProviderImpl(AWS)
 	assert.Nil(t, err)
-	assert.Equal(t, AwsProvider{}, actual)
+	assert.Equal(t, &AwsProvider{}, actual)
 }
