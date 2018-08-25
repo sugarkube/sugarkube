@@ -118,7 +118,8 @@ func (i *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error)
 		return "", errors.WithStack(err)
 	}
 
-	argValues := make([]string, 0)
+	// use a map for deduping
+	argValues := make(map[string]string, 0)
 
 	// make sure the matching group in each match is in the valid pattern matches list
 	for _, match := range matches {
@@ -128,7 +129,7 @@ func (i *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error)
 		for _, v := range matchingGroups {
 			for _, valid := range validPatternMatches {
 				if v == valid {
-					argValues = append(argValues, strings.Join([]string{argKey, match}, "="))
+					argValues[match] = strings.Join([]string{argKey, match}, "=")
 				}
 			}
 		}
@@ -137,8 +138,14 @@ func (i *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error)
 	cliArg := ""
 
 	if len(argValues) > 0 {
-		joinedValues := strings.Join(argValues, " ")
-		cliArg = strings.Join([]string{argName, joinedValues}, " ")
+		strArgs := make([]string, 0)
+
+		for _, v := range argValues {
+			strArgs = append(strArgs, v)
+		}
+
+		joinedValues := strings.Join(strArgs, " ")
+		cliArg = strings.Join([]string{argName, joinedValues}, "=")
 	}
 	return cliArg, nil
 }
