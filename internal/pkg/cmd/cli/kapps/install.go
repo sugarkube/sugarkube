@@ -18,7 +18,7 @@ type installCmd struct {
 	diffPath      string
 	cacheDir      string
 	dryRun        bool
-	apply         bool
+	approved      bool
 	oneShot       bool
 	force         bool
 	stackName     string
@@ -56,7 +56,7 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
-	f.BoolVar(&c.apply, "apply", false, "actually apply a cluster diff to install/destroy kapps. If false, kapps "+
+	f.BoolVar(&c.approved, "approved", false, "actually apply a cluster diff to install/destroy kapps. If false, kapps "+
 		"will be expected to plan their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not "+
 		"apply it).")
 	f.BoolVar(&c.oneShot, "one-shot", false, "apply a cluster diff in a single pass by invoking each kapp with "+
@@ -150,7 +150,7 @@ func (c *installCmd) run() error {
 
 	if !c.oneShot {
 		// run the plan either preparing or applying changes
-		err := actionPlan.Run(c.apply, c.dryRun)
+		err := actionPlan.Run(c.approved, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

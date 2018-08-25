@@ -122,7 +122,7 @@ func (i *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error)
 
 	// make sure the matching group in each match is in the valid pattern matches list
 	for _, match := range matches {
-		matchingGroups := getRexExpCapturingGroups(pattern, match)
+		matchingGroups := getRegExpCapturingGroups(pattern, match)
 
 		// don't punish yourself by saying the words "functional programming"...
 		for _, v := range matchingGroups {
@@ -134,9 +134,12 @@ func (i *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error)
 		}
 	}
 
-	joinedValues := strings.Join(argValues, " ")
-	cliArg := strings.Join([]string{argName, joinedValues}, " ")
+	cliArg := ""
 
+	if len(argValues) > 0 {
+		joinedValues := strings.Join(argValues, " ")
+		cliArg = strings.Join([]string{argName, joinedValues}, " ")
+	}
 	return cliArg, nil
 }
 

@@ -113,7 +113,7 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 			select {
 			case err := <-errCh:
 				close(doneCh)
-				log.Warnf("Error processing kapp in tranche %d of plan: %s", i+1, err)
+				log.Fatalf("Error processing kapp in tranche %d of plan: %s", i+1, err)
 				return errors.Wrapf(err, "Error processing kapp goroutine "+
 					"in tranche %d of plan", i+1)
 			case <-doneCh:
@@ -156,9 +156,15 @@ func processKapp(kappObj kapp.Kapp, stackConfig *kapp.StackConfig,
 
 	// install the kapp
 	if install {
-		installer.Install(installerImpl, &kappObj, stackConfig, approved, dryRun)
+		err := installer.Install(installerImpl, &kappObj, stackConfig, approved, dryRun)
+		if err != nil {
+			errCh <- errors.Wrapf(err, "Error installing kapp '%s'", kappObj.Id)
+		}
 	} else { // destroy the kapp
-		installer.Destroy(installerImpl, &kappObj, stackConfig, approved, dryRun)
+		err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved, dryRun)
+		if err != nil {
+			errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", kappObj.Id)
+		}
 	}
 
 	doneCh <- true

@@ -46,10 +46,6 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 	makefilePath := makefilePaths[0]
 
-	// search for values-<env>.yaml files where env could also be the cluster/
-	// profile/etc. Todo - think where to get the pattern `values-<var>.yaml`
-	// from that doesn't make us rely on Helm. Answer: paramertisers
-
 	// create the env vars
 	envVars := map[string]string{
 		"APPROVED": fmt.Sprintf("%v", approved),
@@ -101,7 +97,9 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 			return errors.WithStack(err)
 		}
 
-		cliArgs = append(cliArgs, arg)
+		if arg != "" {
+			cliArgs = append(cliArgs, arg)
+		}
 	}
 
 	// build the command
@@ -120,12 +118,18 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 			strings.Join(makeCmd.Args, " "))
 	} else {
 		// run it
+		log.Infof("Installing kapp '%s' with command: %s %s",
+			kappObj.Id, strings.Join(makeCmd.Env, " "),
+			strings.Join(makeCmd.Args, " "))
+
 		err := makeCmd.Run()
 		if err != nil {
 			return errors.Wrapf(err, "Error installing kapp '%s' with "+
 				"command: %s %s. Stderr: %s", kappObj.Id,
 				strings.Join(makeCmd.Env, " "), strings.Join(makeCmd.Args, " "),
 				stderrBuf.String())
+		} else {
+			log.Infof("Kapp '%s' successfully %sed", kappObj.Id, makeTarget)
 		}
 	}
 
