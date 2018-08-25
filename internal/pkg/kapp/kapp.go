@@ -25,6 +25,7 @@ type Kapp struct {
 	ShouldBePresent bool
 	installerConfig installerConfig
 	Sources         []acquirer.Acquirer
+	RootDir         string // root directory in a cache dir
 }
 
 const PRESENT_KEY = "present"

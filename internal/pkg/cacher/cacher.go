@@ -64,8 +64,8 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 
 // Acquires each source and symlinks it to the target path in the cache directory.
 // Runs all acquirers in parallel.
-func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, kappDir string,
-	kappCacheDir string, dryRun bool) error {
+func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDir string,
+	cacheDir string, dryRun bool) error {
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 
@@ -78,7 +78,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, kappDi
 				errCh <- errors.Wrap(err, "Invalid acquirer ID")
 			}
 
-			sourceDest := filepath.Join(kappCacheDir, acquirerId)
+			sourceDest := filepath.Join(cacheDir, acquirerId)
 
 			if dryRun {
 				log.Debugf("Dry run: Would acquire source into: %s", sourceDest)
@@ -92,22 +92,22 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, kappDi
 			// todo - this doesn't actually create relative symlinks. Probably need
 			// need to use exec.Command and set `command.Dir`, using `ln` directly.
 			sourcePath := filepath.Join(sourceDest, a.Path())
-			sourcePath = strings.TrimPrefix(sourcePath, kappDir)
+			sourcePath = strings.TrimPrefix(sourcePath, rootDir)
 			sourcePath = strings.TrimPrefix(sourcePath, "/")
 
-			symLinkTarget := filepath.Join(kappDir, a.Name())
+			symLinkTarget := filepath.Join(rootDir, a.Name())
 
 			if dryRun {
 				log.Debugf("Dry run. Would symlink cached source %s to %s", sourcePath, symLinkTarget)
 			} else {
-				if _, err := os.Stat(filepath.Join(kappDir, sourcePath)); err != nil {
+				if _, err := os.Stat(filepath.Join(rootDir, sourcePath)); err != nil {
 					errCh <- errors.Wrapf(err, "Symlink source '%s' doesn't exist", sourcePath)
 				}
 
 				log.Debugf("Symlinking cached source %s to %s", sourcePath, symLinkTarget)
 				err := os.Symlink(sourcePath, symLinkTarget)
 				if err != nil {
-					errCh <- errors.Wrapf(err, "Error symlinking kapp source")
+					errCh <- errors.Wrapf(err, "Error symlinking source")
 				}
 			}
 

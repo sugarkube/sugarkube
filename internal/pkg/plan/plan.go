@@ -145,6 +145,8 @@ func processKapp(kappObj kapp.Kapp, stackConfig *kapp.StackConfig,
 		errCh <- errors.Wrap(err, msg)
 	}
 
+	kappObj.RootDir = kappRootDir
+
 	// kapp exists, run the appropriate installer method
 	installerImpl, err := installer.NewInstaller(installer.MAKE, providerImpl)
 	if err != nil {

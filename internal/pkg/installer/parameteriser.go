@@ -5,13 +5,15 @@ import "github.com/sugarkube/sugarkube/internal/pkg/kapp"
 // This is a generic way of inspecting kapps to see what they contain and what
 // env vars/CLI parameters should be passed to their installers
 
-// todo - move into config
+// todo - move into a default config file, but allow them to be overridden/
+// addtional interfaces defined.
 var parameteriserConfig = `
-kapp_interfaces:			# different things a kapp might contain. May be multiple.
+kapp_interfaces:	# different things a kapp might contain. A kapp may 'implement' 
+					# multiple interfaces (e.g. contain both a helm chart and terraform configs
   helm_chart:
     heuristics: 			# inspections we can carry out on a kapp to see what it contains
     - file:
-        glob: Chart.yaml
+        pattern: Chart.yaml		# regex to search for under the kapp root dir
     params:
       env_vars:
       - name: KUBE_CONTEXT
@@ -48,7 +50,7 @@ kapp_interfaces:			# different things a kapp might contain. May be multiple.
   terraform:
     heuristics:
     - file:
-        glob: terraform*
+        pattern: terraform.*
         type: dir
     params:
       cli_arg:
@@ -59,6 +61,8 @@ kapp_interfaces:			# different things a kapp might contain. May be multiple.
             pattern: vars/(\w+).tfvars
 `
 
+// Examines a kapp to find out what it contains, and therefore what env vars/
+// CLI args need passing to it by an Installer.
 func identifyKappInterfaces(kappObj kapp.Kapp) []string {
 	return nil
 }

@@ -21,8 +21,10 @@ type MakeInstaller struct {
 const TARGET_INSTALL = "install"
 const TARGET_DESTROY = "destroy"
 
-func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, dryRun bool) error {
+// Run the given make target
+func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
+	stackConfig *kapp.StackConfig, approved bool, dryRun bool) error {
+
 	// search for the Makefile
 	makefilePath := "/some/path/Makefile"
 
@@ -78,7 +80,14 @@ func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig
 	return nil
 }
 
+// Install a kapp
+func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
+	approved bool, dryRun bool) error {
+	return i.run(TARGET_INSTALL, kappObj, stackConfig, approved, dryRun)
+}
+
+// Destroy a kapp
 func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	approved bool, dryRun bool) error {
-	return nil
+	return i.run(TARGET_DESTROY, kappObj, stackConfig, approved, dryRun)
 }
