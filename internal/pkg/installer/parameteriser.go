@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"strings"
 )
 
 // This is a generic way of inspecting kapps to see what they contain and what
@@ -89,31 +90,35 @@ func (i *Parameteriser) GetEnvVars(vars provider.Values) map[string]string {
 	return envVars
 }
 
-// Returns a list of args that the installer should pass to the kapp
-func (i *Parameteriser) GetCliArgs(validPatternMatches []string) ([]string, error) {
+// Returns a list of args that the installer should pass to the kapp. This will
+// need refactoring once parsing the Parameteriser config is implemented.
+func (i *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error) {
 	pattern := ""
 	argName := ""
+	argKey := ""
 
 	if i.Name == IMPLEMENTS_HELM {
 		pattern = "values-(?P<Var>\\w*).yaml"
 		argName = "helm-opts"
+		argKey = "-f"
 	}
 
 	if i.Name == IMPLEMENTS_TERRAFORM {
 		pattern = "terraform.*"
 		argName = "tf-opts"
+		argKey = "-var-file"
 	}
 
 	if pattern == "" {
-		return []string{}, nil
+		return "", nil
 	}
 
 	matches, err := findFilesByPattern(i.kappObj.RootDir, pattern, true)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return "", errors.WithStack(err)
 	}
 
-	cliArgs := make([]string, 0)
+	argValues := make([]string, 0)
 
 	// make sure the matching group in each match is in the valid pattern matches list
 	for _, match := range matches {
@@ -123,13 +128,16 @@ func (i *Parameteriser) GetCliArgs(validPatternMatches []string) ([]string, erro
 		for _, v := range matchingGroups {
 			for _, valid := range validPatternMatches {
 				if v == valid {
-					cliArgs = append(cliArgs, match)
+					argValues = append(argValues, strings.Join([]string{argKey, match}, "="))
 				}
 			}
 		}
 	}
 
-	return cliArgs, nil
+	joinedValues := strings.Join(argValues, " ")
+	cliArg := strings.Join([]string{argName, joinedValues}, " ")
+
+	return cliArg, nil
 }
 
 // Examines a kapp to find out what it contains, and therefore what env vars/
