@@ -29,14 +29,10 @@ func (p *LocalProvider) getVars() Values {
 	return p.stackConfigVars
 }
 
-// Return vars loaded from configs that should be passed on to kapps by Installers
+// Return vars loaded from configs that should be passed on to all kapps by
+// installers so kapps can be installed into this provider
 func (p *LocalProvider) getInstallerVars() Values {
-	// todo - move this into some kind of KappType package. After identifying
-	// what type of kapp we have, then that should pull out this value from
-	// the vars, since it's only relevant to Helm/k8s-based kapps
-	return Values{
-		"KUBE_CONTEXT": p.stackConfigVars[KUBE_CONTEXT_KEY],
-	}
+	return Values{}
 }
 
 // Returns directories to look for values files in specific to this provider

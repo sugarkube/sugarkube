@@ -26,10 +26,10 @@ func (p *AwsProvider) getVars() Values {
 	return p.stackConfigVars
 }
 
-// Return vars loaded from configs that should be passed on to kapps by Installers
+// Return vars loaded from configs that should be passed on to all kapps by
+// installers so kapps can be installed into this provider
 func (p *AwsProvider) getInstallerVars() Values {
 	return Values{
-		"KUBE_CONTEXT": p.stackConfigVars[KUBE_CONTEXT_KEY],
-		"REGION":       p.region,
+		"REGION": p.region,
 	}
 }
