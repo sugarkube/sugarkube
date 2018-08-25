@@ -3,7 +3,7 @@
 * Launch a minikube cluster works
 * Install kapps, but:
   * without templating/file generation
-  * wihtout consulting a SOT so all kapps in a manifest will be 
+  * without consulting a SOT so all kapps in a manifest will be 
     installed/destroyed regardless of the current state of the cluster
 * Add licence (Apache 2 probably)  
   
@@ -13,6 +13,7 @@
   
 **0.3.0**:
 * Template values.yaml files and terraform files from vars
+* Create _generated_values.yaml files
 * Create `backend.tf` files to allow terraform be backed by different backends
   * Don't assume S3. This should be configurable too.
 * Implement cluster diffing so we can install only those kapps that need 

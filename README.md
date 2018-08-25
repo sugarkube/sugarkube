@@ -179,11 +179,11 @@ Wordpress site. Access it with:
 ```
 minikube service -n wordpress --https wordpress-wordpress
 ```
-or by hostname:
+~~or by hostname:~~(from 0.3.0)
 ```
 echo $(minikube ip) wordpress.localhost | sudo tee -a /etc/hosts
 ```
-And visit `https://wordpress.localhost`.
+~~And visit `https://wordpress.localhost`.~~
 
 ## Explore
 Have a look in `./examples/stacks.yaml` and look for `local-standard`. Follow the
