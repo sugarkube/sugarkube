@@ -27,7 +27,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 	// search for the Makefile
 	makefilePaths, err := findFilesByPattern(kappObj.RootDir, "Makefile",
-		true, true)
+		true, false)
 	if err != nil {
 		return errors.Wrapf(err, "Error finding Makefile in '%s'",
 			kappObj.RootDir)
@@ -44,14 +44,23 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 			"not implemented yet: %s", strings.Join(makefilePaths, ", ")))
 	}
 
-	makefilePath := makefilePaths[0]
+	makefilePath, err := filepath.Abs(makefilePaths[0])
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	absKappRoot, err := filepath.Abs(kappObj.RootDir)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	// create the env vars
 	envVars := map[string]string{
-		"APPROVED": fmt.Sprintf("%v", approved),
-		"CLUSTER":  stackConfig.Cluster,
-		"PROFILE":  stackConfig.Profile,
-		"PROVIDER": stackConfig.Provider,
+		"KAPP_ROOT": absKappRoot,
+		"APPROVED":  fmt.Sprintf("%v", approved),
+		"CLUSTER":   stackConfig.Cluster,
+		"PROFILE":   stackConfig.Profile,
+		"PROVIDER":  stackConfig.Provider,
 	}
 
 	providerImpl, err := provider.NewProvider(stackConfig)

@@ -2,7 +2,6 @@ package installer
 
 import (
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -53,8 +52,9 @@ func findFilesByPattern(rootDir string, pattern string, recursive bool,
 			for i, result := range results {
 				for linkTarget, link := range links {
 					if strings.Contains(result, linkTarget) {
-						log.Debugf("Replacing link target '%s' with "+
-							"link '%s' in result '%s'", linkTarget, link, result)
+						// Too noisy. Commented out.
+						//log.Debugf("Replacing link target '%s' with "+
+						//	"link '%s' in result '%s'", linkTarget, link, result)
 						results[i] = strings.Replace(result, linkTarget, link, 1)
 
 						// verify that the updated path exists
