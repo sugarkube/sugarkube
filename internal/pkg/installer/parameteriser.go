@@ -4,6 +4,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"os"
+	"os/exec"
+	"os/user"
+	"path/filepath"
 	"strings"
 )
 
@@ -78,16 +82,47 @@ type Parameteriser struct {
 const KUBE_CONTEXT_KEY = "kube_context"
 
 // Return a map of env vars that should be passed to the kapp by the installer
-func (i *Parameteriser) GetEnvVars(vars provider.Values) map[string]string {
+func (i *Parameteriser) GetEnvVars(vars provider.Values) (map[string]string, error) {
 	envVars := make(map[string]string)
 
 	if i.Name == IMPLEMENTS_HELM {
 		envVars["NAMESPACE"] = i.kappObj.Id
 		envVars["RELEASE"] = i.kappObj.Id
-		envVars["KUBE_CONTEXT"] = vars[KUBE_CONTEXT_KEY].(string)
+
+		// get the path to the helm binary
+		helmPath, err := exec.LookPath("helm")
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		envVars["HELM"] = helmPath
 	}
 
-	return envVars
+	if i.Name == IMPLEMENTS_HELM || i.Name == IMPLEMENTS_K8S {
+		if kubeContext, ok := os.LookupEnv("KUBE_CONTEXT"); ok {
+			envVars["KUBE_CONTEXT"] = kubeContext
+		} else {
+			envVars["KUBE_CONTEXT"] = vars[KUBE_CONTEXT_KEY].(string)
+		}
+
+		// only set env var if it's not already set
+		if kubeConfig, ok := os.LookupEnv("KUBECONFIG"); ok {
+			envVars["KUBECONFIG"] = kubeConfig
+		} else {
+			usr, _ := user.Current()
+			homeDir := usr.HomeDir
+			defaultKubeConfig := filepath.Join(homeDir, ".kube/config")
+			envVars["KUBECONFIG"] = defaultKubeConfig
+		}
+
+		// get the path to the kubectl binary
+		kubectlPath, err := exec.LookPath("kubectl")
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		envVars["KUBECTL"] = kubectlPath
+	}
+
+	return envVars, nil
 }
 
 // Returns a list of args that the installer should pass to the kapp. This will

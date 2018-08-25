@@ -75,7 +75,12 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 	// Adds things like `KUBE_CONTEXT`, `NAMESPACE`, `RELEASE`, etc.
 	for _, parameteriser := range parameterisers {
-		for k, v := range parameteriser.GetEnvVars(provider.GetVars(providerImpl)) {
+		pEnvVars, err := parameteriser.GetEnvVars(provider.GetVars(providerImpl))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		for k, v := range pEnvVars {
 			envVars[k] = v
 		}
 	}
@@ -112,12 +117,13 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	}
 
 	// build the command
-	var stderrBuf bytes.Buffer
+	var stdoutBuf, stderrBuf bytes.Buffer
 
 	// make command
 	makeCmd := exec.Command("make", cliArgs...)
 	makeCmd.Dir = filepath.Dir(makefilePath)
 	makeCmd.Env = strEnvVars
+	makeCmd.Stdout = &stdoutBuf
 	makeCmd.Stderr = &stderrBuf
 
 	if dryRun {
@@ -131,8 +137,8 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		err := makeCmd.Run()
 		if err != nil {
 			return errors.Wrapf(err, "Error installing kapp '%s' with "+
-				"command: %s. Stderr: %s", kappObj.Id,
-				makeCmd, stderrBuf.String())
+				"command: %s. -- Stdout -- %s -- Stderr -- %s, Err: %s", kappObj.Id,
+				makeCmd, stdoutBuf.String(), stderrBuf.String(), err)
 		} else {
 			log.Infof("Kapp '%s' successfully %sed", kappObj.Id, makeTarget)
 		}
