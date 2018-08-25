@@ -41,5 +41,8 @@ a CI/CD system about the secrets that a kapp needs during installation.
 }
 
 func (c *diffCmd) run(cmd *cobra.Command, args []string) error {
+	// todo the diff should include a timestamp so that we can allow them to
+	// only be valid as inputs to `kapps install` for a certain amount of time.
+
 	return nil
 }
