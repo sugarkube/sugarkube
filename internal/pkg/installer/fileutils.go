@@ -14,6 +14,7 @@ func findFilesByPattern(rootDir string, pattern string, recursive bool) ([]strin
 	results := make([]string, 0)
 
 	if recursive {
+		// todo - rewrite to support symlinks and excluding the .sugarkube cache directory
 		err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return errors.WithStack(err)

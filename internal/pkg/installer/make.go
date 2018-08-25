@@ -46,11 +46,6 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 	makefilePath := makefilePaths[0]
 
-	kappInterfaces, err := identifyKappInterfaces(kappObj)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	// search for values-<env>.yaml files where env could also be the cluster/
 	// profile/etc. Todo - think where to get the pattern `values-<var>.yaml`
 	// from that doesn't make us rely on Helm. Answer: paramertisers
@@ -68,14 +63,19 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		return errors.WithStack(err)
 	}
 
+	parameterisers, err := identifyKappInterfaces(kappObj)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	// Adds things like `KUBE_CONTEXT`, `NAMESPACE`, `RELEASE`, etc.
-	for _, kappInterface := range kappInterfaces {
-		for k, v := range kappInterface.GetEnvVars(provider.GetVars(providerImpl)) {
+	for _, parameteriser := range parameterisers {
+		for k, v := range parameteriser.GetEnvVars(provider.GetVars(providerImpl)) {
 			envVars[k] = v
 		}
 	}
 
-	// The AwsProvider adds REGION
+	// Provider-specific env vars, e.g. the AwsProvider adds REGION
 	for k, v := range provider.GetInstallerVars(i.provider) {
 		upperKey := strings.ToUpper(k)
 		envVars[upperKey] = fmt.Sprintf("%#v", v)
@@ -86,6 +86,8 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	for k, v := range envVars {
 		strEnvVars = append(strEnvVars, strings.Join([]string{k, v}, "="))
 	}
+
+	// to do - return cli args from the parameteriser
 
 	// build the command
 	var stderrBuf bytes.Buffer
