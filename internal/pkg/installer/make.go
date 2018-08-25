@@ -90,7 +90,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		stackConfig.Provider,
 	}
 
-	cliArgs := make([]string, 0)
+	cliArgs := []string{makeTarget}
 	for _, parameteriser := range parameterisers {
 		arg, err := parameteriser.GetCliArgs(validPatternMatches)
 		if err != nil {
@@ -106,33 +106,24 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	var stderrBuf bytes.Buffer
 
 	// make command
-	makeCmd := exec.Command("make", TARGET_INSTALL)
+	makeCmd := exec.Command("make", cliArgs...)
 	makeCmd.Dir = filepath.Dir(makefilePath)
 	makeCmd.Env = strEnvVars
-	makeCmd.Args = cliArgs
 	makeCmd.Stderr = &stderrBuf
 
 	if dryRun {
 		log.Infof("Dry run. Would install kapp '%s' in directory '%s' "+
-			"with command: %s %s",
-			kappObj.Id,
-			makeCmd.Dir,
-			strings.Join(makeCmd.Env, " "),
-			strings.Join(makeCmd.Args, " "))
+			"with command: %s", kappObj.Id, makeCmd.Dir, makeCmd)
 	} else {
 		// run it
-		log.Infof("Installing kapp '%s' in directory %s with command: %s %s",
-			kappObj.Id,
-			makeCmd.Dir,
-			strings.Join(makeCmd.Env, " "),
-			strings.Join(makeCmd.Args, " "))
+		log.Infof("Installing kapp '%s' in directory %s with command: %s",
+			kappObj.Id, makeCmd.Dir, makeCmd)
 
 		err := makeCmd.Run()
 		if err != nil {
 			return errors.Wrapf(err, "Error installing kapp '%s' with "+
-				"command: %s %s. Stderr: %s", kappObj.Id,
-				strings.Join(makeCmd.Env, " "), strings.Join(makeCmd.Args, " "),
-				stderrBuf.String())
+				"command: %s. Stderr: %s", kappObj.Id,
+				makeCmd, stderrBuf.String())
 		} else {
 			log.Infof("Kapp '%s' successfully %sed", kappObj.Id, makeTarget)
 		}
