@@ -87,7 +87,22 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		strEnvVars = append(strEnvVars, strings.Join([]string{k, v}, "="))
 	}
 
-	// to do - return cli args from the parameteriser
+	// get additional CLI args
+	validPatternMatches := []string{
+		stackConfig.Cluster,
+		stackConfig.Profile,
+		stackConfig.Provider,
+	}
+
+	cliArgs := make([]string, 0)
+	for _, parameteriser := range parameterisers {
+		arg, err := parameteriser.GetCliArgs(validPatternMatches)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		cliArgs = append(cliArgs, arg)
+	}
 
 	// build the command
 	var stderrBuf bytes.Buffer
@@ -96,6 +111,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	makeCmd := exec.Command(makefilePath, TARGET_INSTALL)
 	makeCmd.Dir = filepath.Dir(makefilePath)
 	makeCmd.Env = strEnvVars
+	makeCmd.Args = cliArgs
 	makeCmd.Stderr = &stderrBuf
 
 	if dryRun {
