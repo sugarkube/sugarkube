@@ -41,10 +41,17 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		// todo - select the right makefile from the installerConfig if it exists,
 		// then remove this panic
 		panic(fmt.Sprintf("Multiple Makefiles found. Disambiguation "+
-			"not implemented yet: ", strings.Join(makefilePaths, ", ")))
+			"not implemented yet: %s", strings.Join(makefilePaths, ", ")))
 	}
 
 	makefilePath := makefilePaths[0]
+
+	kappInterfaces, err := identifyKappInterfaces(kappObj)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	kappInterfaces = kappInterfaces
 
 	// search for values-<env>.yaml files where env could also be the cluster/
 	// profile/etc. Todo - think where to get the pattern `values-<var>.yaml`
