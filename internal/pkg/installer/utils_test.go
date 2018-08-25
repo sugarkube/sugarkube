@@ -65,18 +65,18 @@ func TestFindFilesByPattern(t *testing.T) {
 				"../../testdata/value-merging/subdir1/values.yaml",
 			},
 		},
-		{
-			name: "good_symlinks",
-			desc: "test that symlinks are followed",
-			// todo - generate a proper set of test dirs
-			startDir:       "../../../test-cache/web/wordpress",
-			pattern:        "values.yaml",
-			recursive:      true,
-			preferSymlinks: true,
-			expectValues: []string{
-				"../../../test-cache/web/wordpress/wordpress/values.yaml",
-			},
-		},
+		// todo - generate a proper set of test dirs and re-enable this
+		//{
+		//	name: "good_symlinks",
+		//	desc: "test that symlinks are followed",
+		//	startDir:       "../../../test-cache/web/wordpress",
+		//	pattern:        "values.yaml",
+		//	recursive:      true,
+		//	preferSymlinks: true,
+		//	expectValues: []string{
+		//		"../../../test-cache/web/wordpress/wordpress/values.yaml",
+		//	},
+		//},
 	}
 
 	for _, test := range tests {
