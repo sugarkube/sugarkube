@@ -46,7 +46,7 @@ func findFilesByPattern(rootDir string, pattern string, recursive bool) ([]strin
 }
 
 // Returns a map of regex named capturing groups and values
-func GetRexExpCapturingGroups(pattern string, input string) map[string]string {
+func getRexExpCapturingGroups(pattern string, input string) map[string]string {
 	re := regexp.MustCompile(pattern)
 	match := re.FindStringSubmatch(input)
 
