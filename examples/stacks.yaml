@@ -30,7 +30,7 @@ local-large:
   - uri: manifests/05-k8s-bootstrap.yaml
   - uri: manifests/07-core-security.yaml
   - uri: manifests/10-core-services.yaml
-#  - uri: manifests/20-security.yaml
+  - uri: manifests/20-security.yaml
   - uri: manifests/30-ci-cd.yaml
   - uri: manifests/40-wordpress-sites.yaml
     id: web       # explicitly set the manifest ID. Will be used as a prefix to generate kapp IDs.

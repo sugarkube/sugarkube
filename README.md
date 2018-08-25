@@ -145,7 +145,7 @@ See https://sugarkube.io for more info and documentation.
 ## Status
 Sugarkube is a work in progress and not ready for production use just yet.
 
-# Installation
+# Installation & quick start
 Clone and build with:
 ```
   git clone git@github.com:sugarkube/sugarkube.git
@@ -154,14 +154,38 @@ Clone and build with:
   make test-all
   make build
 ```
-Launch a minikube cluster:
+
+Launch a minikube cluster (it may take a little while to come online):
 ```
   ./bin/sugarkube cluster create -s ./examples/stacks.yaml -n local-standard
 ```
 
-Cache some manifests to be installed:
+Download some kapps to be installed:
 ```
-  ./bin/sugarkube cache create -m examples/manifests/wordpress-sites.yaml \ 
-    -m examples/manifests/core-services.yaml \
-    -d ./cache-test 
+  ./bin/sugarkube kapps cache create -s examples/stacks.yaml -n local-standard \
+    -d test-cache 
 ```
+
+Install the kapps:
+```
+  ./bin/sugarkube kapps install -s ./examples/stacks.yaml -n local-standard \
+    ./test-cache/ --force --one-shot 
+```
+
+You should now have a local minikube cluster set up with Tiller installed
+(configured for RBAC), along with Cert Manager, Nginx ingress, and a 
+Wordpress site. Access it with:
+
+```
+minikube service -n wordpress --https wordpress-wordpress
+```
+or by hostname:
+```
+echo $(minikube ip) wordpress.localhost | sudo tee -a /etc/hosts
+```
+And visit `https://wordpress.localhost`.
+
+## Explore
+Have a look in `./examples/stacks.yaml` and look for `local-standard`. Follow the
+paths it declares. Then look in `./test-cache` to see how that relates to the
+git repos defined in the manifests used in `stacks.yaml`.

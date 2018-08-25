@@ -170,7 +170,8 @@ func (i *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error)
 		for _, v := range matchingGroups {
 			for _, valid := range validPatternMatches {
 				if v == valid {
-					argValues[match] = strings.Join([]string{argKey, match}, "=")
+					// todo - this separator string may need to be configurable too
+					argValues[match] = strings.Join([]string{argKey, match}, " ")
 				}
 			}
 		}
