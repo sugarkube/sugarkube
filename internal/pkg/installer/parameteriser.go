@@ -89,6 +89,11 @@ func (i *Parameteriser) GetEnvVars(vars provider.Values) (map[string]string, err
 		envVars["NAMESPACE"] = i.kappObj.Id
 		envVars["RELEASE"] = i.kappObj.Id
 
+		// todo - this is a hack. Need to find a place for things like this and
+		// a generic way of adding them as env vars. Perhaps have a YAML block
+		// called 'installers' or something?
+		envVars["HOSTED_ZONE"] = vars["hosted_zone"].(string)
+
 		// get the path to the helm binary
 		helmPath, err := exec.LookPath("helm")
 		if err != nil {
