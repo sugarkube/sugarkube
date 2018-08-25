@@ -31,3 +31,4 @@
 **0.5.0**:
 * Implement a state store so that, e.g. KMS key ARNs can be stored (although 
   perhaps we can just use aliases?)
+* Use acquirers to acquire manifests to support git as well as local manifests 

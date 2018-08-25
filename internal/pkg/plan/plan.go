@@ -67,7 +67,8 @@ func Create(stackConfig *kapp.StackConfig, cacheDir string) (*Plan, error) {
 	}
 
 	// todo - use Sources of Truth (SOTs) to discover the current set of kapps installed
-	// todo - diff the cluster state with the desired state from the manifests to create a plan
+	// todo - diff the cluster state with the desired state from the manifests to
+	// create a cluster diff
 
 	return &plan, nil
 }

@@ -28,7 +28,7 @@ func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig
 
 	// search for values-<env>.yaml files where env could also be the cluster/
 	// profile/etc. Todo - think where to get the pattern `values-<var>.yaml`
-	// from that doesn't make us rely on Helm.
+	// from that doesn't make us rely on Helm. Answer: paramertisers
 
 	// create the env vars
 	envVars := []string{

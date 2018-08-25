@@ -28,15 +28,11 @@ type installCmd struct {
 	account       string
 	cluster       string
 	region        string
-	// todo - add a command to validate that the cache matches the desired
-	// state as defined in the manifest(s).
-	manifests cmd.Files
+	manifests     cmd.Files
 	// todo - document that the above will replace manifests declared in a
 	// stack config, not be additive
 
 	// todo - add options to :
-	// * create the cache into a target directory
-	// * refresh the cache (i.e. modify it so it matches the manifests if it fails validation)
 	// * filter the kapps to be processed (use strings like e.g. manifest:kapp-id to refer to kapps)
 	// * exclude manifests / kapps from being processed
 }
@@ -114,7 +110,7 @@ func (c *installCmd) run() error {
 	//	return errors.New("Cache out-of-sync with manifests: %s", diff)
 	//}
 
-	// todo - accept a previously generated plan as a CLI arg. If given, load
+	// todo - accept a previously generated diff as a CLI arg. If given, load
 	// it and validate that the embedded stack config matches the target cluster.
 
 	// planning mode, so generate a plan
@@ -124,7 +120,7 @@ func (c *installCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	// todo - if autoApply continue, otherwise output a plan of which kapps
+	// todo - if autoApply continue, otherwise output a diff of which kapps
 	// will be installed/destroyed and return
 	//}
 
