@@ -11,6 +11,11 @@ type diffCmd struct {
 	extended bool
 }
 
+// Diff may not be the best term, since the output isn't only a diff but also
+// a plan of changes that need to be applied against a target cluster. However,
+// since we run kapps in a two-phased manner - first planning then applying
+// changes - we won't use the more obvious term 'plan' here to avoid ambiguous
+// terms.
 func newDiffCmd(out io.Writer) *cobra.Command {
 	c := &diffCmd{
 		out: out,

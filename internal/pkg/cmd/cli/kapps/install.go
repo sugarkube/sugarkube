@@ -20,6 +20,7 @@ type installCmd struct {
 	dryRun        bool
 	apply         bool
 	oneShot       bool
+	force         bool
 	stackName     string
 	stackFile     string
 	provider      string
@@ -60,9 +61,10 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 		"apply it).")
 	f.BoolVar(&c.oneShot, "one-shot", false, "apply a cluster diff in a single pass by invoking each kapp with "+
 		"'APPROVED=false' then 'APPROVED=true' to install/destroy kapps in a single invocation of sugarkube")
-	// todo - in future, as a convenience, add a --diff flag to auto-generate a cluster diff prior to installation instead of requiring
-	// sugarkube to be invoked multiple times (first to create the cluster diff, then to install kapps)
-	f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to install")
+	f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/destroy all the kapps "+
+		"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
+	f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to apply. If not given, a "+
+		"diff will be generated")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
 	f.StringVarP(&c.provider, "provider", "p", "", "name of provider, e.g. aws, local, etc.")
@@ -102,38 +104,41 @@ func (c *installCmd) run() error {
 
 	log.Debugf("Final stack config: %#v", stackConfig)
 
-	// todo - validate that the cluster diff matches the manifests
+	var clusterDiff *plan.Plan
 
-	// todo - load the cluster diff which contains the list of kapps to
-	// install/destroy and at which versions
-	// todo - diff the cache against the kapps in the cluster diff and abort if
-	// it's out-of-sync (unless flags are set to ignore cache changes)
-	//cacheDiff, err := cacher.DiffKappCache(clusterDiff, c.cacheDir)
-	//if err != nil {
-	//	return errors.WithStack(err)
-	//}
-	//if len(diff) != 0 {
-	//	return errors.New("Cache out-of-sync with manifests: %s", diff)
-	//}
+	if !c.force {
+		if c.diffPath != "" {
+			// todo load a cluster diff from a file
 
-	// todo - accept a previously generated diff as a CLI arg. If given, load
-	// it and validate that the embedded stack config matches the target cluster.
+			// todo - validate that the embedded stack config matches the target cluster.
 
-	// planning mode, so generate a plan
-	//if !c.apply {
-	changePlan, err := plan.Create(stackConfig, c.cacheDir)
-	if err != nil {
-		return errors.WithStack(err)
+			// in future we may want to be able to work entirely from a cluster
+			// diff, in which case it'd really be a plan for us
+			if len(stackConfig.Manifests) > 0 {
+				// todo - validate that the cluster diff matches the manifests, e.g. that
+				// the versions of kapps in the manifests match the versions in the cluster
+				// diff
+			}
+		} else {
+			// todo - create a cluster diff based on stackConfig.Manifests
+			clusterDiff, err = plan.Create(stackConfig, c.cacheDir)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+
+		// todo - diff the cache against the kapps in the cluster diff and abort if
+		// it's out-of-sync (unless flags are set to ignore cache changes), e.g.:
+		//cacheDiff, err := cacher.DiffKappCache(clusterDiff, c.cacheDir)
+		//if err != nil {
+		//	return errors.WithStack(err)
+		//}
+		//if len(diff) != 0 {
+		//	return errors.New("Cache out-of-sync with manifests: %s", diff)
+		//}
 	}
 
-	// todo - if autoApply continue, otherwise output a diff of which kapps
-	// will be installed/destroyed and return
-	//}
-
-	// if not in planning mode, apply plan
-	// todo - think of better names than plan, apply and approved. The difference
-	// between applying and approving isn't obvious.
-	changePlan.Apply(c.apply, c.dryRun)
+	clusterDiff.Apply(c.apply, c.dryRun)
 
 	return nil
 }

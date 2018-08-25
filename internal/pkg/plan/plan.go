@@ -33,10 +33,11 @@ type Plan struct {
 	cacheDir string
 }
 
+// create a plan containing all kapps in the stackConfig, then filter out the
+// ones that don't need running based on the current state of the target cluster
+// as described by SOTs
 func Create(stackConfig *kapp.StackConfig, cacheDir string) (*Plan, error) {
 
-	// build a plan containing all kapps, then filter out the ones that don't
-	// need running based on responses from SOTs
 	tranches := make([]Tranche, 0)
 
 	for _, manifest := range stackConfig.Manifests {
