@@ -29,6 +29,7 @@
   (although perhaps we don't need this and can just use aliases? What other 
   use cases are there?)
 * Use acquirers to acquire manifests from git repos as well as local files 
+* Catch up on tests
 
 **0.6.0**:
 User-friendliness/ergonomics:
