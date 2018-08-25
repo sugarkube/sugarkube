@@ -47,3 +47,4 @@ User-friendliness/ergonomics:
   MakeInstaller:
   * Parse configs
   * Implement them
+  * Support installerConfigs to disambiguate when multiple Makefiles are found

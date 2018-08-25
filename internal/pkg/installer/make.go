@@ -26,7 +26,25 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	stackConfig *kapp.StackConfig, approved bool, dryRun bool) error {
 
 	// search for the Makefile
-	makefilePath := "/some/path/Makefile"
+	makefilePaths, err := findFilesByPattern(kappObj.RootDir, "Makefile",
+		true)
+	if err != nil {
+		return errors.Wrapf(err, "Error finding Makefile in '%s'",
+			kappObj.RootDir)
+	}
+
+	if len(makefilePaths) == 0 {
+		return errors.New(fmt.Sprintf("No makefile found for kapp '%s' "+
+			"in '%s'", kappObj.Id, kappObj.RootDir))
+	}
+	if len(makefilePaths) > 1 {
+		// todo - select the right makefile from the installerConfig if it exists,
+		// then remove this panic
+		panic(fmt.Sprintf("Multiple Makefiles found. Disambiguation "+
+			"not implemented yet: ", strings.Join(makefilePaths, ", ")))
+	}
+
+	makefilePath := makefilePaths[0]
 
 	// search for values-<env>.yaml files where env could also be the cluster/
 	// profile/etc. Todo - think where to get the pattern `values-<var>.yaml`
