@@ -15,10 +15,11 @@ import (
 
 type installCmd struct {
 	out           io.Writer
+	diffPath      string
+	cacheDir      string
 	dryRun        bool
 	apply         bool
-	approved      bool
-	cacheDir      string
+	oneShot       bool
 	stackName     string
 	stackFile     string
 	provider      string
@@ -29,9 +30,6 @@ type installCmd struct {
 	cluster       string
 	region        string
 	manifests     cmd.Files
-	// todo - document that the above will replace manifests declared in a
-	// stack config, not be additive
-
 	// todo - add options to :
 	// * filter the kapps to be processed (use strings like e.g. manifest:kapp-id to refer to kapps)
 	// * exclude manifests / kapps from being processed
@@ -48,7 +46,7 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 		Long:  `Install cached kapps into a target cluster.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return errors.New("the path to the kapp cache dir to install from is required")
+				return errors.New("the path to the kapp cache dir is required")
 			}
 			c.cacheDir = args[0]
 			return c.run()
@@ -57,10 +55,14 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
-	f.BoolVar(&c.apply, "apply", false, "apply a plan to install/destroy kapps")
-	// todo - change this. It's confusing.
-	f.BoolVar(&c.approved, "approved", false, "actually apply a plan to install/destroy kapps")
-	f.StringVarP(&c.cacheDir, "dir", "d", "", "Cache directory to install kapps from")
+	f.BoolVar(&c.apply, "apply", false, "actually apply a cluster diff to install/destroy kapps. If false, kapps "+
+		"will be expected to plan their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not "+
+		"apply it).")
+	f.BoolVar(&c.oneShot, "one-shot", false, "apply a cluster diff in a single pass by invoking each kapp with "+
+		"'APPROVED=false' then 'APPROVED=true' to install/destroy kapps in a single invocation of sugarkube")
+	// todo - in future, as a convenience, add a --diff flag to auto-generate a cluster diff prior to installation instead of requiring
+	// sugarkube to be invoked multiple times (first to create the cluster diff, then to install kapps)
+	f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to install")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
 	f.StringVarP(&c.provider, "provider", "p", "", "name of provider, e.g. aws, local, etc.")
@@ -70,7 +72,7 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
 	f.VarP(&c.varsFilesDirs, "vars-file-or-dir", "f", "YAML vars file or directory to load (can specify multiple)")
-	f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
+	f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple but will replace any configured in a stack)")
 	return cmd
 }
 
@@ -100,9 +102,13 @@ func (c *installCmd) run() error {
 
 	log.Debugf("Final stack config: %#v", stackConfig)
 
-	// todo - diff the cache dir against the manifests. Abort if the cache is
-	// out-of-sync with the manifests
-	//diff, err := cacher.DiffCache(stackConfig.Manifests, c.cacheDir)
+	// todo - validate that the cluster diff matches the manifests
+
+	// todo - load the cluster diff which contains the list of kapps to
+	// install/destroy and at which versions
+	// todo - diff the cache against the kapps in the cluster diff and abort if
+	// it's out-of-sync (unless flags are set to ignore cache changes)
+	//cacheDiff, err := cacher.DiffKappCache(clusterDiff, c.cacheDir)
 	//if err != nil {
 	//	return errors.WithStack(err)
 	//}
@@ -127,7 +133,7 @@ func (c *installCmd) run() error {
 	// if not in planning mode, apply plan
 	// todo - think of better names than plan, apply and approved. The difference
 	// between applying and approving isn't obvious.
-	changePlan.Apply(c.approved, c.dryRun)
+	changePlan.Apply(c.apply, c.dryRun)
 
 	return nil
 }
