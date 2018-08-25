@@ -89,6 +89,49 @@ func (i *Parameteriser) GetEnvVars(vars provider.Values) map[string]string {
 	return envVars
 }
 
+// Returns a list of args that the installer should pass to the kapp
+func (i *Parameteriser) GetCliArgs(validPatternMatches []string) ([]string, error) {
+	pattern := ""
+	argName := ""
+
+	if i.Name == IMPLEMENTS_HELM {
+		pattern = "values-(?P<Var>\\w*).yaml"
+		argName = "helm-opts"
+	}
+
+	if i.Name == IMPLEMENTS_TERRAFORM {
+		pattern = "terraform.*"
+		argName = "tf-opts"
+	}
+
+	if pattern == "" {
+		return []string{}, nil
+	}
+
+	matches, err := findFilesByPattern(i.kappObj.RootDir, pattern, true)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	cliArgs := make([]string, 0)
+
+	// make sure the matching group in each match is in the valid pattern matches list
+	for _, match := range matches {
+		matchingGroups := getRexExpCapturingGroups(pattern, match)
+
+		// don't punish yourself by saying the words "functional programming"...
+		for _, v := range matchingGroups {
+			for _, valid := range validPatternMatches {
+				if v == valid {
+					cliArgs = append(cliArgs, match)
+				}
+			}
+		}
+	}
+
+	return cliArgs, nil
+}
+
 // Examines a kapp to find out what it contains, and therefore what env vars/
 // CLI args need passing to it by an Installer.
 func identifyKappInterfaces(kappObj *kapp.Kapp) ([]Parameteriser, error) {
