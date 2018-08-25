@@ -2,22 +2,40 @@ package installer
 
 import (
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
-// Search for files in a directory matching a regex, optionally recursively
-func findFilesByPattern(rootDir string, pattern string, recursive bool) ([]string, error) {
+// Search for files in a directory matching a regex, optionally recursively.
+// If preferSymlinks is true, return paths will be replaced by symlinks where
+// possible.
+func findFilesByPattern(rootDir string, pattern string, recursive bool,
+	preferSymlinks bool) ([]string, error) {
 	re := regexp.MustCompile(pattern)
 	results := make([]string, 0)
+
+	links := make(map[string]string)
 
 	if recursive {
 		// todo - rewrite to support symlinks and excluding the .sugarkube cache directory
 		err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return errors.WithStack(err)
+			}
+
+			// if the file is a symlink, save the destination so we can replace it later
+			if info.Mode()&os.ModeSymlink != 0 {
+				realPath, err := os.Readlink(path)
+				if err != nil {
+					return errors.Wrapf(err, "Error reading symlink '%s'", path)
+				}
+
+				links[realPath] = filepath.Base(path)
+				return nil
 			}
 
 			if match := re.FindString(path); match != "" {
@@ -27,6 +45,27 @@ func findFilesByPattern(rootDir string, pattern string, recursive bool) ([]strin
 		})
 		if err != nil {
 			return nil, errors.WithStack(err)
+		}
+
+		if preferSymlinks && len(links) > 0 {
+			// iterate through results replacing any paths that contain symlink
+			// targets to be the symlinks themselves
+			for i, result := range results {
+				for linkTarget, link := range links {
+					if strings.Contains(result, linkTarget) {
+						log.Debugf("Replacing link target '%s' with "+
+							"link '%s' in result '%s'", linkTarget, link, result)
+						results[i] = strings.Replace(result, linkTarget, link, 1)
+
+						// verify that the updated path exists
+						_, err := os.Stat(results[i])
+						if err != nil {
+							return nil, errors.Wrapf(err, "Path updated with "+
+								"symlink '%s' doesn't exist", results[i])
+						}
+					}
+				}
+			}
 		}
 
 	} else {

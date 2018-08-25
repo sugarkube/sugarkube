@@ -113,7 +113,8 @@ func (i *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error)
 		return "", nil
 	}
 
-	matches, err := findFilesByPattern(i.kappObj.RootDir, pattern, true)
+	matches, err := findFilesByPattern(i.kappObj.RootDir, pattern,
+		true, true)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
@@ -164,7 +165,8 @@ func identifyKappInterfaces(kappObj *kapp.Kapp) ([]Parameteriser, error) {
 		Name: IMPLEMENTS_K8S, kappObj: kappObj})
 
 	// todo - remove this kludge to find out whether the kapp contains a helm chart.
-	chartPaths, err := findFilesByPattern(kappObj.RootDir, "Chart.yaml", true)
+	chartPaths, err := findFilesByPattern(kappObj.RootDir, "Chart.yaml",
+		true, true)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -174,7 +176,8 @@ func identifyKappInterfaces(kappObj *kapp.Kapp) ([]Parameteriser, error) {
 	}
 
 	// todo - remove this kludge to find out whether the kapp contains terraform configs
-	terraformPaths, err := findFilesByPattern(kappObj.RootDir, "terraform", true)
+	terraformPaths, err := findFilesByPattern(kappObj.RootDir, "terraform",
+		true, true)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

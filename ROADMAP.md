@@ -34,7 +34,7 @@
 **0.6.0**:
 User-friendliness/ergonomics:
 * Add a default config file with the usual platform-dependent search paths
-  (e.g. ~/.sugarkube, etc.).
+  (e.g. ~/.sugarkube, etc. (see os.UserCacheDir())).
 * Add flags to the root command for:
   * setting the log level
   * specifying the path to a config file 

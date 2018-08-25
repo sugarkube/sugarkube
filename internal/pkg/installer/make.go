@@ -27,7 +27,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 	// search for the Makefile
 	makefilePaths, err := findFilesByPattern(kappObj.RootDir, "Makefile",
-		true)
+		true, true)
 	if err != nil {
 		return errors.Wrapf(err, "Error finding Makefile in '%s'",
 			kappObj.RootDir)
