@@ -112,8 +112,8 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 		for success := 0; success < totalOperations; success++ {
 			select {
 			case err := <-errCh:
-				close(doneCh)
 				log.Fatalf("Error processing kapp in tranche %d of plan: %s", i+1, err)
+				close(doneCh)
 				return errors.Wrapf(err, "Error processing kapp goroutine "+
 					"in tranche %d of plan", i+1)
 			case <-doneCh:
@@ -123,7 +123,7 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 		}
 	}
 
-	log.Debugf("Finished applying plan")
+	log.Infof("Finished applying plan")
 
 	return nil
 }

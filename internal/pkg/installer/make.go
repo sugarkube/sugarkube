@@ -106,20 +106,25 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	var stderrBuf bytes.Buffer
 
 	// make command
-	makeCmd := exec.Command(makefilePath, TARGET_INSTALL)
+	makeCmd := exec.Command("make", TARGET_INSTALL)
 	makeCmd.Dir = filepath.Dir(makefilePath)
 	makeCmd.Env = strEnvVars
 	makeCmd.Args = cliArgs
 	makeCmd.Stderr = &stderrBuf
 
 	if dryRun {
-		log.Infof("Dry run. Would install kapp '%s' with command: %s %s",
-			kappObj.Id, strings.Join(makeCmd.Env, " "),
+		log.Infof("Dry run. Would install kapp '%s' in directory '%s' "+
+			"with command: %s %s",
+			kappObj.Id,
+			makeCmd.Dir,
+			strings.Join(makeCmd.Env, " "),
 			strings.Join(makeCmd.Args, " "))
 	} else {
 		// run it
-		log.Infof("Installing kapp '%s' with command: %s %s",
-			kappObj.Id, strings.Join(makeCmd.Env, " "),
+		log.Infof("Installing kapp '%s' in directory %s with command: %s %s",
+			kappObj.Id,
+			makeCmd.Dir,
+			strings.Join(makeCmd.Env, " "),
 			strings.Join(makeCmd.Args, " "))
 
 		err := makeCmd.Run()
