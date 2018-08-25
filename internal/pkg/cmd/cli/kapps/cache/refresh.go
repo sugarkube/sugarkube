@@ -36,8 +36,9 @@ Refreshing means:
 }
 
 func (c *refreshCmd) run(cmd *cobra.Command, args []string) error {
-	// todo - could this just be a flag on `cache create --refresh`? That way
-	// it could create or refresh an existing cache which will simplify scripting
+	// this may end up as a flag on `cache create`, e.g. `cache create --refresh`,
+	// but for now we'll implement it here as a separate command before adding
+	// that flag, if at all.
 
 	return nil
 }
