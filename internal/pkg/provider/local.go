@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 )
 
-const KUBE_CONTEXT_KEY = "kube_context"
-
 type LocalProvider struct {
 	stackConfigVars Values
 }

@@ -51,31 +51,40 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		return errors.WithStack(err)
 	}
 
-	kappInterfaces = kappInterfaces
-
 	// search for values-<env>.yaml files where env could also be the cluster/
 	// profile/etc. Todo - think where to get the pattern `values-<var>.yaml`
 	// from that doesn't make us rely on Helm. Answer: paramertisers
 
 	// create the env vars
-	envVars := []string{
-		fmt.Sprintf("APPROVED=%v", approved),
-		"CLUSTER=" + stackConfig.Cluster,
-		"PROFILE=" + stackConfig.Profile,
-		"PROVIDER=" + stackConfig.Provider,
-		// Helm-specific env var names - todo use something that understand helm to add these in
-		"NAMESPACE=" + kappObj.Id, // todo - permit overrides
-		"RELEASE=" + kappObj.Id,
-		//"CHART_DIR=???"			// todo - is this necessary?
+	envVars := map[string]string{
+		"APPROVED": fmt.Sprintf("%v", approved),
+		"CLUSTER":  stackConfig.Cluster,
+		"PROFILE":  stackConfig.Profile,
+		"PROVIDER": stackConfig.Provider,
 	}
 
-	// todo - there should be something that understand Helm and that takes stuff
-	// from the provider to return the vars that the installer cares about for Helm
-	// kapps. I.e. we shouldn't return the KUBE_CONTEXT for non-k8s/helm kapps.
+	providerImpl, err := provider.NewProvider(stackConfig)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// Adds things like `KUBE_CONTEXT`, `NAMESPACE`, `RELEASE`, etc.
+	for _, kappInterface := range kappInterfaces {
+		for k, v := range kappInterface.GetEnvVars(provider.GetVars(providerImpl)) {
+			envVars[k] = v
+		}
+	}
+
+	// The AwsProvider adds REGION
 	for k, v := range provider.GetInstallerVars(i.provider) {
 		upperKey := strings.ToUpper(k)
-		kv := fmt.Sprintf("%s=%s", upperKey, v)
-		envVars = append(envVars, kv)
+		envVars[upperKey] = fmt.Sprintf("%#v", v)
+	}
+
+	// convert the env vars to a string array
+	strEnvVars := make([]string, 0)
+	for k, v := range envVars {
+		strEnvVars = append(strEnvVars, strings.Join([]string{k, v}, "="))
 	}
 
 	// build the command
@@ -84,7 +93,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	// make command
 	makeCmd := exec.Command(makefilePath, TARGET_INSTALL)
 	makeCmd.Dir = filepath.Dir(makefilePath)
-	makeCmd.Env = envVars
+	makeCmd.Env = strEnvVars
 	makeCmd.Stderr = &stderrBuf
 
 	if dryRun {

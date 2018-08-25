@@ -3,6 +3,7 @@ package installer
 import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 )
 
 // This is a generic way of inspecting kapps to see what they contain and what
@@ -68,17 +69,36 @@ const IMPLEMENTS_HELM = "helm"
 const IMPLEMENTS_TERRAFORM = "terraform"
 const IMPLEMENTS_K8S = "k8s"
 
+type KappInterface struct {
+	Name    string
+	kappObj kapp.Kapp
+}
+
+const KUBE_CONTEXT_KEY = "kube_context"
+
+func (i *KappInterface) GetEnvVars(vars provider.Values) map[string]string {
+	envVars := make(map[string]string)
+
+	if i.Name == IMPLEMENTS_HELM {
+		envVars["NAMESPACE"] = i.kappObj.Id
+		envVars["RELEASE"] = i.kappObj.Id
+		envVars["KUBE_CONTEXT"] = vars[KUBE_CONTEXT_KEY].(string)
+	}
+
+	return envVars
+}
+
 // Examines a kapp to find out what it contains, and therefore what env vars/
 // CLI args need passing to it by an Installer.
-func identifyKappInterfaces(kappObj *kapp.Kapp) ([]string, error) {
+func identifyKappInterfaces(kappObj *kapp.Kapp) ([]KappInterface, error) {
 	// todo - parse the above config and test the kapp using it.
 	// todo - also look in the kapp's sugarkube.yaml file if it exists
 
-	interfaces := make([]string, 0)
+	interfaces := make([]KappInterface, 0)
 
 	// todo - remove IMPLEMENTS_K8S from this. It's a temporary kludge until we
 	// can get it from the kapp's sugarkube.yaml file
-	interfaces = append(interfaces, IMPLEMENTS_K8S)
+	interfaces = append(interfaces, KappInterface{Name: IMPLEMENTS_K8S})
 
 	// todo - remove this kludge to find out whether the kapp contains a helm chart.
 	chartPaths, err := findFilesByPattern(kappObj.RootDir, "Chart.yaml", true)
@@ -86,7 +106,7 @@ func identifyKappInterfaces(kappObj *kapp.Kapp) ([]string, error) {
 		return nil, errors.WithStack(err)
 	}
 	if len(chartPaths) > 0 {
-		interfaces = append(interfaces, IMPLEMENTS_HELM)
+		interfaces = append(interfaces, KappInterface{Name: IMPLEMENTS_HELM})
 	}
 
 	// todo - remove this kludge to find out whether the kapp contains terraform configs
@@ -95,7 +115,7 @@ func identifyKappInterfaces(kappObj *kapp.Kapp) ([]string, error) {
 		return nil, errors.WithStack(err)
 	}
 	if len(terraformPaths) > 0 {
-		interfaces = append(interfaces, IMPLEMENTS_TERRAFORM)
+		interfaces = append(interfaces, KappInterface{Name: IMPLEMENTS_TERRAFORM})
 	}
 
 	return interfaces, nil
