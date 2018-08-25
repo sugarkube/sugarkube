@@ -109,6 +109,8 @@ func (c *installCmd) run() error {
 	var actionPlan *plan.Plan
 
 	if !c.force {
+		panic("Not implemented. Pass --force")
+
 		if c.diffPath != "" {
 			// todo load a cluster diff from a file
 

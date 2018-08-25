@@ -71,11 +71,12 @@ const IMPLEMENTS_K8S = "k8s"
 
 type KappInterface struct {
 	Name    string
-	kappObj kapp.Kapp
+	kappObj *kapp.Kapp
 }
 
 const KUBE_CONTEXT_KEY = "kube_context"
 
+// Return a map of env vars that should be passed to the kapp by the installer
 func (i *KappInterface) GetEnvVars(vars provider.Values) map[string]string {
 	envVars := make(map[string]string)
 
@@ -98,7 +99,7 @@ func identifyKappInterfaces(kappObj *kapp.Kapp) ([]KappInterface, error) {
 
 	// todo - remove IMPLEMENTS_K8S from this. It's a temporary kludge until we
 	// can get it from the kapp's sugarkube.yaml file
-	interfaces = append(interfaces, KappInterface{Name: IMPLEMENTS_K8S})
+	interfaces = append(interfaces, KappInterface{Name: IMPLEMENTS_K8S, kappObj: kappObj})
 
 	// todo - remove this kludge to find out whether the kapp contains a helm chart.
 	chartPaths, err := findFilesByPattern(kappObj.RootDir, "Chart.yaml", true)
@@ -106,7 +107,7 @@ func identifyKappInterfaces(kappObj *kapp.Kapp) ([]KappInterface, error) {
 		return nil, errors.WithStack(err)
 	}
 	if len(chartPaths) > 0 {
-		interfaces = append(interfaces, KappInterface{Name: IMPLEMENTS_HELM})
+		interfaces = append(interfaces, KappInterface{Name: IMPLEMENTS_HELM, kappObj: kappObj})
 	}
 
 	// todo - remove this kludge to find out whether the kapp contains terraform configs
@@ -115,7 +116,7 @@ func identifyKappInterfaces(kappObj *kapp.Kapp) ([]KappInterface, error) {
 		return nil, errors.WithStack(err)
 	}
 	if len(terraformPaths) > 0 {
-		interfaces = append(interfaces, KappInterface{Name: IMPLEMENTS_TERRAFORM})
+		interfaces = append(interfaces, KappInterface{Name: IMPLEMENTS_TERRAFORM, kappObj: kappObj})
 	}
 
 	return interfaces, nil
