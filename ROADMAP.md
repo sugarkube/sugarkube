@@ -5,6 +5,7 @@
   * without templating/file generation
   * wihtout consulting a SOT so all kapps in a manifest will be 
     installed/destroyed regardless of the current state of the cluster
+* Add licence (Apache 2 probably)  
   
 **0.2.0**:
 * Implement cache diffing
