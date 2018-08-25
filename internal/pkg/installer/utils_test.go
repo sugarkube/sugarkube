@@ -10,6 +10,10 @@ const testDir = "../../testdata"
 
 // Test against testdata
 func TestFindFilesByPattern(t *testing.T) {
+
+	absTestDir, err := filepath.Abs(testDir)
+	assert.Nil(t, err)
+
 	tests := []struct {
 		name           string
 		desc           string
@@ -27,7 +31,7 @@ func TestFindFilesByPattern(t *testing.T) {
 			recursive:      true,
 			preferSymlinks: true,
 			expectValues: []string{
-				"../../testdata/manifests/manifest2.yaml",
+				filepath.Join(absTestDir, "manifests/manifest2.yaml"),
 			},
 		},
 		{
@@ -38,8 +42,8 @@ func TestFindFilesByPattern(t *testing.T) {
 			recursive:      true,
 			preferSymlinks: true,
 			expectValues: []string{
-				"../../testdata/manifests/manifest1.yaml",
-				"../../testdata/manifests/manifest2.yaml",
+				filepath.Join(absTestDir, "manifests/manifest1.yaml"),
+				filepath.Join(absTestDir, "manifests/manifest2.yaml"),
 			},
 		},
 		{
@@ -50,7 +54,7 @@ func TestFindFilesByPattern(t *testing.T) {
 			recursive:      false,
 			preferSymlinks: true,
 			expectValues: []string{
-				"../../testdata/value-merging/values.yaml",
+				filepath.Join(absTestDir, "value-merging/values.yaml"),
 			},
 		},
 		{
@@ -61,8 +65,8 @@ func TestFindFilesByPattern(t *testing.T) {
 			recursive:      true,
 			preferSymlinks: true,
 			expectValues: []string{
-				"../../testdata/value-merging/subdir1/subdir2/values.yaml",
-				"../../testdata/value-merging/subdir1/values.yaml",
+				filepath.Join(absTestDir, "value-merging/subdir1/subdir2/values.yaml"),
+				filepath.Join(absTestDir, "value-merging/subdir1/values.yaml"),
 			},
 		},
 		// todo - generate a proper set of test dirs and re-enable this

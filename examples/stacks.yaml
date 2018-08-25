@@ -9,6 +9,7 @@ local-standard:
   manifests:
   # todo - support pulling these from git repos
   - uri: manifests/05-k8s-bootstrap.yaml
+  - uri: manifests/07-core-security.yaml
   - uri: manifests/10-core-services.yaml
   - uri: manifests/40-wordpress-sites.yaml
 
@@ -27,8 +28,9 @@ local-large:
   manifests:
   # if no protocol is given, file:// is assumed.
   - uri: manifests/05-k8s-bootstrap.yaml
+  - uri: manifests/07-core-security.yaml
   - uri: manifests/10-core-services.yaml
-  - uri: manifests/20-security.yaml
+#  - uri: manifests/20-security.yaml
   - uri: manifests/30-ci-cd.yaml
   - uri: manifests/40-wordpress-sites.yaml
     id: web       # explicitly set the manifest ID. Will be used as a prefix to generate kapp IDs.
@@ -47,6 +49,7 @@ aws-dev:
   manifests:
   # if no protocol is given, file:// is assumed.
   - uri: manifests/05-k8s-bootstrap.yaml
+  - uri: manifests/07-core-security.yaml
   - uri: manifests/10-core-services.yaml
   - uri: manifests/15-core-aws.yaml
   - uri: manifests/20-security.yaml

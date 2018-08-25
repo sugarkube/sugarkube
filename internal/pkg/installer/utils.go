@@ -81,6 +81,15 @@ func findFilesByPattern(rootDir string, pattern string, recursive bool,
 		}
 	}
 
+	for i, result := range results {
+		absResult, err := filepath.Abs(result)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		results[i] = absResult
+	}
+
 	return results, nil
 }
 
