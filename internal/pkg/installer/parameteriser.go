@@ -60,5 +60,5 @@ kapp_interfaces:			# different things a kapp might contain. May be multiple.
 `
 
 func identifyKappInterfaces(kappObj kapp.Kapp) []string {
-
+	return nil
 }

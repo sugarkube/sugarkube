@@ -4,8 +4,8 @@ Describes how installing kapps works at a high level.
 ## Manifest loading
 * Load all manifests from either the `stack` or given on the CLI.
 
-## Planning
-* Build a plan:
+## Diff the cluster
+* Diff the state of the cluster against all the kapps in the manifests:
   * Build the lists of kapps to install and destroy based on the kapps in the 
     given manifests, and any CLI args (e.g. `filter` which allows selecting a 
     subset of kapps).
@@ -13,19 +13,23 @@ Describes how installing kapps works at a high level.
     in the target cluster.
   * Refresh (or build) the cache (see below)
   * Read `sugarkube.yaml` from each kapp so we know what creds each one needs
-  * Write the plan as YAML to the root of the kapp cache (by default 
-    `_generated_plan.yaml`, or to a supplied path).
+  * Print the diff as YAML on stdout, or to a file (default 
+    `<cache_dir>/_generated_diff.yaml`)
 
-Also support loading a previously generated plan instead of always having to 
+Also support loading a previously generated diff instead of always having to 
 go through this process.
 
-### Where to declare which creds a kapp needs?
-If we store `sugarkube.yaml` we need to build/refresh the cache while 
-generating the plan. If they're somewhere else we won't need to. What's 
-better? It's probably clearer to store them in kapps, then people can configure
-their CD pipelines to throw warnings if someone uses a credential †hat doesn't
-contain the kapp's name (e.g. the wordpress kapp should probably only need
-creds prefixed with `wordpress`).
+### Where to declare which secrets a kapp needs?
+Kapps can include a `sugarkube.yaml` file which will be outputted verbatim by
+the `cluster diff` command. Thsi can be used by CI/CD systems to discover which
+secrets a kapp needs making available during installation as environment 
+variables.
+
+The `sugarkube.yaml` file can also contain additional metadata about the kapp
+such as what type of kapp it is. While the types of some kapps can be identified
+via heuristics (e.g. a kapp includes a Helm chart if it includes a file called
+`Chart.yaml`), some can't be so easily so must be explicitly specified. They
+can be specified in `sugarkube.yaml`.
 
 ## Refreshing the cache
 Sometimes we'll want to build a cache for all kapps in all manifests for a 
