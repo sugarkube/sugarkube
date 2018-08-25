@@ -80,6 +80,8 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 
 func (c *installCmd) run() error {
 
+	var err error
+
 	stackConfig, err := cluster.ParseStackCliArgs(c.stackName, c.stackFile)
 	if err != nil {
 		return errors.WithStack(err)
@@ -104,7 +106,7 @@ func (c *installCmd) run() error {
 
 	log.Debugf("Final stack config: %#v", stackConfig)
 
-	var clusterDiff *plan.Plan
+	var actionPlan *plan.Plan
 
 	if !c.force {
 		if c.diffPath != "" {
@@ -121,10 +123,6 @@ func (c *installCmd) run() error {
 			}
 		} else {
 			// todo - create a cluster diff based on stackConfig.Manifests
-			clusterDiff, err = plan.Create(stackConfig, c.cacheDir)
-			if err != nil {
-				return errors.WithStack(err)
-			}
 		}
 
 		// todo - diff the cache against the kapps in the cluster diff and abort if
@@ -136,9 +134,35 @@ func (c *installCmd) run() error {
 		//if len(diff) != 0 {
 		//	return errors.New("Cache out-of-sync with manifests: %s", diff)
 		//}
+
+		// todo - create an action plan from the validated cluster diff
+		//actionPlan, err := plan.FromDiff(clusterDiff)
+
+	} else {
+		// force mode, so no need to perform validation. Just create a plan
+		actionPlan, err = plan.Create(stackConfig, c.cacheDir)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
-	clusterDiff.Apply(c.apply, c.dryRun)
+	if !c.oneShot {
+		// run the plan either preparing or applying changes
+		err := actionPlan.Run(c.apply, c.dryRun)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		// one-shot mode, so prepare and apply the plan straight away
+		err = actionPlan.Run(false, c.dryRun)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		err = actionPlan.Run(true, c.dryRun)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
 
 	return nil
 }

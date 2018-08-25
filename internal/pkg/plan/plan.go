@@ -74,10 +74,10 @@ func Create(stackConfig *kapp.StackConfig, cacheDir string) (*Plan, error) {
 	return &plan, nil
 }
 
-// Apply a plan to make a target cluster have the necessary kapps installed/
+// Run a plan to make a target cluster have the necessary kapps installed/
 // destroyed to match the input manifests. Each tranche is run sequentially,
 // and each kapp in each tranche is processed in parallel.
-func (p *Plan) Apply(approved bool, dryRun bool) error {
+func (p *Plan) Run(approved bool, dryRun bool) error {
 
 	if p.tranche == nil {
 		log.Info("No tranches in plan to process")
