@@ -2,6 +2,7 @@ package sugarkube
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cache"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/version"
@@ -75,6 +76,7 @@ See https://sugarkube.io for more info and documentation.
 		version.NewCommand(),
 		cluster.NewClusterCmds(out),
 		kapps.NewKappsCmds(out),
+		cache.NewCacheCmds(out),
 	)
 
 	return cmd

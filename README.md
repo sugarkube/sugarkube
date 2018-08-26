@@ -154,6 +154,7 @@ Clone and build with:
   make test-all
   make build
 ```
+Alternatively download a release and then cloning the repo as above.
 
 Launch a minikube cluster (it may take a little while to come online):
 ```
@@ -162,7 +163,7 @@ Launch a minikube cluster (it may take a little while to come online):
 
 Download some kapps to be installed:
 ```
-  ./bin/sugarkube kapps cache create -s examples/stacks.yaml -n local-standard \
+  ./bin/sugarkube cache create -s examples/stacks.yaml -n local-standard \
     -d test-cache 
 ```
 
