@@ -5,7 +5,7 @@ local-standard:
   cluster: standard
   vars:               # paths to yaml files to load data from. Keys will be merged.
   - providers/
-  - vars/
+#  - vars/
   manifests:
   # todo - support pulling these from git repos
   - uri: manifests/05-k8s-bootstrap.yaml
@@ -45,7 +45,7 @@ aws-dev:
   - eu-west-1
   vars:               # paths to yaml files to load data from. Keys will be merged.
   - providers/
-  - vars/
+#  - vars/
   manifests:
   # if no protocol is given, file:// is assumed.
   - uri: manifests/05-k8s-bootstrap.yaml
