@@ -5,7 +5,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"os"
-	"os/exec"
 	"os/user"
 	"path/filepath"
 	"strings"
@@ -93,13 +92,6 @@ func (i *Parameteriser) GetEnvVars(vars provider.Values) (map[string]string, err
 		// a generic way of adding them as env vars. Perhaps have a YAML block
 		// called 'installers' or something?
 		envVars["HOSTED_ZONE"] = vars["hosted_zone"].(string)
-
-		// get the path to the helm binary
-		helmPath, err := exec.LookPath("helm")
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		envVars["HELM"] = helmPath
 	}
 
 	if i.Name == IMPLEMENTS_HELM || i.Name == IMPLEMENTS_K8S {
@@ -118,13 +110,6 @@ func (i *Parameteriser) GetEnvVars(vars provider.Values) (map[string]string, err
 			defaultKubeConfig := filepath.Join(homeDir, ".kube/config")
 			envVars["KUBECONFIG"] = defaultKubeConfig
 		}
-
-		// get the path to the kubectl binary
-		kubectlPath, err := exec.LookPath("kubectl")
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		envVars["KUBECTL"] = kubectlPath
 	}
 
 	return envVars, nil
