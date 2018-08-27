@@ -43,7 +43,7 @@ func TestLoadStackConfig(t *testing.T) {
 						Sources: []acquirer.Acquirer{
 							acquirer.NewGitAcquirer(
 								"pathA",
-								"git@github.com:sugarkube/sample-kapps-A.git",
+								"git@github.com:sugarkube/kapps-A.git",
 								"kappA-0.1.0",
 								"some/pathA"),
 						},
@@ -60,7 +60,7 @@ func TestLoadStackConfig(t *testing.T) {
 						Sources: []acquirer.Acquirer{
 							acquirer.NewGitAcquirer(
 								"pathB",
-								"git@github.com:sugarkube/sample-kapps-B.git",
+								"git@github.com:sugarkube/kapps-B.git",
 								"kappB-0.2.0",
 								"some/pathB"),
 						},

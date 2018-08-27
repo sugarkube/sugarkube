@@ -20,16 +20,16 @@ func TestNewGitAcquirerPartial(t *testing.T) {
 }
 
 var defaultSettings = map[string]string{
-	"uri":    "git@github.com:sugarkube/sample-kapps.git",
-	"branch": "tiller-0.1.0",
-	"path":   "tiller/",
+	"uri":    "git@github.com:sugarkube/kapps.git",
+	"branch": "master",
+	"path":   "incubator/tiller/",
 }
 
 var expectedAcquirer = GitAcquirer{
 	name:   "tiller",
-	uri:    "git@github.com:sugarkube/sample-kapps.git",
-	branch: "tiller-0.1.0",
-	path:   "tiller/",
+	uri:    "git@github.com:sugarkube/kapps.git",
+	branch: "master",
+	path:   "incubator/tiller/",
 }
 
 func TestNewGitAcquirerFull(t *testing.T) {
@@ -49,9 +49,9 @@ func TestNewAcquirerGitExplicit(t *testing.T) {
 	actual, err := NewAcquirer(
 		map[string]string{
 			ACQUIRER_KEY: GIT,
-			"uri":        "git@github.com:sugarkube/sample-kapps.git",
-			"branch":     "tiller-0.1.0",
-			"path":       "tiller/",
+			"uri":        "git@github.com:sugarkube/kapps.git",
+			"branch":     "master",
+			"path":       "incubator/tiller/",
 		})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual)

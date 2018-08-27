@@ -39,7 +39,7 @@ present:
 #      # Name of the source. Defaults to the last component of the path (in this
 #      # case `site1`). Also used as a key.
 #      name: site1-values
-#    - uri: git@github.com:sugarkube/sample-kapps.git
+#    - uri: git@github.com:sugarkube/kapps.git
 #      branch: master
 #      path: common-makefiles/
 

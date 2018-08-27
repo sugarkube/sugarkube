@@ -1,6 +1,6 @@
 present:
   kappB:
     sources:
-    - uri: git@github.com:sugarkube/sample-kapps-B.git
+    - uri: git@github.com:sugarkube/kapps-B.git
       branch: kappB-0.2.0
       path: some/pathB
