@@ -7,6 +7,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -56,6 +57,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 	// create the env vars
 	envVars := map[string]string{
+		"PATH":      os.Getenv("PATH"),
 		"KAPP_ROOT": absKappRoot,
 		"APPROVED":  fmt.Sprintf("%v", approved),
 		"CLUSTER":   stackConfig.Cluster,
