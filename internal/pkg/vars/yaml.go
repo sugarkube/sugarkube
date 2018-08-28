@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 )
 
+// Loads a YAML file
 func LoadYamlFile(path string) (map[string]interface{}, error) {
 	// make sure the file exists
 	absPath, err := filepath.Abs(path)
