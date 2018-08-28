@@ -57,7 +57,6 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 	// create the env vars
 	envVars := map[string]string{
-		"PATH":      os.Getenv("PATH"),
 		"KAPP_ROOT": absKappRoot,
 		"APPROVED":  fmt.Sprintf("%v", approved),
 		"CLUSTER":   stackConfig.Cluster,
@@ -93,8 +92,8 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		envVars[upperKey] = fmt.Sprintf("%#v", v)
 	}
 
-	// convert the env vars to a string array
-	strEnvVars := make([]string, 0)
+	// add our env vars to the user's existing env vars
+	strEnvVars := os.Environ()
 	for k, v := range envVars {
 		strEnvVars = append(strEnvVars, strings.Join([]string{k, v}, "="))
 	}

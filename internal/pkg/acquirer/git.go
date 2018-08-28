@@ -80,11 +80,14 @@ func (a GitAcquirer) acquire(dest string) error {
 		return errors.Wrapf(err, "Error creating directory %s", dest)
 	}
 
+	userEnv := os.Environ()
+
 	var stderrBuf bytes.Buffer
 
 	// git init
 	initCmd := exec.Command(GIT_PATH, "init")
 	initCmd.Dir = dest
+	initCmd.Env = userEnv
 	initCmd.Stderr = &stderrBuf
 	err = initCmd.Run()
 	if err != nil {
@@ -97,6 +100,7 @@ func (a GitAcquirer) acquire(dest string) error {
 	// add origin
 	remoteAddCmd := exec.Command(GIT_PATH, "remote", "add", "origin", a.uri)
 	remoteAddCmd.Dir = dest
+	remoteAddCmd.Env = userEnv
 	remoteAddCmd.Stderr = &stderrBuf
 	err = remoteAddCmd.Run()
 	if err != nil {
@@ -108,6 +112,7 @@ func (a GitAcquirer) acquire(dest string) error {
 
 	fetchCmd := exec.Command(GIT_PATH, "fetch")
 	fetchCmd.Dir = dest
+	fetchCmd.Env = userEnv
 	fetchCmd.Stderr = &stderrBuf
 	err = fetchCmd.Run()
 	if err != nil {
@@ -119,6 +124,7 @@ func (a GitAcquirer) acquire(dest string) error {
 
 	configCmd := exec.Command(GIT_PATH, "config", "core.sparsecheckout", "true")
 	configCmd.Dir = dest
+	configCmd.Env = userEnv
 	configCmd.Stderr = &stderrBuf
 	err = configCmd.Run()
 	if err != nil {
@@ -136,6 +142,7 @@ func (a GitAcquirer) acquire(dest string) error {
 
 	checkoutCmd := exec.Command(GIT_PATH, "checkout", a.branch)
 	checkoutCmd.Dir = dest
+	checkoutCmd.Env = userEnv
 	checkoutCmd.Stderr = &stderrBuf
 	err = checkoutCmd.Run()
 	if err != nil {

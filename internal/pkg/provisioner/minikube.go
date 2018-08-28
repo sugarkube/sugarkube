@@ -7,6 +7,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -56,6 +57,7 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 	}
 
 	cmd := exec.Command(MINIKUBE_PATH, args...)
+	cmd.Env = os.Environ()
 
 	if dryRun {
 		log.Infof("Dry run. Skipping invoking Minikube, but would execute: %s %s",
@@ -83,6 +85,7 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 // Returns whether a minikube cluster is already online
 func (p MinikubeProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 	cmd := exec.Command(MINIKUBE_PATH, "status")
+	cmd.Env = os.Environ()
 	err := cmd.Run()
 
 	if err != nil {

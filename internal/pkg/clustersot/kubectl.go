@@ -7,6 +7,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"os"
 	"os/exec"
 )
 
@@ -25,6 +26,7 @@ func (c KubeCtlClusterSot) isOnline(sc *kapp.StackConfig, providerImpl provider.
 
 	// poll `kubectl --context {{ kube_context }} get namespace`
 	cmd := exec.Command(KUBECTL_PATH, "--context", context, "get", "namespace")
+	cmd.Env = os.Environ()
 	err := cmd.Run()
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
@@ -43,10 +45,12 @@ func (c KubeCtlClusterSot) isReady(sc *kapp.StackConfig, providerImpl provider.P
 	providerVars := provider.GetVars(providerImpl)
 	context := providerVars[KUBE_CONTEXT_KEY].(string)
 
+	userEnv := os.Environ()
 	var kubeCtlStderr, grepStdout bytes.Buffer
 
 	kubeCtlCmd := exec.Command(KUBECTL_PATH, "--context", context, "-n", "kube-system",
 		"get", "pod", "-o", "go-template=\"{{ range .items }}{{ printf \"%%s\\n\" .status.phase }}{{ end }}\"")
+	kubeCtlCmd.Env = userEnv
 	kubeCtlStdout, err := kubeCtlCmd.StdoutPipe()
 	kubeCtlCmd.Stderr = &kubeCtlStderr
 
@@ -55,6 +59,7 @@ func (c KubeCtlClusterSot) isReady(sc *kapp.StackConfig, providerImpl provider.P
 	}
 
 	grepCmd := exec.Command("grep", "-v", "Running")
+	grepCmd.Env = userEnv
 	grepCmd.Stdin = kubeCtlStdout
 	grepCmd.Stdout = &grepStdout
 
