@@ -96,11 +96,13 @@ func (i *Parameteriser) GetEnvVars(vars provider.Values) (map[string]string, err
 
 	if i.Name == IMPLEMENTS_HELM || i.Name == IMPLEMENTS_K8S {
 		if kubeContext, ok := os.LookupEnv("KUBE_CONTEXT"); ok {
+			// todo - we probably don't need this... remove if not
 			envVars["KUBE_CONTEXT"] = kubeContext
 		} else {
 			envVars["KUBE_CONTEXT"] = vars[KUBE_CONTEXT_KEY].(string)
 		}
 
+		// todo - we probably don't need this... remove if not
 		// only set env var if it's not already set
 		if kubeConfig, ok := os.LookupEnv("KUBECONFIG"); ok {
 			envVars["KUBECONFIG"] = kubeConfig
