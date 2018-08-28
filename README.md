@@ -146,7 +146,12 @@ See https://sugarkube.io for more info and documentation.
 Sugarkube is a work in progress and not ready for production use just yet.
 
 # Installation & quick start
-Clone and build with:
+Install `go` and `dep`. E.g. if on OSX run:
+```
+brew install go dep
+```
+
+Then clone and build with:
 ```
   git clone git@github.com:sugarkube/sugarkube.git
   cd sugarkube
