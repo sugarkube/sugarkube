@@ -160,7 +160,7 @@ Then clone and build with:
   make build
 ```
 Alternatively download a [release](https://github.com/sugarkube/sugarkube/releases) 
-and then cloning the repo as above.
+and then clone the repo as above.
 
 Launch a minikube cluster (it may take a little while to come online):
 ```
