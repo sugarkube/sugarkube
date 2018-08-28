@@ -57,9 +57,64 @@ Use Sugarkube to:
 Sugarkube is great for new projects, but even legacy applications can be 
 migrated into kapps. You can migrate a bit at a time to see how it helps you.
 
-## FAQ
+## Status
+Sugarkube is a work in progress and not ready for production use just yet.
+
+# Installation & quick start
+Install `go` and `dep`. E.g. if on OSX run:
+```
+brew install go dep
+```
+
+Then clone and build with:
+```
+  git clone git@github.com:sugarkube/sugarkube.git
+  cd sugarkube
+  make deps
+  make test-all
+  make build
+```
+Alternatively download a [release](https://github.com/sugarkube/sugarkube/releases) 
+and then clone the repo as above.
+
+Launch a minikube cluster (it may take a little while to come online):
+```
+  ./bin/sugarkube cluster create -s ./examples/stacks.yaml -n local-standard
+```
+
+Download some kapps to be installed:
+```
+  ./bin/sugarkube cache create -s examples/stacks.yaml -n local-standard \
+    -d test-cache 
+```
+
+Install the kapps:
+```
+  ./bin/sugarkube kapps install -s ./examples/stacks.yaml -n local-standard \
+    ./test-cache/ --force --one-shot 
+```
+
+You should now have a local minikube cluster set up with Tiller installed
+(configured for RBAC), along with Cert Manager, Nginx ingress, and a 
+Wordpress site. Access it with:
+
+```
+minikube service -n wordpress --https wordpress-wordpress
+```
+~~or by hostname:~~(from 0.3.0)
+```
+echo $(minikube ip) wordpress.localhost | sudo tee -a /etc/hosts
+```
+~~And visit `https://wordpress.localhost`.~~
+
+## Explore
+Have a look in `./examples/stacks.yaml` and look for `local-standard`. Follow the
+paths it declares. Then look in `./test-cache` to see how that relates to the
+git repos defined in the manifests used in `stacks.yaml`.
+
+# FAQ
 ### Does this depend on containers?
-Nope. Sugarkube just acquires and runs versioned Makefiles. It's up to you 
+No. Sugarkube just acquires and runs versioned Makefiles. It's up to you 
 what they do. 
 
 ### How does this compare to Helm?
@@ -139,60 +194,5 @@ values for launching clusters can be defined and overridden at various levels
 to allow all dev clusters to have similar defaults different from your staging 
 and prod clusters, but for everything to be overrideable.
 
-## More info
-See https://sugarkube.io for more info and documentation. 
-
-## Status
-Sugarkube is a work in progress and not ready for production use just yet.
-
-# Installation & quick start
-Install `go` and `dep`. E.g. if on OSX run:
-```
-brew install go dep
-```
-
-Then clone and build with:
-```
-  git clone git@github.com:sugarkube/sugarkube.git
-  cd sugarkube
-  make deps
-  make test-all
-  make build
-```
-Alternatively download a [release](https://github.com/sugarkube/sugarkube/releases) 
-and then clone the repo as above.
-
-Launch a minikube cluster (it may take a little while to come online):
-```
-  ./bin/sugarkube cluster create -s ./examples/stacks.yaml -n local-standard
-```
-
-Download some kapps to be installed:
-```
-  ./bin/sugarkube cache create -s examples/stacks.yaml -n local-standard \
-    -d test-cache 
-```
-
-Install the kapps:
-```
-  ./bin/sugarkube kapps install -s ./examples/stacks.yaml -n local-standard \
-    ./test-cache/ --force --one-shot 
-```
-
-You should now have a local minikube cluster set up with Tiller installed
-(configured for RBAC), along with Cert Manager, Nginx ingress, and a 
-Wordpress site. Access it with:
-
-```
-minikube service -n wordpress --https wordpress-wordpress
-```
-~~or by hostname:~~(from 0.3.0)
-```
-echo $(minikube ip) wordpress.localhost | sudo tee -a /etc/hosts
-```
-~~And visit `https://wordpress.localhost`.~~
-
-## Explore
-Have a look in `./examples/stacks.yaml` and look for `local-standard`. Follow the
-paths it declares. Then look in `./test-cache` to see how that relates to the
-git repos defined in the manifests used in `stacks.yaml`.
+### Where can I find more info?
+See https://sugarkube.io for more info and documentation (in progress). 
