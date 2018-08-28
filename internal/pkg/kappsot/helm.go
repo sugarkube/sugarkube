@@ -1,4 +1,4 @@
-package sot
+package kappsot
 
 import (
 	"bytes"
@@ -9,7 +9,9 @@ import (
 )
 
 // Uses Helm to determine which kapps are already installed in a target cluster
-type HelmSot struct{}
+type HelmKappSot struct {
+	charts HelmOutput
+}
 
 // Wrapper around Helm output
 type HelmOutput struct {
@@ -29,7 +31,7 @@ type HelmRelease struct {
 }
 
 // Refresh the list of Helm charts
-func (s HelmSot) refresh() error {
+func (s HelmKappSot) refresh() error {
 	var stdout bytes.Buffer
 	cmd := exec.Command("helm", "list", "--output", "yaml")
 	cmd.Env = os.Environ()
@@ -48,9 +50,11 @@ func (s HelmSot) refresh() error {
 			stdout.String())
 	}
 
+	s.charts = output
+
 	return nil
 }
 
-func (s HelmSot) isInstalled(name string, version string) (bool, error) {
+func (s HelmKappSot) isInstalled(name string, version string) (bool, error) {
 	panic("not implemented")
 }

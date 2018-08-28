@@ -1,6 +1,6 @@
-package sot
+package kappsot
 
-type Sot interface {
+type KappSot interface {
 	refresh() error
 	isInstalled(name string, version string) (bool, error)
 }
