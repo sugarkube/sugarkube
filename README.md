@@ -1,6 +1,6 @@
 # Sugarkube - Infrastructure Dependency Management
 
-**TLDR;** Basically like `requirements.txt` or `package.json` but for 
+**TL;DR** Basically like `requirements.txt` or `package.json` but for 
 infrastructure and applications. Can be used to spin up and provision cloud
 infrastructure from scratch and to deploy your applications onto it. Can be
 used as a production release pipeline. Not specific to Kubernetes or Helm.
@@ -195,4 +195,5 @@ to allow all dev clusters to have similar defaults different from your staging
 and prod clusters, but for everything to be overrideable.
 
 ### Where can I find more info?
-See https://sugarkube.io for more info and documentation (in progress). 
+See [https://www.sugarkube.io](https://www.sugarkube.io) for more info and 
+documentation (in progress). 
