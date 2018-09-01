@@ -61,9 +61,9 @@ migrated into kapps. You can migrate a bit at a time to see how it helps you.
 Sugarkube is a work in progress and not ready for production use just yet.
 
 # Installation & quick start
-Install `go` and `dep`. E.g. if on OSX run:
+Install `go`, `dep` and [cfssl](https://github.com/cloudflare/cfssl). On OSX run:
 ```
-brew install go dep
+brew install go dep cfssl
 ```
 
 Then clone and build with:
