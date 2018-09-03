@@ -1,6 +1,6 @@
 # Sugarkube - Infrastructure Dependency Management
 
-**TL;DR;** Basically like `requirements.txt` or `package.json` but for 
+**TL;DR** Basically like `requirements.txt` or `package.json` but for 
 infrastructure and applications. Can be used to spin up and provision cloud
 infrastructure from scratch and to deploy your applications onto it. Can be
 used as a production release pipeline. Not specific to Kubernetes or Helm.
