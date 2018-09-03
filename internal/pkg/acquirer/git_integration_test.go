@@ -1,3 +1,5 @@
+// +build integration
+
 /*
  * Copyright 2018 The Sugarkube Authors
  *
@@ -13,8 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// +build integration
 
 package acquirer
 
