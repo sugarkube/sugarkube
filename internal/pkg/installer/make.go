@@ -129,7 +129,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 	if dryRun {
 		log.Infof("Dry run. Would install kapp '%s' in directory '%s' "+
-			"with command: %s", kappObj.Id, makeCmd.Dir, makeCmd)
+			"with command: %#v", kappObj.Id, makeCmd.Dir, makeCmd)
 	} else {
 		// run it
 		log.Infof("Installing kapp '%s'...", kappObj.Id)
@@ -137,7 +137,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		err := makeCmd.Run()
 		if err != nil {
 			return errors.Wrapf(err, "Error installing kapp '%s' with "+
-				"command: %s. -- Stdout -- %s -- Stderr -- %s, Err: %s", kappObj.Id,
+				"command: %#v. -- Stdout -- %s -- Stderr -- %s, Err: %s", kappObj.Id,
 				makeCmd, stdoutBuf.String(), stderrBuf.String(), err)
 		} else {
 			log.Infof("Kapp '%s' successfully %sed", kappObj.Id, makeTarget)

@@ -42,7 +42,7 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 			ShouldBePresent: shouldBePresent,
 		}
 
-		log.Debugf("kapp=%s, v=%#v", kapp, v)
+		log.Debugf("kapp=%#v, v=%#v", kapp, v)
 
 		// parse the list of sources
 		valuesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(v.(map[interface{}]interface{}))
