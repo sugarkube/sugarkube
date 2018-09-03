@@ -1,7 +1,5 @@
 # To do
 ## Repo-related tasks
-* Add licence
-* Add copyright notice to the top of each file
 * CLA (see https://github.com/heptio/ark)
 * Code of conduct
 
@@ -19,5 +17,4 @@
   by mpb [described here](https://stackoverflow.com/questions/11958626/make-file-warning-overriding-commands-for-target)
 
 ## Docs
-* Create web site
 * Fully functional examples
