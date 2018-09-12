@@ -1,0 +1,51 @@
+/*
+ * Copyright 2018 The Sugarkube Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package utils
+
+import (
+	"bytes"
+	"context"
+	"github.com/pkg/errors"
+	"os"
+	"os/exec"
+	"time"
+)
+
+// Executes a command with a timeout, writing stdout and stderr to buffers
+func ExecWithTimeout(command string, args []string, stdoutBuf *bytes.Buffer,
+	stderrBuf *bytes.Buffer, timeoutSeconds int) error {
+
+	ctx, cancel := context.WithTimeout(context.Background(),
+		time.Duration(timeoutSeconds)*time.Second)
+	defer cancel() // The cancel should be deferred so resources are cleaned up
+
+	cmd := exec.CommandContext(ctx, command, args...)
+	cmd.Env = os.Environ()
+	cmd.Stdout = stdoutBuf
+	cmd.Stderr = stderrBuf
+
+	err := cmd.Run()
+	if ctx.Err() == context.DeadlineExceeded {
+		return errors.Wrapf(ctx.Err(),
+			"Timed out executing command: '%s' with args: %#v", command, args)
+	}
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}

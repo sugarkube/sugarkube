@@ -17,12 +17,23 @@
 package provisioner
 
 import (
+	"bytes"
+	"context"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
+	"os/exec"
 )
+
+// todo - make configurable
+const KOPS_PATH = "kops"
+
+// number of seconds to timeout after while checking whether the Kops cluster
+// config exists
+const KOPS_COMMAND_TIMEOUT_SECONDS = 10
 
 type KopsProvisioner struct {
 	clusterSot clustersot.ClusterSot
@@ -46,6 +57,46 @@ func (p KopsProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 	}
 
 	return p.clusterSot, nil
+}
+
+// Returns a bool indicating whether the cluster configuration has already been created
+func (p KopsProvisioner) clusterConfigExists(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
+
+	providerVars := provider.GetVars(providerImpl)
+	log.Debugf("Checking if a Kops cluster config exists for values: %#v", providerVars)
+
+	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
+
+	args := []string{
+		"get",
+		"clusters",
+		"--state",
+		// todo - error checking / defaults here
+		provisionerValues["state"].(string),
+		provisionerValues["name"].(string),
+	}
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+
+	err := utils.ExecWithTimeout(KOPS, args, &stdoutBuf, &stderrBuf,
+		KOPS_COMMAND_TIMEOUT_SECONDS)
+
+	if err != nil {
+		if err == context.DeadlineExceeded {
+			return false, errors.Wrap(err,
+				"Timed out trying to retrieve kops cluster config. "+
+					"Check your credentials.")
+		}
+
+		if _, ok := err.(*exec.ExitError); ok {
+			log.Debug("Cluster config doesn'te exist")
+			return false, nil
+		} else {
+			return false, errors.Wrap(err, "Error fetching kops clusters")
+		}
+	}
+
+	return true, nil
 }
 
 func (p KopsProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
