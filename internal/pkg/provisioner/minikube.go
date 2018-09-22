@@ -98,7 +98,7 @@ func (p MinikubeProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl 
 		"", 0, false)
 	if err != nil {
 		// assume no cluster is up if the command starts but doesn't complete successfully
-		if _, ok := err.(*exec.ExitError); ok {
+		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
 			return false, nil
 		} else {
 			// something else, so return an error

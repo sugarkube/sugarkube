@@ -41,6 +41,9 @@ func ExecCommand(command string, args []string, stdoutBuf *bytes.Buffer,
 	var ctx context.Context
 
 	if timeoutSeconds > 0 {
+		log.Debugf("%s command will be run with a timeout of %d seconds",
+			command, timeoutSeconds)
+
 		ctx, cancel := context.WithTimeout(context.Background(),
 			time.Duration(timeoutSeconds)*time.Second)
 		defer cancel() // The cancel should be deferred so resources are cleaned up
