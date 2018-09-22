@@ -1,4 +1,5 @@
 # kube_context: "{{ cluster }}.{{ region }}.{{ account_name }}.{{ domain }}"    # populated by default but overrideable
+kube_context: sugarkube-test-eu-west-1.sugarkube.io         # todo - default this to the kops cluster name
 
 #s3:
 #  kms_key: "arn:..."        # added to generated files to support e.g. encrypted terraform S3 backends.
