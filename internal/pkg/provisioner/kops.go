@@ -99,13 +99,13 @@ func (p KopsProvisioner) clusterConfigExists(sc *kapp.StackConfig, providerImpl 
 	err = utils.ExecCommand(KOPS, args, &stdoutBuf, &stderrBuf, "",
 		KOPS_COMMAND_TIMEOUT_SECONDS, false)
 	if err != nil {
-		if err == context.DeadlineExceeded {
+		if errors.Cause(err) == context.DeadlineExceeded {
 			return false, errors.Wrap(err,
 				"Timed out trying to retrieve kops cluster config. "+
 					"Check your credentials.")
 		}
 
-		if _, ok := err.(*exec.ExitError); ok {
+		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
 			log.Debug("Cluster config doesn't exist")
 			return false, nil
 		} else {
