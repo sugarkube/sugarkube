@@ -23,8 +23,8 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -59,11 +59,6 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		// then remove this panic
 		panic(fmt.Sprintf("Multiple Makefiles found. Disambiguation "+
 			"not implemented yet: %s", strings.Join(makefilePaths, ", ")))
-	}
-
-	makefilePath, err := filepath.Abs(makefilePaths[0])
-	if err != nil {
-		return errors.WithStack(err)
 	}
 
 	absKappRoot, err := filepath.Abs(kappObj.RootDir)
@@ -133,32 +128,21 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		}
 	}
 
-	// build the command
-	var stdoutBuf, stderrBuf bytes.Buffer
-
-	// make command
-	makeCmd := exec.Command("make", cliArgs...)
-	makeCmd.Dir = filepath.Dir(makefilePath)
-	makeCmd.Env = strEnvVars
-	makeCmd.Stdout = &stdoutBuf
-	makeCmd.Stderr = &stderrBuf
-
-	if dryRun {
-		log.Infof("Dry run. Would install kapp '%s' in directory '%s' "+
-			"with command: %#v", kappObj.Id, makeCmd.Dir, makeCmd)
-	} else {
-		// run it
-		log.Infof("Installing kapp '%s'...", kappObj.Id)
-
-		err := makeCmd.Run()
-		if err != nil {
-			return errors.Wrapf(err, "Error installing kapp '%s' with "+
-				"command: %#v. -- Stdout -- %s -- Stderr -- %s, Err: %s", kappObj.Id,
-				makeCmd, stdoutBuf.String(), stderrBuf.String(), err)
-		} else {
-			log.Infof("Kapp '%s' successfully %sed", kappObj.Id, makeTarget)
-		}
+	makefilePath, err := filepath.Abs(makefilePaths[0])
+	if err != nil {
+		return errors.WithStack(err)
 	}
+
+	log.Infof("Installing kapp '%s'...", kappObj.Id)
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+	err = utils.ExecCommand("make", cliArgs, &stdoutBuf, &stderrBuf,
+		filepath.Dir(makefilePath), 0, dryRun)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	log.Infof("Kapp '%s' successfully %sed", kappObj.Id, makeTarget)
 
 	return nil
 }

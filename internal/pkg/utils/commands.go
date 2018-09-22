@@ -31,7 +31,7 @@ import (
 // buffers. If `dryRun` is true, a log message of what would have been executed
 // is emitted instead.
 func ExecCommand(command string, args []string, stdoutBuf *bytes.Buffer,
-	stderrBuf *bytes.Buffer, timeoutSeconds int, dryRun bool) error {
+	stderrBuf *bytes.Buffer, dir string, timeoutSeconds int, dryRun bool) error {
 
 	var cmd *exec.Cmd
 	var ctx context.Context
@@ -49,6 +49,10 @@ func ExecCommand(command string, args []string, stdoutBuf *bytes.Buffer,
 	cmd.Env = os.Environ()
 	cmd.Stdout = stdoutBuf
 	cmd.Stderr = stderrBuf
+
+	if dir != "" {
+		cmd.Dir = dir
+	}
 
 	if dryRun {
 		log.Infof("Dry run. Would run: %s %s", command, strings.Join(args, " "))

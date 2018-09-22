@@ -78,7 +78,7 @@ func (p KopsProvisioner) clusterConfigExists(sc *kapp.StackConfig, providerImpl 
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	err := utils.ExecCommand(KOPS, args, &stdoutBuf, &stderrBuf,
+	err := utils.ExecCommand(KOPS, args, &stdoutBuf, &stderrBuf, "",
 		KOPS_COMMAND_TIMEOUT_SECONDS, false)
 
 	if err != nil {

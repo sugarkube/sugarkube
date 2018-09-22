@@ -76,7 +76,7 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	log.Info("Launching Minikube cluster...")
-	err := utils.ExecCommand(MINIKUBE_PATH, args, &stdoutBuf, &stderrBuf,
+	err := utils.ExecCommand(MINIKUBE_PATH, args, &stdoutBuf, &stderrBuf, "",
 		0, dryRun)
 	if err != nil {
 		return errors.Wrap(err, "Failed to start a Minikube cluster")
@@ -95,7 +95,7 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 func (p MinikubeProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 	err := utils.ExecCommand(MINIKUBE_PATH, []string{"status"}, &stdoutBuf, &stderrBuf,
-		0, false)
+		"", 0, false)
 	if err != nil {
 		// assume no cluster is up if the command starts but doesn't complete successfully
 		if _, ok := err.(*exec.ExitError); ok {
