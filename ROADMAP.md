@@ -8,8 +8,8 @@
 * Add licence 
   
 **0.2.0**:
-* Implement cache diffing
-* Implement SOTs to enable cluster diffing
+* Add a kops provisioner
+  * Support creating and updating Kops clusters
   
 **0.3.0**:
 * Template values.yaml files and terraform files from vars
@@ -20,7 +20,6 @@
   installing and to destroy those that need removing
 
 **0.4.0**:
-* Add a kops provisioner
 * Work on bootstrapping before running a provisioner
   * E.g. kops needs an S3 backend encrypted with KMS. How do we create that 
   before running kops, and where do we store the ARN, etc?
@@ -33,6 +32,10 @@
 * Catch up on tests
 
 **0.6.0**:
+* Implement cache diffing
+* Implement SOTs to enable cluster diffing
+
+**0.7.0**:
 User-friendliness/ergonomics:
 * Add a default config file with the usual platform-dependent search paths
   (e.g. ~/.sugarkube, etc. (see os.UserCacheDir())).
@@ -43,7 +46,7 @@ User-friendliness/ergonomics:
   * Bear in mind in future we may want to allow different output formats, e.g. 
   yaml, json, etc., so don't just print to stdout.
 
-**0.7.0**:
+**0.8.0**:
 * Implement parameterisers and remove helm/terraform specific code in the 
   MakeInstaller:
   * Parse configs
