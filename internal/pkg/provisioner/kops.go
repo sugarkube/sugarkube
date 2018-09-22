@@ -85,7 +85,7 @@ func (p KopsProvisioner) clusterConfigExists(sc *kapp.StackConfig, providerImpl 
 	log.Debugf("Checking if a Kops cluster config exists for values: %#v", providerVars)
 
 	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-	kopsConfig, err := getKopsConfig(provisionerValues)
+	kopsConfig, err := getKopsProvisionerConfig(provisionerValues)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -125,7 +125,7 @@ func (p KopsProvisioner) create(sc *kapp.StackConfig, providerImpl provider.Prov
 	log.Debugf("Provider vars: %#v", providerVars)
 
 	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-	kopsConfig, err := getKopsConfig(provisionerValues)
+	kopsConfig, err := getKopsProvisionerConfig(provisionerValues)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -196,7 +196,7 @@ func (p KopsProvisioner) update(sc *kapp.StackConfig, providerImpl provider.Prov
 	providerVars := provider.GetVars(providerImpl)
 
 	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-	kopsConfig, err := getKopsConfig(provisionerValues)
+	kopsConfig, err := getKopsProvisionerConfig(provisionerValues)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -246,7 +246,7 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 
 	providerVars := provider.GetVars(providerImpl)
 	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-	kopsConfig, err := getKopsConfig(provisionerValues)
+	kopsConfig, err := getKopsProvisionerConfig(provisionerValues)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -475,7 +475,7 @@ func parameteriseValues(args []string, valueMap map[string]string) []string {
 }
 
 // Parses the Kops provisioner config
-func getKopsConfig(provisionerValues map[interface{}]interface{}) (*KopsConfig, error) {
+func getKopsProvisionerConfig(provisionerValues map[interface{}]interface{}) (*KopsConfig, error) {
 	log.Debugf("Marshalling: %#v", provisionerValues)
 
 	// marshal then unmarshal the provisioner values to get the command parameters

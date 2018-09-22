@@ -18,19 +18,25 @@ package provisioner
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
+	"gopkg.in/yaml.v2"
 	"os/exec"
-	"strings"
 )
 
 type MinikubeProvisioner struct {
 	clusterSot clustersot.ClusterSot
+}
+
+type MinikubeConfig struct {
+	Params struct {
+		Global map[string]string
+		Start  map[string]string
+	}
 }
 
 // todo - make configurable
@@ -60,29 +66,29 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 	dryRun bool) error {
 
 	providerVars := provider.GetVars(providerImpl)
-	log.Debugf("Creating stack with Minikube and values: %#v", providerVars)
-
-	args := make([]string, 0)
-	args = append(args, "start")
 
 	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-
-	for k, v := range provisionerValues {
-		key := strings.Replace(k.(string), "_", "-", -1)
-		args = append(args, "--"+key)
-		args = append(args, fmt.Sprintf("%v", v))
+	minikubeConfig, err := getMinikubeProvisionerConfig(provisionerValues)
+	if err != nil {
+		return errors.WithStack(err)
 	}
+
+	args := []string{"start"}
+	args = parameteriseValues(args, minikubeConfig.Params.Global)
+	args = parameteriseValues(args, minikubeConfig.Params.Start)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	log.Info("Launching Minikube cluster...")
-	err := utils.ExecCommand(MINIKUBE_PATH, args, &stdoutBuf, &stderrBuf, "",
+	err = utils.ExecCommand(MINIKUBE_PATH, args, &stdoutBuf, &stderrBuf, "",
 		0, dryRun)
 	if err != nil {
 		return errors.Wrap(err, "Failed to start a Minikube cluster")
 	}
 
-	log.Infof("Minikube cluster successfully started")
+	if !dryRun {
+		log.Infof("Minikube cluster successfully started")
+	}
 
 	sc.Status.StartedThisRun = true
 	// only sleep before checking the cluster fo readiness if we started it
@@ -115,4 +121,26 @@ func (p MinikubeProvisioner) update(sc *kapp.StackConfig, providerImpl provider.
 	dryRun bool) error {
 	log.Info("Updating minikube clusters has no effect. Ignoring.")
 	return nil
+}
+
+// Parses the provisioner config
+func getMinikubeProvisionerConfig(provisionerValues map[interface{}]interface{}) (
+	*MinikubeConfig, error) {
+	log.Debugf("Marshalling: %#v", provisionerValues)
+
+	// marshal then unmarshal the provisioner values to get the command parameters
+	byteData, err := yaml.Marshal(provisionerValues)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	log.Debugf("Marshalled to: %s", string(byteData[:]))
+
+	var minikubeConfig MinikubeConfig
+	err = yaml.Unmarshal(byteData, &minikubeConfig)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &minikubeConfig, nil
 }

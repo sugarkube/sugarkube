@@ -1,5 +1,7 @@
 # defines a higher-specced local cluster
 provisioner:
-  memory: 4096
-  cpus: 4
-  disk_size: 100g
+  params:
+    start:        # parameters for the `minikube start` command
+      memory: 4096
+      cpus: 4
+      disk_size: 100g
