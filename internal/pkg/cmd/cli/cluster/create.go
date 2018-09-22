@@ -108,6 +108,8 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		Provisioner:   c.provisioner,
 		Profile:       c.profile,
 		Cluster:       c.cluster,
+		Region:        c.region,
+		Account:       c.account,
 		VarsFilesDirs: c.varsFilesDirs,
 		Manifests:     cliManifests,
 		ReadyTimeout:  c.readyTimeout,
