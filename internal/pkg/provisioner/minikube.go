@@ -40,7 +40,7 @@ const MINIKUBE_PATH = "minikube"
 
 // Seconds to sleep after the cluster is online but before checking whether it's ready.
 // This gives pods a chance to be launched. If we check immediately there are no pods.
-const SLEEP_SECONDS_BEFORE_READY_CHECK = 30
+const MINIKUBE_SLEEP_SECONDS_BEFORE_READY_CHECK = 30
 
 func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 	if p.clusterSot == nil {
@@ -86,7 +86,7 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 
 	sc.Status.StartedThisRun = true
 	// only sleep before checking the cluster fo readiness if we started it
-	sc.Status.SleepBeforeReadyCheck = SLEEP_SECONDS_BEFORE_READY_CHECK
+	sc.Status.SleepBeforeReadyCheck = MINIKUBE_SLEEP_SECONDS_BEFORE_READY_CHECK
 
 	return nil
 }
@@ -111,7 +111,8 @@ func (p MinikubeProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl 
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p MinikubeProvisioner) update(sc *kapp.StackConfig, providerImpl provider.Provider) error {
-	log.Infof("Updating minikube clusters has no effect. Ignoring.")
+func (p MinikubeProvisioner) update(sc *kapp.StackConfig, providerImpl provider.Provider,
+	dryRun bool) error {
+	log.Info("Updating minikube clusters has no effect. Ignoring.")
 	return nil
 }

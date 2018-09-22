@@ -34,7 +34,7 @@ type Provisioner interface {
 	// Returns whether the cluster is already running
 	isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error)
 	// Update the cluster config if supported by the provisioner
-	update(sc *kapp.StackConfig, providerImpl provider.Provider) error
+	update(sc *kapp.StackConfig, providerImpl provider.Provider, dryRun bool) error
 }
 
 // key in Values that relates to this provisioner
