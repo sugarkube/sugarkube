@@ -79,7 +79,7 @@ func (p KopsProvisioner) clusterConfigExists(sc *kapp.StackConfig, providerImpl 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	err := utils.ExecWithTimeout(KOPS, args, &stdoutBuf, &stderrBuf,
-		KOPS_COMMAND_TIMEOUT_SECONDS)
+		KOPS_COMMAND_TIMEOUT_SECONDS, false)
 
 	if err != nil {
 		if err == context.DeadlineExceeded {
@@ -99,8 +99,28 @@ func (p KopsProvisioner) clusterConfigExists(sc *kapp.StackConfig, providerImpl 
 	return true, nil
 }
 
+// Returns a boolean indicating whether the cluster is already online
 func (p KopsProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
-	panic("not implemented")
+	configExists, err := p.clusterConfigExists(sc, providerImpl)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	if !configExists {
+		return false, nil
+	}
+
+	clusterSot, err := p.ClusterSot()
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	online, err := clustersot.IsOnline(clusterSot, sc, providerImpl)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	return online, nil
 }
 
 // No-op function, required to fully implement the Provisioner interface

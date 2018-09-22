@@ -20,14 +20,16 @@ import (
 	"bytes"
 	"context"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
 // Executes a command with a timeout, writing stdout and stderr to buffers
 func ExecWithTimeout(command string, args []string, stdoutBuf *bytes.Buffer,
-	stderrBuf *bytes.Buffer, timeoutSeconds int) error {
+	stderrBuf *bytes.Buffer, timeoutSeconds int, dryRun bool) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(),
 		time.Duration(timeoutSeconds)*time.Second)
@@ -37,6 +39,12 @@ func ExecWithTimeout(command string, args []string, stdoutBuf *bytes.Buffer,
 	cmd.Env = os.Environ()
 	cmd.Stdout = stdoutBuf
 	cmd.Stderr = stderrBuf
+
+	if dryRun {
+		log.Infof("Dry run. Skipping running: %s %s", command,
+			strings.Join(args, " "))
+		return nil
+	}
 
 	err := cmd.Run()
 	if ctx.Err() == context.DeadlineExceeded {
