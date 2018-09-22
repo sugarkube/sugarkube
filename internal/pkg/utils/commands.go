@@ -33,6 +33,10 @@ import (
 func ExecCommand(command string, args []string, stdoutBuf *bytes.Buffer,
 	stderrBuf *bytes.Buffer, dir string, timeoutSeconds int, dryRun bool) error {
 
+	// reset the buffers in case they've already been used
+	stdoutBuf.Reset()
+	stderrBuf.Reset()
+
 	var cmd *exec.Cmd
 	var ctx context.Context
 

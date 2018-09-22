@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -96,56 +96,34 @@ func (a GitAcquirer) acquire(dest string) error {
 		return errors.Wrapf(err, "Error creating directory %s", dest)
 	}
 
-	userEnv := os.Environ()
-
-	var stderrBuf bytes.Buffer
+	var stdoutBuf, stderrBuf bytes.Buffer
 
 	// git init
-	initCmd := exec.Command(GIT_PATH, "init")
-	initCmd.Dir = dest
-	initCmd.Env = userEnv
-	initCmd.Stderr = &stderrBuf
-	err = initCmd.Run()
+	err = utils.ExecCommand(GIT_PATH, []string{"init"}, &stdoutBuf, &stderrBuf,
+		dest, 5, false)
 	if err != nil {
-		return errors.Wrapf(err, "Error running: %s. Stderr: %s",
-			strings.Join(initCmd.Args, " "), stderrBuf.String())
+		return errors.WithStack(err)
 	}
-
-	stderrBuf.Reset()
 
 	// add origin
-	remoteAddCmd := exec.Command(GIT_PATH, "remote", "add", "origin", a.uri)
-	remoteAddCmd.Dir = dest
-	remoteAddCmd.Env = userEnv
-	remoteAddCmd.Stderr = &stderrBuf
-	err = remoteAddCmd.Run()
+	err = utils.ExecCommand(GIT_PATH, []string{"remote", "add", "origin", a.uri},
+		&stdoutBuf, &stderrBuf, dest, 5, false)
 	if err != nil {
-		return errors.Wrapf(err, "Error running: %s. Stderr=%s",
-			strings.Join(remoteAddCmd.Args, " "), stderrBuf.String())
+		return errors.WithStack(err)
 	}
 
-	stderrBuf.Reset()
-
-	fetchCmd := exec.Command(GIT_PATH, "fetch")
-	fetchCmd.Dir = dest
-	fetchCmd.Env = userEnv
-	fetchCmd.Stderr = &stderrBuf
-	err = fetchCmd.Run()
+	// fetch
+	err = utils.ExecCommand(GIT_PATH, []string{"fetch"}, &stdoutBuf, &stderrBuf,
+		dest, 60, false)
 	if err != nil {
-		return errors.Wrapf(err, "Error running: %s. Stderr=%s",
-			strings.Join(fetchCmd.Args, " "), stderrBuf.String())
+		return errors.WithStack(err)
 	}
 
-	stderrBuf.Reset()
-
-	configCmd := exec.Command(GIT_PATH, "config", "core.sparsecheckout", "true")
-	configCmd.Dir = dest
-	configCmd.Env = userEnv
-	configCmd.Stderr = &stderrBuf
-	err = configCmd.Run()
+	// git configure sparse checkout
+	err = utils.ExecCommand(GIT_PATH, []string{"config", "core.sparsecheckout", "true"},
+		&stdoutBuf, &stderrBuf, dest, 90, false)
 	if err != nil {
-		return errors.Wrapf(err, "Error running: %s. Stderr=%s",
-			strings.Join(configCmd.Args, " "), stderrBuf.String())
+		return errors.WithStack(err)
 	}
 
 	err = appendToFile(filepath.Join(dest, ".git/info/sparse-checkout"),
@@ -154,17 +132,11 @@ func (a GitAcquirer) acquire(dest string) error {
 		return errors.WithStack(err)
 	}
 
-	stderrBuf.Reset()
-
-	checkoutCmd := exec.Command(GIT_PATH, "checkout", a.branch)
-	checkoutCmd.Dir = dest
-	checkoutCmd.Env = userEnv
-	checkoutCmd.Stderr = &stderrBuf
-	err = checkoutCmd.Run()
+	// git checkout
+	err = utils.ExecCommand(GIT_PATH, []string{"checkout", a.branch},
+		&stdoutBuf, &stderrBuf, dest, 90, false)
 	if err != nil {
-		return errors.Wrapf(err, "Error running: '%s' on %s with path '%s'. "+
-			"Stderr=%s", strings.Join(
-			checkoutCmd.Args, " "), a.uri, a.path, stderrBuf.String())
+		return errors.WithStack(err)
 	}
 
 	// we could optionally verify tags with:
