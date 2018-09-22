@@ -62,6 +62,11 @@ func Create(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider,
 	return p.create(sc, providerImpl, dryRun)
 }
 
+// Updates a cluster using an implementation of a Provisioner
+func Update(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider, dryRun bool) error {
+	return p.update(sc, providerImpl, dryRun)
+}
+
 // Return whether the cluster is already online
 func IsAlreadyOnline(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 
