@@ -272,7 +272,9 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 		return errors.WithStack(err)
 	}
 
-	log.Debugf("Downloaded config for kops cluster:\n%s", stdoutBuf.String())
+	if !dryRun {
+		log.Debugf("Downloaded config for kops cluster:\n%s", stdoutBuf.String())
+	}
 
 	kopsYamlConfig := map[string]interface{}{}
 	err = yaml.Unmarshal(stdoutBuf.Bytes(), kopsYamlConfig)
@@ -341,7 +343,9 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 		return errors.WithStack(err)
 	}
 
-	log.Info("Kops cluster config replaced.")
+	if !dryRun {
+		log.Info("Kops cluster config replaced.")
+	}
 
 	log.Debug("Patching instance group configs...")
 

@@ -4,18 +4,38 @@ is_prod_cluster: false
 hosted_zone: example.com            # The domain to host your stuff under.
 
 kops:
-  kubernetes_version: 1.9.6
-  # state_store:                    # A default is generated but it's overrideable too
-  ssh_key: "/path/to/ssh.pub"       # Path to the SSH key used to create the kops cluster when using kops
-  api_loadbalancer_type: public     # More kops settings...
-  dns: public
-  authorization: RBAC
-  networking: calico
-  topology: private
+  params:       # parameters to different kops commands
+    global:     # these are applied to all commands
+      state: s3://bucket.example.com      # todo - generate a default value
+
+    create_cluster:       # Parameters for the `kops create cluster` command
+      kubernetes_version: 1.9.6
+      ssh_key: "/path/to/ssh.pub"       # Path to the SSH key used to create the kops cluster when using kops
+      api_loadbalancer_type: public     # More kops settings...
+      dns: public
+      authorization: RBAC
+      networking: calico
+      topology: private
+      master_count: 1
+      master_size: t2.medium
+      node_count: 1
+      node_size: t2.small
+
+    rolling_update:
+      node_interval: 4m0s
 
   spec:                             # The kops config will be downloaded and this
-    docker:                         # will be patched into the spec before
-      logLevel: warn                # applying it to update the cluster config.
-      logOpt:                       # This allows kops clusters to be fully
-      - max-size: 10m               # customised and updated automatically.
-      - max-file: 5
+    cluster:
+      docker:                         # will be patched into the spec before
+        logLevel: warn                # applying it to update the cluster config.
+        logOpt:                       # This allows kops clusters to be fully
+        - max-size: 10m               # customised and updated automatically.
+        - max-file: 5
+    instanceGroups:
+      nodes:                    # name of the instance group
+        nodeLabels:
+          kops.k8s.io/test: test-label
+        cloudLabels:
+          project: test-project-label
+        maxSize: 1          # change these then run `sugarkube cluster update -n aws-dev -s examples/stacks.yaml`
+        minSize: 1          # and watch the config changes take effect
