@@ -17,13 +17,14 @@
 package provisioner
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
-	"os"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os/exec"
 	"strings"
 )
@@ -72,24 +73,16 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 		args = append(args, fmt.Sprintf("%v", v))
 	}
 
-	cmd := exec.Command(MINIKUBE_PATH, args...)
-	cmd.Env = os.Environ()
+	var stdoutBuf, stderrBuf bytes.Buffer
 
-	if dryRun {
-		log.Infof("Dry run. Skipping invoking Minikube, but would execute: %s %s",
-			MINIKUBE_PATH, strings.Join(args, " "))
-	} else {
-		log.Infof("Launching Minikube cluster... Executing: %s %s", MINIKUBE_PATH,
-			strings.Join(args, " "))
-
-		err := cmd.Run()
-
-		if err != nil {
-			return errors.Wrap(err, "Failed to start a Minikube cluster")
-		}
-
-		log.Infof("Minikube cluster successfully started")
+	log.Info("Launching Minikube cluster...")
+	err := utils.ExecCommand(MINIKUBE_PATH, args, &stdoutBuf, &stderrBuf,
+		0, dryRun)
+	if err != nil {
+		return errors.Wrap(err, "Failed to start a Minikube cluster")
 	}
+
+	log.Infof("Minikube cluster successfully started")
 
 	sc.Status.StartedThisRun = true
 	// only sleep before checking the cluster fo readiness if we started it
@@ -100,10 +93,9 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 
 // Returns whether a minikube cluster is already online
 func (p MinikubeProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
-	cmd := exec.Command(MINIKUBE_PATH, "status")
-	cmd.Env = os.Environ()
-	err := cmd.Run()
-
+	var stdoutBuf, stderrBuf bytes.Buffer
+	err := utils.ExecCommand(MINIKUBE_PATH, []string{"status"}, &stdoutBuf, &stderrBuf,
+		0, false)
 	if err != nil {
 		// assume no cluster is up if the command starts but doesn't complete successfully
 		if _, ok := err.(*exec.ExitError); ok {

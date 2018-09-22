@@ -27,32 +27,44 @@ import (
 	"time"
 )
 
-// Executes a command with a timeout, writing stdout and stderr to buffers
-func ExecWithTimeout(command string, args []string, stdoutBuf *bytes.Buffer,
+// Executes a command with an optional timeout, writing stdout and stderr to
+// buffers. If `dryRun` is true, a log message of what would have been executed
+// is emitted instead.
+func ExecCommand(command string, args []string, stdoutBuf *bytes.Buffer,
 	stderrBuf *bytes.Buffer, timeoutSeconds int, dryRun bool) error {
 
-	ctx, cancel := context.WithTimeout(context.Background(),
-		time.Duration(timeoutSeconds)*time.Second)
-	defer cancel() // The cancel should be deferred so resources are cleaned up
+	var cmd *exec.Cmd
+	var ctx context.Context
 
-	cmd := exec.CommandContext(ctx, command, args...)
+	if timeoutSeconds > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(),
+			time.Duration(timeoutSeconds)*time.Second)
+		defer cancel() // The cancel should be deferred so resources are cleaned up
+
+		cmd = exec.CommandContext(ctx, command, args...)
+	} else {
+		cmd = exec.Command(command, args...)
+	}
+
 	cmd.Env = os.Environ()
 	cmd.Stdout = stdoutBuf
 	cmd.Stderr = stderrBuf
 
 	if dryRun {
-		log.Infof("Dry run. Skipping running: %s %s", command,
-			strings.Join(args, " "))
+		log.Infof("Dry run. Would run: %s %s", command, strings.Join(args, " "))
 		return nil
+	} else {
+		log.Debugf("Executing command: %s %s", command, strings.Join(args, " "))
 	}
 
 	err := cmd.Run()
-	if ctx.Err() == context.DeadlineExceeded {
+	if timeoutSeconds > 0 && ctx.Err() == context.DeadlineExceeded {
 		return errors.Wrapf(ctx.Err(),
 			"Timed out executing command: '%s' with args: %#v", command, args)
 	}
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Wrapf(err, "Failed to run command '%s' with args: %#v\n"+
+			"Stdout=%s\nStderr=%s", command, args, stdoutBuf.String(), stderrBuf.String())
 	}
 
 	return nil
