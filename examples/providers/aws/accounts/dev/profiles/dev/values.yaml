@@ -1,12 +1,12 @@
 # Default values for all clusters that use this profile
 is_prod_cluster: false
 
-hosted_zone: example.com            # The domain to host your stuff under.
+hosted_zone: k8s.sugarkube.io            # The domain to host your stuff under.
 
 provisioner:
   params:       # parameters to different kops commands
     global:     # these are applied to all commands
-      state: s3://kops.sugarkube.io      # todo - generate a default value
+      state: s3://k8s.sugarkube.io      # todo - generate a default value
 
     create_cluster:       # Parameters for the `kops create cluster` command
       api_loadbalancer_type: public     # More kops settings...
