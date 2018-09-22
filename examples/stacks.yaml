@@ -41,8 +41,7 @@ aws-dev:
   account: dev
   profile: dev
   cluster: dev1
-  regions:
-  - eu-west-1
+  region: eu-west-1
   vars:               # paths to yaml files to load data from. Keys will be merged.
   - providers/
 #  - vars/

@@ -9,7 +9,6 @@ provisioner:
       state: s3://kops.sugarkube.io      # todo - generate a default value
 
     create_cluster:       # Parameters for the `kops create cluster` command
-      ssh_key: "/path/to/ssh.pub"       # Path to the SSH key used to create the kops cluster when using kops
       api_loadbalancer_type: public     # More kops settings...
       dns: public
       authorization: RBAC
@@ -23,7 +22,7 @@ provisioner:
     rolling_update:
       node_interval: 4m0s
 
-  spec:                             # The kops config will be downloaded and this
+  specs:                              # The kops config will be downloaded and this
     cluster:
       docker:                         # will be patched into the spec before
         logLevel: warn                # applying it to update the cluster config.

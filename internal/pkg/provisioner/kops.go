@@ -368,7 +368,7 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 	log.Info("Updating Kops cluster...")
 
 	err = utils.ExecCommand(KOPS_PATH, args, &stdoutBuf, &stderrBuf,
-		"", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
+		"", 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

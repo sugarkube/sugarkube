@@ -72,7 +72,8 @@ func ExecCommand(command string, args []string, stdoutBuf *bytes.Buffer,
 	err := cmd.Run()
 	if timeoutSeconds > 0 && ctx.Err() == context.DeadlineExceeded {
 		return errors.Wrapf(ctx.Err(),
-			"Timed out executing command: '%s' with args: %#v", command, args)
+			"Timed out executing command: '%s' with args: %s", command,
+			strings.Join(args, " "))
 	}
 	if err != nil {
 		return errors.Wrapf(err, "Failed to run command '%s' with args: %#v\n"+

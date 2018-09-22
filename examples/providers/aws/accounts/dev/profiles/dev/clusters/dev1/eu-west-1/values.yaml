@@ -6,11 +6,11 @@
 provisioner:
   params:
     global:
-      name: sugarkube-test-eu-west-1
+      name: sugarkube-test-eu-west-1.sugarkube.io
 
     create_cluster:
       # from https://stable.release.core-os.net/amd64-usr/current/coreos_production_ami_hvm_eu-west-1.txt
-      node_image_id: ami-1d3cd8f0
+      image: ami-1d3cd8f0
 
       master-zones: eu-west-1a
       zones: eu-west-1a,eu-west-1b,eu-west-1c
