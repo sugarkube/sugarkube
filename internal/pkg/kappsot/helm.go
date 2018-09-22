@@ -21,9 +21,8 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
-	"os"
-	"os/exec"
 )
 
 // Uses Helm to determine which kapps are already installed in a target cluster
@@ -36,6 +35,8 @@ type HelmOutput struct {
 	Next     string
 	Releases []HelmRelease
 }
+
+const HELM_PATH = "helm"
 
 // struct returned by `helm list --output yaml`
 type HelmRelease struct {
@@ -50,23 +51,21 @@ type HelmRelease struct {
 
 // Refreshes the list of Helm charts
 func (s HelmKappSot) refresh() error {
-	var stdout bytes.Buffer
-	// todo - add the --kube-context
-	cmd := exec.Command("helm", "list", "--all", "--output", "yaml")
-	cmd.Env = os.Environ()
-	cmd.Stdout = &stdout
+	var stdoutBuf, stderrBuf bytes.Buffer
 
-	err := cmd.Run()
+	// todo - add the --kube-context
+	err := utils.ExecCommand(HELM_PATH, []string{"list", "--all", "--output", "yaml"},
+		&stdoutBuf, &stderrBuf, "", 30, false)
 	if err != nil {
-		return errors.Wrap(err, "Error running 'helm list'")
+		return errors.WithStack(err)
 	}
 
 	// parse stdout
 	output := HelmOutput{}
-	err = yaml.Unmarshal(stdout.Bytes(), &output)
+	err = yaml.Unmarshal(stdoutBuf.Bytes(), &output)
 	if err != nil {
 		return errors.Wrapf(err, "Error parsing 'Helm list' output: %s",
-			stdout.String())
+			stdoutBuf.String())
 	}
 
 	s.charts = output

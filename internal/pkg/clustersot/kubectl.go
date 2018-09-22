@@ -23,6 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os"
 	"os/exec"
 )
@@ -40,10 +41,11 @@ func (c KubeCtlClusterSot) isOnline(sc *kapp.StackConfig, providerImpl provider.
 	providerVars := provider.GetVars(providerImpl)
 	context := providerVars[KUBE_CONTEXT_KEY].(string)
 
+	var stdoutBuf, stderrBuf bytes.Buffer
+
 	// poll `kubectl --context {{ kube_context }} get namespace`
-	cmd := exec.Command(KUBECTL_PATH, "--context", context, "get", "namespace")
-	cmd.Env = os.Environ()
-	err := cmd.Run()
+	err := utils.ExecCommand(KUBECTL_PATH, []string{"--context", context, "get", "namespace"},
+		&stdoutBuf, &stderrBuf, "", 30, false)
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
 			log.Debug("Cluster isn't online yet - kubectl not getting results")
@@ -61,15 +63,16 @@ func (c KubeCtlClusterSot) isReady(sc *kapp.StackConfig, providerImpl provider.P
 	providerVars := provider.GetVars(providerImpl)
 	context := providerVars[KUBE_CONTEXT_KEY].(string)
 
+	// todo - simplify this by using ExecCommand to get the data from kubectl with a timeout,
+	// then just feed that to grep on its stdin instead of piping directly.
 	userEnv := os.Environ()
 	var kubeCtlStderr, grepStdout bytes.Buffer
 
 	kubeCtlCmd := exec.Command(KUBECTL_PATH, "--context", context, "-n", "kube-system",
 		"get", "pod", "-o", "go-template=\"{{ range .items }}{{ printf \"%%s\\n\" .status.phase }}{{ end }}\"")
 	kubeCtlCmd.Env = userEnv
-	kubeCtlStdout, err := kubeCtlCmd.StdoutPipe()
 	kubeCtlCmd.Stderr = &kubeCtlStderr
-
+	kubeCtlStdout, err := kubeCtlCmd.StdoutPipe()
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
