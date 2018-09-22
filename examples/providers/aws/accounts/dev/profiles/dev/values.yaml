@@ -3,23 +3,22 @@ is_prod_cluster: false
 
 hosted_zone: example.com            # The domain to host your stuff under.
 
-kops:
+provisioner:
   params:       # parameters to different kops commands
     global:     # these are applied to all commands
-      state: s3://bucket.example.com      # todo - generate a default value
+      state: s3://kops.sugarkube.io      # todo - generate a default value
 
     create_cluster:       # Parameters for the `kops create cluster` command
-      kubernetes_version: 1.9.6
       ssh_key: "/path/to/ssh.pub"       # Path to the SSH key used to create the kops cluster when using kops
       api_loadbalancer_type: public     # More kops settings...
       dns: public
       authorization: RBAC
       networking: calico
-      topology: private
+      topology: public
       master_count: 1
       master_size: t2.medium
-      node_count: 1
-      node_size: t2.small
+      node_count: 2
+      node_size: t2.medium
 
     rolling_update:
       node_interval: 4m0s
@@ -29,8 +28,11 @@ kops:
       docker:                         # will be patched into the spec before
         logLevel: warn                # applying it to update the cluster config.
         logOpt:                       # This allows kops clusters to be fully
-        - max-size: 10m               # customised and updated automatically.
-        - max-file: 5
+        - max-size=10m                # customised and updated automatically.
+        - max-file=5
+        logDriver: json-file
+        ipMasq: true
+        ipTables: true
     instanceGroups:
       nodes:                    # name of the instance group
         nodeLabels:

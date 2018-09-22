@@ -39,6 +39,8 @@ type StackConfig struct {
 	FilePath      string
 	Provider      string
 	Provisioner   string
+	Account       string
+	Region        string
 	Profile       string
 	Cluster       string
 	VarsFilesDirs []string `yaml:"vars"`

@@ -1,5 +1,3 @@
-provisioner: kops
-
 # Lists IDs of trusted GPG keys. Clusters with `require_signed_tags=true` will
 # reject any git tags that haven't been signed by one of the keys listed here.
 trusted_gpg_keys:

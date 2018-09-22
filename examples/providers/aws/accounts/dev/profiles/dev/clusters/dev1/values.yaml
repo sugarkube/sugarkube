@@ -1,10 +1,8 @@
 # Values from the `dev` profile can be overridden here:
-kops:
+provisioner:
   params:
     create_cluster:
-      master:
-        node_count: 2
-        node_instance_size: t2.large
-      worker:
-        node_count: 2
-        node_instance_size: t2.large
+      master_count: 1
+      master_size: t2.micro
+      node_count: 1
+      node_size: t2.micro
