@@ -25,7 +25,7 @@
 #   unused-packages = true
 
 [[constraint]]
-  name = "github.com/Sirupsen/logrus"
+  name = "github.com/sirupsen/logrus"
   version = "1.0.6"
 
 [[constraint]]
@@ -55,3 +55,7 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/onrik/logrus"

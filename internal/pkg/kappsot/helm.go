@@ -90,23 +90,23 @@ func (s HelmKappSot) isInstalled(name string, version string) (bool, error) {
 	for _, release := range s.charts.Releases {
 		if release.Chart == chart {
 			if release.Status == "DEPLOYED" {
-				log.Infof("Chart '%s' is already installed", chart)
+				log.Logger.Infof("Chart '%s' is already installed", chart)
 				return true, nil
 			}
 
 			if release.Status == "FAILED" {
-				log.Infof("The previous release of chart '%s' failed", chart)
+				log.Logger.Infof("The previous release of chart '%s' failed", chart)
 				return false, nil
 			}
 
 			if release.Status == "DELETED" {
-				log.Infof("Chart '%s' was installed but was deleted", chart)
+				log.Logger.Infof("Chart '%s' was installed but was deleted", chart)
 				return false, nil
 			}
 		}
 	}
 
-	log.Debugf("Chart '%s' isn't installed", chart)
+	log.Logger.Debugf("Chart '%s' isn't installed", chart)
 
 	return false, nil
 }

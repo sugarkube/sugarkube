@@ -41,7 +41,7 @@ func convertStringable(input interface{}) (string, error) {
 // returns an error if types can't be sanely converted
 func MapInterfaceInterfaceToMapStringString(input map[interface{}]interface{}) (map[string]string, error) {
 
-	log.Debugf("Converting map of interfaces to map of strings. Input=%#v", input)
+	log.Logger.Debugf("Converting map of interfaces to map of strings. Input=%#v", input)
 
 	output := make(map[string]string)
 
@@ -59,7 +59,7 @@ func MapInterfaceInterfaceToMapStringString(input map[interface{}]interface{}) (
 		output[strKey] = strVal
 	}
 
-	log.Debugf("Converted map of interfaces to map of strings. Output=%#v", output)
+	log.Logger.Debugf("Converted map of interfaces to map of strings. Output=%#v", output)
 
 	return output, nil
 }
@@ -68,7 +68,7 @@ func MapInterfaceInterfaceToMapStringString(input map[interface{}]interface{}) (
 // returns an error if types can't be sanely converted
 func MapInterfaceInterfaceToMapStringInterface(input map[interface{}]interface{}) (map[string]interface{}, error) {
 
-	log.Debugf("Converting map of interfaces to map with string keys. Input=%#v", input)
+	log.Logger.Debugf("Converting map of interfaces to map with string keys. Input=%#v", input)
 
 	output := make(map[string]interface{})
 
@@ -81,7 +81,7 @@ func MapInterfaceInterfaceToMapStringInterface(input map[interface{}]interface{}
 		output[strKey] = v
 	}
 
-	log.Debugf("Converted map of interfaces to map with string keys. Output=%#v", output)
+	log.Logger.Debugf("Converted map of interfaces to map with string keys. Output=%#v", output)
 
 	return output, nil
 }

@@ -33,7 +33,7 @@ func TestGitAcquire(t *testing.T) {
 	tempDir, err := ioutil.TempDir("", "git-")
 	assert.Nil(t, err)
 
-	log.Infof("Testing the git acquirer with temp dir: %s", tempDir)
+	log.Logger.Infof("Testing the git acquirer with temp dir: %s", tempDir)
 	defer os.RemoveAll(tempDir)
 
 	err = acquirer.acquire(tempDir)

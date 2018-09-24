@@ -42,7 +42,7 @@ func (p *AwsProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 		// prepend the directory of the stack config file if the path is relative
 		if !filepath.IsAbs(path) {
 			path = filepath.Join(prefix, path)
-			log.Debugf("Prepended dir of stack config to relative path. New path %s", path)
+			log.Logger.Debugf("Prepended dir of stack config to relative path. New path %s", path)
 		}
 
 		accountDir := filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, sc.Account)

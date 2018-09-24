@@ -79,7 +79,7 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	log.Info("Launching Minikube cluster...")
+	log.Logger.Info("Launching Minikube cluster...")
 	err = utils.ExecCommand(MINIKUBE_PATH, args, &stdoutBuf, &stderrBuf, "",
 		0, dryRun)
 	if err != nil {
@@ -87,7 +87,7 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 	}
 
 	if !dryRun {
-		log.Infof("Minikube cluster successfully started")
+		log.Logger.Infof("Minikube cluster successfully started")
 	}
 
 	sc.Status.StartedThisRun = true
@@ -119,14 +119,14 @@ func (p MinikubeProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl 
 // No-op function, required to fully implement the Provisioner interface
 func (p MinikubeProvisioner) update(sc *kapp.StackConfig, providerImpl provider.Provider,
 	dryRun bool) error {
-	log.Info("Updating minikube clusters has no effect. Ignoring.")
+	log.Logger.Info("Updating minikube clusters has no effect. Ignoring.")
 	return nil
 }
 
 // Parses the provisioner config
 func getMinikubeProvisionerConfig(provisionerValues map[interface{}]interface{}) (
 	*MinikubeConfig, error) {
-	log.Debugf("Marshalling: %#v", provisionerValues)
+	log.Logger.Debugf("Marshalling: %#v", provisionerValues)
 
 	// marshal then unmarshal the provisioner values to get the command parameters
 	byteData, err := yaml.Marshal(provisionerValues)
@@ -134,7 +134,7 @@ func getMinikubeProvisionerConfig(provisionerValues map[interface{}]interface{})
 		return nil, errors.WithStack(err)
 	}
 
-	log.Debugf("Marshalled to: %s", string(byteData[:]))
+	log.Logger.Debugf("Marshalled to: %s", string(byteData[:]))
 
 	var minikubeConfig MinikubeConfig
 	err = yaml.Unmarshal(byteData, &minikubeConfig)

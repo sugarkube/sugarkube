@@ -58,7 +58,7 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 			ShouldBePresent: shouldBePresent,
 		}
 
-		log.Debugf("kapp=%#v, v=%#v", kapp, v)
+		log.Logger.Debugf("kapp=%#v, v=%#v", kapp, v)
 
 		// parse the list of sources
 		valuesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(v.(map[interface{}]interface{}))
@@ -72,7 +72,7 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 			return errors.Wrapf(err, "Error marshalling sources yaml: %#v", v)
 		}
 
-		log.Debugf("Marshalled sources YAML: %s", sourcesBytes)
+		log.Logger.Debugf("Marshalled sources YAML: %s", sourcesBytes)
 
 		sourcesMaps := []map[interface{}]interface{}{}
 		err = yaml.UnmarshalStrict(sourcesBytes, &sourcesMaps)
@@ -80,7 +80,7 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 			return errors.Wrapf(err, "Error unmarshalling yaml: %s", sourcesBytes)
 		}
 
-		log.Debugf("sourcesMaps=%#v", sourcesMaps)
+		log.Logger.Debugf("sourcesMaps=%#v", sourcesMaps)
 
 		acquirers := make([]acquirer.Acquirer, 0)
 		// now we have a list of sources, get the acquirer for each one
@@ -95,7 +95,7 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 				return errors.WithStack(err)
 			}
 
-			log.Debugf("Got acquirer %#v", acquirerImpl)
+			log.Logger.Debugf("Got acquirer %#v", acquirerImpl)
 
 			acquirers = append(acquirers, acquirerImpl)
 		}
@@ -110,7 +110,7 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 
 		kapp.Sources = acquirers
 
-		log.Debugf("Parsed kapp=%#v", kapp)
+		log.Logger.Debugf("Parsed kapp=%#v", kapp)
 
 		*kapps = append(*kapps, kapp)
 	}
@@ -138,7 +138,7 @@ func parseManifestYaml(data map[string]interface{}) ([]Kapp, error) {
 		}
 	}
 
-	log.Debugf("Parsed kapps to install and remove: %#v", kapps)
+	log.Logger.Debugf("Parsed kapps to install and remove: %#v", kapps)
 
 	return kapps, nil
 }

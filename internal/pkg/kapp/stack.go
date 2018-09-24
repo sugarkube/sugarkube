@@ -81,7 +81,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 		return nil, errors.New(fmt.Sprintf("No stack called '%s' found in stack file %s", name, path))
 	}
 
-	log.Debugf("Loaded stack '%s' from file '%s'", name, path)
+	log.Logger.Debugf("Loaded stack '%s' from file '%s'", name, path)
 
 	// marshal the data we want so we can unmarshal it again into a struct
 	stackConfigBytes, err := yaml.Marshal(stackConfig)
@@ -89,7 +89,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	log.Debugf("Stack config bytes:\n%s", stackConfigBytes)
+	log.Logger.Debugf("Stack config bytes:\n%s", stackConfigBytes)
 
 	stack := StackConfig{
 		Name:     name,
@@ -108,11 +108,11 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	log.Debugf("Loaded stack config: %#v", stack)
+	log.Logger.Debugf("Loaded stack config: %#v", stack)
 
 	// at this point stack.Manifest only contains a list of URIs. We need to
 	// acquire and parse them.
-	log.Debug("Parsing manifests")
+	log.Logger.Debug("Parsing manifests")
 
 	// todo - this is duplicated with some changes in manifest.ParseManifests.
 	// They need centralising.
@@ -148,7 +148,7 @@ func (s *StackConfig) Dir() string {
 	} else {
 		executable, err := os.Executable()
 		if err != nil {
-			log.Fatal("Failed to get the path of this binary.")
+			log.Logger.Fatal("Failed to get the path of this binary.")
 			panic(err)
 		}
 

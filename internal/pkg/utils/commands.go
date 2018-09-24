@@ -42,7 +42,7 @@ func ExecCommand(command string, args []string, stdoutBuf *bytes.Buffer,
 	var cancel context.CancelFunc
 
 	if timeoutSeconds > 0 {
-		log.Debugf("%s command will be run with a timeout of %d seconds",
+		log.Logger.Debugf("%s command will be run with a timeout of %d seconds",
 			command, timeoutSeconds)
 
 		ctx, cancel = context.WithTimeout(context.Background(),
@@ -63,10 +63,10 @@ func ExecCommand(command string, args []string, stdoutBuf *bytes.Buffer,
 	}
 
 	if dryRun {
-		log.Infof("Dry run. Would run: %s %s", command, strings.Join(args, " "))
+		log.Logger.Infof("Dry run. Would run: %s %s", command, strings.Join(args, " "))
 		return nil
 	} else {
-		log.Debugf("Executing command: %s %s", command, strings.Join(args, " "))
+		log.Logger.Debugf("Executing command: %s %s", command, strings.Join(args, " "))
 	}
 
 	err := cmd.Run()

@@ -70,7 +70,7 @@ func Update(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider,
 // Return whether the cluster is already online
 func IsAlreadyOnline(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 
-	log.Infof("Checking whether cluster '%s' is already online...", sc.Cluster)
+	log.Logger.Infof("Checking whether cluster '%s' is already online...", sc.Cluster)
 
 	online, err := p.isAlreadyOnline(sc, providerImpl)
 	if err != nil {
@@ -78,9 +78,9 @@ func IsAlreadyOnline(p Provisioner, sc *kapp.StackConfig, providerImpl provider.
 	}
 
 	if online {
-		log.Infof("Cluster '%s' is online", sc.Cluster)
+		log.Logger.Infof("Cluster '%s' is online", sc.Cluster)
 	} else {
-		log.Infof("Cluster '%s' is not online", sc.Cluster)
+		log.Logger.Infof("Cluster '%s' is not online", sc.Cluster)
 	}
 
 	sc.Status.IsOnline = online
@@ -94,7 +94,7 @@ func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, providerImpl p
 		return errors.WithStack(err)
 	}
 
-	log.Infof("Checking whether the cluster is online... Will try for %d seconds",
+	log.Logger.Infof("Checking whether the cluster is online... Will try for %d seconds",
 		sc.OnlineTimeout)
 
 	clusterWasOffline := false
@@ -107,11 +107,11 @@ func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, providerImpl p
 		}
 
 		if online {
-			log.Info("Cluster is online")
+			log.Logger.Info("Cluster is online")
 			break
 		} else {
 			clusterWasOffline = true
-			log.Info("Cluster isn't online. Sleeping...")
+			log.Logger.Info("Cluster isn't online. Sleeping...")
 			time.Sleep(time.Duration(5) * time.Second)
 		}
 	}
@@ -123,11 +123,11 @@ func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, providerImpl p
 	// only sleep before checking readiness if the cluster was initially offline
 	sleepTime := sc.Status.SleepBeforeReadyCheck
 	if clusterWasOffline || sc.Status.StartedThisRun && sleepTime > 0 {
-		log.Infof("Sleeping for %d seconds before checking cluster readiness...", sleepTime)
+		log.Logger.Infof("Sleeping for %d seconds before checking cluster readiness...", sleepTime)
 		time.Sleep(time.Second * time.Duration(sleepTime))
 	}
 
-	log.Infof("Checking whether the cluster is ready...")
+	log.Logger.Infof("Checking whether the cluster is ready...")
 
 	readinessTimeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
 	for time.Now().Before(readinessTimeoutTime) {
@@ -137,10 +137,10 @@ func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, providerImpl p
 		}
 
 		if ready {
-			log.Info("Cluster is ready")
+			log.Logger.Info("Cluster is ready")
 			break
 		} else {
-			log.Info("Cluster isn't ready. Sleeping...")
+			log.Logger.Info("Cluster isn't ready. Sleeping...")
 			time.Sleep(time.Duration(5) * time.Second)
 		}
 	}

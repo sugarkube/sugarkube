@@ -69,7 +69,7 @@ func findFilesByPattern(rootDir string, pattern string, recursive bool,
 				for linkTarget, link := range links {
 					if strings.Contains(result, linkTarget) {
 						// Too noisy. Commented out.
-						//log.Debugf("Replacing link target '%s' with "+
+						//log.Logger.Debugf("Replacing link target '%s' with "+
 						//	"link '%s' in result '%s'", linkTarget, link, result)
 						results[i] = strings.Replace(result, linkTarget, link, 1)
 

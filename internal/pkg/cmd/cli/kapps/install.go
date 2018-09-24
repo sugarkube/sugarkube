@@ -122,7 +122,7 @@ func (c *installCmd) run() error {
 
 	mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
 
-	log.Debugf("Final stack config: %#v", stackConfig)
+	log.Logger.Debugf("Final stack config: %#v", stackConfig)
 
 	var actionPlan *plan.Plan
 

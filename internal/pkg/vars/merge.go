@@ -28,7 +28,7 @@ func Merge(result *map[string]interface{}, paths ...string) error {
 
 	for _, path := range paths {
 
-		log.Debug("Loading path ", path)
+		log.Logger.Debug("Loading path ", path)
 
 		yamlFile, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -42,7 +42,7 @@ func Merge(result *map[string]interface{}, paths ...string) error {
 			return errors.Wrapf(err, "Error loading YAML file: %s", path)
 		}
 
-		log.Debugf("Merging %v with %v", result, loaded)
+		log.Logger.Debugf("Merging %v with %v", result, loaded)
 
 		mergo.Merge(result, loaded, mergo.WithOverride)
 	}

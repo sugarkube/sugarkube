@@ -35,7 +35,7 @@ const GIT = "git"
 
 // Factory that creates acquirers
 func acquirerFactory(name string, settings map[string]string) (Acquirer, error) {
-	log.Debugf("Returning new %s acquirer", name)
+	log.Logger.Debugf("Returning new %s acquirer", name)
 
 	if name == GIT {
 		if settings[URI] == "" || settings[BRANCH] == "" || settings[PATH] == "" {

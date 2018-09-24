@@ -34,7 +34,7 @@ func LoadYamlFile(path string) (map[string]interface{}, error) {
 	}
 
 	if _, err := os.Stat(absPath); err != nil {
-		log.Debugf("YAML file doesn't exist: %s", absPath)
+		log.Logger.Debugf("YAML file doesn't exist: %s", absPath)
 		return nil, errors.WithStack(err)
 	}
 
@@ -50,7 +50,7 @@ func LoadYamlFile(path string) (map[string]interface{}, error) {
 		return nil, errors.Wrapf(err, "Error loading YAML file %s", path)
 	}
 
-	log.Debugf("YAML file: %#v", data)
+	log.Logger.Debugf("YAML file: %#v", data)
 
 	return data, nil
 }

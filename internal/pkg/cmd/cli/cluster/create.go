@@ -119,7 +119,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
 	mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
 
-	log.Debugf("Final stack config: %#v", stackConfig)
+	log.Logger.Debugf("Final stack config: %#v", stackConfig)
 
 	providerImpl, err := provider.NewProvider(stackConfig)
 	if err != nil {
@@ -137,7 +137,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	if online && !c.dryRun {
-		log.Infof("Target cluster is already online. Aborting.")
+		log.Logger.Infof("Target cluster is already online. Aborting.")
 		return nil
 	}
 
@@ -147,14 +147,14 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	if c.dryRun {
-		log.Infof("Dry run. Skipping cluster readiness check.")
+		log.Logger.Infof("Dry run. Skipping cluster readiness check.")
 	} else {
 		err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig, providerImpl)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		log.Infof("Cluster '%s' is ready for use.", stackConfig.Cluster)
+		log.Logger.Infof("Cluster '%s' is ready for use.", stackConfig.Cluster)
 	}
 
 	return nil
@@ -180,7 +180,7 @@ func ParseStackCliArgs(stackName string, stackFile string) (*kapp.StackConfig, e
 		}
 	}
 
-	log.Debugf("Parsed stack CLI args to stack config: %#v", stackConfig)
+	log.Logger.Debugf("Parsed stack CLI args to stack config: %#v", stackConfig)
 
 	return stackConfig, nil
 }

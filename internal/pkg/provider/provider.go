@@ -70,13 +70,13 @@ func NewProvider(stackConfig *kapp.StackConfig) (Provider, error) {
 
 	stackConfigVars, err := stackConfigVars(providerImpl, stackConfig)
 	if err != nil {
-		log.Warn("Error loading stack config variables")
+		log.Logger.Warn("Error loading stack config variables")
 		return nil, errors.WithStack(err)
 	}
-	log.Debugf("Provider loaded vars: %#v", stackConfigVars)
+	log.Logger.Debugf("Provider loaded vars: %#v", stackConfigVars)
 
 	if len(stackConfigVars) == 0 {
-		log.Fatal("No values loaded for stack")
+		log.Logger.Fatal("No values loaded for stack")
 		return nil, errors.New("Failed to load values for stack")
 	}
 
@@ -100,7 +100,7 @@ func stackConfigVars(p Provider, sc *kapp.StackConfig) (Values, error) {
 
 		_, err := os.Stat(valuePath)
 		if err != nil {
-			log.Debugf("Skipping merging non-existent path %s", valuePath)
+			log.Logger.Debugf("Skipping merging non-existent path %s", valuePath)
 			continue
 		}
 

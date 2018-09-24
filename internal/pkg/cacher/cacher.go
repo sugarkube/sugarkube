@@ -50,7 +50,7 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 	// create a directory to cache all kapps in this manifest in
 	manifestCacheDir := GetManifestCachePath(cacheDir, manifest)
 
-	log.Debugf("Creating manifest cache dir: %s", manifestCacheDir)
+	log.Logger.Debugf("Creating manifest cache dir: %s", manifestCacheDir)
 	err := os.MkdirAll(manifestCacheDir, 0755)
 	if err != nil {
 		return errors.WithStack(err)
@@ -63,7 +63,7 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 		// build a directory path for the kapp's .sugarkube cache directory
 		kappCacheDir := getKappCachePath(kappRootPath)
 
-		log.Debugf("Creating kapp cache dir: %s", kappCacheDir)
+		log.Logger.Debugf("Creating kapp cache dir: %s", kappCacheDir)
 		err := os.MkdirAll(kappCacheDir, 0755)
 		if err != nil {
 			return errors.WithStack(err)
@@ -85,7 +85,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 
-	log.Debugf("Acquiring sources for manifest: %s", manifest.Id)
+	log.Logger.Debugf("Acquiring sources for manifest: %s", manifest.Id)
 
 	for _, acquirerImpl := range acquirers {
 		go func(a acquirer.Acquirer) {
@@ -97,7 +97,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 			sourceDest := filepath.Join(cacheDir, acquirerId)
 
 			if dryRun {
-				log.Debugf("Dry run: Would acquire source into: %s", sourceDest)
+				log.Logger.Debugf("Dry run: Would acquire source into: %s", sourceDest)
 			} else {
 				err := acquirer.Acquire(a, sourceDest)
 				if err != nil {
@@ -114,13 +114,13 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 			symLinkTarget := filepath.Join(rootDir, a.Name())
 
 			if dryRun {
-				log.Debugf("Dry run. Would symlink cached source %s to %s", sourcePath, symLinkTarget)
+				log.Logger.Debugf("Dry run. Would symlink cached source %s to %s", sourcePath, symLinkTarget)
 			} else {
 				if _, err := os.Stat(filepath.Join(rootDir, sourcePath)); err != nil {
 					errCh <- errors.Wrapf(err, "Symlink source '%s' doesn't exist", sourcePath)
 				}
 
-				log.Debugf("Symlinking cached source %s to %s", sourcePath, symLinkTarget)
+				log.Logger.Debugf("Symlinking cached source %s to %s", sourcePath, symLinkTarget)
 				err := os.Symlink(sourcePath, symLinkTarget)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error symlinking source")
@@ -135,16 +135,16 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 		select {
 		case err := <-errCh:
 			close(doneCh)
-			log.Warnf("Error in acquirer goroutines: %s", err)
+			log.Logger.Warnf("Error in acquirer goroutines: %s", err)
 			return errors.Wrapf(err, "Error running acquirer in goroutine "+
 				"for manifest '%s'", manifest.Id)
 		case <-doneCh:
-			log.Debugf("%d acquirer(s) successfully completed for manifest '%s'",
+			log.Logger.Debugf("%d acquirer(s) successfully completed for manifest '%s'",
 				success+1, manifest.Id)
 		}
 	}
 
-	log.Debugf("Finished acquiring sources for manifest: %s", manifest.Id)
+	log.Logger.Debugf("Finished acquiring sources for manifest: %s", manifest.Id)
 
 	return nil
 }

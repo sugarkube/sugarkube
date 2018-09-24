@@ -62,14 +62,14 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 
 func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
-	log.Debugf("Got CLI args: %#v", c)
+	log.Logger.Debugf("Got CLI args: %#v", c)
 
 	stackConfig, err := cluster.ParseStackCliArgs(c.stackName, c.stackFile)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	log.Debugf("Loaded stackConfig=%#v", stackConfig)
+	log.Logger.Debugf("Loaded stackConfig=%#v", stackConfig)
 
 	//cliManifests, err := kapp.ParseManifests(c.manifests)
 	//if err != nil {
@@ -83,9 +83,9 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	//
 	//mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
 
-	log.Debugf("Final stack config: %#v", stackConfig)
+	log.Logger.Debugf("Final stack config: %#v", stackConfig)
 
-	log.Debugf("Loaded %d manifest(s)", len(stackConfig.Manifests))
+	log.Logger.Debugf("Loaded %d manifest(s)", len(stackConfig.Manifests))
 
 	for _, manifest := range stackConfig.Manifests {
 		err = kapp.ValidateManifest(&manifest)
@@ -103,7 +103,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		cacheDir = tempDir
 	}
 
-	log.Debugf("Kapps validated. Caching manifests into %s...", cacheDir)
+	log.Logger.Debugf("Kapps validated. Caching manifests into %s...", cacheDir)
 
 	for _, manifest := range stackConfig.Manifests {
 		err := cacher.CacheManifest(manifest, cacheDir, c.dryRun)
@@ -112,7 +112,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	log.Infof("Manifests cached to: %s", cacheDir)
+	log.Logger.Infof("Manifests cached to: %s", cacheDir)
 
 	return nil
 }

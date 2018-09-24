@@ -96,7 +96,7 @@ func Create(stackConfig *kapp.StackConfig, cacheDir string) (*Plan, error) {
 func (p *Plan) Run(approved bool, dryRun bool) error {
 
 	if p.tranche == nil {
-		log.Info("No tranches in plan to process")
+		log.Logger.Info("No tranches in plan to process")
 		return nil
 	}
 
@@ -108,7 +108,7 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 
-	log.Debugf("Applying plan: %#v", p)
+	log.Logger.Debugf("Applying plan: %#v", p)
 
 	for i, tranche := range p.tranche {
 		manifestCacheDir := cacher.GetManifestCachePath(p.cacheDir, tranche.manifest)
@@ -128,18 +128,18 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 		for success := 0; success < totalOperations; success++ {
 			select {
 			case err := <-errCh:
-				log.Fatalf("Error processing kapp in tranche %d of plan: %s", i+1, err)
+				log.Logger.Fatalf("Error processing kapp in tranche %d of plan: %s", i+1, err)
 				close(doneCh)
 				return errors.Wrapf(err, "Error processing kapp goroutine "+
 					"in tranche %d of plan", i+1)
 			case <-doneCh:
-				log.Debugf("%d kapp(s) successfully processed in tranche %d",
+				log.Logger.Debugf("%d kapp(s) successfully processed in tranche %d",
 					success+1, i+1)
 			}
 		}
 	}
 
-	log.Infof("Finished applying plan")
+	log.Logger.Infof("Finished applying plan")
 
 	return nil
 }
@@ -151,13 +151,13 @@ func processKapp(kappObj kapp.Kapp, stackConfig *kapp.StackConfig,
 
 	kappRootDir := cacher.GetKappRootPath(manifestCacheDir, kappObj)
 
-	log.Debugf("Processing kapp '%s' in %s", kappObj.Id, kappRootDir)
+	log.Logger.Debugf("Processing kapp '%s' in %s", kappObj.Id, kappRootDir)
 
 	_, err := os.Stat(kappRootDir)
 	if err != nil {
 		msg := fmt.Sprintf("Kapp '%s' doesn't exist in the cache at '%s'",
 			kappObj.Id, kappRootDir)
-		log.Warn(msg)
+		log.Logger.Warn(msg)
 		errCh <- errors.Wrap(err, msg)
 	}
 

@@ -88,7 +88,7 @@ func (a GitAcquirer) Path() string {
 // Acquires kapps via git and saves them to `dest`.
 func (a GitAcquirer) acquire(dest string) error {
 
-	log.Infof("Acquiring git source %s into %s", a.uri, dest)
+	log.Logger.Infof("Acquiring git source %s into %s", a.uri, dest)
 
 	// create the dest dir if it doesn't exist
 	err := os.MkdirAll(dest, 0755)

@@ -57,14 +57,14 @@ func SetManifestDefaults(manifest *Manifest) {
 // todo - change this to use an acquirer. Use the ID defined in the manifest
 // settings YAML, or default to the manifest file basename.
 func ParseManifestFile(path string) (*Manifest, error) {
-	log.Debugf("Parsing manifest: %s", path)
+	log.Logger.Debugf("Parsing manifest: %s", path)
 
 	data, err := vars.LoadYamlFile(path)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	log.Debugf("Loaded manifest data: %#v", data)
+	log.Logger.Debugf("Loaded manifest data: %#v", data)
 
 	kapps, err := parseManifestYaml(data)
 
@@ -78,7 +78,7 @@ func ParseManifestFile(path string) (*Manifest, error) {
 // todo - this largely duplicates code in stack.LoadStackConfig. It needs
 // centralising
 //func ParseManifests(manifestPaths []string) ([]Manifest, error) {
-//	log.Debugf("Parsing %d manifest(s)", len(manifestPaths))
+//	log.Logger.Debugf("Parsing %d manifest(s)", len(manifestPaths))
 //
 //	manifests := make([]Manifest, 0)
 //

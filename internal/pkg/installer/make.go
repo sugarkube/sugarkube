@@ -133,7 +133,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		return errors.WithStack(err)
 	}
 
-	log.Infof("Installing kapp '%s'...", kappObj.Id)
+	log.Logger.Infof("Installing kapp '%s'...", kappObj.Id)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	err = utils.ExecCommand("make", cliArgs, &stdoutBuf, &stderrBuf,
@@ -142,7 +142,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		return errors.WithStack(err)
 	}
 
-	log.Infof("Kapp '%s' successfully %sed", kappObj.Id, makeTarget)
+	log.Logger.Infof("Kapp '%s' successfully %sed", kappObj.Id, makeTarget)
 
 	return nil
 }
