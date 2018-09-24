@@ -97,12 +97,12 @@ type Parameteriser struct {
 const KUBE_CONTEXT_KEY = "kube_context"
 
 // Return a map of env vars that should be passed to the kapp by the installer
-func (i *Parameteriser) GetEnvVars(vars provider.Values) (map[string]string, error) {
+func (p *Parameteriser) GetEnvVars(vars provider.Values) (map[string]string, error) {
 	envVars := make(map[string]string)
 
-	if i.Name == IMPLEMENTS_HELM {
-		envVars["NAMESPACE"] = i.kappObj.Id
-		envVars["RELEASE"] = i.kappObj.Id
+	if p.Name == IMPLEMENTS_HELM {
+		envVars["NAMESPACE"] = p.kappObj.Id
+		envVars["RELEASE"] = p.kappObj.Id
 
 		// todo - this is a hack. Need to find a place for things like this and
 		// a generic way of adding them as env vars. Perhaps have a YAML block
@@ -110,7 +110,7 @@ func (i *Parameteriser) GetEnvVars(vars provider.Values) (map[string]string, err
 		envVars["HOSTED_ZONE"] = vars["hosted_zone"].(string)
 	}
 
-	if i.Name == IMPLEMENTS_HELM || i.Name == IMPLEMENTS_K8S {
+	if p.Name == IMPLEMENTS_HELM || p.Name == IMPLEMENTS_K8S {
 		if kubeContext, ok := os.LookupEnv("KUBE_CONTEXT"); ok {
 			// todo - we probably don't need this... remove if not
 			envVars["KUBE_CONTEXT"] = kubeContext
@@ -135,18 +135,18 @@ func (i *Parameteriser) GetEnvVars(vars provider.Values) (map[string]string, err
 
 // Returns a list of args that the installer should pass to the kapp. This will
 // need refactoring once parsing the Parameteriser config is implemented.
-func (i *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error) {
+func (p *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error) {
 	pattern := ""
 	argName := ""
 	argKey := ""
 
-	if i.Name == IMPLEMENTS_HELM {
+	if p.Name == IMPLEMENTS_HELM {
 		pattern = "values-(?P<Var>\\w*).yaml"
 		argName = "helm-opts"
 		argKey = "-f"
 	}
 
-	if i.Name == IMPLEMENTS_TERRAFORM {
+	if p.Name == IMPLEMENTS_TERRAFORM {
 		pattern = "terraform.*"
 		argName = "tf-opts"
 		argKey = "-var-file"
@@ -156,7 +156,7 @@ func (i *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error)
 		return "", nil
 	}
 
-	matches, err := findFilesByPattern(i.kappObj.RootDir, pattern,
+	matches, err := findFilesByPattern(p.kappObj.RootDir, pattern,
 		true, true)
 	if err != nil {
 		return "", errors.WithStack(err)

@@ -114,6 +114,8 @@ func (c *installCmd) run() error {
 		Provisioner: c.provisioner,
 		Profile:     c.profile,
 		Cluster:     c.cluster,
+		Region:      c.region,
+		Account:     c.account,
 		//KappVarsDirs: c.kappVarsDirs,
 		//Manifests:    cliManifests,
 	}
