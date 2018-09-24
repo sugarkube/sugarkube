@@ -55,7 +55,7 @@ func (s HelmKappSot) refresh() error {
 
 	// todo - add the --kube-context
 	err := utils.ExecCommand(HELM_PATH, []string{"list", "--all", "--output", "yaml"},
-		&stdoutBuf, &stderrBuf, "", 30, false)
+		map[string]string{}, &stdoutBuf, &stderrBuf, "", 30, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}

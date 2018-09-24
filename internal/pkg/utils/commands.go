@@ -30,12 +30,19 @@ import (
 // Executes a command with an optional timeout, writing stdout and stderr to
 // buffers. If `dryRun` is true, a log message of what would have been executed
 // is emitted instead.
-func ExecCommand(command string, args []string, stdoutBuf *bytes.Buffer,
-	stderrBuf *bytes.Buffer, dir string, timeoutSeconds int, dryRun bool) error {
+func ExecCommand(command string, args []string, envVars map[string]string,
+	stdoutBuf *bytes.Buffer, stderrBuf *bytes.Buffer, dir string,
+	timeoutSeconds int, dryRun bool) error {
 
 	// reset the buffers in case they've already been used
 	stdoutBuf.Reset()
 	stderrBuf.Reset()
+
+	// add any given env vars to the user's current environment
+	strEnvVars := os.Environ()
+	for k, v := range envVars {
+		strEnvVars = append(strEnvVars, strings.Join([]string{k, v}, "="))
+	}
 
 	var cmd *exec.Cmd
 	var ctx context.Context
@@ -54,7 +61,7 @@ func ExecCommand(command string, args []string, stdoutBuf *bytes.Buffer,
 		cmd = exec.Command(command, args...)
 	}
 
-	cmd.Env = os.Environ()
+	cmd.Env = strEnvVars
 	cmd.Stdout = stdoutBuf
 	cmd.Stderr = stderrBuf
 

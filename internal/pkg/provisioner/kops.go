@@ -96,8 +96,8 @@ func (p KopsProvisioner) clusterConfigExists(sc *kapp.StackConfig, providerImpl 
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	err = utils.ExecCommand(KOPS, args, &stdoutBuf, &stderrBuf, "",
-		KOPS_COMMAND_TIMEOUT_SECONDS, false)
+	err = utils.ExecCommand(KOPS, args, map[string]string{}, &stdoutBuf,
+		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS, false)
 	if err != nil {
 		if errors.Cause(err) == context.DeadlineExceeded {
 			return false, errors.Wrap(err,
@@ -137,8 +137,8 @@ func (p KopsProvisioner) create(sc *kapp.StackConfig, providerImpl provider.Prov
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	log.Logger.Info("Creating Kops cluster config...")
-	err = utils.ExecCommand(KOPS_PATH, args, &stdoutBuf, &stderrBuf,
-		"", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
+	err = utils.ExecCommand(KOPS_PATH, args, map[string]string{}, &stdoutBuf,
+		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -216,7 +216,7 @@ func (p KopsProvisioner) update(sc *kapp.StackConfig, providerImpl provider.Prov
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	log.Logger.Info("Running Kops rolling update...")
-	err = utils.ExecCommand(KOPS_PATH, args, &stdoutBuf, &stderrBuf,
+	err = utils.ExecCommand(KOPS_PATH, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
@@ -266,7 +266,7 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 
 	log.Logger.Debug("Downloading config for kops cluster...")
 
-	err = utils.ExecCommand(KOPS_PATH, args, &stdoutBuf, &stderrBuf,
+	err = utils.ExecCommand(KOPS_PATH, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
@@ -337,7 +337,7 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 	args = parameteriseValues(args, kopsConfig.Params.Global)
 	args = parameteriseValues(args, kopsConfig.Params.Replace)
 
-	err = utils.ExecCommand(KOPS_PATH, args, &stdoutBuf, &stderrBuf,
+	err = utils.ExecCommand(KOPS_PATH, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
@@ -367,7 +367,7 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 
 	log.Logger.Info("Updating Kops cluster...")
 
-	err = utils.ExecCommand(KOPS_PATH, args, &stdoutBuf, &stderrBuf,
+	err = utils.ExecCommand(KOPS_PATH, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
@@ -392,8 +392,8 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig *KopsConfig, instanceGrou
 	log.Logger.Infof("Downloading config for instance group '%s' from kops cluster", instanceGroupName)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
-	err := utils.ExecCommand(KOPS_PATH, args, &stdoutBuf, &stderrBuf,
-		"", KOPS_COMMAND_TIMEOUT_SECONDS, false)
+	err := utils.ExecCommand(KOPS_PATH, args, map[string]string{}, &stdoutBuf,
+		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -449,7 +449,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig *KopsConfig, instanceGrou
 	args = parameteriseValues(args, kopsConfig.Params.Global)
 	args = parameteriseValues(args, kopsConfig.Params.Replace)
 
-	err = utils.ExecCommand(KOPS_PATH, args, &stdoutBuf, &stderrBuf,
+	err = utils.ExecCommand(KOPS_PATH, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", KOPS_COMMAND_TIMEOUT_SECONDS, false)
 	if err != nil {
 		return errors.WithStack(err)

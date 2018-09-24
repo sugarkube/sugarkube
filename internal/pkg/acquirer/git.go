@@ -99,29 +99,29 @@ func (a GitAcquirer) acquire(dest string) error {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	// git init
-	err = utils.ExecCommand(GIT_PATH, []string{"init"}, &stdoutBuf, &stderrBuf,
-		dest, 5, false)
+	err = utils.ExecCommand(GIT_PATH, []string{"init"}, map[string]string{},
+		&stdoutBuf, &stderrBuf, dest, 5, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// add origin
 	err = utils.ExecCommand(GIT_PATH, []string{"remote", "add", "origin", a.uri},
-		&stdoutBuf, &stderrBuf, dest, 5, false)
+		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 5, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// fetch
-	err = utils.ExecCommand(GIT_PATH, []string{"fetch"}, &stdoutBuf, &stderrBuf,
-		dest, 60, false)
+	err = utils.ExecCommand(GIT_PATH, []string{"fetch"}, map[string]string{},
+		&stdoutBuf, &stderrBuf, dest, 60, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// git configure sparse checkout
 	err = utils.ExecCommand(GIT_PATH, []string{"config", "core.sparsecheckout", "true"},
-		&stdoutBuf, &stderrBuf, dest, 90, false)
+		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -134,7 +134,7 @@ func (a GitAcquirer) acquire(dest string) error {
 
 	// git checkout
 	err = utils.ExecCommand(GIT_PATH, []string{"checkout", a.branch},
-		&stdoutBuf, &stderrBuf, dest, 90, false)
+		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}

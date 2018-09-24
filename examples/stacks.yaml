@@ -7,7 +7,7 @@ local-standard:
   - providers/    # providers. Errors will be thrown if expected dirs don't exist.
   kappVars:       # YAML files under these directories will be recursively merged
   - vars/         # and values passed to kapps to alter them per profile/manifest/etc.
-  - values/
+#  - values/
   manifests:
   # todo - support pulling these from git repos
   - uri: manifests/05-k8s-bootstrap.yaml

@@ -24,7 +24,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -103,12 +102,6 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		envVars[upperKey] = fmt.Sprintf("%#v", v)
 	}
 
-	// add our env vars to the user's existing env vars
-	strEnvVars := os.Environ()
-	for k, v := range envVars {
-		strEnvVars = append(strEnvVars, strings.Join([]string{k, v}, "="))
-	}
-
 	// get additional CLI args
 	validPatternMatches := []string{
 		stackConfig.Cluster,
@@ -136,8 +129,8 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	log.Logger.Infof("Installing kapp '%s'...", kappObj.Id)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
-	err = utils.ExecCommand("make", cliArgs, &stdoutBuf, &stderrBuf,
-		filepath.Dir(makefilePath), 0, dryRun)
+	err = utils.ExecCommand("make", cliArgs, envVars, &stdoutBuf,
+		&stderrBuf, filepath.Dir(makefilePath), 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
