@@ -45,7 +45,7 @@ func TestLoadStackConfig(t *testing.T) {
 		Provisioner: "minikube",
 		Profile:     "local",
 		Cluster:     "large",
-		VarsFilesDirs: []string{
+		ProviderVarsDirs: []string{
 			"./stacks/",
 		},
 		Manifests: []Manifest{

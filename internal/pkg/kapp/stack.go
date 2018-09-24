@@ -35,19 +35,19 @@ type ClusterStatus struct {
 }
 
 type StackConfig struct {
-	Name          string
-	FilePath      string
-	Provider      string
-	Provisioner   string
-	Account       string
-	Region        string
-	Profile       string
-	Cluster       string
-	VarsFilesDirs []string `yaml:"vars"`
-	Manifests     []Manifest
-	Status        ClusterStatus
-	OnlineTimeout uint32
-	ReadyTimeout  uint32
+	Name             string
+	FilePath         string
+	Provider         string
+	Provisioner      string
+	Account          string
+	Region           string
+	Profile          string
+	Cluster          string
+	ProviderVarsDirs []string `yaml:"providerVars"`
+	Manifests        []Manifest
+	Status           ClusterStatus
+	OnlineTimeout    uint32
+	ReadyTimeout     uint32
 }
 
 // Validates that there aren't multiple manifests in the stack config with the

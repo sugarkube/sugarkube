@@ -38,7 +38,7 @@ func (p *AwsProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 
 	prefix := sc.Dir()
 
-	for _, path := range sc.VarsFilesDirs {
+	for _, path := range sc.ProviderVarsDirs {
 		// prepend the directory of the stack config file if the path is relative
 		if !filepath.IsAbs(path) {
 			path = filepath.Join(prefix, path)

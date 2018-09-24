@@ -3,9 +3,11 @@ local-standard:
   provisioner: minikube
   profile: local
   cluster: standard
-  vars:               # paths to yaml files to load data from. Keys will be merged.
-  - providers/
-#  - vars/
+  providerVars:   # YAML files under here will be recursively merged. Used to configure
+  - providers/    # providers. Errors will be thrown if expected dirs don't exist.
+  kappVars:       # YAML files under these directories will be recursively merged
+  - vars/         # and values passed to kapps to alter them per profile/manifest/etc.
+  - values/
   manifests:
   # todo - support pulling these from git repos
   - uri: manifests/05-k8s-bootstrap.yaml
@@ -22,9 +24,10 @@ local-large:
   provisioner: minikube
   profile: local
   cluster: large
-  vars:               # paths to yaml files to load data from. Keys will be merged.
-  - providers/
-#  - vars/
+  providerVars:   # YAML files under here will be recursively merged. Used to configure
+  - providers/    # providers. Errors will be thrown if expected dirs don't exist.
+  kappVars:       # YAML files under these directories will be recursively merged
+  - vars/         # and values passed to kapps to alter them per profile/manifest/etc.
   manifests:
   # if no protocol is given, file:// is assumed.
   - uri: manifests/05-k8s-bootstrap.yaml
@@ -42,9 +45,10 @@ aws-dev:
   profile: dev
   cluster: dev1
   region: eu-west-1
-  vars:               # paths to yaml files to load data from. Keys will be merged.
-  - providers/
-#  - vars/
+  providerVars:   # YAML files under here will be recursively merged. Used to configure
+  - providers/    # providers. Errors will be thrown if expected dirs don't exist.
+  kappVars:       # YAML files under these directories will be recursively merged
+  - vars/         # and values passed to kapps to alter them per profile/manifest/etc.
   manifests:
   # if no protocol is given, file:// is assumed.
   - uri: manifests/05-k8s-bootstrap.yaml

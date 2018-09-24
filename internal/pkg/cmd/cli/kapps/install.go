@@ -110,12 +110,12 @@ func (c *installCmd) run() error {
 
 	// CLI args override configured args, so merge them in
 	cliStackConfig := &kapp.StackConfig{
-		Provider:      c.provider,
-		Provisioner:   c.provisioner,
-		Profile:       c.profile,
-		Cluster:       c.cluster,
-		VarsFilesDirs: c.varsFilesDirs,
-		Manifests:     cliManifests,
+		Provider:         c.provider,
+		Provisioner:      c.provisioner,
+		Profile:          c.profile,
+		Cluster:          c.cluster,
+		ProviderVarsDirs: c.varsFilesDirs,
+		Manifests:        cliManifests,
 	}
 
 	mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
