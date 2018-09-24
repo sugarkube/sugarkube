@@ -83,7 +83,7 @@ Note: Not all providers require all arguments. See documentation for help.
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	f.VarP(&c.providerVarsDirs, "vars-file-or-dir", "f", "Paths to YAML file/directory to load provider configs from (can specify multiple)")
+	f.VarP(&c.providerVarsDirs, "dir", "f", "Paths to YAML directory to load provider configs from (can specify multiple)")
 	f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
 	f.Uint32Var(&c.onlineTimeout, "online-timeout", 600, "max number of seconds to wait for the cluster to come online")
 	f.Uint32Var(&c.readyTimeout, "ready-timeout", 600, "max number of seconds to wait for the cluster to become ready")
