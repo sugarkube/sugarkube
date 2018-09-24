@@ -121,6 +121,9 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	log.Debugf("Final stack config: %#v", stackConfig)
 
 	providerImpl, err := provider.NewProvider(stackConfig)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner)
 	if err != nil {

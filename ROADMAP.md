@@ -16,8 +16,6 @@
 * Create _generated_values.yaml files
 * Create `backend.tf` files to allow terraform be backed by different backends
   * Don't assume S3. This should be configurable too.
-* Implement cluster diffing so we can install only those kapps that need 
-  installing and to destroy those that need removing
 
 **0.4.0**:
 * Work on bootstrapping before running a provisioner
@@ -34,7 +32,9 @@
 **0.6.0**:
 * Implement cache diffing
 * Implement SOTs to enable cluster diffing
-
+* Implement cluster diffing so we can install only those kapps that need 
+  installing and to destroy those that need removing
+  
 **0.7.0**:
 User-friendliness/ergonomics:
 * Add a default config file with the usual platform-dependent search paths

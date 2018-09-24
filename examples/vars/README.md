@@ -8,7 +8,7 @@ multiple times parameterised differently, so you could install it once at
 `jenkins.client1.com` and once at `jenkins.client2.com`. 
 
 ## Directory structure
-The files in this directory are hierarchically merged and pass through to kapps
+The files in this directory are hierarchically merged and passed through to kapps
 during installation. Sugarkube will look for directories related to the target 
 cluster, and will merge variables following the following rules:
 
@@ -46,7 +46,7 @@ separate makes your provisioner directories more reusable since they're less
 tightly coupled to each project you work on. 
 
 ## Usage in kapps
-Kapps receive each value as environment variables, prefixed by the basename of 
+Kapps receive each value as environment variables, prefixed by the basename  
 of the file containing the variable. The exception is the file `values.yaml`
 which are passed without any prefix. All variable names are upper-cased and have
 hyphens converted to underscores.

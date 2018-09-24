@@ -9,9 +9,9 @@ provisioner:
       state: s3://k8s.sugarkube.io      # todo - generate a default value
 
     create_cluster:       # Parameters for the `kops create cluster` command
-      api_loadbalancer_type: public     # More kops settings...
-      dns: public
-      authorization: RBAC
+      api_loadbalancer_type: public     # More kops settings. Underscores in keys
+      dns: public                       # will be converted to hyphens and prepended
+      authorization: RBAC               # with '--' to turn them into CLI args
       networking: calico
       topology: public
       master_count: 1
