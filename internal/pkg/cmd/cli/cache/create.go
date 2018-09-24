@@ -18,11 +18,9 @@ package cache
 
 import (
 	"fmt"
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -35,8 +33,8 @@ type createCmd struct {
 	dryRun    bool
 	stackName string
 	stackFile string
-	manifests cmd.Files
-	cacheDir  string
+	//manifests cmd.Files
+	cacheDir string
 }
 
 func newCreateCmd(out io.Writer) *cobra.Command {
@@ -56,7 +54,8 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
 	f.StringVarP(&c.cacheDir, "dir", "d", "", "Directory to build the cache in. A temp directory will be generated if not supplied.")
-	f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
+	// commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
+	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
 
 	return cmd
 }
@@ -72,17 +71,17 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
 	log.Debugf("Loaded stackConfig=%#v", stackConfig)
 
-	cliManifests, err := kapp.ParseManifests(c.manifests)
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	//cliManifests, err := kapp.ParseManifests(c.manifests)
+	//if err != nil {
+	//	return errors.WithStack(err)
+	//}
 
 	// CLI args override configured args, so merge them in
-	cliStackConfig := &kapp.StackConfig{
-		Manifests: cliManifests,
-	}
-
-	mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
+	//cliStackConfig := &kapp.StackConfig{
+	//	Manifests: cliManifests,
+	//}
+	//
+	//mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
 
 	log.Debugf("Final stack config: %#v", stackConfig)
 

@@ -21,7 +21,6 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -30,23 +29,23 @@ import (
 )
 
 type installCmd struct {
-	out           io.Writer
-	diffPath      string
-	cacheDir      string
-	dryRun        bool
-	approved      bool
-	oneShot       bool
-	force         bool
-	stackName     string
-	stackFile     string
-	provider      string
-	provisioner   string
-	varsFilesDirs cmd.Files
-	profile       string
-	account       string
-	cluster       string
-	region        string
-	manifests     cmd.Files
+	out         io.Writer
+	diffPath    string
+	cacheDir    string
+	dryRun      bool
+	approved    bool
+	oneShot     bool
+	force       bool
+	stackName   string
+	stackFile   string
+	provider    string
+	provisioner string
+	//kappVarsDirs cmd.Files
+	profile string
+	account string
+	cluster string
+	region  string
+	//manifests    cmd.Files
 	// todo - add options to :
 	// * filter the kapps to be processed (use strings like e.g. manifest:kapp-id to refer to kapps)
 	// * exclude manifests / kapps from being processed
@@ -89,8 +88,9 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	f.VarP(&c.varsFilesDirs, "vars-file-or-dir", "f", "YAML vars file or directory to load (can specify multiple)")
-	f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple but will replace any configured in a stack)")
+	// these are commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
+	//f.VarP(&c.kappVarsDirs, "dir", "f", "Paths to YAML directory to load kapp values from (can specify multiple)")
+	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple but will replace any configured in a stack)")
 	return cmd
 }
 
@@ -103,19 +103,19 @@ func (c *installCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	cliManifests, err := kapp.ParseManifests(c.manifests)
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	//cliManifests, err := kapp.ParseManifests(c.manifests)
+	//if err != nil {
+	//	return errors.WithStack(err)
+	//}
 
 	// CLI args override configured args, so merge them in
 	cliStackConfig := &kapp.StackConfig{
-		Provider:         c.provider,
-		Provisioner:      c.provisioner,
-		Profile:          c.profile,
-		Cluster:          c.cluster,
-		ProviderVarsDirs: c.varsFilesDirs,
-		Manifests:        cliManifests,
+		Provider:    c.provider,
+		Provisioner: c.provisioner,
+		Profile:     c.profile,
+		Cluster:     c.cluster,
+		//KappVarsDirs: c.kappVarsDirs,
+		//Manifests:    cliManifests,
 	}
 
 	mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
@@ -125,7 +125,7 @@ func (c *installCmd) run() error {
 	var actionPlan *plan.Plan
 
 	if !c.force {
-		panic("Not implemented. Pass --force")
+		panic("Cluster diffing not implemented. Pass --force")
 
 		if c.diffPath != "" {
 			// todo load a cluster diff from a file

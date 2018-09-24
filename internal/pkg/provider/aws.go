@@ -25,7 +25,7 @@ import (
 
 type AwsProvider struct {
 	stackConfigVars Values
-	region          string // todo - set this to the dir name when parsing variables
+	region          string
 }
 
 const AWS_PROVIDER_NAME = "aws"

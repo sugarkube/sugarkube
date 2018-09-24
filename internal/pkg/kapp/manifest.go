@@ -75,22 +75,24 @@ func ParseManifestFile(path string) (*Manifest, error) {
 }
 
 // Parses manifest files and returns a list of manifests on success
-func ParseManifests(manifestPaths []string) ([]Manifest, error) {
-	log.Debugf("Parsing %d manifest(s)", len(manifestPaths))
-
-	manifests := make([]Manifest, 0)
-
-	for _, manifestPath := range manifestPaths {
-		manifest, err := ParseManifestFile(manifestPath)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		manifests = append(manifests, *manifest)
-	}
-
-	return manifests, nil
-}
+// todo - this largely duplicates code in stack.LoadStackConfig. It needs
+// centralising
+//func ParseManifests(manifestPaths []string) ([]Manifest, error) {
+//	log.Debugf("Parsing %d manifest(s)", len(manifestPaths))
+//
+//	manifests := make([]Manifest, 0)
+//
+//	for _, manifestPath := range manifestPaths {
+//		manifest, err := ParseManifestFile(manifestPath)
+//		if err != nil {
+//			return nil, errors.WithStack(err)
+//		}
+//
+//		manifests = append(manifests, *manifest)
+//	}
+//
+//	return manifests, nil
+//}
 
 // Validates that there aren't multiple kapps with the same ID in the manifest,
 // or it'll break creating a cache

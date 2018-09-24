@@ -44,6 +44,7 @@ type StackConfig struct {
 	Profile          string
 	Cluster          string
 	ProviderVarsDirs []string `yaml:"providerVars"`
+	KappVarsDirs     []string `yaml:"kappVars"`
 	Manifests        []Manifest
 	Status           ClusterStatus
 	OnlineTimeout    uint32
@@ -113,6 +114,8 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 	// acquire and parse them.
 	log.Debug("Parsing manifests")
 
+	// todo - this is duplicated with some changes in manifest.ParseManifests.
+	// They need centralising.
 	for i, manifest := range stack.Manifests {
 		// todo - convert these to be managed by acquirers. The file acquirer
 		// needs to convert relative paths to absolute.
