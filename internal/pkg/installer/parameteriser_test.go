@@ -45,7 +45,7 @@ func TestGetCliArgs(t *testing.T) {
 		expectValues string
 	}{
 		{
-			name: "good_no_pattern",
+			name: "aws",
 			desc: "test that files are found in the correct order",
 			stackConfig: kapp.StackConfig{
 				Provider: "aws",
@@ -57,6 +57,17 @@ func TestGetCliArgs(t *testing.T) {
 			expectValues: "helm-opts=-f {kappDir}/values-aws.yaml " +
 				"-f {kappDir}/values-dev.yaml -f {kappDir}/values-dev1.yaml " +
 				"-f {kappDir}/values-eu-west-1.yaml",
+		},
+		{
+			name: "local",
+			desc: "test that files are found in the correct order",
+			stackConfig: kapp.StackConfig{
+				Provider: "local",
+				Profile:  "dev",
+				Cluster:  "dev1",
+			},
+			expectValues: "helm-opts=-f {kappDir}/values-dev.yaml " +
+				"-f {kappDir}/values-dev1.yaml",
 		},
 	}
 
