@@ -135,61 +135,53 @@ func (p *Parameteriser) GetEnvVars(vars provider.Values) (map[string]string, err
 
 // Returns a list of args that the installer should pass to the kapp. This will
 // need refactoring once parsing the Parameteriser config is implemented.
-func (p *Parameteriser) GetCliArgs(validPatternMatches []string) (string, error) {
-	pattern := ""
+func (p *Parameteriser) GetCliArgs(configSubstrings []string) (string, error) {
+	filenameTemplate := ""
 	argName := ""
 	argKey := ""
 
 	if p.Name == IMPLEMENTS_HELM {
-		pattern = "values-(?P<Var>\\w*).yaml"
+		filenameTemplate = "values-{substring}.yaml"
 		argName = "helm-opts"
 		argKey = "-f"
 	}
 
+	// todo - these could be in a subdirectory, so search recursively (or in
+	// `terraform_<provider>`)
 	if p.Name == IMPLEMENTS_TERRAFORM {
-		pattern = "terraform.*"
+		filenameTemplate = "terraform-{substring}.tfvars"
 		argName = "tf-opts"
 		argKey = "-var-file"
 	}
 
-	if pattern == "" {
+	if filenameTemplate == "" {
 		return "", nil
 	}
 
-	matches, err := findFilesByPattern(p.kappObj.RootDir, pattern,
-		true, true)
-	if err != nil {
-		return "", errors.WithStack(err)
-	}
+	cliValues := []string{}
+	seenPaths := map[string]bool{}
 
-	// use a map for deduping
-	argValues := make(map[string]string, 0)
+	// if the file exists, add it to the list of CLI args
+	for _, substring := range configSubstrings {
+		filename := strings.Replace(filenameTemplate, "{substring}", substring, 1)
+		path := filepath.Join(p.kappObj.RootDir, filename)
 
-	// make sure the matching group in each match is in the valid pattern matches list
-	for _, match := range matches {
-		matchingGroups := getRegExpCapturingGroups(pattern, match)
+		// ignore paths we've already seen
+		if _, ok := seenPaths[path]; ok {
+			continue
+		}
 
-		// don't punish yourself by saying the words "functional programming"...
-		for _, v := range matchingGroups {
-			for _, valid := range validPatternMatches {
-				if v == valid {
-					// todo - this separator string may need to be configurable too
-					argValues[match] = strings.Join([]string{argKey, match}, " ")
-				}
-			}
+		if _, err := os.Stat(path); err == nil {
+			arg := strings.Join([]string{argKey, path}, " ")
+			cliValues = append(cliValues, arg)
+			seenPaths[path] = true
 		}
 	}
 
 	cliArg := ""
 
-	if len(argValues) > 0 {
-		strArgs := make([]string, 0)
-
-		for _, v := range argValues {
-			strArgs = append(strArgs, v)
-		}
-
-		joinedValues := strings.Join(strArgs, " ")
+	if len(cliValues) > 0 {
+		joinedValues := strings.Join(cliValues, " ")
 		cliArg = strings.Join([]string{argName, joinedValues}, "=")
 	}
 	return cliArg, nil

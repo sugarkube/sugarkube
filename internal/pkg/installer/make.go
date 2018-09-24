@@ -103,15 +103,17 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	}
 
 	// get additional CLI args
-	validPatternMatches := []string{
-		stackConfig.Cluster,
-		stackConfig.Profile,
+	configSubstrings := []string{
 		stackConfig.Provider,
+		stackConfig.Account, // may be blank depending on the provider
+		stackConfig.Profile,
+		stackConfig.Cluster,
+		stackConfig.Region, // may be blank depending on the provider
 	}
 
 	cliArgs := []string{makeTarget}
 	for _, parameteriser := range parameterisers {
-		arg, err := parameteriser.GetCliArgs(validPatternMatches)
+		arg, err := parameteriser.GetCliArgs(configSubstrings)
 		if err != nil {
 			return errors.WithStack(err)
 		}
