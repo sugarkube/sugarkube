@@ -167,17 +167,21 @@ func (p *Parameteriser) GetCliArgs(configSubstrings []string) (string, error) {
 	// if the file exists, add it to the list of CLI args
 	for _, substring := range configSubstrings {
 		filename := strings.Replace(filenameTemplate, "{substring}", substring, 1)
-		path := filepath.Join(p.kappObj.RootDir, filename)
 
-		// ignore paths we've already seen
-		if _, ok := seenPaths[path]; ok {
-			continue
-		}
+		// iterate through all kapp sources
+		for _, kappAcquirer := range p.kappObj.Sources {
+			path := filepath.Join(p.kappObj.RootDir, kappAcquirer.Name(), filename)
 
-		if _, err := os.Stat(path); err == nil {
-			arg := strings.Join([]string{argKey, path}, " ")
-			cliValues = append(cliValues, arg)
-			seenPaths[path] = true
+			// ignore paths we've already seen
+			if _, ok := seenPaths[path]; ok {
+				continue
+			}
+
+			if _, err := os.Stat(path); err == nil {
+				arg := strings.Join([]string{argKey, path}, " ")
+				cliValues = append(cliValues, arg)
+				seenPaths[path] = true
+			}
 		}
 	}
 

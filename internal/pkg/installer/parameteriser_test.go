@@ -18,6 +18,7 @@ package installer
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"path"
@@ -31,6 +32,24 @@ func TestGetCliArgs(t *testing.T) {
 
 	absTestDir, err := filepath.Abs(testDir)
 	assert.Nil(t, err)
+
+	kappRootDir := path.Join(absTestDir, "sample-cache", "sample-manifest", "sample-kapp")
+
+	kappObj := &kapp.Kapp{
+		RootDir: kappRootDir,
+		Sources: []acquirer.Acquirer{
+			acquirer.NewGitAcquirer(
+				"sample-chart",
+				"git@github.com:helm/charts.git",
+				"master",
+				"/fake/chart"),
+			acquirer.NewGitAcquirer(
+				"sister-dir",
+				"git@github.com:helm/charts.git",
+				"master",
+				"/fake/sister"),
+		},
+	}
 
 	tfStackConfig := kapp.StackConfig{
 		Provider:         "local",
@@ -52,10 +71,8 @@ func TestGetCliArgs(t *testing.T) {
 			name: "aws",
 			desc: "test that files are found in the correct order",
 			parameteriser: Parameteriser{
-				Name: IMPLEMENTS_HELM,
-				kappObj: &kapp.Kapp{
-					RootDir: path.Join(absTestDir, "sample-chart"),
-				},
+				Name:    IMPLEMENTS_HELM,
+				kappObj: kappObj,
 			},
 			stackConfig: kapp.StackConfig{
 				Provider: "zaws", // prepend a 'z' otherwise results
@@ -72,10 +89,8 @@ func TestGetCliArgs(t *testing.T) {
 			name: "local",
 			desc: "test that files are found in the correct order",
 			parameteriser: Parameteriser{
-				Name: IMPLEMENTS_HELM,
-				kappObj: &kapp.Kapp{
-					RootDir: path.Join(absTestDir, "sample-chart"),
-				},
+				Name:    IMPLEMENTS_HELM,
+				kappObj: kappObj,
 			},
 			stackConfig: kapp.StackConfig{
 				Provider: "local",
@@ -89,10 +104,8 @@ func TestGetCliArgs(t *testing.T) {
 			name: "terraform",
 			desc: "test that terraform files are found in the correct order",
 			parameteriser: Parameteriser{
-				Name: IMPLEMENTS_TERRAFORM,
-				kappObj: &kapp.Kapp{
-					RootDir: path.Join(absTestDir, "sample-chart"),
-				},
+				Name:         IMPLEMENTS_TERRAFORM,
+				kappObj:      kappObj,
 				providerImpl: &tfProviderImpl,
 			},
 			stackConfig: tfStackConfig,
@@ -112,8 +125,11 @@ func TestGetCliArgs(t *testing.T) {
 
 		result, err := test.parameteriser.GetCliArgs(configSubstrings)
 		assert.Nil(t, err)
-		expected := strings.Replace(test.expectValues, "{kappDir}",
-			test.parameteriser.kappObj.RootDir, -1)
+
+		// the dir of the actual chart inside the cache dir
+		chartDir := path.Join(test.parameteriser.kappObj.RootDir, "sample-chart")
+
+		expected := strings.Replace(test.expectValues, "{kappDir}", chartDir, -1)
 		assert.Equal(t, expected, result, "unexpected files returned for %s",
 			test.name)
 	}
