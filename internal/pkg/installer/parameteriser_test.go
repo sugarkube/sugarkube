@@ -42,12 +42,14 @@ func TestGetCliArgs(t *testing.T) {
 				"sample-chart",
 				"git@github.com:helm/charts.git",
 				"master",
-				"/fake/chart"),
+				"/fake/chart",
+				""),
 			acquirer.NewGitAcquirer(
 				"sister-dir",
 				"git@github.com:helm/charts.git",
 				"master",
-				"/fake/sister"),
+				"/fake/sister",
+				"false"),
 		},
 	}
 

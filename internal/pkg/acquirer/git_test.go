@@ -36,7 +36,8 @@ func TestId(t *testing.T) {
 				"",
 				"git@github.com:helm/charts.git",
 				"master",
-				"stable/wordpress"),
+				"stable/wordpress",
+				""),
 			expectValues: "helm-charts-master-wordpress",
 		},
 		{
@@ -46,7 +47,8 @@ func TestId(t *testing.T) {
 				"",
 				"git@github.com:helm/charts.git",
 				"master",
-				"/stable/wordpress/"),
+				"/stable/wordpress/",
+				""),
 			expectValues: "helm-charts-master-wordpress",
 		},
 		{
@@ -56,7 +58,8 @@ func TestId(t *testing.T) {
 				"site1-values",
 				"git@github.com:sugarkube/sugarkube.git",
 				"master",
-				"examples/values/wordpress/site1/"),
+				"examples/values/wordpress/site1/",
+				""),
 			expectValues: "sugarkube-sugarkube-master-site1-values",
 		},
 		{
@@ -66,7 +69,8 @@ func TestId(t *testing.T) {
 				"",
 				"git@github.com:helm:thing/charts.git",
 				"master",
-				"stable/wordpress"),
+				"stable/wordpress",
+				""),
 			expectError: true,
 		},
 	}

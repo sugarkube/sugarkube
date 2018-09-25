@@ -28,10 +28,11 @@ import (
 )
 
 type GitAcquirer struct {
-	name   string
-	uri    string
-	branch string
-	path   string
+	name          string
+	uri           string
+	branch        string
+	path          string
+	includeValues bool
 }
 
 // todo - make configurable
@@ -41,19 +42,29 @@ const NAME = "name"
 const URI = "uri"
 const BRANCH = "branch"
 const PATH = "path"
+const INCLUDE_VALUES = "includeValues"
 
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
-func NewGitAcquirer(name string, uri string, branch string, path string) GitAcquirer {
+func NewGitAcquirer(name string, uri string, branch string, path string,
+	includeValues string) GitAcquirer {
 	if name == "" {
 		name = filepath.Base(path)
 	}
 
+	// defaults to true
+	includeValuesBool := true
+
+	if strings.ToLower(includeValues) == "false" {
+		includeValuesBool = false
+	}
+
 	return GitAcquirer{
-		name:   name,
-		uri:    uri,
-		branch: branch,
-		path:   path,
+		name:          name,
+		uri:           uri,
+		branch:        branch,
+		path:          path,
+		includeValues: includeValuesBool,
 	}
 }
 
@@ -83,6 +94,11 @@ func (a GitAcquirer) Name() string {
 // return the path
 func (a GitAcquirer) Path() string {
 	return a.path
+}
+
+// return whether this source should be searched for values files
+func (a GitAcquirer) IncludeValues() bool {
+	return a.includeValues
 }
 
 // Acquires kapps via git and saves them to `dest`.

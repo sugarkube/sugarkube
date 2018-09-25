@@ -11,3 +11,8 @@ present:
     - uri: git@github.com:sugarkube/kapps.git
       branch: master
       path: incubator/common-makefiles
+      includeValues: false   # Defaults to true. There aren't any helm/terraform values here,
+                             # but if there were this would mean they aren't passed to the
+                             # kapp when it's being installed. This allows you to keep your
+                             # values in a separate repo to the actual kapp if you want (for
+                             # helm/terraform kapps).

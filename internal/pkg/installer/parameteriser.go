@@ -170,6 +170,12 @@ func (p *Parameteriser) GetCliArgs(configSubstrings []string) (string, error) {
 
 		// iterate through all kapp sources
 		for _, kappAcquirer := range p.kappObj.Sources {
+			if !kappAcquirer.IncludeValues() {
+				log.Logger.Debugf("Won't search kapp source '%s' for values files",
+					kappAcquirer.Name())
+				continue
+			}
+
 			path := filepath.Join(p.kappObj.RootDir, kappAcquirer.Name(), filename)
 
 			// ignore paths we've already seen

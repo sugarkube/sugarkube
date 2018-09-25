@@ -42,10 +42,11 @@ var defaultSettings = map[string]string{
 }
 
 var expectedAcquirer = GitAcquirer{
-	name:   "tiller",
-	uri:    "git@github.com:sugarkube/kapps.git",
-	branch: "master",
-	path:   "incubator/tiller/",
+	name:          "tiller",
+	uri:           "git@github.com:sugarkube/kapps.git",
+	branch:        "master",
+	path:          "incubator/tiller/",
+	includeValues: true,
 }
 
 func TestNewGitAcquirerFull(t *testing.T) {

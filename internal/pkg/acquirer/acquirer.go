@@ -28,6 +28,7 @@ type Acquirer interface {
 	Id() (string, error)
 	Name() string
 	Path() string
+	IncludeValues() bool
 }
 
 const ACQUIRER_KEY = "acquirer"
@@ -44,7 +45,7 @@ func acquirerFactory(name string, settings map[string]string) (Acquirer, error) 
 		}
 
 		return NewGitAcquirer(settings[NAME], settings[URI], settings[BRANCH],
-			settings[PATH]), nil
+			settings[PATH], settings[INCLUDE_VALUES]), nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("Acquirer '%s' doesn't exist", name))
