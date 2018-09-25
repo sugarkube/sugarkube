@@ -211,7 +211,8 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 
 		kappObj.RootDir = kappRootDir
 
-		// kapp exists, run the appropriate installer method
+		// kapp exists, run the appropriate installer method (for now, this will
+		// always be a Make installer)
 		installerImpl, err := installer.NewInstaller(installer.MAKE, providerImpl)
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error instantiating installer for "+

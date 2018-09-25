@@ -1,12 +1,17 @@
-# This manifest configures a k8s cluster itself, e.g. by installing tiller.
-# It'd be a good place to put other universal, cluster-wide kapp for pod
-# security policies, etc.
+# This manifest bootstraps a k8s cluster with services that should alwasy be
+# installed, regardless of whether running on a cloud provider or locally. First
+# it installs tiller, then installs cert-manager then nginx ingress. Because
+# kapps must be installed in exactly that order, parallelism is disabled for
+# this manifest.
+#
+# This manifest could be a good place to put other universal, cluster-wide
+# kapps, e.g. for pod security policies, RBAC, etc.
 
 # Kapps listed under this key will be installed if they are not currently
 # installed in the target cluster.
 options:
-  parallelisation: 1       # don't install kapps in this manifest in parallel
-
+  parallelisation: 1      # kapps in this manifest must be installed in order,
+                          # so disable parallelism for this manifest
 present:
   tiller:
     sources:
