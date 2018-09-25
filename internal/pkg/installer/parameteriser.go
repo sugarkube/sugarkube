@@ -17,6 +17,7 @@
 package installer
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
@@ -90,8 +91,9 @@ const IMPLEMENTS_TERRAFORM = "terraform"
 const IMPLEMENTS_K8S = "k8s"
 
 type Parameteriser struct {
-	Name    string
-	kappObj *kapp.Kapp
+	Name         string
+	kappObj      *kapp.Kapp
+	providerImpl *provider.Provider
 }
 
 const KUBE_CONTEXT_KEY = "kube_context"
@@ -146,10 +148,10 @@ func (p *Parameteriser) GetCliArgs(configSubstrings []string) (string, error) {
 		argKey = "-f"
 	}
 
-	// todo - these could be in a subdirectory, so search recursively (or in
-	// `terraform_<provider>`)
 	if p.Name == IMPLEMENTS_TERRAFORM {
-		filenameTemplate = "terraform-{substring}.tfvars"
+		providerName := provider.GetName(*p.providerImpl)
+		terraformDir := fmt.Sprintf("terraform_%s", strings.ToLower(providerName))
+		filenameTemplate = filepath.Join(terraformDir, "{substring}.tfvars")
 		argName = "tf-opts"
 		argKey = "-var-file"
 	}
@@ -189,7 +191,7 @@ func (p *Parameteriser) GetCliArgs(configSubstrings []string) (string, error) {
 
 // Examines a kapp to find out what it contains, and therefore what env vars/
 // CLI args need passing to it by an Installer.
-func identifyKappInterfaces(kappObj *kapp.Kapp) ([]Parameteriser, error) {
+func identifyKappInterfaces(kappObj *kapp.Kapp, providerImpl *provider.Provider) ([]Parameteriser, error) {
 	// todo - parse the above config and test the kapp using it.
 	// todo - also look in the kapp's sugarkube.yaml file if it exists
 
@@ -198,7 +200,10 @@ func identifyKappInterfaces(kappObj *kapp.Kapp) ([]Parameteriser, error) {
 	// todo - remove IMPLEMENTS_K8S from this. It's a temporary kludge until we
 	// can get it from the kapp's sugarkube.yaml file
 	parameterisers = append(parameterisers, Parameteriser{
-		Name: IMPLEMENTS_K8S, kappObj: kappObj})
+		Name:         IMPLEMENTS_K8S,
+		kappObj:      kappObj,
+		providerImpl: providerImpl,
+	})
 
 	// todo - remove this kludge to find out whether the kapp contains a helm chart.
 	chartPaths, err := findFilesByPattern(kappObj.RootDir, "Chart.yaml",
@@ -208,7 +213,10 @@ func identifyKappInterfaces(kappObj *kapp.Kapp) ([]Parameteriser, error) {
 	}
 	if len(chartPaths) > 0 {
 		parameterisers = append(parameterisers, Parameteriser{
-			Name: IMPLEMENTS_HELM, kappObj: kappObj})
+			Name:         IMPLEMENTS_HELM,
+			kappObj:      kappObj,
+			providerImpl: providerImpl,
+		})
 	}
 
 	// todo - remove this kludge to find out whether the kapp contains terraform configs
@@ -219,7 +227,10 @@ func identifyKappInterfaces(kappObj *kapp.Kapp) ([]Parameteriser, error) {
 	}
 	if len(terraformPaths) > 0 {
 		parameterisers = append(parameterisers, Parameteriser{
-			Name: IMPLEMENTS_TERRAFORM, kappObj: kappObj})
+			Name:         IMPLEMENTS_TERRAFORM,
+			kappObj:      kappObj,
+			providerImpl: providerImpl,
+		})
 	}
 
 	return parameterisers, nil

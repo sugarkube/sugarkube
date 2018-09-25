@@ -18,12 +18,10 @@ package kapps
 
 import (
 	"fmt"
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
-	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"io"
 )
@@ -96,19 +94,7 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 
 func (c *installCmd) run() error {
 
-	var err error
-
-	stackConfig, err := cluster.ParseStackCliArgs(c.stackName, c.stackFile)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	//cliManifests, err := kapp.ParseManifests(c.manifests)
-	//if err != nil {
-	//	return errors.WithStack(err)
-	//}
-
-	// CLI args override configured args, so merge them in
+	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &kapp.StackConfig{
 		Provider:    c.provider,
 		Provisioner: c.provisioner,
@@ -120,9 +106,11 @@ func (c *installCmd) run() error {
 		//Manifests:    cliManifests,
 	}
 
-	mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
-
-	log.Logger.Debugf("Final stack config: %#v", stackConfig)
+	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
+		c.stackFile, cliStackConfig)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	var actionPlan *plan.Plan
 
@@ -168,17 +156,17 @@ func (c *installCmd) run() error {
 
 	if !c.oneShot {
 		// run the plan either preparing or applying changes
-		err := actionPlan.Run(c.approved, c.dryRun)
+		err := actionPlan.Run(c.approved, providerImpl, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	} else {
 		// one-shot mode, so prepare and apply the plan straight away
-		err = actionPlan.Run(false, c.dryRun)
+		err = actionPlan.Run(false, providerImpl, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		err = actionPlan.Run(true, c.dryRun)
+		err = actionPlan.Run(true, providerImpl, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

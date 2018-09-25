@@ -18,13 +18,12 @@ package cluster
 
 import (
 	"fmt"
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"io"
 )
@@ -93,17 +92,7 @@ Note: Not all providers require all arguments. See documentation for help.
 
 func (c *updateCmd) run(cmd *cobra.Command, args []string) error {
 
-	stackConfig, err := ParseStackCliArgs(c.stackName, c.stackFile)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	//cliManifests, err := kapp.ParseManifests(c.manifests)
-	//if err != nil {
-	//	return errors.WithStack(err)
-	//}
-
-	// CLI args override configured args, so merge them in
+	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &kapp.StackConfig{
 		Provider:         c.provider,
 		Provisioner:      c.provisioner,
@@ -117,16 +106,8 @@ func (c *updateCmd) run(cmd *cobra.Command, args []string) error {
 		OnlineTimeout: c.onlineTimeout,
 	}
 
-	mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
-
-	log.Logger.Debugf("Final stack config: %#v", stackConfig)
-
-	providerImpl, err := provider.NewProvider(stackConfig)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner)
+	stackConfig, providerImpl, provisionerImpl, err := utils.ProcessCliArgs(c.stackName,
+		c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}

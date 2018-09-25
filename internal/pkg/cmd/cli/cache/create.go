@@ -21,7 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io"
@@ -64,7 +64,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
 	log.Logger.Debugf("Got CLI args: %#v", c)
 
-	stackConfig, err := cluster.ParseStackCliArgs(c.stackName, c.stackFile)
+	stackConfig, err := utils.MaybeLoadStackConfig(c.stackName, c.stackFile)
 	if err != nil {
 		return errors.WithStack(err)
 	}

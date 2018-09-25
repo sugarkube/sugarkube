@@ -93,16 +93,11 @@ func Create(stackConfig *kapp.StackConfig, cacheDir string) (*Plan, error) {
 // Run a plan to make a target cluster have the necessary kapps installed/
 // destroyed to match the input manifests. Each tranche is run sequentially,
 // and each kapp in each tranche is processed in parallel.
-func (p *Plan) Run(approved bool, dryRun bool) error {
+func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) error {
 
 	if p.tranche == nil {
 		log.Logger.Info("No tranches in plan to process")
 		return nil
-	}
-
-	providerImpl, err := provider.NewProvider(p.stackConfig)
-	if err != nil {
-		return errors.WithStack(err)
 	}
 
 	doneCh := make(chan bool)
@@ -172,12 +167,14 @@ func processKapp(kappObj kapp.Kapp, stackConfig *kapp.StackConfig,
 
 	// install the kapp
 	if install {
-		err := installer.Install(installerImpl, &kappObj, stackConfig, approved, dryRun)
+		err := installer.Install(installerImpl, &kappObj, stackConfig, approved,
+			providerImpl, dryRun)
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error installing kapp '%s'", kappObj.Id)
 		}
 	} else { // destroy the kapp
-		err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved, dryRun)
+		err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved,
+			providerImpl, dryRun)
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", kappObj.Id)
 		}

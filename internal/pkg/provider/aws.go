@@ -103,3 +103,8 @@ func (p *AwsProvider) getInstallerVars() Values {
 		"REGION": p.region,
 	}
 }
+
+// Returns the name of this provider
+func (p *AwsProvider) getName() string {
+	return AWS_PROVIDER_NAME
+}

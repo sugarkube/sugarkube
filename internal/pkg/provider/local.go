@@ -29,7 +29,7 @@ type LocalProvider struct {
 	stackConfigVars Values
 }
 
-const PROVIDER_NAME = "local"
+const LOCAL_PROVIDER_NAME = "local"
 const PROFILE_DIR = "profiles"
 const CLUSTER_DIR = "clusters"
 
@@ -63,8 +63,8 @@ func (p *LocalProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 			log.Logger.Debugf("Prepended dir of stack config to relative path. New path %s", path)
 		}
 
-		profileDir := filepath.Join(path, PROVIDER_NAME, PROFILE_DIR, sc.Profile)
-		clusterDir := filepath.Join(path, PROVIDER_NAME, PROFILE_DIR, sc.Profile, CLUSTER_DIR, sc.Cluster)
+		profileDir := filepath.Join(path, LOCAL_PROVIDER_NAME, PROFILE_DIR, sc.Profile)
+		clusterDir := filepath.Join(path, LOCAL_PROVIDER_NAME, PROFILE_DIR, sc.Profile, CLUSTER_DIR, sc.Cluster)
 
 		if err := abortIfNotDir(profileDir,
 			fmt.Sprintf("No profile directory found at %s", profileDir)); err != nil {
@@ -77,10 +77,10 @@ func (p *LocalProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 		}
 
 		paths = append(paths, filepath.Join(path))
-		paths = append(paths, filepath.Join(path, PROVIDER_NAME))
-		paths = append(paths, filepath.Join(path, PROVIDER_NAME, PROFILE_DIR))
+		paths = append(paths, filepath.Join(path, LOCAL_PROVIDER_NAME))
+		paths = append(paths, filepath.Join(path, LOCAL_PROVIDER_NAME, PROFILE_DIR))
 		paths = append(paths, profileDir)
-		paths = append(paths, filepath.Join(path, PROVIDER_NAME, PROFILE_DIR, sc.Profile, CLUSTER_DIR))
+		paths = append(paths, filepath.Join(path, LOCAL_PROVIDER_NAME, PROFILE_DIR, sc.Profile, CLUSTER_DIR))
 		paths = append(paths, clusterDir)
 	}
 
@@ -99,4 +99,9 @@ func abortIfNotDir(path string, errorMessage string) error {
 	}
 
 	return nil
+}
+
+// Returns the name of this provider
+func (p *LocalProvider) getName() string {
+	return LOCAL_PROVIDER_NAME
 }

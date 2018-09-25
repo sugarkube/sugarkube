@@ -39,7 +39,8 @@ const TARGET_DESTROY = "destroy"
 
 // Run the given make target
 func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
-	stackConfig *kapp.StackConfig, approved bool, dryRun bool) error {
+	stackConfig *kapp.StackConfig, approved bool, providerImpl *provider.Provider,
+	dryRun bool) error {
 
 	// search for the Makefile
 	makefilePaths, err := findFilesByPattern(kappObj.RootDir, "Makefile",
@@ -74,19 +75,14 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		"PROVIDER":  stackConfig.Provider,
 	}
 
-	providerImpl, err := provider.NewProvider(stackConfig)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	parameterisers, err := identifyKappInterfaces(kappObj)
+	parameterisers, err := identifyKappInterfaces(kappObj, providerImpl)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// Adds things like `KUBE_CONTEXT`, `NAMESPACE`, `RELEASE`, etc.
 	for _, parameteriser := range parameterisers {
-		pEnvVars, err := parameteriser.GetEnvVars(provider.GetVars(providerImpl))
+		pEnvVars, err := parameteriser.GetEnvVars(provider.GetVars(*providerImpl))
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -144,12 +140,12 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 // Install a kapp
 func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, dryRun bool) error {
-	return i.run(TARGET_INSTALL, kappObj, stackConfig, approved, dryRun)
+	approved bool, providerImpl provider.Provider, dryRun bool) error {
+	return i.run(TARGET_INSTALL, kappObj, stackConfig, approved, &providerImpl, dryRun)
 }
 
 // Destroy a kapp
 func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, dryRun bool) error {
-	return i.run(TARGET_DESTROY, kappObj, stackConfig, approved, dryRun)
+	approved bool, providerImpl provider.Provider, dryRun bool) error {
+	return i.run(TARGET_DESTROY, kappObj, stackConfig, approved, &providerImpl, dryRun)
 }

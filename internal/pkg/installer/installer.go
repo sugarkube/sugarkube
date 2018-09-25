@@ -25,8 +25,10 @@ import (
 )
 
 type Installer interface {
-	install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, approved bool, dryRun bool) error
-	destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, approved bool, dryRun bool) error
+	install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, approved bool,
+		providerImpl provider.Provider, dryRun bool) error
+	destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, approved bool,
+		providerImpl provider.Provider, dryRun bool) error
 }
 
 // implemented installers
@@ -45,14 +47,14 @@ func NewInstaller(name string, providerImpl provider.Provider) (Installer, error
 
 // Installs a kapp by delegating to an Installer implementation
 func Install(i Installer, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, dryRun bool) error {
+	approved bool, providerImpl provider.Provider, dryRun bool) error {
 	log.Logger.Infof("Installing kapp '%s'...", kappObj.Id)
-	return i.install(kappObj, stackConfig, approved, dryRun)
+	return i.install(kappObj, stackConfig, approved, providerImpl, dryRun)
 }
 
 // Destroys a kapp by delegating to an Installer implementation
 func Destroy(i Installer, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, dryRun bool) error {
+	approved bool, providerImpl provider.Provider, dryRun bool) error {
 	log.Logger.Infof("Destroying kapp '%s'...", kappObj.Id)
-	return i.destroy(kappObj, stackConfig, approved, dryRun)
+	return i.destroy(kappObj, stackConfig, approved, providerImpl, dryRun)
 }

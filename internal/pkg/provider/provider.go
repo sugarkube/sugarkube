@@ -31,6 +31,8 @@ const valuesFile = "values.yaml"
 type Values = map[string]interface{}
 
 type Provider interface {
+	// Returns the name of the provider
+	getName() string
 	// Returns the variables loaded by the Provider
 	getVars() Values
 	// Associate provider variables with the provider
@@ -121,4 +123,9 @@ func GetVars(p Provider) Values {
 // Return vars loaded from configs that should be passed on to kapps by Installers
 func GetInstallerVars(p Provider) Values {
 	return p.getInstallerVars()
+}
+
+// Returns the name of the provider
+func GetName(p Provider) string {
+	return p.getName()
 }
