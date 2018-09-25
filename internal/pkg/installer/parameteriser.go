@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"os"
 	"os/user"
@@ -186,6 +187,9 @@ func (p *Parameteriser) GetCliArgs(configSubstrings []string) (string, error) {
 		joinedValues := strings.Join(cliValues, " ")
 		cliArg = strings.Join([]string{argName, joinedValues}, "=")
 	}
+
+	log.Logger.Debugf("Returning CLI arg for kapp %s: %s", p.kappObj.Id, cliArg)
+
 	return cliArg, nil
 }
 
