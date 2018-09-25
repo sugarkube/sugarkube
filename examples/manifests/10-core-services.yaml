@@ -1,18 +1,18 @@
-present:
-  # The default installer for manifests is stored in config so we don't need
-  # to add it to every entry. But we could in future with e.g. `installer: my-installer`
-  ingress:      # this can be anything - it doesn't need to relate to the name of any source
-    sources:
-    - uri: git@github.com:sugarkube/kapps.git
-      branch: master
-      #branch: nginx-ingress-0.1.0
-      path: incubator/nginx-ingress
-      name: ingress-kapp      # defaults to the basename of the given path, but can be explicitly defined
-    - uri: git@github.com:sugarkube/kapps.git
-      branch: master
-      path: incubator/common-makefiles
-      includeValues: false   # Defaults to true. There aren't any helm/terraform values here,
-                             # but if there were this would mean they aren't passed to the
-                             # kapp when it's being installed. This allows you to keep your
-                             # values in a separate repo to the actual kapp if you want (for
-                             # helm/terraform kapps).
+#present:
+#  # The default installer for manifests is stored in config so we don't need
+#  # to add it to every entry. But we could in future with e.g. `installer: my-installer`
+#  ingress:      # this can be anything - it doesn't need to relate to the name of any source
+#    sources:
+#    - uri: git@github.com:sugarkube/kapps.git
+#      branch: master
+#      #branch: nginx-ingress-0.1.0
+#      path: incubator/nginx-ingress
+#      name: ingress-kapp      # defaults to the basename of the given path, but can be explicitly defined
+#    - uri: git@github.com:sugarkube/kapps.git
+#      branch: master
+#      path: incubator/common-makefiles
+#      includeValues: false   # Defaults to true. There aren't any helm/terraform values here,
+#                             # but if there were this would mean they aren't passed to the
+#                             # kapp when it's being installed. This allows you to keep your
+#                             # values in a separate repo to the actual kapp if you want (for
+#                             # helm/terraform kapps).

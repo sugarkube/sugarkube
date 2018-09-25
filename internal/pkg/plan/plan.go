@@ -49,6 +49,17 @@ type Plan struct {
 	cacheDir string
 }
 
+// A job to be run by a worker
+type job struct {
+	kappObj          kapp.Kapp
+	stackConfig      *kapp.StackConfig
+	manifestCacheDir string
+	install          bool
+	providerImpl     provider.Provider
+	approved         bool
+	dryRun           bool
+}
+
 // create a plan containing all kapps in the stackConfig, then filter out the
 // ones that don't need running based on the current state of the target cluster
 // as described by SOTs
@@ -108,15 +119,50 @@ func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) e
 	for i, tranche := range p.tranche {
 		manifestCacheDir := cacher.GetManifestCachePath(p.cacheDir, tranche.manifest)
 
-		for _, installable := range tranche.installables {
-			go processKapp(installable, p.stackConfig, manifestCacheDir, true,
-				providerImpl, doneCh, errCh, approved, dryRun)
+		// todo - set to 1 if parallelism is disabled
+		numWorkers := 1 // len(tranche.installables) + len(tranche.destroyables)
+
+		jobs := make(chan job, 100)
+
+		// create the worker pool
+		for w := 0; w < numWorkers; w++ {
+			go processKapp(jobs, doneCh, errCh)
 		}
 
-		for _, destroyable := range tranche.destroyables {
-			go processKapp(destroyable, p.stackConfig, manifestCacheDir, false,
-				providerImpl, doneCh, errCh, approved, dryRun)
+		for _, kapp := range tranche.installables {
+			install := true
+
+			job := job{
+				approved:         approved,
+				dryRun:           dryRun,
+				install:          install,
+				kappObj:          kapp,
+				manifestCacheDir: manifestCacheDir,
+				providerImpl:     providerImpl,
+				stackConfig:      p.stackConfig,
+			}
+
+			jobs <- job
 		}
+
+		for _, kapp := range tranche.destroyables {
+			install := false
+
+			job := job{
+				approved:         approved,
+				dryRun:           dryRun,
+				install:          install,
+				kappObj:          kapp,
+				manifestCacheDir: manifestCacheDir,
+				providerImpl:     providerImpl,
+				stackConfig:      p.stackConfig,
+			}
+
+			jobs <- job
+		}
+
+		// close the jobs channel so workers don't block waiting for any more
+		close(jobs)
 
 		totalOperations := len(tranche.installables) + len(tranche.destroyables)
 
@@ -140,45 +186,51 @@ func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) e
 }
 
 // Installs or destroys a kapp using the appropriate Installer
-func processKapp(kappObj kapp.Kapp, stackConfig *kapp.StackConfig,
-	manifestCacheDir string, install bool, providerImpl provider.Provider,
-	doneCh chan bool, errCh chan error, approved bool, dryRun bool) {
+func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 
-	kappRootDir := cacher.GetKappRootPath(manifestCacheDir, kappObj)
+	for job := range jobs {
+		kappObj := job.kappObj
+		providerImpl := job.providerImpl
+		stackConfig := job.stackConfig
+		approved := job.approved
+		dryRun := job.dryRun
 
-	log.Logger.Debugf("Processing kapp '%s' in %s", kappObj.Id, kappRootDir)
+		kappRootDir := cacher.GetKappRootPath(job.manifestCacheDir, kappObj)
 
-	_, err := os.Stat(kappRootDir)
-	if err != nil {
-		msg := fmt.Sprintf("Kapp '%s' doesn't exist in the cache at '%s'",
-			kappObj.Id, kappRootDir)
-		log.Logger.Warn(msg)
-		errCh <- errors.Wrap(err, msg)
-	}
+		log.Logger.Debugf("Processing kapp '%s' in %s", kappObj.Id, kappRootDir)
 
-	kappObj.RootDir = kappRootDir
-
-	// kapp exists, run the appropriate installer method
-	installerImpl, err := installer.NewInstaller(installer.MAKE, providerImpl)
-	if err != nil {
-		errCh <- errors.Wrapf(err, "Error instantiating installer for "+
-			"kapp '%s'", kappObj.Id)
-	}
-
-	// install the kapp
-	if install {
-		err := installer.Install(installerImpl, &kappObj, stackConfig, approved,
-			providerImpl, dryRun)
+		_, err := os.Stat(kappRootDir)
 		if err != nil {
-			errCh <- errors.Wrapf(err, "Error installing kapp '%s'", kappObj.Id)
+			msg := fmt.Sprintf("Kapp '%s' doesn't exist in the cache at '%s'",
+				kappObj.Id, kappRootDir)
+			log.Logger.Warn(msg)
+			errCh <- errors.Wrap(err, msg)
 		}
-	} else { // destroy the kapp
-		err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved,
-			providerImpl, dryRun)
-		if err != nil {
-			errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", kappObj.Id)
-		}
-	}
 
-	doneCh <- true
+		kappObj.RootDir = kappRootDir
+
+		// kapp exists, run the appropriate installer method
+		installerImpl, err := installer.NewInstaller(installer.MAKE, providerImpl)
+		if err != nil {
+			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
+				"kapp '%s'", kappObj.Id)
+		}
+
+		// install the kapp
+		if job.install {
+			err := installer.Install(installerImpl, &kappObj, stackConfig, approved,
+				providerImpl, dryRun)
+			if err != nil {
+				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", kappObj.Id)
+			}
+		} else { // destroy the kapp
+			err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved,
+				providerImpl, dryRun)
+			if err != nil {
+				errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", kappObj.Id)
+			}
+		}
+
+		doneCh <- true
+	}
 }
