@@ -142,7 +142,7 @@ func (a GitAcquirer) acquire(dest string) error {
 		return errors.WithStack(err)
 	}
 
-	err = appendToFile(filepath.Join(dest, ".git/info/sparse-checkout"),
+	err = utils.AppendToFile(filepath.Join(dest, ".git/info/sparse-checkout"),
 		fmt.Sprintf("%s/*\n", strings.TrimSuffix(a.path, "/")))
 	if err != nil {
 		return errors.WithStack(err)
@@ -157,23 +157,6 @@ func (a GitAcquirer) acquire(dest string) error {
 
 	// we could optionally verify tags with:
 	// git tag -v a.branch 2>&1 >/dev/null | grep -E '{{ trusted_gpg_keys|join('|') }}'
-
-	return nil
-}
-
-// Appends text to a file
-func appendToFile(filename string, text string) error {
-	// create the file if it doesn't exist
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0744)
-	if err != nil {
-		return errors.Wrapf(err, "Error opening file %s", filename)
-	}
-
-	defer f.Close()
-
-	if _, err = f.WriteString(text); err != nil {
-		return errors.Wrapf(err, "Error writing to file %s", filename)
-	}
 
 	return nil
 }
