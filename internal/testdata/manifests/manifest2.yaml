@@ -1,3 +1,6 @@
+options:
+  parallelisation: 1       # don't install kapps in this manifest in parallel
+
 present:
   kappB:
     sources:

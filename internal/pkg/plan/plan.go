@@ -119,24 +119,26 @@ func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) e
 	for i, tranche := range p.tranche {
 		manifestCacheDir := cacher.GetManifestCachePath(p.cacheDir, tranche.manifest)
 
-		// todo - set to 1 if parallelism is disabled
-		numWorkers := 1 // len(tranche.installables) + len(tranche.destroyables)
+		numWorkers := tranche.manifest.Options.Parallelisation
+		if numWorkers == 0 {
+			numWorkers = uint16(len(tranche.installables) + len(tranche.destroyables))
+		}
 
 		jobs := make(chan job, 100)
 
 		// create the worker pool
-		for w := 0; w < numWorkers; w++ {
+		for w := uint16(0); w < numWorkers; w++ {
 			go processKapp(jobs, doneCh, errCh)
 		}
 
-		for _, kapp := range tranche.installables {
+		for _, trancheKapp := range tranche.installables {
 			install := true
 
 			job := job{
 				approved:         approved,
 				dryRun:           dryRun,
 				install:          install,
-				kappObj:          kapp,
+				kappObj:          trancheKapp,
 				manifestCacheDir: manifestCacheDir,
 				providerImpl:     providerImpl,
 				stackConfig:      p.stackConfig,
@@ -145,14 +147,14 @@ func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) e
 			jobs <- job
 		}
 
-		for _, kapp := range tranche.destroyables {
+		for _, trancheKapp := range tranche.destroyables {
 			install := false
 
 			job := job{
 				approved:         approved,
 				dryRun:           dryRun,
 				install:          install,
-				kappObj:          kapp,
+				kappObj:          trancheKapp,
 				manifestCacheDir: manifestCacheDir,
 				providerImpl:     providerImpl,
 				stackConfig:      p.stackConfig,

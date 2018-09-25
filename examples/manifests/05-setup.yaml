@@ -5,7 +5,7 @@
 # Kapps listed under this key will be installed if they are not currently
 # installed in the target cluster.
 options:
-  parallel: false       # don't install kapps in this manifest in parallel
+  parallelisation: 1       # don't install kapps in this manifest in parallel
 
 present:
   tiller:

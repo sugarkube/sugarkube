@@ -71,7 +71,8 @@ func ValidateStackConfig(sc *StackConfig) error {
 // Loads a stack config from a YAML file and returns it or an error
 func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
-	data, err := vars.LoadYamlFile(path)
+	data := map[string]interface{}{}
+	err := vars.LoadYamlFile(path, &data)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

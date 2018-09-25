@@ -26,31 +26,29 @@ import (
 )
 
 // Loads a YAML file
-func LoadYamlFile(path string) (map[string]interface{}, error) {
+func LoadYamlFile(path string, out interface{}) error {
 	// make sure the file exists
 	absPath, err := filepath.Abs(path)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
 	if _, err := os.Stat(absPath); err != nil {
 		log.Logger.Debugf("YAML file doesn't exist: %s", absPath)
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
 	yamlData, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error reading YAML file %s", path)
+		return errors.Wrapf(err, "Error reading YAML file %s", path)
 	}
 
-	data := map[string]interface{}{}
-
-	err = yaml.Unmarshal(yamlData, data)
+	err = yaml.Unmarshal(yamlData, out)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error loading YAML file %s", path)
+		return errors.Wrapf(err, "Error loading YAML file %s", path)
 	}
 
-	log.Logger.Debugf("YAML file: %#v", data)
+	log.Logger.Debugf("YAML file: %#v", out)
 
-	return data, nil
+	return nil
 }

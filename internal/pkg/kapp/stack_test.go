@@ -84,6 +84,9 @@ func TestLoadStackConfig(t *testing.T) {
 						},
 					},
 				},
+				Options: ManifestOptions{
+					Parallelisation: uint16(1),
+				},
 			},
 		},
 	}

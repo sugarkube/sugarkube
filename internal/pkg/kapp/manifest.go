@@ -25,12 +25,17 @@ import (
 	"strings"
 )
 
+type ManifestOptions struct {
+	Parallelisation uint16
+}
+
 type Manifest struct {
 	// defaults to the file basename, but can be explicitly specified to avoid
 	// clashes. This is also used to namespace entries in the cache.
-	Id    string
-	Uri   string
-	Kapps []Kapp
+	Id      string
+	Uri     string
+	Kapps   []Kapp
+	Options ManifestOptions
 }
 
 func newManifest(uri string) Manifest {
@@ -59,7 +64,8 @@ func SetManifestDefaults(manifest *Manifest) {
 func ParseManifestFile(path string) (*Manifest, error) {
 	log.Logger.Debugf("Parsing manifest: %s", path)
 
-	data, err := vars.LoadYamlFile(path)
+	data := map[string]interface{}{}
+	err := vars.LoadYamlFile(path, &data)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -68,8 +74,15 @@ func ParseManifestFile(path string) (*Manifest, error) {
 
 	kapps, err := parseManifestYaml(data)
 
+	parsedManifest := Manifest{}
+	err = vars.LoadYamlFile(path, &parsedManifest)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	manifest := newManifest(path)
 	manifest.Kapps = kapps
+	manifest.Options = parsedManifest.Options
 
 	return &manifest, nil
 }
