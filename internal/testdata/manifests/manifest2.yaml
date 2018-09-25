@@ -2,6 +2,12 @@ options:
   parallelisation: 1       # don't install kapps in this manifest in parallel
 
 present:
+  kappC:
+    sources:
+    - uri: git@github.com:sugarkube/kapps-C.git
+      branch: kappC-0.3.0
+      path: some/pathC
+
   kappB:
     sources:
     - uri: git@github.com:sugarkube/kapps-B.git

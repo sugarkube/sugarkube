@@ -72,6 +72,18 @@ func TestLoadStackConfig(t *testing.T) {
 				Uri: "../../testdata/manifests/manifest2.yaml",
 				Kapps: []Kapp{
 					{
+						Id:              "kappC",
+						ShouldBePresent: true,
+						Sources: []acquirer.Acquirer{
+							acquirer.NewGitAcquirer(
+								"pathC",
+								"git@github.com:sugarkube/kapps-C.git",
+								"kappC-0.3.0",
+								"some/pathC",
+								""),
+						},
+					},
+					{
 						Id:              "kappB",
 						ShouldBePresent: true,
 						Sources: []acquirer.Acquirer{
