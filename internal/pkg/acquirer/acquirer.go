@@ -50,7 +50,7 @@ func acquirerFactory(name string, settings map[string]string) (Acquirer, error) 
 	return nil, errors.New(fmt.Sprintf("Acquirer '%s' doesn't exist", name))
 }
 
-// Identifies the requirer based on its settings, and returns a new instance of it
+// Identifies the acquirer based on its settings, and returns a new instance of it
 func NewAcquirer(settings map[string]string) (Acquirer, error) {
 	// perhaps the acquirer is explicitly declared in settings
 	acquirer := settings[ACQUIRER_KEY]

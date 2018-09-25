@@ -31,13 +31,14 @@ E.g. so an example `stack.yaml` file that defines the following cluster:
 local-standard:
   provider: local
   provisioner: minikube
-  profile: local
+  profile: local-mini
   cluster: standard
 ```
 Files will be searched for in subdirectories called any of the following at 
 each level:
 * local
 * minikube
+* local-mini
 * standard
 
 These are similar rules to how provisioner values are loaded, so you could also
