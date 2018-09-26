@@ -1,2 +1,3 @@
 globals:
   account: test-account-val
+regionOverride: account-val

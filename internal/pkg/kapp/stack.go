@@ -162,7 +162,7 @@ func (s *StackConfig) Dir() string {
 // This searches a directory tree from a given root path for files whose values
 // should be merged together for a kapp based on the values of the stack config
 // and the kapp itself.
-func (s *StackConfig) FindKappVarsFiles(kappObj *Kapp) ([]string, error) {
+func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 	validNames := []string{
 		s.Name,
 		s.Provider,
@@ -241,4 +241,21 @@ func (s *StackConfig) FindKappVarsFiles(kappObj *Kapp) ([]string, error) {
 		strings.Join(paths, ", "))
 
 	return paths, nil
+}
+
+// Merges YAML files that may contain values for the given kapp
+func (s *StackConfig) GetKappVars(kappObj *Kapp) (map[string]interface{}, error) {
+	dirs, err := s.findKappVarsFiles(kappObj)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	values := map[string]interface{}{}
+
+	err = vars.Merge(&values, dirs...)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return values, nil
 }

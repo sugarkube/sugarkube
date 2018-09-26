@@ -19,6 +19,7 @@ package kapp
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"gopkg.in/yaml.v2"
 	"path/filepath"
 	"testing"
 )
@@ -155,7 +156,7 @@ func TestFindKappVarsFiles(t *testing.T) {
 			"./stacks/",
 		},
 		KappVarsDirs: []string{
-			"./kapp-vars/", // todo - add some files here...
+			"./kapp-vars/",
 		},
 		Manifests: []Manifest{
 			{
@@ -219,8 +220,98 @@ func TestFindKappVarsFiles(t *testing.T) {
 		filepath.Join(absTestDir, "kapp-vars/test-provider/test-provisioner/test-account/test-region1/kappA.yaml"),
 	}
 
-	results, err := stackConfig.FindKappVarsFiles(&stackConfig.Manifests[0].Kapps[0])
+	results, err := stackConfig.findKappVarsFiles(&stackConfig.Manifests[0].Kapps[0])
 	assert.Nil(t, err)
 
 	assert.Equal(t, expected, results)
+}
+
+func TestGetKappVars(t *testing.T) {
+
+	stackConfig := StackConfig{
+		Name:        "large",
+		FilePath:    "../../testdata/stacks.yaml",
+		Provider:    "test-provider",
+		Provisioner: "test-provisioner",
+		Profile:     "test-profile",
+		Cluster:     "test-cluster",
+		Account:     "test-account",
+		Region:      "test-region1",
+		ProviderVarsDirs: []string{
+			"./stacks/",
+		},
+		KappVarsDirs: []string{
+			"./kapp-vars/",
+		},
+		Manifests: []Manifest{
+			{
+				Id:  "manifest1",
+				Uri: "../../testdata/manifests/manifest1.yaml",
+				Kapps: []Kapp{
+					{
+						Id:              "kappA",
+						ShouldBePresent: true,
+						Sources: []acquirer.Acquirer{
+							acquirer.NewGitAcquirer(
+								"pathA",
+								"git@github.com:sugarkube/kapps-A.git",
+								"kappA-0.1.0",
+								"some/pathA",
+								""),
+						},
+					},
+				},
+			},
+			{
+				Id:  "exampleManifest2",
+				Uri: "../../testdata/manifests/manifest2.yaml",
+				Kapps: []Kapp{
+					{
+						Id:              "kappC",
+						ShouldBePresent: true,
+						Sources: []acquirer.Acquirer{
+							acquirer.NewGitAcquirer(
+								"pathC",
+								"git@github.com:sugarkube/kapps-C.git",
+								"kappC-0.3.0",
+								"some/pathC",
+								""),
+						},
+					},
+					{
+						Id:              "kappB",
+						ShouldBePresent: true,
+						Sources: []acquirer.Acquirer{
+							acquirer.NewGitAcquirer(
+								"pathB",
+								"git@github.com:sugarkube/kapps-B.git",
+								"kappB-0.2.0",
+								"some/pathB",
+								""),
+						},
+					},
+				},
+				Options: ManifestOptions{
+					Parallelisation: uint16(1),
+				},
+			},
+		},
+	}
+
+	expected := `globals:
+  account: test-account-val
+kapp: kappA-val
+kappOverride: kappA-val-override
+profile: test-profile-val
+region: test-region1-val
+regionOverride: region-val-override
+`
+
+	results, err := stackConfig.GetKappVars(&stackConfig.Manifests[0].Kapps[0])
+	assert.Nil(t, err)
+
+	yamlResults, err := yaml.Marshal(results)
+	assert.Nil(t, err)
+
+	assert.Equal(t, expected, string(yamlResults[:]))
 }
