@@ -80,10 +80,28 @@ func TestLoadStackConfig(t *testing.T) {
 						ShouldBePresent: true,
 						Sources: []acquirer.Acquirer{
 							acquirer.NewGitAcquirer(
-								"pathC",
+								"special",
 								"git@github.com:sugarkube/kapps-C.git",
 								"kappC-0.3.0",
-								"some/pathC",
+								"kappC/some/special-path",
+								""),
+							acquirer.NewGitAcquirer(
+								"pathZ",
+								"git@github.com:sugarkube/kapps-C.git",
+								"kappZ-0.3.0",
+								"kappC/some/pathZ",
+								""),
+							acquirer.NewGitAcquirer(
+								"pathX",
+								"git@github.com:sugarkube/kapps-C.git",
+								"kappX-0.3.0",
+								"kappC/some/pathX",
+								""),
+							acquirer.NewGitAcquirer(
+								"pathC",
+								"git@github.com:sugarkube/kapps-C.git",
+								"kappY-0.3.0",
+								"kappC/some/pathY",
 								""),
 						},
 					},
@@ -97,6 +115,30 @@ func TestLoadStackConfig(t *testing.T) {
 								"kappB-0.2.0",
 								"some/pathB",
 								""),
+						},
+					},
+					{
+						Id:              "kappD",
+						ShouldBePresent: true,
+						Sources: []acquirer.Acquirer{
+							acquirer.NewGitAcquirer(
+								"pathD",
+								"git@github.com:sugarkube/kapps-D.git",
+								"kappD-0.2.0",
+								"some/pathD",
+								""),
+						},
+					},
+					{
+						Id:              "kappA",
+						ShouldBePresent: true,
+						Sources: []acquirer.Acquirer{
+							acquirer.NewGitAcquirer(
+								"pathA",
+								"git@github.com:sugarkube/kapps-A.git",
+								"kappA-0.2.0",
+								"some/pathA",
+								"false"),
 						},
 					},
 				},

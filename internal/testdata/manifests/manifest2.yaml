@@ -6,10 +6,30 @@ present:
     sources:
     - uri: git@github.com:sugarkube/kapps-C.git
       branch: kappC-0.3.0
-      path: some/pathC
-
+      path: kappC/some/special-path
+      name: special
+    - uri: git@github.com:sugarkube/kapps-C.git
+      branch: kappZ-0.3.0
+      path: kappC/some/pathZ
+    - uri: git@github.com:sugarkube/kapps-C.git
+      branch: kappX-0.3.0
+      path: kappC/some/pathX
+    - uri: git@github.com:sugarkube/kapps-C.git
+      branch: kappY-0.3.0
+      path: kappC/some/pathY
   kappB:
     sources:
     - uri: git@github.com:sugarkube/kapps-B.git
       branch: kappB-0.2.0
       path: some/pathB
+  kappD:
+    sources:
+    - uri: git@github.com:sugarkube/kapps-D.git
+      branch: kappD-0.2.0
+      path: some/pathD
+  kappA:
+    sources:
+    - uri: git@github.com:sugarkube/kapps-A.git
+      branch: kappA-0.2.0
+      path: some/pathA
+      includeValues: false
