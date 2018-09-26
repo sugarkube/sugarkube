@@ -1,5 +1,5 @@
 present:
-  kappA:
+  - id: kappA
     sources:
     - uri: git@github.com:sugarkube/kapps-A.git
       branch: kappA-0.1.0

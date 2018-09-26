@@ -46,14 +46,14 @@ type Kapp struct {
 const PRESENT_KEY = "present"
 const ABSENT_KEY = "absent"
 const SOURCES_KEY = "sources"
+const ID_KEY = "id"
 
 // Parses kapps and adds them to an array
-func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shouldBePresent bool) error {
+func parseKapps(kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bool) error {
 
 	// parse each kapp definition
-	for k, v := range kappDefinitions {
+	for _, v := range kappDefinitions {
 		kapp := Kapp{
-			Id:              k.(string),
 			ShouldBePresent: shouldBePresent,
 		}
 
@@ -61,6 +61,10 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 
 		// parse the list of sources
 		valuesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(v.(map[interface{}]interface{}))
+		log.Logger.Debugf("valuesMap=%#v", valuesMap)
+
+		kapp.Id = valuesMap[ID_KEY].(string)
+
 		if err != nil {
 			return errors.Wrapf(err, "Error converting manifest value to map")
 		}
@@ -113,9 +117,11 @@ func parseKapps(kapps *[]Kapp, kappDefinitions map[interface{}]interface{}, shou
 func parseManifestYaml(data map[string]interface{}) ([]Kapp, error) {
 	kapps := make([]Kapp, 0)
 
+	log.Logger.Debugf("Manifest data to parse: %#v", data)
+
 	presentKapps, ok := data[PRESENT_KEY]
 	if ok {
-		err := parseKapps(&kapps, presentKapps.(map[interface{}]interface{}), true)
+		err := parseKapps(&kapps, presentKapps.([]interface{}), true)
 		if err != nil {
 			return nil, errors.Wrap(err, "Error parsing present kapps")
 		}
@@ -123,7 +129,7 @@ func parseManifestYaml(data map[string]interface{}) ([]Kapp, error) {
 
 	absentKapps, ok := data[ABSENT_KEY]
 	if ok {
-		err := parseKapps(&kapps, absentKapps.(map[interface{}]interface{}), false)
+		err := parseKapps(&kapps, absentKapps.([]interface{}), false)
 		if err != nil {
 			return nil, errors.Wrap(err, "Error parsing absent kapps")
 		}

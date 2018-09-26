@@ -13,7 +13,7 @@ options:
   parallelisation: 1      # kapps in this manifest must be installed in order,
                           # so disable parallelism for this manifest
 present:
-  tiller:
+  - id: tiller
     sources:
     - uri: git@github.com:sugarkube/kapps.git
       branch: master
@@ -28,7 +28,7 @@ present:
 
   # The simplest manifest entry uses defaults for e.g. the helm namespace,
   # chart name, etc. when using `helm` as the installer.
-  cert-manager:       # Globally-unique identifier. For helm this corresponds
+  - id: cert-manager       # Globally-unique identifier. For helm this corresponds
     # to the release name. If that's too restrictive we could
     # generate a globally-unique identifier based on the
     # manifest, but for now we'll keep it simple.
@@ -54,7 +54,7 @@ present:
 
   # The default installer for manifests is stored in config so we don't need
   # to add it to every entry. But we could in future with e.g. `installer: my-installer`
-  ingress:      # this can be anything - it doesn't need to relate to the name of any source
+  - id: ingress      # this can be anything - it doesn't need to relate to the name of any source
     sources:
     - uri: git@github.com:sugarkube/kapps.git
       branch: master

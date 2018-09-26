@@ -5,7 +5,7 @@ present:
   # will also be called `kiam`. The version number will be set to the version
   # extracted from `Charts.yaml` in `charts/stable/kiam/`. No `installer` block
   # is defined so defaults are used.
-  kiam:
+  - id: kiam
     sources:
     - uri: git@github.com:sugarkube/kapps.git
       branch: master

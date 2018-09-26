@@ -7,43 +7,43 @@ present:
   #
   # Unique identifier. The same kapp can be installed multiple times provided
   # this is unique per instance. This will be the release name when using Helm.
-#  wordpress-site1:
-#    installer:              # installer-specific values
-#      target: wordpress     # The target source (defined below) to run the makefile
-#                            # for to install this kapp. Defaults to the
-#                            # identifier (i.e. wordpress-site1)
-#      values:
-#      - site1-values        # A list of sources to search for cluster-specific
-#                            # values files. Defaults to the main source
-#                            # directory (in this case wordpress)
-#      params:               # key values to set as env vars when calling the Makefile
-#        namespace: wordpress-sites    # Explicitly set a parameter used by Helm
-
+  - id: wordpress-site1
+    installer:              # installer-specific values
+      target: wordpress     # The target source (defined below) to run the makefile
+                            # for to install this kapp. Defaults to the
+                            # identifier (i.e. wordpress-site1)
+      values:
+      - site1-values        # A list of sources to search for cluster-specific
+                            # values files. Defaults to the main source
+                            # directory (in this case wordpress)
+      params:               # key values to set as env vars when calling the Makefile
+        namespace: wordpress-sites    # Explicitly set a parameter used by Helm
     # Sources to checkout as siblings in the cache for this kapp. This allows
     # creating a cache entry from e.g. the actual kapp source, a directory of
     # shared makefiles, and/or pulling in `values.yaml` files etc. from a
     # separately versioned source.
-#    sources:
-#    - uri: git@github.com:helm/charts.git
-#      # if this was our repo a good pattern could be to create a signed tag for
-#      # each release called `<chart>-<version>`.
-#      branch: master
-#      # the name of this source defaults to `wordpress` because it's the last
-#      # component of the path. The name can also be set explicitly as
-#      # illustrated below.
-#      path: stable/wordpress/
-#    - uri: git@github.com:sugarkube/sugarkube.git
-#      branch: master
-#      # this lets us reuse the same kapp parameterised differently per instance
-#      path: examples/values/wordpress/site1/
-#      # Name of the source. Defaults to the last component of the path (in this
-#      # case `site1`). Also used as a key.
-#      name: site1-values
-#    - uri: git@github.com:sugarkube/kapps.git
-#      branch: master
-#      path: common-makefiles/
+    sources:
+    - uri: git@github.com:helm/charts.git
+      # if this was our repo a good pattern could be to create a signed tag for
+      # each release called `<chart>-<version>`.
+      branch: master
+      # the name of this source defaults to `wordpress` because it's the last
+      # component of the path. The name can also be set explicitly as
+      # illustrated below.
+      path: stable/wordpress/
+      includeValues: false    # don't search this source for helm/terraform values
+    - uri: git@github.com:sugarkube/sugarkube.git
+      branch: master
+      # this lets us reuse the same kapp parameterised differently per instance
+      path: examples/values/wordpress/site1/
+      # Name of the source. Defaults to the last component of the path (in this
+      # case `site1`). Also used as a key.
+      name: site1-values
+    - uri: git@github.com:sugarkube/kapps.git
+      branch: master
+      path: common-makefiles/
 
-  wordpress:
+  - id: wordpress
     sources:
     - uri: git@github.com:sugarkube/kapps.git
       branch: master

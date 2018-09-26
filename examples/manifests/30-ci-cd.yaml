@@ -1,5 +1,5 @@
 present:
-  jenkins:
+  - id: jenkins
     sources:
     - uri: git@github.com:sugarkube/kapps.git
       branch: master

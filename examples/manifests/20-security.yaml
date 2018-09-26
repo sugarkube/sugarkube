@@ -1,5 +1,5 @@
 present:
-  keycloak:
+  - id: keycloak
     sources:
     - uri: git@github.com:sugarkube/kapps.git
       branch: master

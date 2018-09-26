@@ -37,7 +37,7 @@ func TestParseManifestYaml(t *testing.T) {
 			desc: "check parsing acceptable input works",
 			input: `
 present:
-  example1:
+  - id: example1
     sources:
     - uri: git@github.com:exampleA/repoA.git
       branch: branchA
@@ -47,14 +47,14 @@ present:
       path: example/pathB
       name: sampleNameB
 
-  example2:
+  - id: example2
     sources:
     - uri: git@github.com:exampleA/repoA.git
       branch: branchA
       path: example/pathA
 
 absent:
-  example3:
+  - id: example3
     sources:
     - uri: git@github.com:exampleA/repoA.git
       branch: branchA
