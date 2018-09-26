@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
+	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
@@ -139,7 +140,9 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 
 	mergedVars := map[string]interface{}{}
 
-	err = mergo.Merge(&mergedVars, stackConfigVars, mergo.WithOverride)
+	// convert the map to the appropriate type
+	err = mergo.Merge(&mergedVars, convert.MapStringStringToMapStringInterface(stackConfigVars),
+		mergo.WithOverride)
 	if err != nil {
 		return errors.WithStack(err)
 	}

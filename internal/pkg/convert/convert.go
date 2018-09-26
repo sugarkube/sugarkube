@@ -85,3 +85,13 @@ func MapInterfaceInterfaceToMapStringInterface(input map[interface{}]interface{}
 
 	return output, nil
 }
+
+// Converts a map[string]string to a map[string]interface{}
+func MapStringStringToMapStringInterface(input map[string]string) map[string]interface{} {
+	output := map[string]interface{}{}
+	for k, v := range input {
+		output[k] = v
+	}
+
+	return output
+}
