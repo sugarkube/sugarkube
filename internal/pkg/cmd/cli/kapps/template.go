@@ -121,7 +121,8 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	stackConfigVars := stackConfig.AsMap()
+	stackConfigMap := stackConfig.AsMap()
+	kappMap := kappObj.AsMap()
 	providerVars := provider.GetVars(providerImpl)
 
 	kappVars, err := stackConfig.GetKappVars(kappObj)
@@ -130,7 +131,7 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 	}
 
 	log.Logger.Debugf("Templating file '%s' with stackVars: %#v, "+
-		"kappVars: %#v and provider vars=%#v", inputPath, stackConfigVars, kappVars,
+		"kappVars: %#v and provider vars=%#v", inputPath, stackConfigMap, kappVars,
 		providerVars)
 
 	tempOutputFile, err := ioutil.TempFile("", "templated-")
@@ -141,15 +142,27 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 	mergedVars := map[string]interface{}{}
 
 	// convert the map to the appropriate type
-	err = mergo.Merge(&mergedVars, convert.MapStringStringToMapStringInterface(stackConfigVars),
-		mergo.WithOverride)
+	namespacedStackConfigMap := map[string]interface{}{
+		"stack": convert.MapStringStringToMapStringInterface(stackConfigMap),
+	}
+	err = mergo.Merge(&mergedVars, namespacedStackConfigMap, mergo.WithOverride)
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
 	err = mergo.Merge(&mergedVars, providerVars, mergo.WithOverride)
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	namespacedKappMap := map[string]interface{}{
+		"kapp": convert.MapStringStringToMapStringInterface(kappMap),
+	}
+	err = mergo.Merge(&mergedVars, namespacedKappMap, mergo.WithOverride)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	err = mergo.Merge(&mergedVars, kappVars, mergo.WithOverride)
 	if err != nil {
 		return errors.WithStack(err)

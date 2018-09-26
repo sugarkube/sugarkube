@@ -17,6 +17,7 @@
 package kapp
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
@@ -47,6 +48,14 @@ const PRESENT_KEY = "present"
 const ABSENT_KEY = "absent"
 const SOURCES_KEY = "sources"
 const ID_KEY = "id"
+
+func (k *Kapp) AsMap() map[string]string {
+	return map[string]string{
+		"id":              k.Id,
+		"shouldBePresent": fmt.Sprintf("%#v", k.ShouldBePresent),
+		"rootDir":         k.RootDir,
+	}
+}
 
 // Parses kapps and adds them to an array
 func parseKapps(kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bool) error {
