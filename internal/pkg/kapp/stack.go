@@ -260,3 +260,17 @@ func (s *StackConfig) GetKappVars(kappObj *Kapp) (map[string]interface{}, error)
 
 	return values, nil
 }
+
+// Returns most fields of the stack config struct as a map
+func (s *StackConfig) AsMap() map[string]interface{} {
+	return map[string]interface{}{
+		"name":        s.Name,
+		"filePath":    s.FilePath,
+		"provider":    s.Provider,
+		"provisioner": s.Provisioner,
+		"account":     s.Account,
+		"region":      s.Region,
+		"profile":     s.Profile,
+		"cluster":     s.Cluster,
+	}
+}

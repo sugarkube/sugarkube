@@ -18,6 +18,7 @@ package kapps
 
 import (
 	"fmt"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
@@ -119,6 +120,7 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	stackConfigVars := stackConfig.AsMap()
 	providerVars := provider.GetVars(providerImpl)
 
 	kappVars, err := stackConfig.GetKappVars(kappObj)
@@ -126,17 +128,31 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Templating file '%s' with kappVars: %#v and "+
-		"provider vars=%#v", inputPath, kappVars, providerVars)
+	log.Logger.Debugf("Templating file '%s' with stackVars: %#v, "+
+		"kappVars: %#v and provider vars=%#v", inputPath, stackConfigVars, kappVars,
+		providerVars)
 
 	tempOutputFile, err := ioutil.TempFile("", "templated-")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	//mergo.Merge(providerVars, kappVars, mergo.WithOverride)
+	mergedVars := map[string]interface{}{}
 
-	templater.TemplateFile(inputPath, tempOutputFile.Name(), kappVars, true)
+	err = mergo.Merge(&mergedVars, stackConfigVars, mergo.WithOverride)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	err = mergo.Merge(&mergedVars, providerVars, mergo.WithOverride)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	err = mergo.Merge(&mergedVars, kappVars, mergo.WithOverride)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	templater.TemplateFile(inputPath, tempOutputFile.Name(), mergedVars, true)
 
 	return nil
 }
