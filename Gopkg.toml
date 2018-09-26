@@ -41,6 +41,10 @@
   version = "v0.8.0"
 
 [[constraint]]
+  name = "github.com/Masterminds/sprig"
+  version = "v2.16.0"
+
+[[constraint]]
   name = "gopkg.in/yaml.v2"
   version = "v2.2.1"
 

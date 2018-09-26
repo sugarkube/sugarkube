@@ -17,17 +17,22 @@
 package templater
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 )
 
-func TestRender(t *testing.T) {
-	tests := []struct {
-		name     string
-		template string
-		vars     map[string]interface{}
-		expected string
-	}{
+type TemplateTest struct {
+	name     string
+	template string
+	vars     map[string]interface{}
+	expected string
+}
+
+func getFixture() []TemplateTest {
+	return []TemplateTest{
 		{
 			name:     "no-vars",
 			template: `{{ "hello!" | upper | repeat 5 }}`,
@@ -53,11 +58,44 @@ func TestRender(t *testing.T) {
 			},
 		},
 	}
+}
+
+func TestRenderTemplate(t *testing.T) {
+	tests := getFixture()
 
 	for _, test := range tests {
-		result, err := Render(test.template, test.vars)
+		result, err := renderTemplate(test.template, test.vars)
 		assert.Nil(t, err)
 		assert.Equal(t, test.expected, result,
+			"Template rendering failed for %s", test.name)
+	}
+}
+
+func TestTemplateFile(t *testing.T) {
+	tests := getFixture()
+
+	inputTempDir, err := ioutil.TempDir("", "inputTpls-")
+	assert.Nil(t, err)
+
+	outputTempDir, err := ioutil.TempDir("", "outputTpls-")
+	assert.Nil(t, err)
+
+	for i, test := range tests {
+		inputTemplatePath := filepath.Join(inputTempDir,
+			fmt.Sprintf("test-%d.tpl", i))
+		outputTemplatePath := filepath.Join(outputTempDir,
+			fmt.Sprintf("test-%d.txt", i))
+
+		err = ioutil.WriteFile(inputTemplatePath, []byte(test.template), 0644)
+		assert.Nil(t, err)
+
+		err := TemplateFile(inputTemplatePath, outputTemplatePath, test.vars, false)
+		assert.Nil(t, err)
+
+		result, err := ioutil.ReadFile(outputTemplatePath)
+		assert.Nil(t, err)
+
+		assert.Equal(t, test.expected, string(result[:]),
 			"Template rendering failed for %s", test.name)
 	}
 }
