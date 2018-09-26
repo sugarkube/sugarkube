@@ -19,6 +19,7 @@ package kapp
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
@@ -222,7 +223,7 @@ func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 
 				nakedBasename := strings.Replace(basename, ext, "", 1)
 
-				if basename == "values.yaml" || utils.InStringArray(validNames, nakedBasename) {
+				if basename == constants.VALUES_FILE || utils.InStringArray(validNames, nakedBasename) {
 					log.Logger.Debugf("Adding kapp var file: %s", path)
 					// prepend the value to the array to maintain ordering
 					paths = append([]string{path}, paths...)

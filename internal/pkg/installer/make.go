@@ -31,7 +31,7 @@ import (
 // Installs kapps with make
 type MakeInstaller struct {
 	provider        provider.Provider
-	stackConfigVars provider.Values
+	stackConfigVars map[string]interface{}
 }
 
 const TARGET_INSTALL = "install"

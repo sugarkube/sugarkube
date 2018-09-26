@@ -26,7 +26,7 @@ import (
 )
 
 type LocalProvider struct {
-	stackConfigVars Values
+	stackConfigVars map[string]interface{}
 }
 
 const LOCAL_PROVIDER_NAME = "local"
@@ -34,19 +34,19 @@ const PROFILE_DIR = "profiles"
 const CLUSTER_DIR = "clusters"
 
 // Associate provider variables with the provider
-func (p *LocalProvider) setVars(values Values) {
+func (p *LocalProvider) setVars(values map[string]interface{}) {
 	p.stackConfigVars = values
 }
 
 // Returns the variables loaded by the Provider
-func (p *LocalProvider) getVars() Values {
+func (p *LocalProvider) getVars() map[string]interface{} {
 	return p.stackConfigVars
 }
 
 // Return vars loaded from configs that should be passed on to all kapps by
 // installers so kapps can be installed into this provider
-func (p *LocalProvider) getInstallerVars() Values {
-	return Values{}
+func (p *LocalProvider) getInstallerVars() map[string]interface{} {
+	return map[string]interface{}{}
 }
 
 // Returns directories to look for values files in specific to this provider

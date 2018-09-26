@@ -26,7 +26,7 @@ func TestStackConfigVars(t *testing.T) {
 	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
 	assert.Nil(t, err)
 
-	expected := Values{
+	expected := map[string]interface{}{
 		"provisioner": map[interface{}]interface{}{
 			"memory":    4096,
 			"cpus":      4,

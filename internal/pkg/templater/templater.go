@@ -61,6 +61,8 @@ func TemplateFile(src string, dest string, vars map[string]interface{},
 		return errors.Wrapf(err, "Error reading source template file %s", src)
 	}
 
+	log.Logger.Debugf("Rendering template in '%s' with vars: %#v", src, vars)
+
 	rendered, err := renderTemplate(string(srcTemplate[:]), vars)
 	if err != nil {
 		return errors.WithStack(err)

@@ -24,7 +24,7 @@ import (
 )
 
 type AwsProvider struct {
-	stackConfigVars Values
+	stackConfigVars map[string]interface{}
 	region          string
 }
 
@@ -87,19 +87,19 @@ func (p *AwsProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 }
 
 // Associate provider variables with the provider
-func (p *AwsProvider) setVars(values Values) {
+func (p *AwsProvider) setVars(values map[string]interface{}) {
 	p.stackConfigVars = values
 }
 
 // Returns the variables loaded by the Provider
-func (p *AwsProvider) getVars() Values {
+func (p *AwsProvider) getVars() map[string]interface{} {
 	return p.stackConfigVars
 }
 
 // Return vars loaded from configs that should be passed on to all kapps by
 // installers so kapps can be installed into this provider
-func (p *AwsProvider) getInstallerVars() Values {
-	return Values{
+func (p *AwsProvider) getInstallerVars() map[string]interface{} {
+	return map[string]interface{}{
 		"REGION": p.region,
 	}
 }

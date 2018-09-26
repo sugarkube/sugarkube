@@ -19,6 +19,7 @@ package provider
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
@@ -26,19 +27,15 @@ import (
 	"path/filepath"
 )
 
-const valuesFile = "values.yaml"
-
-type Values = map[string]interface{}
-
 type Provider interface {
 	// Returns the name of the provider
 	getName() string
 	// Returns the variables loaded by the Provider
-	getVars() Values
+	getVars() map[string]interface{}
 	// Associate provider variables with the provider
-	setVars(Values)
+	setVars(map[string]interface{})
 	// Returns variables installers should pass on to kapps
-	getInstallerVars() Values
+	getInstallerVars() map[string]interface{}
 	// Method that returns all paths in a config directory relevant to the
 	// target profile/cluster/region, etc. that should be searched for values
 	// files to merge.
@@ -89,8 +86,8 @@ func NewProvider(stackConfig *kapp.StackConfig) (Provider, error) {
 
 // Searches for values.yaml files in configured directories and returns the
 // result of merging them.
-func stackConfigVars(p Provider, sc *kapp.StackConfig) (Values, error) {
-	stackConfigVars := Values{}
+func stackConfigVars(p Provider, sc *kapp.StackConfig) (map[string]interface{}, error) {
+	stackConfigVars := map[string]interface{}{}
 
 	varsDirs, err := p.varsDirs(sc)
 	if err != nil {
@@ -98,7 +95,7 @@ func stackConfigVars(p Provider, sc *kapp.StackConfig) (Values, error) {
 	}
 
 	for _, varFile := range varsDirs {
-		valuePath := filepath.Join(varFile, valuesFile)
+		valuePath := filepath.Join(varFile, constants.VALUES_FILE)
 
 		_, err := os.Stat(valuePath)
 		if err != nil {
@@ -116,12 +113,12 @@ func stackConfigVars(p Provider, sc *kapp.StackConfig) (Values, error) {
 }
 
 // Return vars loaded from configs
-func GetVars(p Provider) Values {
+func GetVars(p Provider) map[string]interface{} {
 	return p.getVars()
 }
 
 // Return vars loaded from configs that should be passed on to kapps by Installers
-func GetInstallerVars(p Provider) Values {
+func GetInstallerVars(p Provider) map[string]interface{} {
 	return p.getInstallerVars()
 }
 

@@ -100,7 +100,7 @@ type Parameteriser struct {
 const KUBE_CONTEXT_KEY = "kube_context"
 
 // Return a map of env vars that should be passed to the kapp by the installer
-func (p *Parameteriser) GetEnvVars(vars provider.Values) (map[string]string, error) {
+func (p *Parameteriser) GetEnvVars(vars map[string]interface{}) (map[string]string, error) {
 	envVars := make(map[string]string)
 
 	if p.Name == IMPLEMENTS_HELM {

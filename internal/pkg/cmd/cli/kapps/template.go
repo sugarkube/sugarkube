@@ -24,7 +24,9 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"io"
+	"io/ioutil"
 	"os"
 )
 
@@ -126,6 +128,15 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 
 	log.Logger.Debugf("Templating file '%s' with kappVars: %#v and "+
 		"provider vars=%#v", inputPath, kappVars, providerVars)
+
+	tempOutputFile, err := ioutil.TempFile("", "templated-")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	//mergo.Merge(providerVars, kappVars, mergo.WithOverride)
+
+	templater.TemplateFile(inputPath, tempOutputFile.Name(), kappVars, true)
 
 	return nil
 }
