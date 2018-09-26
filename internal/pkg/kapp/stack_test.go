@@ -98,7 +98,7 @@ func TestLoadStackConfig(t *testing.T) {
 								"kappC/some/pathX",
 								""),
 							acquirer.NewGitAcquirer(
-								"pathC",
+								"pathY",
 								"git@github.com:sugarkube/kapps-C.git",
 								"kappY-0.3.0",
 								"kappC/some/pathY",
