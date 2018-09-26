@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Hold information about the status of the cluster
@@ -155,4 +157,88 @@ func (s *StackConfig) Dir() string {
 
 		return executable
 	}
+}
+
+// This searches a directory tree from a given root path for files whose values
+// should be merged together for a kapp based on the values of the stack config
+// and the kapp itself.
+func (s *StackConfig) FindKappVarsFiles(kappObj *Kapp) ([]string, error) {
+	validNames := []string{
+		s.Name,
+		s.Provider,
+		s.Provisioner,
+		s.Account,
+		s.Region,
+		s.Profile,
+		s.Cluster,
+		kappObj.Id,
+	}
+
+	for _, acquirerObj := range kappObj.Sources {
+		validNames = append(validNames, acquirerObj.Name())
+
+		id, err := acquirerObj.Id()
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		validNames = append(validNames, id)
+	}
+
+	paths := make([]string, 0)
+
+	for _, searchDir := range s.KappVarsDirs {
+		searchPath, err := filepath.Abs(filepath.Join(s.Dir(), searchDir))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		log.Logger.Debugf("Searching for files/dirs under '%s' with basenames: %s",
+			searchPath, strings.Join(validNames, ", "))
+
+		err = filepath.Walk(searchPath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			log.Logger.Debugf("Visiting: %s", path)
+
+			if info.IsDir() {
+				if utils.InStringArray(validNames, info.Name()) || info.Name() == filepath.Base(searchPath) {
+					log.Logger.Debugf("Will search kapp var path: %s", path)
+					return nil
+				} else {
+					log.Logger.Debugf("Skipping kapp var dir: %s", path)
+					return filepath.SkipDir
+				}
+			} else {
+				basename := filepath.Base(path)
+				ext := filepath.Ext(basename)
+
+				if strings.ToLower(ext) != ".yaml" {
+					log.Logger.Debugf("Ignoring non-yaml file: %s", path)
+					return nil
+				}
+
+				nakedBasename := strings.Replace(basename, ext, "", 1)
+
+				if basename == "values.yaml" || utils.InStringArray(validNames, nakedBasename) {
+					log.Logger.Debugf("Adding kapp var file: %s", path)
+					// prepend the value to the array to maintain ordering
+					paths = append([]string{path}, paths...)
+				}
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	log.Logger.Debugf("Kapp var paths for kapp '%s' are: %s", kappObj.Id,
+		strings.Join(paths, ", "))
+
+	return paths, nil
 }
