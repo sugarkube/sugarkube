@@ -33,12 +33,17 @@ func TestFindKappVarsFiles(t *testing.T) {
 	stackConfig := StackConfig{
 		Name:        "large",
 		FilePath:    "../../testdata/stacks.yaml",
-		Provider:    "local",
-		Provisioner: "minikube",
-		Profile:     "local",
-		Cluster:     "large",
+		Provider:    "test-provider",
+		Provisioner: "test-provisioner",
+		Profile:     "test-profile",
+		Cluster:     "test-cluster",
+		Account:     "test-account",
+		Region:      "test-region1",
 		ProviderVarsDirs: []string{
 			"./stacks/",
+		},
+		KappVarsDirs: []string{
+			"./kapp-vars/", // todo - add some files here...
 		},
 		Manifests: []Manifest{
 			{
@@ -95,7 +100,15 @@ func TestFindKappVarsFiles(t *testing.T) {
 		},
 	}
 
-	FindKappVarsFiles(absTestDir, &stackConfig, &stackConfig.Manifests[0].Kapps[0])
-	assert.Equal(t, true, false)
-	//assert.Equal(t, test.expected, test.input.Id)
+	expected := []string{
+		filepath.Join(absTestDir, "kapp-vars/test-provider/test-provisioner/test-profile.yaml"),
+		filepath.Join(absTestDir, "kapp-vars/test-provider/test-provisioner/test-account/values.yaml"),
+		filepath.Join(absTestDir, "kapp-vars/test-provider/test-provisioner/test-account/test-region1/values.yaml"),
+		filepath.Join(absTestDir, "kapp-vars/test-provider/test-provisioner/test-account/test-region1/kappA.yaml"),
+	}
+
+	results, err := FindKappVarsFiles(&stackConfig, &stackConfig.Manifests[0].Kapps[0])
+	assert.Nil(t, err)
+
+	assert.Equal(t, expected, results)
 }

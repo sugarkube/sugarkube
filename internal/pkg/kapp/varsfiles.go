@@ -28,7 +28,7 @@ import (
 // This searches a directory tree from a given root path for files whose values
 // should be merged together for a kapp based on the values of the stack config
 // and the kapp itself.
-func FindKappVarsFiles(rootPath string, stackConfig *StackConfig, kappObj *Kapp) ([]string, error) {
+func FindKappVarsFiles(stackConfig *StackConfig, kappObj *Kapp) ([]string, error) {
 	validNames := []string{
 		stackConfig.Name,
 		stackConfig.Provider,
@@ -51,45 +51,56 @@ func FindKappVarsFiles(rootPath string, stackConfig *StackConfig, kappObj *Kapp)
 		validNames = append(validNames, id)
 	}
 
-	log.Logger.Debugf("Searching for files/dirs under '%s' with basenames: %s",
-		rootPath, strings.Join(validNames, ", "))
-
 	paths := make([]string, 0)
 
-	err := filepath.Walk(rootPath, func(path string, info os.FileInfo, err error) error {
+	for _, searchDir := range stackConfig.KappVarsDirs {
+		searchPath, err := filepath.Abs(filepath.Join(stackConfig.Dir(), searchDir))
 		if err != nil {
-			return errors.WithStack(err)
+			return nil, errors.WithStack(err)
 		}
 
-		log.Logger.Debugf("Visiting: %s", info.Name())
+		log.Logger.Debugf("Searching for files/dirs under '%s' with basenames: %s",
+			searchPath, strings.Join(validNames, ", "))
 
-		if info.IsDir() {
-			if utils.InStringArray(validNames, info.Name()) {
-				log.Logger.Debugf("Adding kapp var path: %s", info.Name())
-				paths = append(paths, info.Name())
+		err = filepath.Walk(searchPath, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			log.Logger.Debugf("Visiting: %s", path)
+
+			if info.IsDir() {
+				if utils.InStringArray(validNames, info.Name()) || info.Name() == filepath.Base(searchPath) {
+					log.Logger.Debugf("Will search kapp var path: %s", path)
+					return nil
+				} else {
+					log.Logger.Debugf("Skipping kapp var dir: %s", path)
+					return filepath.SkipDir
+				}
 			} else {
-				log.Logger.Debugf("Skipping kapp var dir: %s", info.Name())
-				return filepath.SkipDir
-			}
-		} else {
-			basename := filepath.Base(info.Name())
-			ext := filepath.Ext(basename)
+				basename := filepath.Base(path)
+				ext := filepath.Ext(basename)
 
-			if strings.ToLower(ext) != "yaml" {
-				return filepath.SkipDir
+				if strings.ToLower(ext) != ".yaml" {
+					log.Logger.Debugf("Ignoring non-yaml file: %s", path)
+					return nil
+				}
+
+				nakedBasename := strings.Replace(basename, ext, "", 1)
+
+				if basename == "values.yaml" || utils.InStringArray(validNames, nakedBasename) {
+					log.Logger.Debugf("Adding kapp var file: %s", path)
+					// prepend the value to the array to maintain ordering
+					paths = append([]string{path}, paths...)
+				}
 			}
 
-			if basename == "values.yaml" || utils.InStringArray(validNames, basename) {
-				log.Logger.Debugf("Adding kapp var file: %s", basename)
-				paths = append(paths, basename)
-			}
+			return nil
+		})
+
+		if err != nil {
+			return nil, errors.WithStack(err)
 		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, errors.WithStack(err)
 	}
 
 	log.Logger.Debugf("Kapp var paths for kapp '%s' are: %s", kappObj.Id,

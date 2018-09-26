@@ -8,21 +8,31 @@ multiple times parameterised differently, so you could install it once at
 `jenkins.client1.com` and once at `jenkins.client2.com`. 
 
 ## Directory structure
-The files in this directory are hierarchically merged and passed through to kapps
-during installation. Sugarkube will look for directories related to the target 
-cluster, and will merge variables following the following rules:
+The YAML files in this directory are hierarchically merged and the resulting 
+dictionary/map can be used to template files for kapps. Sugarkube will merge 
+files hierarchically (that is, from the root to leaves, with files closer to 
+leaves overriding values higher up) by searching for directories with any 
+of the following names (with values coming from the configured stack): 
 
-* If there's only a subdirectory. merge values
-* If there are multiple subdirectories, look for any called any of the 
-  following (in this order) as defined in the stack:
   * provider
   * provisioner
+  * account (if relevant to the provider)
+  * region (if relevant to the provider)
   * profile
   * cluster
   * installer (default `make`)
   * manifest
   * `<KAPP_ID>.yaml`      
-  
+
+Note that the above will be searched for in every subdirectory. However, 
+subdirectories that don't match any of the above will be ignored and won't be 
+searched further. So unlike with providers where there's a defined hierarchy, 
+variable file directories are more free-form. This means if you could define 
+some rather strange directory structures which may not behave as expected. 
+However, it gives more flexibility because it means variables files aren't tied 
+to a particular provider. If you want to do that, put your variables into the 
+providers directory tree.
+
 In the above, `KAPP_ID` could be `wordpress-site1.yaml` for example if there 
 are multiple Wordpress instances.
 
@@ -47,10 +57,8 @@ separate makes your provisioner directories more reusable since they're less
 tightly coupled to each project you work on. 
 
 ## Usage in kapps
-Kapps receive each value as environment variables, prefixed by the basename  
-of the file containing the variable. The exception is the file `values.yaml`
-which are passed without any prefix. All variable names are upper-cased and have
-hyphens converted to underscores.
+Kapps can declare how to receive variables. They can either be used to template
+files, or can be passed as environment variables.
 
 Here's an example that illustrates the variable merging logic for a kapp with
 an ID of `wordpress`:
@@ -72,6 +80,6 @@ and `local/standard/wordpress.yaml` contains:
 ```
 hosted-zone: example.com
 ```
-Then the `wordpress` kapp will be passed `WORDPRESS_HOSTED_ZONE=example.com` 
-when being installed into the `standard` cluster. It's up to the kapp's 
-`Makefile` to use this value e.g. as a parameter to Terraform or Helm.
+Then if the `wordpress` kapp used the variable `hosted-zone` it would have the 
+values `example.com`. It could use this value to template a file, or opt to
+have it passed as an environment variable under an arbitrary key. 
