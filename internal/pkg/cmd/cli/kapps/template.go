@@ -29,11 +29,15 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
 type templateConfig struct {
 	out         io.Writer
+	dryRun      bool
 	cacheDir    string
 	stackName   string
 	stackFile   string
@@ -64,6 +68,7 @@ configured for the region the target cluster is in, generating Helm
 	}
 
 	f := cmd.Flags()
+	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
 	f.StringVarP(&c.provider, "provider", "p", "", "name of provider, e.g. aws, local, etc.")
@@ -131,6 +136,13 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	candidateKappIds := []string{}
+	for k, _ := range candidateKapps {
+		candidateKappIds = append(candidateKappIds, k)
+	}
+
+	log.Logger.Debugf("Templating candidate kapps: %s", strings.Join(candidateKappIds, ", "))
+
 	stackConfigMap := stackConfig.AsMap()
 	// convert the map to the appropriate type
 	namespacedStackConfigMap := map[string]interface{}{
@@ -140,7 +152,8 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 	providerVars := provider.GetVars(providerImpl)
 
 	for _, kappObj := range candidateKapps {
-		err = templateKapp(&kappObj, stackConfig, namespacedStackConfigMap, providerVars)
+		err = templateKapp(&kappObj, stackConfig, namespacedStackConfigMap,
+			providerVars, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -181,7 +194,8 @@ func getKappsByFullyQualifiedId(kapps []string, stackConfig *kapp.StackConfig) (
 }
 
 func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	stackConfigMap map[string]interface{}, providerVarsMap map[string]interface{}) error {
+	stackConfigMap map[string]interface{}, providerVarsMap map[string]interface{},
+	dryRun bool) error {
 
 	mergedVars := map[string]interface{}{}
 	err := mergo.Merge(&mergedVars, stackConfigMap, mergo.WithOverride)
@@ -213,27 +227,47 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 		return errors.WithStack(err)
 	}
 
-	// todo - pull from the kapp itself
-	inputPath := "dummy-input"
+	for _, templateDefinition := range kappObj.Templates {
+		templateSource := templateDefinition.Source
+		if !filepath.IsAbs(templateSource) {
+			templateSource = filepath.Join(stackConfig.Dir(), templateSource)
+		}
 
-	log.Logger.Debugf("Templating file '%s' with vars: %#v", inputPath, mergedVars)
+		log.Logger.Debugf("Templating file '%s' with vars: %#v", templateSource, mergedVars)
 
-	// if the dest path exists, only continue if we're allowed to overwrite it
-	//if _, err := os.Stat(dest); err == nil && !overwrite {
-	//	return errors.Wrapf(err, "Template destination path '%s' already "+
-	//		"exists, and overwrite=false", dest)
-	//}
+		destPath := templateDefinition.Dest
+		if !filepath.IsAbs(destPath) {
+			destPath = filepath.Join(kappObj.RootDir, destPath)
+		}
 
-	//tempOutputFile, err := ioutil.TempFile("", "templated-")
-	//if err != nil {
-	//	return errors.WithStack(err)
-	//}
+		// check whether the dest path exists
+		if _, err := os.Stat(destPath); err == nil {
+			log.Logger.Infof("Rendering template '%s' for kapp '%s'. "+
+				"Destination path '%s' already exists. File will be overwritten.",
+				templateSource, kappObj.Id, destPath)
+		} else {
+			log.Logger.Infof("Rendering template '%s' for kapp '%s' to %s ",
+				templateSource, kappObj.Id, destPath)
+		}
 
-	var outBuf bytes.Buffer
+		var outBuf bytes.Buffer
 
-	err = templater.TemplateFile(inputPath, &outBuf, mergedVars)
-	if err != nil {
-		return errors.WithStack(err)
+		err = templater.TemplateFile(templateSource, &outBuf, mergedVars)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		if dryRun {
+			log.Logger.Infof("Dry run. Template '%s' for kapp '%s' "+
+				"rendered as:\n%s", templateSource, kappObj.Id, outBuf.String())
+		} else {
+			log.Logger.Debugf("Writing rendered template '%s' for kapp "+
+				"'%s' to '%s'", templateSource, kappObj.Id, destPath)
+			err := ioutil.WriteFile(destPath, outBuf.Bytes(), 0644)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
 	}
 
 	return nil

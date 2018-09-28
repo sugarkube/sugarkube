@@ -31,6 +31,11 @@ type installerConfig struct {
 	params       map[string]string
 }
 
+type Template struct {
+	Source string
+	Dest   string
+}
+
 type Kapp struct {
 	Id string
 	// if true, this kapp should be present after completing, otherwise it
@@ -41,6 +46,7 @@ type Kapp struct {
 	ShouldBePresent bool
 	installerConfig installerConfig
 	Sources         []acquirer.Acquirer
+	Templates       []Template
 	RootDir         string // root directory in a cache dir
 }
 

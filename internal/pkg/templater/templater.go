@@ -40,9 +40,8 @@ func renderTemplate(inputTemplate string, vars map[string]interface{}) (string, 
 	return buf.String(), nil
 }
 
-// Renders a template from a template file, writing the output to another file
-// at a specified path, optionally overwriting it.
-func TemplateFile(src string, outFile *bytes.Buffer, vars map[string]interface{}) error {
+// Renders a template from a template file to a buffer
+func TemplateFile(src string, outBuf *bytes.Buffer, vars map[string]interface{}) error {
 
 	// verify that the input template exists
 	if _, err := os.Stat(src); err != nil {
@@ -61,7 +60,7 @@ func TemplateFile(src string, outFile *bytes.Buffer, vars map[string]interface{}
 		return errors.WithStack(err)
 	}
 
-	_, err = outFile.Write([]byte(rendered))
+	_, err = outBuf.Write([]byte(rendered))
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -8,8 +8,12 @@ present:
   # Unique identifier. The same kapp can be installed multiple times provided
   # this is unique per instance. This will be the release name when using Helm.
   - id: wordpress-site1
+    templates:        # a list of templates to render for this kapp
+      - source: terraform/s3_backend.tf  # source template must exist under one of the
+                                         # 'template' directories declared in the stacks.yaml file
+        dest: stable/wordpress/backend.tf   # dest relative to the kapp root directory
     installer:              # installer-specific values
-      target: wordpress     # The target source (defined below) to run the makefile
+#      target: wordpress     # The target source (defined below) to run the makefile
                             # for to install this kapp. Defaults to the
                             # identifier (i.e. wordpress-site1)
       values:
