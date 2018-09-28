@@ -153,6 +153,14 @@ func TestLoadStackConfig(t *testing.T) {
 		},
 	}
 
+	// set the reference to the manifest on each kapp
+	for i, manifestObj := range expected.Manifests {
+		for j, kappObj := range manifestObj.Kapps {
+			kappObj.SetManifest(&expected.Manifests[i])
+			expected.Manifests[i].Kapps[j] = kappObj
+		}
+	}
+
 	actual, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual, "unexpected stack")

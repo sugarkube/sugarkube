@@ -59,17 +59,20 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 	// acquire each kapp and cache it
 	for _, kappObj := range manifest.Kapps {
 		// build a directory path for the kapp in the manifest cache directory
-		kappRootPath := GetKappRootPath(manifestCacheDir, kappObj)
-		// build a directory path for the kapp's .sugarkube cache directory
-		kappCacheDir := getKappCachePath(kappRootPath)
+		kappObj.SetCacheDir(cacheDir)
 
-		log.Logger.Debugf("Creating kapp cache dir: %s", kappCacheDir)
-		err := os.MkdirAll(kappCacheDir, 0755)
+		log.Logger.Debugf("Caching kapp: %#v", kappObj)
+
+		// build a directory path for the kapp's .sugarkube cache directory
+		sugarkubeCacheDir := getKappCachePath(kappObj.CacheDir())
+
+		log.Logger.Debugf("Creating kapp cache dir: %s", sugarkubeCacheDir)
+		err := os.MkdirAll(sugarkubeCacheDir, 0755)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		err = acquireSource(manifest, kappObj.Sources, kappRootPath, kappCacheDir, dryRun)
+		err = acquireSource(manifest, kappObj.Sources, kappObj.CacheDir(), sugarkubeCacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

@@ -43,16 +43,16 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	dryRun bool) error {
 
 	// search for the Makefile
-	makefilePaths, err := findFilesByPattern(kappObj.RootDir, "Makefile",
+	makefilePaths, err := findFilesByPattern(kappObj.CacheDir(), "Makefile",
 		true, false)
 	if err != nil {
 		return errors.Wrapf(err, "Error finding Makefile in '%s'",
-			kappObj.RootDir)
+			kappObj.CacheDir())
 	}
 
 	if len(makefilePaths) == 0 {
 		return errors.New(fmt.Sprintf("No makefile found for kapp '%s' "+
-			"in '%s'", kappObj.Id, kappObj.RootDir))
+			"in '%s'", kappObj.Id, kappObj.CacheDir()))
 	}
 	if len(makefilePaths) > 1 {
 		// todo - select the right makefile from the installerConfig if it exists,
@@ -61,10 +61,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 			"not implemented yet: %s", strings.Join(makefilePaths, ", ")))
 	}
 
-	absKappRoot, err := filepath.Abs(kappObj.RootDir)
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	absKappRoot := kappObj.CacheDir()
 
 	// create the env vars
 	envVars := map[string]string{

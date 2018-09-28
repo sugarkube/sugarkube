@@ -9,6 +9,7 @@ local-standard:
   - vars/         # and values passed to kapps to alter them per profile/manifest/etc.
   - values/
   templateDirs:
+  # todo - add support for searching in kapps first, so templates can be kept in kapps?
   - templates/    # paths to template files that can be used by kapps
   manifests:
   # todo - support pulling these from git repos

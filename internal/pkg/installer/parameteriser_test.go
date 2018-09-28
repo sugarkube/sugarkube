@@ -33,10 +33,8 @@ func TestGetCliArgs(t *testing.T) {
 	absTestDir, err := filepath.Abs(testDir)
 	assert.Nil(t, err)
 
-	kappRootDir := path.Join(absTestDir, "sample-cache", "sample-manifest", "sample-kapp")
-
 	kappObj := &kapp.Kapp{
-		RootDir: kappRootDir,
+		Id: "sample-kapp",
 		Sources: []acquirer.Acquirer{
 			acquirer.NewGitAcquirer(
 				"sample-chart",
@@ -52,6 +50,13 @@ func TestGetCliArgs(t *testing.T) {
 				"false"),
 		},
 	}
+
+	manifest := kapp.Manifest{
+		Id: "sample-manifest",
+	}
+
+	kappObj.SetManifest(&manifest)
+	kappObj.SetCacheDir(path.Join(absTestDir, "sample-cache"))
 
 	tfStackConfig := kapp.StackConfig{
 		Provider:         "local",
@@ -129,7 +134,7 @@ func TestGetCliArgs(t *testing.T) {
 		assert.Nil(t, err)
 
 		// the dir of the actual chart inside the cache dir
-		chartDir := path.Join(test.parameteriser.kappObj.RootDir, "sample-chart")
+		chartDir := path.Join(test.parameteriser.kappObj.CacheDir(), "sample-chart")
 
 		expected := strings.Replace(test.expectValues, "{kappDir}", chartDir, -1)
 		assert.Equal(t, expected, result, "unexpected files returned for %s",

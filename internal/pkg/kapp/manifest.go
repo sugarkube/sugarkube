@@ -84,6 +84,15 @@ func ParseManifestFile(path string) (*Manifest, error) {
 	manifest.Kapps = kapps
 	manifest.Options = parsedManifest.Options
 
+	for i, kappObj := range manifest.Kapps {
+		log.Logger.Debugf("Setting manifest reference")
+		kappObj.SetManifest(&manifest)
+		// we've modified the kapp, so reassign it
+		manifest.Kapps[i] = kappObj
+	}
+
+	log.Logger.Debugf("Returning manifest: %#v", manifest)
+
 	return &manifest, nil
 }
 

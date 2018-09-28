@@ -23,6 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
+	"path/filepath"
 )
 
 type installerConfig struct {
@@ -37,7 +38,9 @@ type Template struct {
 }
 
 type Kapp struct {
-	Id string
+	Id       string
+	manifest *Manifest
+	cacheDir string
 	// if true, this kapp should be present after completing, otherwise it
 	// should be absent. This is here instead of e.g. putting all kapps into
 	// an enclosing struct with 'present' and 'absent' properties so we can
@@ -47,7 +50,6 @@ type Kapp struct {
 	installerConfig installerConfig
 	Sources         []acquirer.Acquirer
 	Templates       []Template
-	RootDir         string // root directory in a cache dir
 }
 
 const PRESENT_KEY = "present"
@@ -56,11 +58,46 @@ const SOURCES_KEY = "sources"
 const TEMPLATES_KEY = "templates"
 const ID_KEY = "id"
 
-func (k *Kapp) AsMap() map[string]string {
+// Sets the root cache directory the kapp is checked out into
+func (k *Kapp) SetCacheDir(cacheDir string) {
+	k.cacheDir = cacheDir
+}
+
+// Sets the manifest the kapp is part of
+func (k *Kapp) SetManifest(manifest *Manifest) {
+	if manifest == nil {
+		log.Logger.Fatalf("Can't associate nil manifest with kapp")
+	}
+
+	log.Logger.Debugf("Setting manifest for kapp %s to %#v", k.Id, manifest)
+	k.manifest = manifest
+}
+
+// Returns the physical path to this kapp in a cache
+func (k Kapp) CacheDir() string {
+	if k.cacheDir == "" {
+		panic("Empty cache dir")
+	}
+	if k.manifest == nil {
+		panic("Kapp manifest not set")
+	}
+	if k.Id == "" {
+		panic("Empty kapp ID")
+	}
+
+	absKappRoot, err := filepath.Abs(filepath.Join(k.cacheDir, k.manifest.Id, k.Id))
+	if err != nil {
+		panic(fmt.Sprintf("Couldn't convert path to absolute path: %#v", err))
+	}
+
+	return absKappRoot
+}
+
+func (k Kapp) AsMap() map[string]string {
 	return map[string]string{
 		"id":              k.Id,
 		"shouldBePresent": fmt.Sprintf("%#v", k.ShouldBePresent),
-		"rootDir":         k.RootDir,
+		"cacheDir":        k.CacheDir(),
 	}
 }
 

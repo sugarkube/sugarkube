@@ -71,6 +71,7 @@ configured for the region the target cluster is in, generating Helm
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
+	f.StringVarP(&c.cacheDir, "dir", "d", "", "Directory containing the kapp cache to write rendered templates to")
 	f.StringVarP(&c.provider, "provider", "p", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVarP(&c.provisioner, "provisioner", "v", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVarP(&c.profile, "profile", "l", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -137,7 +138,8 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 	}
 
 	candidateKappIds := []string{}
-	for k, _ := range candidateKapps {
+	for k, kappObj := range candidateKapps {
+		kappObj.SetCacheDir(c.cacheDir)
 		candidateKappIds = append(candidateKappIds, k)
 	}
 
@@ -263,7 +265,7 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 
 		destPath := templateDefinition.Dest
 		if !filepath.IsAbs(destPath) {
-			destPath = filepath.Join(kappObj.RootDir, destPath)
+			destPath = filepath.Join(kappObj.CacheDir(), destPath)
 		}
 
 		// check whether the dest path exists
@@ -284,8 +286,9 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 		}
 
 		if dryRun {
-			log.Logger.Infof("Dry run. Template '%s' for kapp '%s' "+
-				"rendered as:\n%s", templateSource, kappObj.Id, outBuf.String())
+			log.Logger.Infof("Dry run. Template '%s' for kapp '%s' which "+
+				"would be written to '%s' rendered as:\n%s", templateSource,
+				kappObj.Id, destPath, outBuf.String())
 		} else {
 			log.Logger.Debugf("Writing rendered template '%s' for kapp "+
 				"'%s' to '%s'", templateSource, kappObj.Id, destPath)

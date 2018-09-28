@@ -19,7 +19,6 @@ package plan
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -117,8 +116,6 @@ func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) e
 	log.Logger.Debugf("Applying plan: %#v", p)
 
 	for i, tranche := range p.tranche {
-		manifestCacheDir := cacher.GetManifestCachePath(p.cacheDir, tranche.manifest)
-
 		numWorkers := tranche.manifest.Options.Parallelisation
 		if numWorkers == 0 {
 			numWorkers = uint16(len(tranche.installables) + len(tranche.destroyables))
@@ -133,15 +130,15 @@ func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) e
 
 		for _, trancheKapp := range tranche.installables {
 			install := true
+			trancheKapp.SetCacheDir(p.cacheDir)
 
 			job := job{
-				approved:         approved,
-				dryRun:           dryRun,
-				install:          install,
-				kappObj:          trancheKapp,
-				manifestCacheDir: manifestCacheDir,
-				providerImpl:     providerImpl,
-				stackConfig:      p.stackConfig,
+				approved:     approved,
+				dryRun:       dryRun,
+				install:      install,
+				kappObj:      trancheKapp,
+				providerImpl: providerImpl,
+				stackConfig:  p.stackConfig,
 			}
 
 			jobs <- job
@@ -149,15 +146,15 @@ func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) e
 
 		for _, trancheKapp := range tranche.destroyables {
 			install := false
+			trancheKapp.SetCacheDir(p.cacheDir)
 
 			job := job{
-				approved:         approved,
-				dryRun:           dryRun,
-				install:          install,
-				kappObj:          trancheKapp,
-				manifestCacheDir: manifestCacheDir,
-				providerImpl:     providerImpl,
-				stackConfig:      p.stackConfig,
+				approved:     approved,
+				dryRun:       dryRun,
+				install:      install,
+				kappObj:      trancheKapp,
+				providerImpl: providerImpl,
+				stackConfig:  p.stackConfig,
 			}
 
 			jobs <- job
@@ -197,8 +194,7 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 		approved := job.approved
 		dryRun := job.dryRun
 
-		kappRootDir := cacher.GetKappRootPath(job.manifestCacheDir, kappObj)
-
+		kappRootDir := kappObj.CacheDir()
 		log.Logger.Debugf("Processing kapp '%s' in %s", kappObj.Id, kappRootDir)
 
 		_, err := os.Stat(kappRootDir)
@@ -208,8 +204,6 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 			log.Logger.Warn(msg)
 			errCh <- errors.Wrap(err, msg)
 		}
-
-		kappObj.RootDir = kappRootDir
 
 		// kapp exists, run the appropriate installer method (for now, this will
 		// always be a Make installer)

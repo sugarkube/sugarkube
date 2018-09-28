@@ -176,7 +176,7 @@ func (p *Parameteriser) GetCliArgs(configSubstrings []string) (string, error) {
 				continue
 			}
 
-			path := filepath.Join(p.kappObj.RootDir, kappAcquirer.Name(), filename)
+			path := filepath.Join(p.kappObj.CacheDir(), kappAcquirer.Name(), filename)
 
 			// ignore paths we've already seen
 			if _, ok := seenPaths[path]; ok {
@@ -220,7 +220,7 @@ func identifyKappInterfaces(kappObj *kapp.Kapp, providerImpl *provider.Provider)
 	})
 
 	// todo - remove this kludge to find out whether the kapp contains a helm chart.
-	chartPaths, err := findFilesByPattern(kappObj.RootDir, "Chart.yaml",
+	chartPaths, err := findFilesByPattern(kappObj.CacheDir(), "Chart.yaml",
 		true, true)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -234,7 +234,7 @@ func identifyKappInterfaces(kappObj *kapp.Kapp, providerImpl *provider.Provider)
 	}
 
 	// todo - remove this kludge to find out whether the kapp contains terraform configs
-	terraformPaths, err := findFilesByPattern(kappObj.RootDir, "terraform",
+	terraformPaths, err := findFilesByPattern(kappObj.CacheDir(), "terraform",
 		true, true)
 	if err != nil {
 		return nil, errors.WithStack(err)

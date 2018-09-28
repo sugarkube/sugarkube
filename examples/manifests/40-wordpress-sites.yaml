@@ -11,7 +11,7 @@ present:
     templates:        # a list of templates to render for this kapp
       - source: terraform/backend.tf  # source template must exist under one of the
                                       # 'template' directories declared in the stacks.yaml file
-        dest: stable/wordpress/backend.tf   # dest relative to the kapp root directory
+        dest: wordpress/backend.tf   # dest relative to the kapp root directory
     installer:              # installer-specific values
 #      target: wordpress     # The target source (defined below) to run the makefile
                             # for to install this kapp. Defaults to the
@@ -34,18 +34,19 @@ present:
       # the name of this source defaults to `wordpress` because it's the last
       # component of the path. The name can also be set explicitly as
       # illustrated below.
-      path: stable/wordpress/
+      path: stable/wordpress
       includeValues: false    # don't search this source for helm/terraform values
-    - uri: git@github.com:sugarkube/sugarkube.git
-      branch: master
-      # this lets us reuse the same kapp parameterised differently per instance
-      path: examples/values/wordpress/site1/
-      # Name of the source. Defaults to the last component of the path (in this
-      # case `site1`). Also used as a key.
-      name: site1-values
+# todo - implement these paths and uncomment as an example
+#    - uri: git@github.com:sugarkube/sugarkube.git
+#      branch: master
+#      # this lets us reuse the same kapp parameterised differently per instance
+#      path: examples/values/wordpress/site1/
+#      # Name of the source. Defaults to the last component of the path (in this
+#      # case `site1`). Also used as a key.
+#      name: site1-values
     - uri: git@github.com:sugarkube/kapps.git
       branch: master
-      path: common-makefiles/
+      path: incubator/common-makefiles
 
   - id: wordpress
     sources:
