@@ -232,9 +232,31 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	for _, templateDefinition := range kappObj.Templates {
 		templateSource := templateDefinition.Source
 		if !filepath.IsAbs(templateSource) {
-			// todo - search each template directory
+			foundTemplate := false
 
-			templateSource = filepath.Join(stackConfig.Dir(), templateSource)
+			// search each template directory defined in the stack config
+			for _, templateDir := range stackConfig.TemplateDirs {
+				possibleSource := filepath.Join(stackConfig.Dir(), templateDir, templateSource)
+				_, err := os.Stat(possibleSource)
+				if err == nil {
+					templateSource = possibleSource
+					foundTemplate = true
+					break
+				}
+			}
+
+			if !foundTemplate {
+				return errors.New(fmt.Sprintf("Failed to find template '%s' "+
+					"in any of the defined template directories: %s", templateSource,
+					strings.Join(stackConfig.TemplateDirs, ", ")))
+			}
+		}
+
+		if !filepath.IsAbs(templateSource) {
+			templateSource, err = filepath.Abs(templateSource)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
 
 		log.Logger.Debugf("Templating file '%s' with vars: %#v", templateSource, mergedVars)

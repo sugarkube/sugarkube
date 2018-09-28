@@ -9,8 +9,8 @@ present:
   # this is unique per instance. This will be the release name when using Helm.
   - id: wordpress-site1
     templates:        # a list of templates to render for this kapp
-      - source: terraform/s3_backend.tf  # source template must exist under one of the
-                                         # 'template' directories declared in the stacks.yaml file
+      - source: terraform/backend.tf  # source template must exist under one of the
+                                      # 'template' directories declared in the stacks.yaml file
         dest: stable/wordpress/backend.tf   # dest relative to the kapp root directory
     installer:              # installer-specific values
 #      target: wordpress     # The target source (defined below) to run the makefile
