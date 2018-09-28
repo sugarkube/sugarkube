@@ -57,6 +57,9 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	// commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
 	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
 
+	// todo - add a flag to automatically template kapps (or perhaps more usefully do that
+	// by default and create a flag to prevent kapps being automatically templated)
+
 	return cmd
 }
 
