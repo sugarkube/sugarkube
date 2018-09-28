@@ -125,8 +125,7 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		// select all kapps
 		for _, manifest := range stackConfig.Manifests {
 			for _, manifestKapp := range manifest.Kapps {
-				fqId := fmt.Sprintf("%s:%s", manifest.Id, manifestKapp.Id)
-				candidateKapps[fqId] = manifestKapp
+				candidateKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
 			}
 		}
 	}
@@ -206,9 +205,16 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	stackConfigMap map[string]interface{}, providerVarsMap map[string]interface{},
 	cacheDir string, dryRun bool) error {
 
+	if len(kappObj.Templates) == 0 {
+		log.Logger.Debugf("No templates to generate for kapp '%s'",
+			kappObj.FullyQualifiedId())
+		return nil
+	}
+
 	kappObj.SetCacheDir(cacheDir)
 
-	log.Logger.Debugf("Rendering templates for kapp '%s'", kappObj.Id)
+	log.Logger.Debugf("Rendering templates for kapp '%s'",
+		kappObj.FullyQualifiedId())
 
 	mergedVars := map[string]interface{}{}
 	err := mergo.Merge(&mergedVars, stackConfigMap, mergo.WithOverride)

@@ -24,6 +24,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
 	"path/filepath"
+	"strings"
 )
 
 type installerConfig struct {
@@ -71,6 +72,11 @@ func (k *Kapp) SetManifest(manifest *Manifest) {
 
 	log.Logger.Debugf("Setting manifest for kapp %s to %#v", k.Id, manifest)
 	k.manifest = manifest
+}
+
+// Returns the fully-qualified ID of a kapp
+func (k Kapp) FullyQualifiedId() string {
+	return strings.Join([]string{k.manifest.Id, k.Id}, ":")
 }
 
 // Returns the physical path to this kapp in a cache
