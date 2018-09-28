@@ -11,7 +11,12 @@ present:
     templates:        # a list of templates to render for this kapp
       - source: terraform/backend.tf  # source template must exist under one of the
                                       # 'template' directories declared in the stacks.yaml file
-        dest: wordpress/backend.tf   # dest relative to the kapp root directory
+        dest: wordpress/_generated_backend.tf   # dest relative to the kapp root directory
+
+    # todo - do we need a way of modifying the args passed to charts so they can
+    # use the generated files if they're not auto-loaded (e.g. something like
+    # helmArgs: "%helm-opts% -f wordpress/_generated_backend.tf")?
+
     installer:              # installer-specific values
 #      target: wordpress     # The target source (defined below) to run the makefile
                             # for to install this kapp. Defaults to the
