@@ -29,7 +29,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"io"
 	"io/ioutil"
-	"os"
+	"strings"
 )
 
 type templateConfig struct {
@@ -45,9 +45,8 @@ type templateConfig struct {
 	cluster string
 	region  string
 	//manifests    cmd.Files
-	// todo - add options to :
-	// * filter the kapps to be processed (use strings like e.g. manifest:kapp-id to refer to kapps)
-	// * exclude manifests / kapps from being processed
+	includeKapps []string
+	excludeKapps []string
 }
 
 func newTemplateCmd(out io.Writer) *cobra.Command {
@@ -73,6 +72,8 @@ configured for the region the target cluster is in, generating Helm
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
+	f.StringArrayVarP(&c.includeKapps, "include", "i", []string{}, "only process specified kapps (can specify multiple, formatted manifest-id:kapp-id)")
+	f.StringArrayVarP(&c.excludeKapps, "exclude", "x", []string{}, "exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id)")
 	// these are commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
 	//f.VarP(&c.kappVarsDirs, "dir", "f", "Paths to YAML directory to load kapp values from (can specify multiple)")
 	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple but will replace any configured in a stack)")
@@ -80,13 +81,6 @@ configured for the region the target cluster is in, generating Helm
 }
 
 func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
-
-	inputPath := args[0]
-	if _, err := os.Stat(inputPath); err != nil {
-		return errors.Wrapf(err, "Input file '%s' doesn't exist", inputPath)
-	}
-
-	kappId := args[1]
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &kapp.StackConfig{
@@ -106,51 +100,102 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	var kappObj *kapp.Kapp
+	candidateKapps := map[string]kapp.Kapp{}
 
-	for _, manifest := range stackConfig.Manifests {
-		for _, manifestKapp := range manifest.Kapps {
-			if manifestKapp.Id == kappId {
-				kappObj = &manifestKapp
-				break
+	if len(c.includeKapps) > 0 {
+		candidateKapps, err = getKappsByFullyQualifiedId(c.includeKapps, stackConfig)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		// select all kapps
+		for _, manifest := range stackConfig.Manifests {
+			for _, manifestKapp := range manifest.Kapps {
+				fqId := fmt.Sprintf("%s:%s", manifest.Id, manifestKapp.Id)
+				candidateKapps[fqId] = manifestKapp
 			}
 		}
+	}
 
-		if kappObj != nil {
-			break
+	if len(c.excludeKapps) > 0 {
+		// delete kapps
+		excludedKapps, err := getKappsByFullyQualifiedId(c.excludeKapps, stackConfig)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		for k, _ := range excludedKapps {
+			if _, ok := candidateKapps[k]; ok {
+				delete(candidateKapps, k)
+			}
 		}
 	}
 
 	stackConfigMap := stackConfig.AsMap()
-	kappMap := kappObj.AsMap()
-	providerVars := provider.GetVars(providerImpl)
-
-	kappVars, err := stackConfig.GetKappVars(kappObj)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	log.Logger.Debugf("Templating file '%s' with stackVars: %#v, "+
-		"kappVars: %#v and provider vars=%#v", inputPath, stackConfigMap, kappVars,
-		providerVars)
-
-	tempOutputFile, err := ioutil.TempFile("", "templated-")
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	mergedVars := map[string]interface{}{}
-
 	// convert the map to the appropriate type
 	namespacedStackConfigMap := map[string]interface{}{
 		"stack": convert.MapStringStringToMapStringInterface(stackConfigMap),
 	}
-	err = mergo.Merge(&mergedVars, namespacedStackConfigMap, mergo.WithOverride)
+
+	providerVars := provider.GetVars(providerImpl)
+
+	for _, kappObj := range candidateKapps {
+		err = templateKapp(&kappObj, stackConfig, namespacedStackConfigMap, providerVars)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	return nil
+}
+
+// Returns kapps from a stack config by fully-qualified ID, i.e. `manifest-id:kapp-id`
+func getKappsByFullyQualifiedId(kapps []string, stackConfig *kapp.StackConfig) (map[string]kapp.Kapp, error) {
+	results := map[string]kapp.Kapp{}
+
+	for _, fqKappId := range kapps {
+		splitKappId := strings.Split(fqKappId, ":")
+
+		if len(splitKappId) != 2 {
+			return nil, errors.New("Fully-qualified kapps must be given, i.e. " +
+				"formatted 'manifest-id:kapp-id'")
+		}
+
+		manifestId := splitKappId[0]
+		kappId := splitKappId[1]
+
+		for _, manifest := range stackConfig.Manifests {
+			if manifestId != manifest.Id {
+				continue
+			}
+
+			for _, manifestKapp := range manifest.Kapps {
+				if manifestKapp.Id == kappId {
+					results[fqKappId] = manifestKapp
+				}
+			}
+		}
+	}
+
+	return results, nil
+}
+
+func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
+	stackConfigMap map[string]interface{}, providerVarsMap map[string]interface{}) error {
+
+	mergedVars := map[string]interface{}{}
+	err := mergo.Merge(&mergedVars, stackConfigMap, mergo.WithOverride)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = mergo.Merge(&mergedVars, providerVars, mergo.WithOverride)
+	err = mergo.Merge(&mergedVars, providerVarsMap, mergo.WithOverride)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	kappMap := kappObj.AsMap()
+	kappVars, err := stackConfig.GetKappVars(kappObj)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -168,7 +213,20 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	templater.TemplateFile(inputPath, tempOutputFile.Name(), mergedVars, true)
+	// todo - pull from the kapp itself
+	inputPath := "dummy-input"
+
+	log.Logger.Debugf("Templating file '%s' with vars: %#v", inputPath, mergedVars)
+
+	tempOutputFile, err := ioutil.TempFile("", "templated-")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	err = templater.TemplateFile(inputPath, tempOutputFile.Name(), mergedVars, true)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	return nil
 }
