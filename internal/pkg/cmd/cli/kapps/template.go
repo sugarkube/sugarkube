@@ -17,6 +17,7 @@
 package kapps
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
@@ -28,7 +29,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"io"
-	"os"
 	"strings"
 )
 
@@ -229,9 +229,9 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	//	return errors.WithStack(err)
 	//}
 
-	output := os.Stdout
+	var outBuf bytes.Buffer
 
-	err = templater.TemplateFile(inputPath, output, mergedVars)
+	err = templater.TemplateFile(inputPath, &outBuf, mergedVars)
 	if err != nil {
 		return errors.WithStack(err)
 	}

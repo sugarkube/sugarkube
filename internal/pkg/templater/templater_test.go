@@ -17,10 +17,10 @@
 package templater
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 )
@@ -78,29 +78,18 @@ func TestTemplateFile(t *testing.T) {
 	inputTempDir, err := ioutil.TempDir("", "inputTpls-")
 	assert.Nil(t, err)
 
-	outputTempDir, err := ioutil.TempDir("", "outputTpls-")
-	assert.Nil(t, err)
-
 	for i, test := range tests {
 		inputTemplatePath := filepath.Join(inputTempDir,
 			fmt.Sprintf("test-%d.tpl", i))
-		outputTemplatePath := filepath.Join(outputTempDir,
-			fmt.Sprintf("test-%d.txt", i))
 
 		err = ioutil.WriteFile(inputTemplatePath, []byte(test.template), 0644)
 		assert.Nil(t, err)
 
-		outFile, err := os.Create(outputTemplatePath)
-		assert.Nil(t, err)
-		defer outFile.Close()
-
-		err = TemplateFile(inputTemplatePath, outFile, test.vars)
+		var outBuf bytes.Buffer
+		err = TemplateFile(inputTemplatePath, &outBuf, test.vars)
 		assert.Nil(t, err)
 
-		result, err := ioutil.ReadFile(outputTemplatePath)
-		assert.Nil(t, err)
-
-		assert.Equal(t, test.expected, string(result[:]),
+		assert.Equal(t, test.expected, outBuf.String(),
 			"Template rendering failed for %s", test.name)
 	}
 }

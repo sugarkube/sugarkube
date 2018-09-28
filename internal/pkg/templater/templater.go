@@ -42,7 +42,7 @@ func renderTemplate(inputTemplate string, vars map[string]interface{}) (string, 
 
 // Renders a template from a template file, writing the output to another file
 // at a specified path, optionally overwriting it.
-func TemplateFile(src string, outFile *os.File, vars map[string]interface{}) error {
+func TemplateFile(src string, outFile *bytes.Buffer, vars map[string]interface{}) error {
 
 	// verify that the input template exists
 	if _, err := os.Stat(src); err != nil {
