@@ -49,6 +49,7 @@ type StackConfig struct {
 	ProviderVarsDirs []string `yaml:"providerVars"`
 	KappVarsDirs     []string `yaml:"kappVars"`
 	Manifests        []Manifest
+	TemplateDirs     []string `yaml:"templateDirs"`
 	Status           ClusterStatus
 	OnlineTimeout    uint32
 	ReadyTimeout     uint32

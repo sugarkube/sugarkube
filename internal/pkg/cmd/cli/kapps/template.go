@@ -197,6 +197,8 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	stackConfigMap map[string]interface{}, providerVarsMap map[string]interface{},
 	dryRun bool) error {
 
+	log.Logger.Debugf("Rendering templates for kapp '%s'", kappObj.Id)
+
 	mergedVars := map[string]interface{}{}
 	err := mergo.Merge(&mergedVars, stackConfigMap, mergo.WithOverride)
 	if err != nil {
@@ -230,6 +232,8 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	for _, templateDefinition := range kappObj.Templates {
 		templateSource := templateDefinition.Source
 		if !filepath.IsAbs(templateSource) {
+			// todo - search each template directory
+
 			templateSource = filepath.Join(stackConfig.Dir(), templateSource)
 		}
 

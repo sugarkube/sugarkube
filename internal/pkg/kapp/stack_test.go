@@ -52,6 +52,10 @@ func TestLoadStackConfig(t *testing.T) {
 		ProviderVarsDirs: []string{
 			"./stacks/",
 		},
+		TemplateDirs: []string{
+			"templates1/",
+			"templates2/",
+		},
 		Manifests: []Manifest{
 			{
 				Id:  "manifest1",

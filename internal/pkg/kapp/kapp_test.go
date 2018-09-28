@@ -38,6 +38,9 @@ func TestParseManifestYaml(t *testing.T) {
 			input: `
 present:
   - id: example1
+    templates:        
+      - source: example/template1.tpl
+        dest: example/dest.txt
     sources:
     - uri: git@github.com:exampleA/repoA.git
       branch: branchA
@@ -64,6 +67,12 @@ absent:
 				{
 					Id:              "example1",
 					ShouldBePresent: true,
+					Templates: []Template{
+						{
+							"example/template1.tpl",
+							"example/dest.txt",
+						},
+					},
 					Sources: []acquirer.Acquirer{
 						acquirer.NewGitAcquirer(
 							"pathA",

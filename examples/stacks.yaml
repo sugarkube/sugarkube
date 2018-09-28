@@ -8,7 +8,7 @@ local-standard:
   kappVars:       # YAML files under these directories will be recursively merged
   - vars/         # and values passed to kapps to alter them per profile/manifest/etc.
   - values/
-  templates:
+  templateDirs:
   - templates/    # paths to template files that can be used by kapps
   manifests:
   # todo - support pulling these from git repos

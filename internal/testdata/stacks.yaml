@@ -20,3 +20,6 @@ large:
   - uri: manifests/manifest1.yaml
   - uri: manifests/manifest2.yaml
     id: exampleManifest2
+  templateDirs:
+  - templates1/
+  - templates2/

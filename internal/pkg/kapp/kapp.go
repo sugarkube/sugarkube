@@ -53,6 +53,7 @@ type Kapp struct {
 const PRESENT_KEY = "present"
 const ABSENT_KEY = "absent"
 const SOURCES_KEY = "sources"
+const TEMPLATES_KEY = "templates"
 const ID_KEY = "id"
 
 func (k *Kapp) AsMap() map[string]string {
@@ -83,6 +84,21 @@ func parseKapps(kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bo
 		if err != nil {
 			return errors.Wrapf(err, "Error converting manifest value to map")
 		}
+
+		// marshal and unmarshal the list of templates
+		templateBytes, err := yaml.Marshal(valuesMap[TEMPLATES_KEY])
+		if err != nil {
+			return errors.Wrapf(err, "Error marshalling kapp templates: %#v", v)
+		}
+
+		log.Logger.Debugf("Marshalled templates YAML: %s", templateBytes)
+
+		templates := []Template{}
+		err = yaml.Unmarshal(templateBytes, &templates)
+		if err != nil {
+			return errors.Wrapf(err, "Error unmarshalling template YAML: %s", templateBytes)
+		}
+		kapp.Templates = templates
 
 		// marshal and unmarshal the list of sources
 		sourcesBytes, err := yaml.Marshal(valuesMap[SOURCES_KEY])
