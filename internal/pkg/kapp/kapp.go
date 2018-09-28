@@ -75,9 +75,6 @@ func (k *Kapp) SetManifest(manifest *Manifest) {
 
 // Returns the physical path to this kapp in a cache
 func (k Kapp) CacheDir() string {
-	if k.cacheDir == "" {
-		panic("Empty cache dir")
-	}
 	if k.manifest == nil {
 		panic("Kapp manifest not set")
 	}
@@ -85,12 +82,23 @@ func (k Kapp) CacheDir() string {
 		panic("Empty kapp ID")
 	}
 
-	absKappRoot, err := filepath.Abs(filepath.Join(k.cacheDir, k.manifest.Id, k.Id))
-	if err != nil {
-		panic(fmt.Sprintf("Couldn't convert path to absolute path: %#v", err))
+	cacheDir := filepath.Join(k.cacheDir, k.manifest.Id, k.Id)
+
+	// if no cache dir has been set (e.g. because the user is doing a dry-run),
+	// don't return an absolute path
+	if k.cacheDir != "" {
+		absCacheDir, err := filepath.Abs(cacheDir)
+		if err != nil {
+			panic(fmt.Sprintf("Couldn't convert path to absolute path: %#v", err))
+		}
+
+		cacheDir = absCacheDir
+	} else {
+		log.Logger.Infof("No cache dir has been set on kapp. Cache dir will " +
+			"not be made absolute.")
 	}
 
-	return absKappRoot
+	return cacheDir
 }
 
 func (k Kapp) AsMap() map[string]string {

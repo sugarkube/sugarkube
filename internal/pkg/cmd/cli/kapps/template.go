@@ -100,6 +100,14 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		//Manifests:    cliManifests,
 	}
 
+	// make sure the cache dir exists if set
+	if c.cacheDir != "" {
+		if _, err := os.Stat(c.cacheDir); err != nil {
+			return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
+				c.cacheDir))
+		}
+	}
+
 	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
 		c.stackFile, cliStackConfig)
 	if err != nil {
@@ -138,8 +146,7 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 	}
 
 	candidateKappIds := []string{}
-	for k, kappObj := range candidateKapps {
-		kappObj.SetCacheDir(c.cacheDir)
+	for k, _ := range candidateKapps {
 		candidateKappIds = append(candidateKappIds, k)
 	}
 
@@ -155,7 +162,7 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 
 	for _, kappObj := range candidateKapps {
 		err = templateKapp(&kappObj, stackConfig, namespacedStackConfigMap,
-			providerVars, c.dryRun)
+			providerVars, c.cacheDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -197,7 +204,9 @@ func getKappsByFullyQualifiedId(kapps []string, stackConfig *kapp.StackConfig) (
 
 func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	stackConfigMap map[string]interface{}, providerVarsMap map[string]interface{},
-	dryRun bool) error {
+	cacheDir string, dryRun bool) error {
+
+	kappObj.SetCacheDir(cacheDir)
 
 	log.Logger.Debugf("Rendering templates for kapp '%s'", kappObj.Id)
 
