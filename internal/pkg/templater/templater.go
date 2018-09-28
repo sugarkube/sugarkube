@@ -42,18 +42,11 @@ func renderTemplate(inputTemplate string, vars map[string]interface{}) (string, 
 
 // Renders a template from a template file, writing the output to another file
 // at a specified path, optionally overwriting it.
-func TemplateFile(src string, dest string, vars map[string]interface{},
-	overwrite bool) error {
+func TemplateFile(src string, outFile *os.File, vars map[string]interface{}) error {
 
 	// verify that the input template exists
 	if _, err := os.Stat(src); err != nil {
 		return errors.Wrapf(err, "Source template '%s' doesn't exist", src)
-	}
-
-	// if the dest path exists, only continue if we're allowed to overwrite it
-	if _, err := os.Stat(dest); err == nil && !overwrite {
-		return errors.Wrapf(err, "Template destination path '%s' already "+
-			"exists, and overwrite=false", dest)
 	}
 
 	srcTemplate, err := ioutil.ReadFile(src)
@@ -68,12 +61,12 @@ func TemplateFile(src string, dest string, vars map[string]interface{},
 		return errors.WithStack(err)
 	}
 
-	err = ioutil.WriteFile(dest, []byte(rendered), 0644)
+	_, err = outFile.Write([]byte(rendered))
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Successfully rendered input template '%s' to '%s", src, dest)
+	log.Logger.Debugf("Successfully rendered input template '%s'", src)
 
 	return nil
 }

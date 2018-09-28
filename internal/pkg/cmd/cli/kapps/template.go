@@ -28,7 +28,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"io"
-	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -218,12 +218,20 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 
 	log.Logger.Debugf("Templating file '%s' with vars: %#v", inputPath, mergedVars)
 
-	tempOutputFile, err := ioutil.TempFile("", "templated-")
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	// if the dest path exists, only continue if we're allowed to overwrite it
+	//if _, err := os.Stat(dest); err == nil && !overwrite {
+	//	return errors.Wrapf(err, "Template destination path '%s' already "+
+	//		"exists, and overwrite=false", dest)
+	//}
 
-	err = templater.TemplateFile(inputPath, tempOutputFile.Name(), mergedVars, true)
+	//tempOutputFile, err := ioutil.TempFile("", "templated-")
+	//if err != nil {
+	//	return errors.WithStack(err)
+	//}
+
+	output := os.Stdout
+
+	err = templater.TemplateFile(inputPath, output, mergedVars)
 	if err != nil {
 		return errors.WithStack(err)
 	}

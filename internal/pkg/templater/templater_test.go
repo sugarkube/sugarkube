@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -89,7 +90,11 @@ func TestTemplateFile(t *testing.T) {
 		err = ioutil.WriteFile(inputTemplatePath, []byte(test.template), 0644)
 		assert.Nil(t, err)
 
-		err := TemplateFile(inputTemplatePath, outputTemplatePath, test.vars, false)
+		outFile, err := os.Create(outputTemplatePath)
+		assert.Nil(t, err)
+		defer outFile.Close()
+
+		err = TemplateFile(inputTemplatePath, outFile, test.vars)
 		assert.Nil(t, err)
 
 		result, err := ioutil.ReadFile(outputTemplatePath)
