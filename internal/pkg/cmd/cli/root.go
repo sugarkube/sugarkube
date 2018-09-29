@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package sugarkube
+package cli
 
 import (
 	"github.com/spf13/cobra"
@@ -22,14 +22,11 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/version"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"io/ioutil"
 )
 
-func NewCommand(name string) *cobra.Command {
-
-	cmd := &cobra.Command{
-		Use:   name,
-		Short: "Sweet cluster dependency management",
-		Long: `Sugarkube is dependency management for your infrastructure. 
+const longUsage = `Sugarkube is dependency management for your infrastructure. 
 While its focus is Kubernetes-based clusters, it can be used to deploy your
 applications onto any scriptable backend.
 
@@ -80,13 +77,30 @@ Sugarkube is great for new projects, but even legacy applications can be
 migrated into Kapps. You can migrate a bit at a time to see how it helps you.
 
 See https://sugarkube.io for more info and documentation.
-`,
-		// Uncomment the following line if your bare application
-		// has an action associated with it:
-		//      Run: func(cmd *cobra.Command, args []string) { },
+`
+
+func NewCommand(name string) *cobra.Command {
+
+	var verboseOutput bool
+	var logLevel string
+
+	cmd := &cobra.Command{
+		Use:   name,
+		Short: "Sweet cluster dependency management",
+		Long:  longUsage,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if !verboseOutput {
+				log.Logger.Out = ioutil.Discard
+			} else {
+				log.SetLevel(log.Logger, logLevel)
+			}
+		},
 	}
 
 	out := cmd.OutOrStdout()
+
+	cmd.PersistentFlags().BoolVarP(&verboseOutput, "verbose", "v", false, "enable verbose output/logging")
+	cmd.PersistentFlags().StringVar(&logLevel, "log-level", "info", "log level. One of debug|info|warn")
 
 	cmd.AddCommand(
 		version.NewCommand(),

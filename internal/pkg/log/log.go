@@ -27,15 +27,10 @@ import (
 var Logger *logrus.Logger
 
 func init() {
-	Logger = newLogrusLogger(config.Config())
+	Logger = NewLogger(config.Config())
 }
 
 func NewLogger(cfg config.Provider) *logrus.Logger {
-	return newLogrusLogger(cfg)
-}
-
-func newLogrusLogger(cfg config.Provider) *logrus.Logger {
-
 	l := logrus.New()
 	l.AddHook(filename.NewHook())
 
@@ -44,16 +39,22 @@ func newLogrusLogger(cfg config.Provider) *logrus.Logger {
 	}
 	l.Out = os.Stderr
 
-	switch cfg.GetString("loglevel") {
-	case "debug":
-		l.Level = logrus.DebugLevel
-	case "warning":
-		l.Level = logrus.WarnLevel
-	case "info":
-		l.Level = logrus.InfoLevel
-	default:
-		l.Level = logrus.DebugLevel
-	}
+	SetLevel(l, cfg.GetString("loglevel"))
 
 	return l
+}
+
+func SetLevel(l *logrus.Logger, level string) {
+	switch level {
+	case "debug":
+		l.Level = logrus.DebugLevel
+	case "info":
+		l.Level = logrus.InfoLevel
+	case "warn":
+		l.Level = logrus.WarnLevel
+	case "warning":
+		l.Level = logrus.WarnLevel
+	default:
+		l.Level = logrus.InfoLevel
+	}
 }

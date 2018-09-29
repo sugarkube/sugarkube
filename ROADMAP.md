@@ -23,18 +23,14 @@
 * Work on bootstrapping before running a provisioner
   * E.g. kops needs an S3 backend encrypted with KMS. How do we create that 
   before running kops, and where do we store the ARN, etc?
-* Use acquirers to acquire manifests from git repos as well as local files 
+* Use acquirers to acquire manifests/vars files from git repos as well as local files 
 
 **0.7.0**:
 User-friendliness/ergonomics:
 * Add a default config file with the usual platform-dependent search paths
   (e.g. ~/.sugarkube, etc. (see os.UserCacheDir())).
 * Add flags to the root command for:
-  * setting the log level
   * specifying the path to a config file 
-* Print the output of commands instead of only logging
-  * Bear in mind in future we may want to allow different output formats, e.g. 
-  yaml, json, etc., so don't just print to stdout.
 
 **0.8.0**:
 * Implement parameterisers and remove helm/terraform specific code in the 
