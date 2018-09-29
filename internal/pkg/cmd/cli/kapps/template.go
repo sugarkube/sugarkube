@@ -72,9 +72,9 @@ configured for the region the target cluster is in, generating Helm
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
 	f.StringVarP(&c.cacheDir, "dir", "d", "", "Directory containing the kapp cache to write rendered templates to")
-	f.StringVarP(&c.provider, "provider", "p", "", "name of provider, e.g. aws, local, etc.")
-	f.StringVarP(&c.provisioner, "provisioner", "v", "", "name of provisioner, e.g. kops, minikube, etc.")
-	f.StringVarP(&c.profile, "profile", "l", "", "launch profile, e.g. dev, test, prod, etc.")
+	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
+	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
+	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
@@ -136,11 +136,15 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	fmt.Fprintf(c.out, "Rendering templates for %d kapps\n", len(candidateKapps))
+
 	err = RenderTemplates(candidateKapps, c.cacheDir, stackConfig, providerImpl,
 		c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	fmt.Fprintln(c.out, "Templates successfully rendered")
 
 	return nil
 }
