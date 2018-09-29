@@ -119,7 +119,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	log.Logger.Debugf("Kapps validated. Caching manifests into %s...", absCacheDir)
 
 	// don't use the abs cache path here to keep the output simpler
-	fmt.Fprintf(c.out, "Caching kapps into '%s'... ", cacheDir)
+	fmt.Fprintf(c.out, "Caching kapps into '%s'...\n", cacheDir)
 
 	for _, manifest := range stackConfig.Manifests {
 		err := cacher.CacheManifest(manifest, absCacheDir, c.dryRun)
@@ -128,12 +128,12 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	fmt.Fprintf(c.out, "done\n")
+	fmt.Fprintln(c.out, "Kapps successfully cached")
 
 	log.Logger.Infof("Manifests cached to: %s", absCacheDir)
 
 	if !c.skipTemplating {
-		fmt.Fprint(c.out, "Rendering templates for kapps... ")
+		fmt.Fprintln(c.out, "Rendering templates for kapps...")
 
 		// template kapps
 		candidateKapps := map[string]kapp.Kapp{}
@@ -150,7 +150,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 			return errors.WithStack(err)
 		}
 
-		fmt.Fprintf(c.out, "done\n")
+		fmt.Fprintln(c.out, "Templates successfully rendered")
 	} else {
 		fmt.Fprintln(c.out, "Skipping rendering templates for kapps")
 	}
