@@ -100,14 +100,6 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		//Manifests:    cliManifests,
 	}
 
-	// make sure the cache dir exists if set
-	if c.cacheDir != "" {
-		if _, err := os.Stat(c.cacheDir); err != nil {
-			return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
-				c.cacheDir))
-		}
-	}
-
 	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
 		c.stackFile, cliStackConfig)
 	if err != nil {
@@ -144,12 +136,33 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	err = RenderTemplates(candidateKapps, c.cacheDir, stackConfig, providerImpl,
+		c.dryRun)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+// Render templates for kapps defined in a stack config
+func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
+	stackConfig *kapp.StackConfig, providerImpl provider.Provider, dryRun bool) error {
+
+	// make sure the cache dir exists if set
+	if cacheDir != "" {
+		if _, err := os.Stat(cacheDir); err != nil {
+			return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
+				cacheDir))
+		}
+	}
+
 	candidateKappIds := []string{}
-	for k, _ := range candidateKapps {
+	for k, _ := range kapps {
 		candidateKappIds = append(candidateKappIds, k)
 	}
 
-	log.Logger.Debugf("Templating candidate kapps: %s", strings.Join(candidateKappIds, ", "))
+	log.Logger.Debugf("Templating kapps: %s", strings.Join(candidateKappIds, ", "))
 
 	stackConfigMap := stackConfig.AsMap()
 	// convert the map to the appropriate type
@@ -159,9 +172,9 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 
 	providerVars := provider.GetVars(providerImpl)
 
-	for _, kappObj := range candidateKapps {
-		err = templateKapp(&kappObj, stackConfig, namespacedStackConfigMap,
-			providerVars, c.cacheDir, c.dryRun)
+	for _, kappObj := range kapps {
+		err := templateKapp(&kappObj, stackConfig, namespacedStackConfigMap,
+			providerVars, cacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -201,6 +214,7 @@ func getKappsByFullyQualifiedId(kapps []string, stackConfig *kapp.StackConfig) (
 	return results, nil
 }
 
+// Render templates for an individual kapp
 func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	stackConfigMap map[string]interface{}, providerVarsMap map[string]interface{},
 	cacheDir string, dryRun bool) error {

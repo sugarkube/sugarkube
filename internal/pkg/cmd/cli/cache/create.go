@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -34,7 +35,8 @@ type createCmd struct {
 	stackName string
 	stackFile string
 	//manifests cmd.Files
-	cacheDir string
+	cacheDir       string
+	skipTemplating bool
 }
 
 func newCreateCmd(out io.Writer) *cobra.Command {
@@ -45,12 +47,14 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create [flags]",
 		Short: fmt.Sprintf("Create kapp caches"),
-		Long:  `Create a local kapps cache for a given manifest(s).`,
-		RunE:  c.run,
+		Long: `Create a local kapps cache for a given manifest(s), and renders any 
+templates defined by kapps.`,
+		RunE: c.run,
 	}
 
 	f := cmd.Flags()
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
+	f.BoolVar(&c.skipTemplating, "skip-templating", false, "don't render templates for kapps")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
 	f.StringVarP(&c.cacheDir, "dir", "d", "", "Directory to build the cache in. A temp directory will be generated if not supplied.")
@@ -67,12 +71,10 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 
 	log.Logger.Debugf("Got CLI args: %#v", c)
 
-	stackConfig, err := utils.MaybeLoadStackConfig(c.stackName, c.stackFile)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	log.Logger.Debugf("Loaded stackConfig=%#v", stackConfig)
+	//stackConfig, err := utils.MaybeLoadStackConfig(c.stackName, c.stackFile)
+	//if err != nil {
+	//	return errors.WithStack(err)
+	//}
 
 	//cliManifests, err := kapp.ParseManifests(c.manifests)
 	//if err != nil {
@@ -80,13 +82,15 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	//}
 
 	// CLI args override configured args, so merge them in
-	//cliStackConfig := &kapp.StackConfig{
-	//	Manifests: cliManifests,
-	//}
-	//
-	//mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
+	cliStackConfig := &kapp.StackConfig{
+		//Manifests: cliManifests,
+	}
 
-	log.Logger.Debugf("Final stack config: %#v", stackConfig)
+	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
+		c.stackFile, cliStackConfig)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	log.Logger.Debugf("Loaded %d manifest(s)", len(stackConfig.Manifests))
 
@@ -116,6 +120,27 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	log.Logger.Infof("Manifests cached to: %s", cacheDir)
+
+	if !c.skipTemplating {
+		log.Logger.Debug("Templating kapps...")
+
+		// template kapps
+		candidateKapps := map[string]kapp.Kapp{}
+
+		for _, manifest := range stackConfig.Manifests {
+			for _, manifestKapp := range manifest.Kapps {
+				candidateKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
+			}
+		}
+
+		err = kapps.RenderTemplates(candidateKapps, c.cacheDir, stackConfig, providerImpl,
+			c.dryRun)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		log.Logger.Info("Skipping templating kapps")
+	}
 
 	return nil
 }
