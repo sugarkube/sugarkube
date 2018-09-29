@@ -60,7 +60,7 @@ func newTemplateCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "template [flags]",
-		Short: fmt.Sprintf("Generate templates for kapps"),
+		Short: fmt.Sprintf("Render templates for kapps"),
 		Long: `Renders configured templates for kapps, useful for e.g. terraform backends 
 configured for the region the target cluster is in, generating Helm 
 'values.yaml' files, etc.`,
@@ -224,7 +224,7 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	cacheDir string, dryRun bool) error {
 
 	if len(kappObj.Templates) == 0 {
-		log.Logger.Infof("No templates to generate for kapp '%s'",
+		log.Logger.Debugf("No templates to render for kapp '%s'",
 			kappObj.FullyQualifiedId())
 		return nil
 	}
@@ -321,7 +321,7 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 				kappObj.Id, destPath, outBuf.String())
 		} else {
 			log.Logger.Infof("Writing rendered template '%s' for kapp "+
-				"'%s' to '%s'", templateSource, kappObj.Id, destPath)
+				"'%s' to '%s'", templateSource, kappObj.FullyQualifiedId(), destPath)
 			err := ioutil.WriteFile(destPath, outBuf.Bytes(), 0644)
 			if err != nil {
 				return errors.WithStack(err)

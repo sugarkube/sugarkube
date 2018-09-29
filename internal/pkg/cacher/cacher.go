@@ -50,7 +50,7 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 	// create a directory to cache all kapps in this manifest in
 	manifestCacheDir := GetManifestCachePath(cacheDir, manifest)
 
-	log.Logger.Infof("Creating manifest cache dir: %s", manifestCacheDir)
+	log.Logger.Infof("Creating manifest cache dir '%s'", manifestCacheDir)
 	err := os.MkdirAll(manifestCacheDir, 0755)
 	if err != nil {
 		return errors.WithStack(err)
@@ -61,13 +61,13 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 		// build a directory path for the kapp in the manifest cache directory
 		kappObj.SetCacheDir(cacheDir)
 
-		log.Logger.Infof("Caching kapp: %s", kappObj.FullyQualifiedId())
+		log.Logger.Infof("Caching kapp '%s'", kappObj.FullyQualifiedId())
 		log.Logger.Debugf("Kapp to cache: %#v", kappObj)
 
 		// build a directory path for the kapp's .sugarkube cache directory
 		sugarkubeCacheDir := getKappCachePath(kappObj.CacheDir())
 
-		log.Logger.Debugf("Creating kapp cache dir: %s", sugarkubeCacheDir)
+		log.Logger.Debugf("Creating kapp cache dir '%s'", sugarkubeCacheDir)
 		err := os.MkdirAll(sugarkubeCacheDir, 0755)
 		if err != nil {
 			return errors.WithStack(err)
@@ -89,7 +89,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 
-	log.Logger.Infof("Acquiring sources for manifest: %s", manifest.Id)
+	log.Logger.Infof("Acquiring sources for manifest '%s'", manifest.Id)
 
 	for _, acquirerImpl := range acquirers {
 		go func(a acquirer.Acquirer) {
@@ -101,7 +101,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 			sourceDest := filepath.Join(cacheDir, acquirerId)
 
 			if dryRun {
-				log.Logger.Debugf("Dry run: Would acquire source into: %s", sourceDest)
+				log.Logger.Debugf("Dry run: Would acquire source into '%s'", sourceDest)
 			} else {
 				err := acquirer.Acquire(a, sourceDest)
 				if err != nil {
@@ -148,7 +148,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 		}
 	}
 
-	log.Logger.Infof("Finished acquiring sources for manifest: %s", manifest.Id)
+	log.Logger.Infof("Finished acquiring sources for manifest '%s'", manifest.Id)
 
 	return nil
 }
