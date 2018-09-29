@@ -112,15 +112,21 @@ func (c *updateCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
+	fmt.Fprintf(c.out, "Checking whether the target cluster '%s' is already "+
+		"online...\n", stackConfig.Cluster)
+
 	online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig, providerImpl)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	if !online {
-		log.Logger.Infof("Target cluster is not online. Aborting.")
+		fmt.Fprintln(c.out, "Cluster is already online. Aborting.")
 		return nil
 	}
+
+	fmt.Fprintln(c.out, "Cluster is online. Will update it now (this "+
+		"may take some time...)")
 
 	err = provisioner.Update(provisionerImpl, stackConfig, providerImpl, c.dryRun)
 	if err != nil {
@@ -135,7 +141,7 @@ func (c *updateCmd) run(cmd *cobra.Command, args []string) error {
 			return errors.WithStack(err)
 		}
 
-		log.Logger.Infof("Cluster '%s' is ready for use.", stackConfig.Cluster)
+		fmt.Fprintf(c.out, "Cluster '%s' successfully updated.\n", stackConfig.Cluster)
 	}
 
 	return nil

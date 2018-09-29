@@ -147,6 +147,8 @@ func (c *installCmd) run() error {
 		//actionPlan, err := plan.FromDiff(clusterDiff)
 
 	} else {
+		fmt.Fprintln(c.out, "Planning operations on kapps")
+
 		// force mode, so no need to perform validation. Just create a plan
 		actionPlan, err = plan.Create(stackConfig, c.cacheDir)
 		if err != nil {
@@ -155,22 +157,32 @@ func (c *installCmd) run() error {
 	}
 
 	if !c.oneShot {
+		fmt.Fprintf(c.out, "Running the plan with APPROVED=%#v...\n", c.approved)
+
 		// run the plan either preparing or applying changes
 		err := actionPlan.Run(c.approved, providerImpl, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	} else {
+		fmt.Fprintln(c.out, "Running the plan in a single pass")
+
+		fmt.Fprintln(c.out, "First running the plan with APPROVED=false for "+
+			"kapps to plan their changes...")
 		// one-shot mode, so prepare and apply the plan straight away
 		err = actionPlan.Run(false, providerImpl, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
+
+		fmt.Fprintln(c.out, "Now running with APPROVED=true to actually apply changes...")
 		err = actionPlan.Run(true, providerImpl, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
+
+	fmt.Fprintln(c.out, "Kapp change plan successfully applied")
 
 	return nil
 }
