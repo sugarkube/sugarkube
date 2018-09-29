@@ -26,7 +26,7 @@ import (
 	"io"
 )
 
-type installCmd struct {
+type applyCmd struct {
 	out         io.Writer
 	diffPath    string
 	cacheDir    string
@@ -49,15 +49,15 @@ type installCmd struct {
 	// * exclude manifests / kapps from being processed
 }
 
-func newInstallCmd(out io.Writer) *cobra.Command {
-	c := &installCmd{
+func newApplyCmd(out io.Writer) *cobra.Command {
+	c := &applyCmd{
 		out: out,
 	}
 
 	cmd := &cobra.Command{
-		Use:   "install [cache-dir]",
-		Short: fmt.Sprintf("Install kapps"),
-		Long:  `Install cached kapps into a target cluster.`,
+		Use:   "apply [cache-dir]",
+		Short: fmt.Sprintf("Install/destroy kapps into a cluster"),
+		Long:  `Apply cached kapps to a target cluster according to manifests.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("the path to the kapp cache dir is required")
@@ -92,7 +92,7 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 	return cmd
 }
 
-func (c *installCmd) run() error {
+func (c *applyCmd) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &kapp.StackConfig{
@@ -157,7 +157,7 @@ func (c *installCmd) run() error {
 	}
 
 	if !c.oneShot {
-		fmt.Fprintf(c.out, "Running the plan with APPROVED=%#v...\n", c.approved)
+		fmt.Fprintf(c.out, "Applying the plan with APPROVED=%#v...\n", c.approved)
 
 		// run the plan either preparing or applying changes
 		err := actionPlan.Run(c.approved, providerImpl, c.dryRun)
@@ -165,9 +165,9 @@ func (c *installCmd) run() error {
 			return errors.WithStack(err)
 		}
 	} else {
-		fmt.Fprintln(c.out, "Running the plan in a single pass")
+		fmt.Fprintln(c.out, "Applying the plan in a single pass")
 
-		fmt.Fprintln(c.out, "First running the plan with APPROVED=false for "+
+		fmt.Fprintln(c.out, "First applying the plan with APPROVED=false for "+
 			"kapps to plan their changes...")
 		// one-shot mode, so prepare and apply the plan straight away
 		err = actionPlan.Run(false, providerImpl, c.dryRun)

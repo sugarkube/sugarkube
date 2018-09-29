@@ -32,7 +32,7 @@ func NewKappsCmds(out io.Writer) *cobra.Command {
 
 	cmd.AddCommand(
 		newTemplateCmd(out),
-		newInstallCmd(out),
+		newApplyCmd(out),
 	)
 
 	cmd.Aliases = []string{"kapp"}
