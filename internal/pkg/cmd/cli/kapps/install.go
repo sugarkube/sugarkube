@@ -107,7 +107,7 @@ func (c *installCmd) run() error {
 	}
 
 	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
-		c.stackFile, cliStackConfig)
+		c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -27,6 +27,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io"
 	"io/ioutil"
+	"path/filepath"
 )
 
 type createCmd struct {
@@ -87,7 +88,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
-		c.stackFile, cliStackConfig)
+		c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -110,19 +111,29 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		cacheDir = tempDir
 	}
 
-	log.Logger.Debugf("Kapps validated. Caching manifests into %s...", cacheDir)
+	absCacheDir, err := filepath.Abs(cacheDir)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	log.Logger.Debugf("Kapps validated. Caching manifests into %s...", absCacheDir)
+
+	// don't use the abs cache path here to keep the output simpler
+	fmt.Fprintf(c.out, "Caching kapps into '%s'... ", cacheDir)
 
 	for _, manifest := range stackConfig.Manifests {
-		err := cacher.CacheManifest(manifest, cacheDir, c.dryRun)
+		err := cacher.CacheManifest(manifest, absCacheDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
 
-	log.Logger.Infof("Manifests cached to: %s", cacheDir)
+	fmt.Fprintf(c.out, "done\n")
+
+	log.Logger.Infof("Manifests cached to: %s", absCacheDir)
 
 	if !c.skipTemplating {
-		log.Logger.Info("Rendering templates for kapps...")
+		fmt.Fprint(c.out, "Rendering templates for kapps... ")
 
 		// template kapps
 		candidateKapps := map[string]kapp.Kapp{}
@@ -133,14 +144,18 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		err = kapps.RenderTemplates(candidateKapps, c.cacheDir, stackConfig, providerImpl,
+		err = kapps.RenderTemplates(candidateKapps, absCacheDir, stackConfig, providerImpl,
 			c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
+
+		fmt.Fprintf(c.out, "done\n")
 	} else {
-		log.Logger.Info("Skipping rendering templates for kapps")
+		fmt.Fprintln(c.out, "Skipping rendering templates for kapps")
 	}
+
+	fmt.Fprintf(c.out, "Kapps successfully cached into '%s'\n", absCacheDir)
 
 	return nil
 }

@@ -107,7 +107,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	stackConfig, providerImpl, provisionerImpl, err := utils.ProcessCliArgs(c.stackName,
-		c.stackFile, cliStackConfig)
+		c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}

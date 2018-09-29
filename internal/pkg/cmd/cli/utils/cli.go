@@ -17,17 +17,19 @@
 package utils
 
 import (
+	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
+	"io"
 )
 
 // Loads a stack config from a file
 func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.StackConfig,
-) (*kapp.StackConfig, provider.Provider, provisioner.Provisioner, error) {
+	out io.Writer) (*kapp.StackConfig, provider.Provider, provisioner.Provisioner, error) {
 
 	stackConfig, err := MaybeLoadStackConfig(stackName, stackFile)
 	if err != nil {
@@ -52,6 +54,14 @@ func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.Sta
 	if err != nil {
 		return nil, nil, nil, errors.WithStack(err)
 	}
+
+	numKaps := 0
+	for _, manifest := range stackConfig.Manifests {
+		numKaps += len(manifest.Kapps)
+	}
+
+	fmt.Fprintf(out, "Successfully loaded stack config containing %d "+
+		"manifest(s) and %d kapps in total.\n", len(stackConfig.Manifests), numKaps)
 
 	return stackConfig, providerImpl, provisionerImpl, nil
 }
