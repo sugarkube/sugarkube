@@ -98,6 +98,7 @@ func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, providerImpl p
 		sc.OnlineTimeout)
 
 	clusterWasOffline := false
+	offlineInfoMessageShown := false
 
 	timeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
 	for time.Now().Before(timeoutTime) {
@@ -111,7 +112,15 @@ func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, providerImpl p
 			break
 		} else {
 			clusterWasOffline = true
-			log.Logger.Info("Cluster isn't online. Sleeping...")
+
+			// only show this info message once to avoid noisy logs
+			if !offlineInfoMessageShown {
+				log.Logger.Infof("Cluster isn't online. Will keep retrying "+
+					"for %d seconds...", sc.OnlineTimeout)
+				offlineInfoMessageShown = true
+			}
+
+			log.Logger.Debug("Cluster isn't online. Sleeping...")
 			time.Sleep(time.Duration(5) * time.Second)
 		}
 	}

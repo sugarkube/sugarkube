@@ -70,13 +70,18 @@ func (k *Kapp) SetManifest(manifest *Manifest) {
 		log.Logger.Fatalf("Can't associate nil manifest with kapp")
 	}
 
-	log.Logger.Debugf("Setting manifest for kapp %s to %#v", k.Id, manifest)
+	log.Logger.Debugf("Setting manifest for kapp %s to %#v",
+		k.FullyQualifiedId(), manifest)
 	k.manifest = manifest
 }
 
 // Returns the fully-qualified ID of a kapp
 func (k Kapp) FullyQualifiedId() string {
-	return strings.Join([]string{k.manifest.Id, k.Id}, ":")
+	if k.manifest == nil {
+		return k.Id
+	} else {
+		return strings.Join([]string{k.manifest.Id, k.Id}, ":")
+	}
 }
 
 // Returns the physical path to this kapp in a cache
@@ -101,7 +106,7 @@ func (k Kapp) CacheDir() string {
 		cacheDir = absCacheDir
 	} else {
 		log.Logger.Infof("No cache dir has been set on kapp. Cache dir will " +
-			"not be made absolute.")
+			"not be converted to an absolute path.")
 	}
 
 	return cacheDir

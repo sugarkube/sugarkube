@@ -122,7 +122,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	log.Logger.Infof("Manifests cached to: %s", cacheDir)
 
 	if !c.skipTemplating {
-		log.Logger.Debug("Templating kapps...")
+		log.Logger.Info("Rendering templates for kapps...")
 
 		// template kapps
 		candidateKapps := map[string]kapp.Kapp{}
@@ -139,7 +139,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 			return errors.WithStack(err)
 		}
 	} else {
-		log.Logger.Info("Skipping templating kapps")
+		log.Logger.Info("Skipping rendering templates for kapps")
 	}
 
 	return nil

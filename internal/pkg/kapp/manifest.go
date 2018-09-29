@@ -62,7 +62,7 @@ func SetManifestDefaults(manifest *Manifest) {
 // todo - change this to use an acquirer. Use the ID defined in the manifest
 // settings YAML, or default to the manifest file basename.
 func ParseManifestFile(path string) (*Manifest, error) {
-	log.Logger.Debugf("Parsing manifest: %s", path)
+	log.Logger.Infof("Parsing manifest: %s", path)
 
 	data := map[string]interface{}{}
 	err := vars.LoadYamlFile(path, &data)

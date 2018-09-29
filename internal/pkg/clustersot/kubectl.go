@@ -48,7 +48,7 @@ func (c KubeCtlClusterSot) isOnline(sc *kapp.StackConfig, providerImpl provider.
 		map[string]string{}, &stdoutBuf, &stderrBuf, "", 30, false)
 	if err != nil {
 		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
-			log.Logger.Debug("Cluster isn't online yet - kubectl not getting results")
+			log.Logger.Info("Cluster isn't online yet - kubectl not getting results")
 			return false, nil
 		}
 

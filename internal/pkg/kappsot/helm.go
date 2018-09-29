@@ -106,7 +106,7 @@ func (s HelmKappSot) isInstalled(name string, version string) (bool, error) {
 		}
 	}
 
-	log.Logger.Debugf("Chart '%s' isn't installed", chart)
+	log.Logger.Infof("Chart '%s' isn't installed", chart)
 
 	return false, nil
 }

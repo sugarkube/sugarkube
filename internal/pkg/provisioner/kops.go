@@ -82,6 +82,7 @@ func (p KopsProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 func (p KopsProvisioner) clusterConfigExists(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 
 	providerVars := provider.GetVars(providerImpl)
+	log.Logger.Info("Checking if a Kops cluster config already exists...")
 	log.Logger.Debugf("Checking if a Kops cluster config exists for values: %#v", providerVars)
 
 	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
@@ -106,7 +107,7 @@ func (p KopsProvisioner) clusterConfigExists(sc *kapp.StackConfig, providerImpl 
 		}
 
 		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
-			log.Logger.Debug("Cluster config doesn't exist")
+			log.Logger.Info("Kops cluster config doesn't exist")
 			return false, nil
 		} else {
 			return false, errors.Wrap(err, "Error fetching kops clusters")
@@ -264,7 +265,7 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	log.Logger.Debug("Downloading config for kops cluster...")
+	log.Logger.Info("Downloading config for kops cluster...")
 
 	err = utils.ExecCommand(KOPS_PATH, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
@@ -347,7 +348,7 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 		log.Logger.Info("Kops cluster config replaced.")
 	}
 
-	log.Logger.Debug("Patching instance group configs...")
+	log.Logger.Info("Patching instance group configs...")
 
 	igSpecs := specs[KOPS_INSTANCE_GROUPS_KEY].(map[interface{}]interface{})
 
@@ -439,7 +440,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig *KopsConfig, instanceGrou
 
 	// replace the cluster config
 
-	log.Logger.Debugf("Replacing config of Kops instance group %s...", instanceGroupName)
+	log.Logger.Infof("Replacing config of Kops instance group %s...", instanceGroupName)
 	args = []string{
 		"replace",
 		"-f",
@@ -455,7 +456,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig *KopsConfig, instanceGrou
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Infof("Successfully replaced config of instance group %s", instanceGroupName)
+	log.Logger.Infof("Successfully replaced config of instance group '%s'", instanceGroupName)
 
 	return nil
 }

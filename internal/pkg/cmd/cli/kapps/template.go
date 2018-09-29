@@ -162,7 +162,7 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 		candidateKappIds = append(candidateKappIds, k)
 	}
 
-	log.Logger.Debugf("Templating kapps: %s", strings.Join(candidateKappIds, ", "))
+	log.Logger.Debugf("Rendering templates for kapps: %s", strings.Join(candidateKappIds, ", "))
 
 	stackConfigMap := stackConfig.AsMap()
 	// convert the map to the appropriate type
@@ -220,14 +220,14 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	cacheDir string, dryRun bool) error {
 
 	if len(kappObj.Templates) == 0 {
-		log.Logger.Debugf("No templates to generate for kapp '%s'",
+		log.Logger.Infof("No templates to generate for kapp '%s'",
 			kappObj.FullyQualifiedId())
 		return nil
 	}
 
 	kappObj.SetCacheDir(cacheDir)
 
-	log.Logger.Debugf("Rendering templates for kapp '%s'",
+	log.Logger.Infof("Rendering templates for kapp '%s'",
 		kappObj.FullyQualifiedId())
 
 	mergedVars := map[string]interface{}{}
@@ -299,12 +299,9 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 
 		// check whether the dest path exists
 		if _, err := os.Stat(destPath); err == nil {
-			log.Logger.Infof("Rendering template '%s' for kapp '%s'. "+
-				"Destination path '%s' already exists. File will be overwritten.",
-				templateSource, kappObj.Id, destPath)
-		} else {
-			log.Logger.Infof("Rendering template '%s' for kapp '%s' to %s ",
-				templateSource, kappObj.Id, destPath)
+			log.Logger.Infof("Template destination path '%s' exists. "+
+				"File will be overwritten by rendered template '%s' for kapp '%s'",
+				destPath, templateSource, kappObj.Id)
 		}
 
 		var outBuf bytes.Buffer
@@ -319,7 +316,7 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 				"would be written to '%s' rendered as:\n%s", templateSource,
 				kappObj.Id, destPath, outBuf.String())
 		} else {
-			log.Logger.Debugf("Writing rendered template '%s' for kapp "+
+			log.Logger.Infof("Writing rendered template '%s' for kapp "+
 				"'%s' to '%s'", templateSource, kappObj.Id, destPath)
 			err := ioutil.WriteFile(destPath, outBuf.Bytes(), 0644)
 			if err != nil {

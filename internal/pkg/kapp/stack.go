@@ -86,7 +86,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 		return nil, errors.New(fmt.Sprintf("No stack called '%s' found in stack file %s", name, path))
 	}
 
-	log.Logger.Debugf("Loaded stack '%s' from file '%s'", name, path)
+	log.Logger.Infof("Loaded stack '%s' from file '%s'", name, path)
 
 	// marshal the data we want so we can unmarshal it again into a struct
 	stackConfigBytes, err := yaml.Marshal(stackConfig)
@@ -117,7 +117,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
 	// at this point stack.Manifest only contains a list of URIs. We need to
 	// acquire and parse them.
-	log.Logger.Debug("Parsing manifests")
+	log.Logger.Info("Parsing manifests...")
 
 	// todo - this is duplicated with some changes in manifest.ParseManifests.
 	// They need centralising.

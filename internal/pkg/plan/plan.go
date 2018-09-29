@@ -113,6 +113,7 @@ func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) e
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 
+	log.Logger.Info("Applying plan...")
 	log.Logger.Debugf("Applying plan: %#v", p)
 
 	for i, tranche := range p.tranche {
@@ -173,7 +174,7 @@ func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) e
 				return errors.Wrapf(err, "Error processing kapp goroutine "+
 					"in tranche %d of plan", i+1)
 			case <-doneCh:
-				log.Logger.Debugf("%d kapp(s) successfully processed in tranche %d",
+				log.Logger.Infof("%d kapp(s) successfully processed in tranche %d",
 					success+1, i+1)
 			}
 		}
@@ -195,7 +196,8 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 		dryRun := job.dryRun
 
 		kappRootDir := kappObj.CacheDir()
-		log.Logger.Debugf("Processing kapp '%s' in %s", kappObj.Id, kappRootDir)
+		log.Logger.Infof("Processing kapp '%s' in %s", kappObj.FullyQualifiedId(),
+			kappRootDir)
 
 		_, err := os.Stat(kappRootDir)
 		if err != nil {

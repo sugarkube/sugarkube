@@ -50,7 +50,7 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 	// create a directory to cache all kapps in this manifest in
 	manifestCacheDir := GetManifestCachePath(cacheDir, manifest)
 
-	log.Logger.Debugf("Creating manifest cache dir: %s", manifestCacheDir)
+	log.Logger.Infof("Creating manifest cache dir: %s", manifestCacheDir)
 	err := os.MkdirAll(manifestCacheDir, 0755)
 	if err != nil {
 		return errors.WithStack(err)
@@ -61,7 +61,8 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 		// build a directory path for the kapp in the manifest cache directory
 		kappObj.SetCacheDir(cacheDir)
 
-		log.Logger.Debugf("Caching kapp: %#v", kappObj)
+		log.Logger.Infof("Caching kapp: %s", kappObj.FullyQualifiedId())
+		log.Logger.Debugf("Kapp to cache: %#v", kappObj)
 
 		// build a directory path for the kapp's .sugarkube cache directory
 		sugarkubeCacheDir := getKappCachePath(kappObj.CacheDir())
@@ -88,7 +89,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 
-	log.Logger.Debugf("Acquiring sources for manifest: %s", manifest.Id)
+	log.Logger.Infof("Acquiring sources for manifest: %s", manifest.Id)
 
 	for _, acquirerImpl := range acquirers {
 		go func(a acquirer.Acquirer) {
@@ -142,12 +143,12 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 			return errors.Wrapf(err, "Error running acquirer in goroutine "+
 				"for manifest '%s'", manifest.Id)
 		case <-doneCh:
-			log.Logger.Debugf("%d acquirer(s) successfully completed for manifest '%s'",
+			log.Logger.Infof("%d acquirer(s) successfully completed for manifest '%s'",
 				success+1, manifest.Id)
 		}
 	}
 
-	log.Logger.Debugf("Finished acquiring sources for manifest: %s", manifest.Id)
+	log.Logger.Infof("Finished acquiring sources for manifest: %s", manifest.Id)
 
 	return nil
 }

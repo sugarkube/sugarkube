@@ -198,7 +198,8 @@ func (p *Parameteriser) GetCliArgs(configSubstrings []string) (string, error) {
 		cliArg = strings.Join([]string{argName, joinedValues}, "=")
 	}
 
-	log.Logger.Debugf("Returning CLI arg for kapp %s: %s", p.kappObj.Id, cliArg)
+	log.Logger.Debugf("Returning CLI arg for kapp %s: %s",
+		p.kappObj.FullyQualifiedId(), cliArg)
 
 	return cliArg, nil
 }

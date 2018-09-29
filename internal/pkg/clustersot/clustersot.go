@@ -54,7 +54,7 @@ func IsOnline(c ClusterSot, sc *kapp.StackConfig, providerImpl provider.Provider
 	}
 
 	if online {
-		log.Logger.Debug("Cluster is online. Updating cluster status.")
+		log.Logger.Info("Cluster is online. Updating cluster status.")
 		sc.Status.IsOnline = true
 	}
 
@@ -73,7 +73,7 @@ func IsReady(c ClusterSot, sc *kapp.StackConfig, providerImpl provider.Provider)
 	}
 
 	if ready {
-		log.Logger.Debug("Cluster is ready. Updating cluster status.")
+		log.Logger.Info("Cluster is ready. Updating cluster status.")
 		sc.Status.IsReady = true
 	}
 
