@@ -109,18 +109,28 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 	candidateKapps := map[string]kapp.Kapp{}
 
 	if len(c.includeKapps) > 0 {
+		log.Logger.Debugf("Adding %d kapps to the candidate template set", len(c.includeKapps))
 		candidateKapps, err = getKappsByFullyQualifiedId(c.includeKapps, stackConfig)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	} else {
+		log.Logger.Debugf("Adding all kapps to the candidate template set")
+
+		log.Logger.Debugf("Stack config has %d manifests", len(stackConfig.Manifests))
+
 		// select all kapps
 		for _, manifest := range stackConfig.Manifests {
+			log.Logger.Debugf("Manifest '%s' contains %d kapps", manifest.Id, len(manifest.Kapps))
+
 			for _, manifestKapp := range manifest.Kapps {
 				candidateKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
 			}
 		}
 	}
+
+	log.Logger.Debugf("There are %d candidate kapps for templating (before applying exclusions)",
+		len(candidateKapps))
 
 	if len(c.excludeKapps) > 0 {
 		// delete kapps
@@ -129,6 +139,8 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 			return errors.WithStack(err)
 		}
 
+		log.Logger.Debugf("Excluding %d kapps from the templating set", len(excludedKapps))
+
 		for k, _ := range excludedKapps {
 			if _, ok := candidateKapps[k]; ok {
 				delete(candidateKapps, k)
@@ -136,7 +148,10 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	fmt.Fprintf(c.out, "Rendering templates for %d kapps\n", len(candidateKapps))
+	_, err = fmt.Fprintf(c.out, "Rendering templates for %d kapps\n", len(candidateKapps))
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	err = RenderTemplates(candidateKapps, c.cacheDir, stackConfig, providerImpl,
 		c.dryRun)
@@ -144,7 +159,10 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	fmt.Fprintln(c.out, "Templates successfully rendered")
+	_, err = fmt.Fprintln(c.out, "Templates successfully rendered")
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	return nil
 }
