@@ -56,5 +56,6 @@ func (c *refreshCmd) run(cmd *cobra.Command, args []string) error {
 	// but for now we'll implement it here as a separate command before adding
 	// that flag, if at all.
 
+	panic("Not implemented")
 	return nil
 }
