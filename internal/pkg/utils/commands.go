@@ -38,8 +38,7 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 	stdoutBuf.Reset()
 	stderrBuf.Reset()
 
-	// add any given env vars to the user's current environment
-	strEnvVars := os.Environ()
+	strEnvVars := make([]string, len(envVars))
 	for k, v := range envVars {
 		strEnvVars = append(strEnvVars, strings.Join([]string{k, v}, "="))
 	}
@@ -61,7 +60,7 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 		cmd = exec.Command(command, args...)
 	}
 
-	cmd.Env = strEnvVars
+	cmd.Env = append(os.Environ(), strEnvVars...)
 	cmd.Stdout = stdoutBuf
 	cmd.Stderr = stderrBuf
 
@@ -70,10 +69,12 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 	}
 
 	if dryRun {
-		log.Logger.Infof("Dry run. Would run: %s %s", command, strings.Join(args, " "))
+		log.Logger.Infof("Dry run. Would run: '%s %s' with env vars %s", command,
+			strings.Join(args, " "), strings.TrimSpace(strings.Join(strEnvVars, " ")))
 		return nil
 	} else {
-		log.Logger.Debugf("Executing command: %s %s", command, strings.Join(args, " "))
+		log.Logger.Debugf("Executing command: '%s %s' with env vars %s", command,
+			strings.Join(args, " "), strings.TrimSpace(strings.Join(strEnvVars, " ")))
 	}
 
 	err := cmd.Run()
