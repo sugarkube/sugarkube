@@ -126,6 +126,11 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	var stdoutBuf, stderrBuf bytes.Buffer
 	err = utils.ExecCommand("make", cliArgs, envVars, &stdoutBuf,
 		&stderrBuf, filepath.Dir(makefilePath), 0, dryRun)
+
+	log.Logger.Infof("Stdout: %s", stdoutBuf.String())
+	log.Logger.Infof("Stderr: %s", stderrBuf.String())
+
+	// some commands write to stderr, so we can't just fail if that buffer is non-zero
 	if err != nil {
 		return errors.WithStack(err)
 	}
