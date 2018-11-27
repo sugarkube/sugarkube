@@ -106,7 +106,9 @@ func (p *Parameteriser) GetEnvVars(vars map[string]interface{}) (map[string]stri
 	if p.Name == IMPLEMENTS_HELM {
 		envVars["NAMESPACE"] = p.kappObj.Id
 		envVars["RELEASE"] = p.kappObj.Id
+	}
 
+	if p.Name == IMPLEMENTS_HELM || p.Name == IMPLEMENTS_TERRAFORM {
 		// todo - this is a hack. Need to find a place for things like this and
 		// a generic way of adding them as env vars. Perhaps have a YAML block
 		// called 'installers' or something?
