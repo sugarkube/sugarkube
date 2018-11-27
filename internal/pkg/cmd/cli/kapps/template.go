@@ -171,6 +171,10 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 	stackConfig *kapp.StackConfig, providerImpl provider.Provider, dryRun bool) error {
 
+	if len(kapps) == 0 {
+		return errors.New("No kapps supplied to template function")
+	}
+
 	// make sure the cache dir exists if set
 	if cacheDir != "" {
 		if _, err := os.Stat(cacheDir); err != nil {
@@ -324,6 +328,12 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 			log.Logger.Infof("Template destination path '%s' exists. "+
 				"File will be overwritten by rendered template '%s' for kapp '%s'",
 				destPath, templateSource, kappObj.Id)
+		}
+
+		// check whether the parent directory for dest path exists and return an error if not
+		destDir := filepath.Dir(destPath)
+		if _, err := os.Stat(destDir); os.IsNotExist(err) {
+			return errors.New(fmt.Sprintf("Can't write template to non-existent directory: %s", destDir))
 		}
 
 		var outBuf bytes.Buffer
