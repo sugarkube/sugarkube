@@ -51,5 +51,5 @@ arguments.
 }
 
 func (c *diffCmd) run(cmd *cobra.Command, args []string) error {
-	return nil
+	panic("Not implemented")
 }
