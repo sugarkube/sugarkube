@@ -32,7 +32,6 @@ func NewCacheCmds(out io.Writer) *cobra.Command {
 
 	cmd.AddCommand(
 		newCreateCmd(out),
-		newRefreshCmd(out),
 		newDiffCmd(out),
 	)
 
