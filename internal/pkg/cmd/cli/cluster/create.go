@@ -112,8 +112,11 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	fmt.Fprintf(c.out, "Checking whether the target cluster '%s' is already "+
+	_, err = fmt.Fprintf(c.out, "Checking whether the target cluster '%s' is already "+
 		"online...\n", stackConfig.Cluster)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig, providerImpl)
 	if err != nil {
@@ -121,12 +124,19 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	if online && !c.dryRun {
-		fmt.Fprintln(c.out, "Cluster is already online. Aborting.")
+		_, err = fmt.Fprintln(c.out, "Cluster is already online. Aborting.")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
 		return nil
 	}
 
-	fmt.Fprintln(c.out, "Cluster is not online. Will create it now (this "+
+	_, err = fmt.Fprintln(c.out, "Cluster is not online. Will create it now (this "+
 		"may take some time...)")
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	err = provisioner.Create(provisionerImpl, stackConfig, providerImpl, c.dryRun)
 	if err != nil {
@@ -141,7 +151,10 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 			return errors.WithStack(err)
 		}
 
-		fmt.Fprintf(c.out, "Cluster '%s' successfully created.\n", stackConfig.Cluster)
+		_, err = fmt.Fprintf(c.out, "Cluster '%s' successfully created.\n", stackConfig.Cluster)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil
