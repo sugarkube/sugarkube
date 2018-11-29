@@ -47,13 +47,21 @@ func getKappCachePath(kappRootPath string) string {
 // Build a cache for a manifest into a directory
 func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 
+	var err error
+
 	// create a directory to cache all kapps in this manifest in
 	manifestCacheDir := GetManifestCachePath(cacheDir, manifest)
 
-	log.Logger.Infof("Creating manifest cache dir '%s'", manifestCacheDir)
-	err := os.MkdirAll(manifestCacheDir, 0755)
-	if err != nil {
-		return errors.WithStack(err)
+	if _, err := os.Stat(manifestCacheDir); err != nil {
+		if os.IsNotExist(err) {
+			log.Logger.Infof("Creating manifest cache dir '%s'", manifestCacheDir)
+			err := os.MkdirAll(manifestCacheDir, 0755)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		} else {
+			return errors.Wrapf(err, "Error creating manifest dir '%s'", manifestCacheDir)
+		}
 	}
 
 	// acquire each kapp and cache it
@@ -67,10 +75,16 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 		// build a directory path for the kapp's .sugarkube cache directory
 		sugarkubeCacheDir := getKappCachePath(kappObj.CacheDir())
 
-		log.Logger.Debugf("Creating kapp cache dir '%s'", sugarkubeCacheDir)
-		err := os.MkdirAll(sugarkubeCacheDir, 0755)
-		if err != nil {
-			return errors.WithStack(err)
+		if _, err := os.Stat(sugarkubeCacheDir); err != nil {
+			if os.IsNotExist(err) {
+				log.Logger.Debugf("Creating kapp cache dir '%s'", sugarkubeCacheDir)
+				err := os.MkdirAll(sugarkubeCacheDir, 0755)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+			} else {
+				return errors.Wrapf(err, "Error creating cache dir '%s'", sugarkubeCacheDir)
+			}
 		}
 
 		err = acquireSource(manifest, kappObj.Sources, kappObj.CacheDir(), sugarkubeCacheDir, dryRun)
@@ -96,6 +110,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 			acquirerId, err := a.Id()
 			if err != nil {
 				errCh <- errors.Wrap(err, "Invalid acquirer ID")
+				return
 			}
 
 			sourceDest := filepath.Join(cacheDir, acquirerId)
@@ -106,6 +121,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 				err := acquirer.Acquire(a, sourceDest)
 				if err != nil {
 					errCh <- errors.WithStack(err)
+					return
 				}
 			}
 
@@ -117,17 +133,34 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 
 			symLinkTarget := filepath.Join(rootDir, a.Name())
 
-			if dryRun {
-				log.Logger.Debugf("Dry run. Would symlink cached source %s to %s", sourcePath, symLinkTarget)
-			} else {
-				if _, err := os.Stat(filepath.Join(rootDir, sourcePath)); err != nil {
-					errCh <- errors.Wrapf(err, "Symlink source '%s' doesn't exist", sourcePath)
-				}
+			var symLinksExist bool
 
-				log.Logger.Debugf("Symlinking cached source %s to %s", sourcePath, symLinkTarget)
-				err := os.Symlink(sourcePath, symLinkTarget)
-				if err != nil {
-					errCh <- errors.Wrapf(err, "Error symlinking source")
+			if _, err := os.Stat(symLinkTarget); err != nil {
+				if os.IsNotExist(err) {
+					log.Logger.Debugf("Symlinks don't exist at '%s'. Will create...", symLinkTarget)
+					symLinksExist = false
+				} else {
+					errCh <- errors.WithStack(err)
+					return
+				}
+			} else {
+				log.Logger.Debugf("Symlinks already exist at '%s'", symLinkTarget)
+				symLinksExist = true
+			}
+
+			if !symLinksExist {
+				if dryRun {
+					log.Logger.Debugf("Dry run. Would symlink cached source %s to %s", sourcePath, symLinkTarget)
+				} else {
+					if _, err := os.Stat(filepath.Join(rootDir, sourcePath)); err != nil {
+						errCh <- errors.Wrapf(err, "Symlink source '%s' doesn't exist", sourcePath)
+					}
+
+					log.Logger.Debugf("Symlinking cached source %s to %s", sourcePath, symLinkTarget)
+					err := os.Symlink(sourcePath, symLinkTarget)
+					if err != nil {
+						errCh <- errors.Wrapf(err, "Error symlinking source")
+					}
 				}
 			}
 

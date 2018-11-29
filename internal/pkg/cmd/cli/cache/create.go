@@ -30,11 +30,10 @@ import (
 )
 
 type createCmd struct {
-	out       io.Writer
-	dryRun    bool
-	stackName string
-	stackFile string
-	//manifests cmd.Files
+	out            io.Writer
+	dryRun         bool
+	stackName      string
+	stackFile      string
 	cacheDir       string
 	skipTemplating bool
 }
@@ -63,11 +62,6 @@ templates defined by kapps.`,
 	f.BoolVar(&c.skipTemplating, "skip-templating", false, "don't render templates for kapps")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
-	// commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
-	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
-
-	// todo - add a flag to automatically template kapps (or perhaps more usefully do that
-	// by default and create a flag to prevent kapps being automatically templated)
 
 	return cmd
 }
@@ -76,20 +70,8 @@ func (c *createCmd) run() error {
 
 	log.Logger.Debugf("Got CLI args: %#v", c)
 
-	//stackConfig, err := utils.MaybeLoadStackConfig(c.stackName, c.stackFile)
-	//if err != nil {
-	//	return errors.WithStack(err)
-	//}
-
-	//cliManifests, err := kapp.ParseManifests(c.manifests)
-	//if err != nil {
-	//	return errors.WithStack(err)
-	//}
-
 	// CLI args override configured args, so merge them in
-	cliStackConfig := &kapp.StackConfig{
-		//Manifests: cliManifests,
-	}
+	cliStackConfig := &kapp.StackConfig{}
 
 	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
 		c.stackFile, cliStackConfig, c.out)

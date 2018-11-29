@@ -69,12 +69,12 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 	}
 
 	if dryRun {
-		log.Logger.Infof("Dry run. Would run: '%s %s' with env vars %s", command,
-			strings.Join(args, " "), strings.TrimSpace(strings.Join(strEnvVars, " ")))
+		log.Logger.Infof("Dry run. Would run: '%s %s' in '%s' with env vars %s", command,
+			strings.Join(args, " "), cmd.Dir, strings.TrimSpace(strings.Join(strEnvVars, " ")))
 		return nil
 	} else {
-		log.Logger.Debugf("Executing command: '%s %s' with env vars %s", command,
-			strings.Join(args, " "), strings.TrimSpace(strings.Join(strEnvVars, " ")))
+		log.Logger.Debugf("Executing command: '%s %s' in '%s' with env vars %s", command,
+			strings.Join(args, " "), cmd.Dir, strings.TrimSpace(strings.Join(strEnvVars, " ")))
 	}
 
 	err := cmd.Run()

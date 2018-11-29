@@ -104,6 +104,30 @@ func (a GitAcquirer) IncludeValues() bool {
 // Acquires kapps via git and saves them to `dest`.
 func (a GitAcquirer) acquire(dest string) error {
 
+	var destExists bool
+
+	if _, err := os.Stat(dest); err != nil {
+		if os.IsNotExist(err) {
+			log.Logger.Debugf("Destination directory '%s' doesn't exist... will create it", dest)
+			destExists = false
+		} else {
+			return errors.WithStack(err)
+		}
+	} else {
+		log.Logger.Debugf("Destination directory '%s' already exists... will update it", dest)
+		destExists = true
+	}
+
+	if destExists {
+		return a.update(dest)
+	} else {
+		return a.clone(dest)
+	}
+}
+
+// Performs a sparse checkout for when the destination directory doesn't already exist
+func (a GitAcquirer) clone(dest string) error {
+
 	log.Logger.Infof("Cloning git source '%s' into '%s'", a.uri, dest)
 
 	// create the dest dir if it doesn't exist
@@ -157,6 +181,24 @@ func (a GitAcquirer) acquire(dest string) error {
 
 	// we could optionally verify tags with:
 	// git tag -v a.branch 2>&1 >/dev/null | grep -E '{{ trusted_gpg_keys|join('|') }}'
+
+	return nil
+}
+
+// Pulls a previously checked out source to update it
+func (a GitAcquirer) update(dest string) error {
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+
+	err := utils.ExecCommand(GIT_PATH, []string{"pull", "origin", a.branch},
+		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
+
+	log.Logger.Debugf("Stdout=%s", stdoutBuf.String())
+	log.Logger.Debugf("Stderr=%s", stderrBuf.String())
+
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	return nil
 }
