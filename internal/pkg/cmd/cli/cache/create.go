@@ -26,7 +26,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io"
-	"io/ioutil"
 	"path/filepath"
 )
 
@@ -46,11 +45,17 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "create [flags]",
+		Use:   "create [cache-dir]",
 		Short: fmt.Sprintf("Create kapp caches"),
-		Long: `Create a local kapps cache for a given manifest(s), and renders any 
+		Long: `Create/update a local kapps cache for a given manifest(s), and renders any 
 templates defined by kapps.`,
-		RunE: c.run,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return errors.New("the path to the kapp cache dir is required")
+			}
+			c.cacheDir = args[0]
+			return c.run()
+		},
 	}
 
 	f := cmd.Flags()
@@ -58,7 +63,6 @@ templates defined by kapps.`,
 	f.BoolVar(&c.skipTemplating, "skip-templating", false, "don't render templates for kapps")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
-	f.StringVarP(&c.cacheDir, "dir", "d", "", "Directory to build the cache in. A temp directory will be generated if not supplied.")
 	// commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
 	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
 
@@ -68,7 +72,7 @@ templates defined by kapps.`,
 	return cmd
 }
 
-func (c *createCmd) run(cmd *cobra.Command, args []string) error {
+func (c *createCmd) run() error {
 
 	log.Logger.Debugf("Got CLI args: %#v", c)
 
@@ -102,16 +106,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	cacheDir := c.cacheDir
-	if cacheDir == "" {
-		tempDir, err := ioutil.TempDir("", "sugarkube-cache-")
-		if err != nil {
-			return errors.WithStack(err)
-		}
-		cacheDir = tempDir
-	}
-
-	absCacheDir, err := filepath.Abs(cacheDir)
+	absCacheDir, err := filepath.Abs(c.cacheDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -119,7 +114,7 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 	log.Logger.Debugf("Kapps validated. Caching manifests into %s...", absCacheDir)
 
 	// don't use the abs cache path here to keep the output simpler
-	_, err = fmt.Fprintf(c.out, "Caching kapps into '%s'...\n", cacheDir)
+	_, err = fmt.Fprintf(c.out, "Caching kapps into '%s'...\n", c.cacheDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
