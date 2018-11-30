@@ -192,8 +192,32 @@ func (a GitAcquirer) clone(dest string) error {
 func (a GitAcquirer) update(dest string) error {
 
 	var stdoutBuf, stderrBuf bytes.Buffer
+	var err error
 
-	err := utils.ExecCommand(GIT_PATH, []string{"pull", "origin", a.branch},
+	// find out which branch is currently checked out
+	err = utils.ExecCommand(GIT_PATH, []string{"branch", "--format", "%(refname:short)"},
+		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 2, false)
+
+	log.Logger.Debugf("Stdout=%s", stdoutBuf.String())
+	log.Logger.Debugf("Stderr=%s", stderrBuf.String())
+
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	localBranch := strings.TrimSpace(stdoutBuf.String())
+
+	log.Logger.Debugf("Local cache at '%s' already contains branch '%s'. "+
+		"We need '%s'", dest, localBranch, a.branch)
+
+	if localBranch != a.branch {
+		return errors.New(fmt.Sprintf("Error updating the cache. The path "+
+			"at '%s' already contains the branch '%s', but we need to populate it with "+
+			"the branch '%s'. Aborting to prevent losing work.",
+			dest, localBranch, a.branch))
+	}
+
+	err = utils.ExecCommand(GIT_PATH, []string{"pull", "origin", a.branch},
 		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
 
 	log.Logger.Debugf("Stdout=%s", stdoutBuf.String())
