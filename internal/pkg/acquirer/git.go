@@ -211,6 +211,9 @@ func (a GitAcquirer) update(dest string) error {
 		"We need '%s'", dest, localBranch, a.branch)
 
 	if localBranch != a.branch {
+		// todo - work out if there's anything we can do to help (a flag to force overwriting,
+		// or a flag to just go ahead and switch? We could do a 'git status' and ignore the
+		// different branches if there are no modified files, etc.)
 		return errors.New(fmt.Sprintf("Error updating the cache. The path "+
 			"at '%s' already contains the branch '%s', but we need to populate it with "+
 			"the branch '%s'. Aborting to prevent losing work.",
