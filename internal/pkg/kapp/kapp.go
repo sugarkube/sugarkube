@@ -87,6 +87,7 @@ func (k Kapp) FullyQualifiedId() string {
 // Returns the physical path to this kapp in a cache
 func (k Kapp) CacheDir() string {
 	if k.manifest == nil {
+		// todo - remove panics in favour of returning errors like everywhere else
 		panic("Kapp manifest not set")
 	}
 	if k.Id == "" {

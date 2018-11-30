@@ -77,13 +77,16 @@ func (a GitAcquirer) Id() (string, error) {
 				"character in URI %s", a.uri))
 	}
 
+	// this doesn't contain the branch because we don't want to create complications
+	// in case users create their own branches (e.g. if we've checked out into a
+	// directory containing 'master' and they create a feature branch the dir name
+	// will be misleading).
 	orgRepo := strings.SplitAfter(a.uri, ":")
 	hyphenatedOrg := strings.Replace(orgRepo[1], "/", "-", -1)
 	hyphenatedOrg = strings.TrimSuffix(hyphenatedOrg, ".git")
-	hyphenatedBranc := strings.Replace(a.branch, "/", "-", -1)
 	hyphenatedName := strings.Replace(a.name, "/", "-", -1)
 
-	return strings.Join([]string{hyphenatedOrg, hyphenatedBranc, hyphenatedName}, "-"), nil
+	return strings.Join([]string{hyphenatedOrg, hyphenatedName}, "-"), nil
 }
 
 // return the name

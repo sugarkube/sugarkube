@@ -38,7 +38,7 @@ func TestId(t *testing.T) {
 				"master",
 				"stable/wordpress",
 				""),
-			expectValues: "helm-charts-master-wordpress",
+			expectValues: "helm-charts-wordpress",
 		},
 		{
 			name: "good_path_leading_trailing_slash",
@@ -49,7 +49,7 @@ func TestId(t *testing.T) {
 				"master",
 				"/stable/wordpress/",
 				""),
-			expectValues: "helm-charts-master-wordpress",
+			expectValues: "helm-charts-wordpress",
 		},
 		{
 			name: "good_name_in_id",
@@ -60,7 +60,7 @@ func TestId(t *testing.T) {
 				"master",
 				"examples/values/wordpress/site1/",
 				""),
-			expectValues: "sugarkube-sugarkube-master-site1-values",
+			expectValues: "sugarkube-sugarkube-site1-values",
 		},
 		{
 			name: "error_invalid_uri",
