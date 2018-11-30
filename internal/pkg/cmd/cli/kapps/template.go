@@ -117,10 +117,10 @@ func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
 	} else {
 		log.Logger.Debugf("Adding all kapps to the candidate template set")
 
-		log.Logger.Debugf("Stack config has %d manifests", len(stackConfig.Manifests))
+		log.Logger.Debugf("Stack config has %d manifests", len(stackConfig.AllManifests()))
 
 		// select all kapps
-		for _, manifest := range stackConfig.Manifests {
+		for _, manifest := range stackConfig.AllManifests() {
 			log.Logger.Debugf("Manifest '%s' contains %d kapps", manifest.Id, len(manifest.Kapps))
 
 			for _, manifestKapp := range manifest.Kapps {
@@ -224,7 +224,7 @@ func getKappsByFullyQualifiedId(kapps []string, stackConfig *kapp.StackConfig) (
 		manifestId := splitKappId[0]
 		kappId := splitKappId[1]
 
-		for _, manifest := range stackConfig.Manifests {
+		for _, manifest := range stackConfig.AllManifests() {
 			if manifestId != manifest.Id {
 				continue
 			}

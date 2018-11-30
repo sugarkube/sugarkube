@@ -41,7 +41,10 @@ func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.Sta
 	//	return errors.WithStack(err)
 	//}
 
-	mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
+	err = mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
+	if err != nil {
+		return nil, nil, nil, errors.WithStack(err)
+	}
 
 	log.Logger.Debugf("Final stack config: %#v", stackConfig)
 
@@ -55,13 +58,17 @@ func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.Sta
 		return nil, nil, nil, errors.WithStack(err)
 	}
 
-	numKaps := 0
-	for _, manifest := range stackConfig.Manifests {
-		numKaps += len(manifest.Kapps)
+	numKapps := 0
+	for _, manifest := range stackConfig.AllManifests() {
+		numKapps += len(manifest.Kapps)
 	}
 
-	fmt.Fprintf(out, "Successfully loaded stack config containing %d "+
-		"manifest(s) and %d kapps in total.\n", len(stackConfig.Manifests), numKaps)
+	_, err = fmt.Fprintf(out, "Successfully loaded stack config containing %d "+
+		"init manifest(s), %d manifest(s) and %d kapps in total.\n",
+		len(stackConfig.InitManifests), len(stackConfig.Manifests), numKapps)
+	if err != nil {
+		return nil, nil, nil, errors.WithStack(err)
+	}
 
 	return stackConfig, providerImpl, provisionerImpl, nil
 }

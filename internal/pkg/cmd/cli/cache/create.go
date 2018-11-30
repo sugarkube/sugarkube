@@ -79,9 +79,10 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Loaded %d manifest(s)", len(stackConfig.Manifests))
+	log.Logger.Debugf("Loaded %d init manifest(s) and %d manifest(s)",
+		len(stackConfig.InitManifests), len(stackConfig.Manifests))
 
-	for _, manifest := range stackConfig.Manifests {
+	for _, manifest := range stackConfig.AllManifests() {
 		err = kapp.ValidateManifest(&manifest)
 		if err != nil {
 			return errors.WithStack(err)
@@ -101,7 +102,7 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	for _, manifest := range stackConfig.Manifests {
+	for _, manifest := range stackConfig.AllManifests() {
 		err := cacher.CacheManifest(manifest, absCacheDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
@@ -124,7 +125,7 @@ func (c *createCmd) run() error {
 		// template kapps
 		candidateKapps := map[string]kapp.Kapp{}
 
-		for _, manifest := range stackConfig.Manifests {
+		for _, manifest := range stackConfig.AllManifests() {
 			for _, manifestKapp := range manifest.Kapps {
 				candidateKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
 			}
