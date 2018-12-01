@@ -207,10 +207,10 @@ func (a GitAcquirer) update(dest string) error {
 
 	localBranch := strings.TrimSpace(stdoutBuf.String())
 
-	log.Logger.Debugf("Local cache at '%s' already contains branch '%s'. "+
-		"We need '%s'", dest, localBranch, a.branch)
-
-	if localBranch != a.branch {
+	if localBranch == a.branch {
+		log.Logger.Debugf("Branch '%s' already checked out into local cache at '%s'. Will "+
+			"update it...", localBranch, dest)
+	} else {
 		// todo - work out if there's anything we can do to help (a flag to force overwriting,
 		// or a flag to just go ahead and switch? We could do a 'git status' and ignore the
 		// different branches if there are no modified files, etc.)
