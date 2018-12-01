@@ -23,6 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"path/filepath"
 	"strings"
@@ -63,7 +64,13 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 	absKappRoot := kappObj.CacheDir()
 
-	// create the env vars
+	// load the kapp's own config
+	err = kappObj.Load()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// populate env vars that are always supplied
 	envVars := map[string]string{
 		"KAPP_ROOT": absKappRoot,
 		"APPROVED":  fmt.Sprintf("%v", approved),
@@ -72,49 +79,48 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		"PROVIDER":  stackConfig.Provider,
 	}
 
-	parameterisers, err := identifyKappInterfaces(kappObj, providerImpl)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	// Adds things like `KUBE_CONTEXT`, `NAMESPACE`, `RELEASE`, etc.
-	for _, parameteriser := range parameterisers {
-		pEnvVars, err := parameteriser.GetEnvVars(provider.GetVars(*providerImpl))
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		for k, v := range pEnvVars {
-			envVars[k] = v
-		}
-	}
-
 	// Provider-specific env vars, e.g. the AwsProvider adds REGION
 	for k, v := range provider.GetInstallerVars(i.provider) {
 		upperKey := strings.ToUpper(k)
 		envVars[upperKey] = fmt.Sprintf("%#v", v)
 	}
 
-	// get additional CLI args
-	configSubstrings := []string{
-		stackConfig.Provider,
-		stackConfig.Account, // may be blank depending on the provider
-		stackConfig.Profile,
-		stackConfig.Cluster,
-		stackConfig.Region, // may be blank depending on the provider
-	}
+	mergedKappVars, err := templater.MergeVarsForKapp(kappObj, stackConfig, providerImpl)
+	log.Logger.Debugf("remove this: %#v", mergedKappVars)
 
-	cliArgs := []string{makeTarget}
-	for _, parameteriser := range parameterisers {
-		arg, err := parameteriser.GetCliArgs(configSubstrings)
+	// add the env vars the kapp needs
+	for k, v := range kappObj.Config.EnvVars {
+		upperKey := strings.ToUpper(k)
+
+		// render env var values as templates so they can be populated by vars
+		rendered, err := templater.RenderTemplate(v.(string), mergedKappVars)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		if arg != "" {
-			cliArgs = append(cliArgs, arg)
-		}
+		envVars[upperKey] = rendered
 	}
+
+	// get additional CLI args
+	//configSubstrings := []string{
+	//	stackConfig.Provider,
+	//	stackConfig.Account, // may be blank depending on the provider
+	//	stackConfig.Profile,
+	//	stackConfig.Cluster,
+	//	stackConfig.Region, // may be blank depending on the provider
+	//}
+
+	cliArgs := []string{makeTarget}
+	//for _, parameteriser := range parameterisers {
+	//	arg, err := parameteriser.GetCliArgs(configSubstrings)
+	//	if err != nil {
+	//		return errors.WithStack(err)
+	//	}
+	//
+	//	if arg != "" {
+	//		cliArgs = append(cliArgs, arg)
+	//	}
+	//}
 
 	makefilePath, err := filepath.Abs(makefilePaths[0])
 	if err != nil {

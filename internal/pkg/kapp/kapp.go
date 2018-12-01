@@ -38,10 +38,17 @@ type Template struct {
 	Dest   string
 }
 
+// Populated from the kapp's sugarkube.yaml file
+type Config struct {
+	EnvVars map[string]interface{}
+	Version string
+}
+
 type Kapp struct {
 	Id       string
 	manifest *Manifest
 	cacheDir string
+	Config   Config
 	// if true, this kapp should be present after completing, otherwise it
 	// should be absent. This is here instead of e.g. putting all kapps into
 	// an enclosing struct with 'present' and 'absent' properties so we can

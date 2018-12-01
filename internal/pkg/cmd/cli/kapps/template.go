@@ -19,16 +19,13 @@ package kapps
 import (
 	"bytes"
 	"fmt"
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
-	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -191,17 +188,9 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 
 	log.Logger.Debugf("Rendering templates for kapps: %s", strings.Join(candidateKappIds, ", "))
 
-	stackConfigMap := stackConfig.AsMap()
-	// convert the map to the appropriate type
-	namespacedStackConfigMap := map[string]interface{}{
-		"stack": convert.MapStringStringToMapStringInterface(stackConfigMap),
-	}
-
-	providerVars := provider.GetVars(providerImpl)
-
 	for _, kappObj := range kapps {
-		err := templateKapp(&kappObj, stackConfig, namespacedStackConfigMap,
-			providerVars, cacheDir, dryRun)
+		mergedKappVars, err := templater.MergeVarsForKapp(&kappObj, stackConfig, &providerImpl)
+		err = templateKapp(&kappObj, mergedKappVars, stackConfig, cacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -242,9 +231,10 @@ func getKappsByFullyQualifiedId(kapps []string, stackConfig *kapp.StackConfig) (
 }
 
 // Render templates for an individual kapp
-func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	stackConfigMap map[string]interface{}, providerVarsMap map[string]interface{},
-	cacheDir string, dryRun bool) error {
+func templateKapp(kappObj *kapp.Kapp, mergedKappVars map[string]interface{},
+	stackConfig *kapp.StackConfig, cacheDir string, dryRun bool) error {
+
+	var err error
 
 	if len(kappObj.Templates) == 0 {
 		log.Logger.Debugf("No templates to render for kapp '%s'",
@@ -256,39 +246,6 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 
 	log.Logger.Infof("Rendering templates for kapp '%s'",
 		kappObj.FullyQualifiedId())
-
-	mergedVars := map[string]interface{}{}
-	err := mergo.Merge(&mergedVars, stackConfigMap, mergo.WithOverride)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	err = mergo.Merge(&mergedVars, providerVarsMap, mergo.WithOverride)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	kappMap := kappObj.AsMap()
-	kappVars, err := stackConfig.GetKappVars(kappObj)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	namespacedKappMap := map[string]interface{}{
-		"kapp": convert.MapStringStringToMapStringInterface(kappMap),
-	}
-	err = mergo.Merge(&mergedVars, namespacedKappMap, mergo.WithOverride)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	err = mergo.Merge(&mergedVars, kappVars, mergo.WithOverride)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	yamlData, err := yaml.Marshal(&mergedVars)
-	log.Logger.Debugf("All merged vars:\n%s", yamlData)
 
 	for _, templateDefinition := range kappObj.Templates {
 		templateSource := templateDefinition.Source
@@ -320,7 +277,7 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 			}
 		}
 
-		log.Logger.Debugf("Templating file '%s' with vars: %#v", templateSource, mergedVars)
+		log.Logger.Debugf("Templating file '%s' with vars: %#v", templateSource, mergedKappVars)
 
 		destPath := templateDefinition.Dest
 		if !filepath.IsAbs(destPath) {
@@ -342,7 +299,7 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 
 		var outBuf bytes.Buffer
 
-		err = templater.TemplateFile(templateSource, &outBuf, mergedVars)
+		err = templater.TemplateFile(templateSource, &outBuf, mergedKappVars)
 		if err != nil {
 			return errors.WithStack(err)
 		}
