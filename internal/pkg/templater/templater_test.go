@@ -93,3 +93,25 @@ func TestTemplateFile(t *testing.T) {
 			"Template rendering failed for %s", test.name)
 	}
 }
+
+func TestCustomFunctions(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "test findFiles",
+			input:    `{{ .DefaultVars | mapPrintF "values-%s.yaml" | findFiles | join " " }}`,
+			expected: "Not*implemented",
+		},
+	}
+
+	for _, test := range tests {
+		output, err := renderTemplate(test.input, map[string]interface{}{
+			"DefaultVars": []string{"cat", "dog", "fish"},
+		})
+		assert.Nil(t, err)
+		assert.Equal(t, test.expected, output)
+	}
+}

@@ -29,7 +29,8 @@ import (
 // Returns a template rendered with the given input variables
 func renderTemplate(inputTemplate string, vars map[string]interface{}) (string, error) {
 	tpl := template.Must(
-		template.New("gotpl").Funcs(sprig.TxtFuncMap()).Parse(inputTemplate))
+		template.New("gotpl").Funcs(
+			sprig.TxtFuncMap()).Funcs(CustomFunctions).Parse(inputTemplate))
 
 	buf := bytes.NewBuffer(nil)
 	err := tpl.Execute(buf, vars)
