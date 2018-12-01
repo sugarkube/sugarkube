@@ -149,7 +149,10 @@ func (c *applyCmd) run() error {
 		//actionPlan, err := plan.FromDiff(clusterDiff)
 
 	} else {
-		fmt.Fprintln(c.out, "Planning operations on kapps")
+		_, err = fmt.Fprintln(c.out, "Planning operations on kapps")
+		if err != nil {
+			return errors.WithStack(err)
+		}
 
 		// force mode, so no need to perform validation. Just create a plan
 		actionPlan, err = plan.Create(stackConfig, c.cacheDir, c.initManifests)
@@ -159,7 +162,10 @@ func (c *applyCmd) run() error {
 	}
 
 	if !c.oneShot {
-		fmt.Fprintf(c.out, "Applying the plan with APPROVED=%#v...\n", c.approved)
+		_, err = fmt.Fprintf(c.out, "Applying the plan with APPROVED=%#v...\n", c.approved)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 
 		// run the plan either preparing or applying changes
 		err := actionPlan.Run(c.approved, providerImpl, c.dryRun)
@@ -167,24 +173,38 @@ func (c *applyCmd) run() error {
 			return errors.WithStack(err)
 		}
 	} else {
-		fmt.Fprintln(c.out, "Applying the plan in a single pass")
+		_, err = fmt.Fprintln(c.out, "Applying the plan in a single pass")
+		if err != nil {
+			return errors.WithStack(err)
+		}
 
-		fmt.Fprintln(c.out, "First applying the plan with APPROVED=false for "+
+		_, err = fmt.Fprintln(c.out, "First applying the plan with APPROVED=false for "+
 			"kapps to plan their changes...")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
 		// one-shot mode, so prepare and apply the plan straight away
 		err = actionPlan.Run(false, providerImpl, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		fmt.Fprintln(c.out, "Now running with APPROVED=true to actually apply changes...")
+		_, err = fmt.Fprintln(c.out, "Now running with APPROVED=true to actually apply changes...")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
 		err = actionPlan.Run(true, providerImpl, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
 
-	fmt.Fprintln(c.out, "Kapp change plan successfully applied")
+	_, err = fmt.Fprintln(c.out, "Kapp change plan successfully applied")
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	return nil
 }

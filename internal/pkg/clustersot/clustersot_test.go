@@ -64,7 +64,8 @@ func TestIsOnlineTrue(t *testing.T) {
 	assert.False(t, sc.Status.IsOnline)
 
 	// call the code we are testing
-	IsOnline(testObj, &sc, testProvider)
+	_, err := IsOnline(testObj, &sc, testProvider)
+	assert.Nil(t, err)
 
 	// assert that the expectations were met
 	testObj.AssertExpectations(t)
@@ -90,7 +91,8 @@ func TestIsOnlineFalse(t *testing.T) {
 	assert.False(t, sc.Status.IsOnline)
 
 	// call the code we are testing
-	IsOnline(testObj, &sc, testProvider)
+	_, err := IsOnline(testObj, &sc, testProvider)
+	assert.Nil(t, err)
 
 	// assert that the expectations were met
 	testObj.AssertExpectations(t)
@@ -116,7 +118,8 @@ func TestIsReadyTrue(t *testing.T) {
 	assert.False(t, sc.Status.IsReady)
 
 	// call the code we are testing
-	IsReady(testObj, &sc, testProvider)
+	_, err := IsReady(testObj, &sc, testProvider)
+	assert.Nil(t, err)
 
 	// assert that the expectations were met
 	testObj.AssertExpectations(t)
@@ -142,7 +145,8 @@ func TestIsReadyFalse(t *testing.T) {
 	assert.False(t, sc.Status.IsReady)
 
 	// call the code we are testing
-	IsReady(testObj, &sc, testProvider)
+	_, err := IsReady(testObj, &sc, testProvider)
+	assert.Nil(t, err)
 
 	// assert that the expectations were met
 	testObj.AssertExpectations(t)

@@ -53,7 +53,7 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 		out: out,
 	}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "create [flags]",
 		Short: fmt.Sprintf("Create a cluster"),
 		Long: `Create a new cluster, either local or remote.
@@ -72,7 +72,7 @@ Note: Not all providers require all arguments. See documentation for help.
 		RunE: c.run,
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
@@ -87,7 +87,7 @@ Note: Not all providers require all arguments. See documentation for help.
 	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
 	f.Uint32Var(&c.onlineTimeout, "online-timeout", 600, "max number of seconds to wait for the cluster to come online")
 	f.Uint32Var(&c.readyTimeout, "ready-timeout", 600, "max number of seconds to wait for the cluster to become ready")
-	return cmd
+	return command
 }
 
 func (c *createCmd) run(cmd *cobra.Command, args []string) error {

@@ -296,7 +296,10 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 	log.Logger.Debugf("Spec to merge in:\n%s", specValues)
 
 	// patch in the configured spec
-	mergo.Merge(&kopsYamlConfig, specValues, mergo.WithOverride)
+	err = mergo.Merge(&kopsYamlConfig, specValues, mergo.WithOverride)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	log.Logger.Debugf("Merged config is:\n%s", kopsYamlConfig)
 
@@ -354,7 +357,10 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 
 	for instanceGroupName, newSpec := range igSpecs {
 		specValues := map[string]interface{}{"spec": newSpec}
-		p.patchInstanceGroup(kopsConfig, instanceGroupName.(string), specValues)
+		err = p.patchInstanceGroup(kopsConfig, instanceGroupName.(string), specValues)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	args = []string{
@@ -410,7 +416,10 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig *KopsConfig, instanceGrou
 	log.Logger.Debugf("Yaml instance group kopsYamlConfig:\n%s", kopsYamlConfig)
 
 	// patch in the configured spec
-	mergo.Merge(&kopsYamlConfig, newSpec, mergo.WithOverride)
+	err = mergo.Merge(&kopsYamlConfig, newSpec, mergo.WithOverride)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	log.Logger.Debugf("Merged instance group config is:\n%s", kopsYamlConfig)
 

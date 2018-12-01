@@ -44,7 +44,10 @@ func Merge(result *map[string]interface{}, paths ...string) error {
 
 		log.Logger.Debugf("Merging %v with %v", result, loaded)
 
-		mergo.Merge(result, loaded, mergo.WithOverride)
+		err = mergo.Merge(result, loaded, mergo.WithOverride)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil

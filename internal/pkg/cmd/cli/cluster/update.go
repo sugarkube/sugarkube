@@ -53,7 +53,7 @@ func newUpdateCmd(out io.Writer) *cobra.Command {
 		out: out,
 	}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "update [flags]",
 		Short: fmt.Sprintf("Update a cluster"),
 		Long: `Update a cluster if supported by the provisioner.
@@ -72,7 +72,7 @@ Note: Not all providers require all arguments. See documentation for help.
 		RunE: c.run,
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't update a cluster")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
@@ -87,7 +87,7 @@ Note: Not all providers require all arguments. See documentation for help.
 	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
 	f.Uint32Var(&c.onlineTimeout, "online-timeout", 600, "max number of seconds to wait for the cluster to come online")
 	f.Uint32Var(&c.readyTimeout, "ready-timeout", 600, "max number of seconds to wait for the cluster to become ready")
-	return cmd
+	return command
 }
 
 func (c *updateCmd) run(cmd *cobra.Command, args []string) error {
@@ -112,8 +112,11 @@ func (c *updateCmd) run(cmd *cobra.Command, args []string) error {
 		return errors.WithStack(err)
 	}
 
-	fmt.Fprintf(c.out, "Checking whether the target cluster '%s' is already "+
+	_, err = fmt.Fprintf(c.out, "Checking whether the target cluster '%s' is already "+
 		"online...\n", stackConfig.Cluster)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig, providerImpl)
 	if err != nil {
@@ -121,12 +124,18 @@ func (c *updateCmd) run(cmd *cobra.Command, args []string) error {
 	}
 
 	if !online {
-		fmt.Fprintln(c.out, "Cluster is already online. Aborting.")
+		_, err = fmt.Fprintln(c.out, "Cluster is already online. Aborting.")
+		if err != nil {
+			return errors.WithStack(err)
+		}
 		return nil
 	}
 
-	fmt.Fprintln(c.out, "Cluster is online. Will update it now (this "+
+	_, err = fmt.Fprintln(c.out, "Cluster is online. Will update it now (this "+
 		"may take some time...)")
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	err = provisioner.Update(provisionerImpl, stackConfig, providerImpl, c.dryRun)
 	if err != nil {
@@ -141,7 +150,10 @@ func (c *updateCmd) run(cmd *cobra.Command, args []string) error {
 			return errors.WithStack(err)
 		}
 
-		fmt.Fprintf(c.out, "Cluster '%s' successfully updated.\n", stackConfig.Cluster)
+		_, err = fmt.Fprintf(c.out, "Cluster '%s' successfully updated.\n", stackConfig.Cluster)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil

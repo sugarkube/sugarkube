@@ -108,17 +108,3 @@ func findFilesByPattern(rootDir string, pattern string, recursive bool,
 
 	return results, nil
 }
-
-// Returns a map of regex named capturing groups and values
-func getRegExpCapturingGroups(pattern string, input string) map[string]string {
-	re := regexp.MustCompile(pattern)
-	match := re.FindStringSubmatch(input)
-
-	groups := make(map[string]string, 0)
-	for i, name := range re.SubexpNames() {
-		if i > 0 && i <= len(match) {
-			groups[name] = match[i]
-		}
-	}
-	return groups
-}

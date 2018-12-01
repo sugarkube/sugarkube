@@ -58,6 +58,11 @@ func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.Sta
 		return nil, nil, nil, errors.WithStack(err)
 	}
 
+	err = kapp.ValidateStackConfig(stackConfig)
+	if err != nil {
+		return nil, nil, nil, errors.WithStack(err)
+	}
+
 	numKapps := 0
 	for _, manifest := range stackConfig.AllManifests() {
 		numKapps += len(manifest.Kapps)

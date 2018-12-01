@@ -57,10 +57,10 @@ type StackConfig struct {
 }
 
 // Returns all manifests in the stack
-func (sc *StackConfig) AllManifests() []Manifest {
-	allManifests := make([]Manifest, len(sc.Manifests)+len(sc.InitManifests))
-	allManifests = append(allManifests, sc.InitManifests...)
-	allManifests = append(allManifests, sc.Manifests...)
+func (s *StackConfig) AllManifests() []Manifest {
+	allManifests := make([]Manifest, len(s.Manifests)+len(s.InitManifests))
+	allManifests = append(allManifests, s.InitManifests...)
+	allManifests = append(allManifests, s.Manifests...)
 	return allManifests
 }
 

@@ -145,7 +145,7 @@ func (c *templateConfig) run() error {
 
 		log.Logger.Debugf("Excluding %d kapps from the templating set", len(excludedKapps))
 
-		for k, _ := range excludedKapps {
+		for k := range excludedKapps {
 			if _, ok := candidateKapps[k]; ok {
 				delete(candidateKapps, k)
 			}
@@ -186,7 +186,7 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 	}
 
 	candidateKappIds := []string{}
-	for k, _ := range kapps {
+	for k := range kapps {
 		candidateKappIds = append(candidateKappIds, k)
 	}
 

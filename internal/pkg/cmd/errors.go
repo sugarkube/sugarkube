@@ -43,7 +43,10 @@ import (
 func CheckError(err error) {
 	if err != nil {
 		if err != context.Canceled {
-			fmt.Fprintf(os.Stderr, fmt.Sprintf("An error occurred: %v\n", err))
+			_, err2 := fmt.Fprintf(os.Stderr, fmt.Sprintf("An error occurred: %v\n", err))
+			if err2 != nil {
+				panic(err2)
+			}
 		}
 		os.Exit(1)
 	}
