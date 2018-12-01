@@ -22,9 +22,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
-	"os"
-	"path/filepath"
+	"strings"
 )
 
 const KAPP_CONFIG_FILE = "sugarkube.yaml"
@@ -32,18 +32,28 @@ const KAPP_CONFIG_FILE = "sugarkube.yaml"
 // Loads the kapp's sugarkube.yaml file, renders it and sets its attributes as
 // an attribute on the kapp
 func (k *Kapp) Load(mergedKappVars map[string]interface{}) error {
-	configFilePath := filepath.Join(k.CacheDir(), KAPP_CONFIG_FILE)
 
-	// return an error if the kapp doesn't have a sugarkube.yaml file.
-	if _, err := os.Stat(configFilePath); err != nil {
-		if os.IsNotExist(err) {
-			return errors.New(fmt.Sprintf("No '%s' file found for kapp "+
-				"'%s' at %s", KAPP_CONFIG_FILE, k.FullyQualifiedId(), k.CacheDir()))
-		}
+	configFilePaths, err := utils.FindFilesByPattern(k.CacheDir(), KAPP_CONFIG_FILE,
+		true, false)
+	if err != nil {
+		return errors.Wrapf(err, "Error finding '%s' in '%s'",
+			KAPP_CONFIG_FILE, k.CacheDir())
 	}
 
+	if len(configFilePaths) == 0 {
+		return errors.New(fmt.Sprintf("No '%s' file found for kapp "+
+			"'%s' in %s", KAPP_CONFIG_FILE, k.FullyQualifiedId(), k.CacheDir()))
+	} else if len(configFilePaths) > 1 {
+		// todo - have a way of declaring the 'right' one in the manifest
+		panic(fmt.Sprintf("Multiple '%s' found for kapp '%s'. Disambiguation "+
+			"not implemented yet: %s", KAPP_CONFIG_FILE, k.FullyQualifiedId(),
+			strings.Join(configFilePaths, ", ")))
+	}
+
+	configFilePath := configFilePaths[0]
+
 	var outBuf bytes.Buffer
-	err := templater.TemplateFile(configFilePath, &outBuf, mergedKappVars)
+	err = templater.TemplateFile(configFilePath, &outBuf, mergedKappVars)
 	if err != nil {
 		return errors.WithStack(err)
 	}

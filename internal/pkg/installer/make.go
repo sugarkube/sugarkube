@@ -43,7 +43,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	dryRun bool) error {
 
 	// search for the Makefile
-	makefilePaths, err := findFilesByPattern(kappObj.CacheDir(), "Makefile",
+	makefilePaths, err := utils.FindFilesByPattern(kappObj.CacheDir(), "Makefile",
 		true, false)
 	if err != nil {
 		return errors.Wrapf(err, "Error finding Makefile in '%s'",

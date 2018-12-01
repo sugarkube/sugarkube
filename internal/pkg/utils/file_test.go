@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package installer
+package utils
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -100,7 +100,7 @@ func TestFindFilesByPattern(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result, err := findFilesByPattern(test.startDir, test.pattern,
+		result, err := FindFilesByPattern(test.startDir, test.pattern,
 			test.recursive, test.preferSymlinks)
 		assert.Nil(t, err)
 		assert.Equal(t, test.expectValues, result, "unexpected files returned for %s", test.name)

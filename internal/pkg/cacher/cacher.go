@@ -33,11 +33,6 @@ func GetManifestCachePath(cacheDir string, manifest kapp.Manifest) string {
 	return filepath.Join(cacheDir, manifest.Id)
 }
 
-// Returns the root path in the cache for a kapp
-func GetKappRootPath(manifestCacheDir string, kappObj kapp.Kapp) string {
-	return filepath.Join(manifestCacheDir, kappObj.Id)
-}
-
 // Returns the path of a kapp's cache dir where the different sources are
 // checked out to
 func getKappCachePath(kappRootPath string) string {

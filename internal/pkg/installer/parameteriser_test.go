@@ -27,6 +27,8 @@ import (
 	"testing"
 )
 
+const testDir = "../../testdata"
+
 // Test against testdata
 func TestGetCliArgs(t *testing.T) {
 
