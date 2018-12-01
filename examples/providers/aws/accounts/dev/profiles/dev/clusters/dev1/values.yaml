@@ -1,8 +1,0 @@
-# Values from the `dev` profile can be overridden here:
-provisioner:
-  params:
-    create_cluster:
-      master_count: 1
-      master_size: t2.micro
-      node_count: 1
-      node_size: t2.micro

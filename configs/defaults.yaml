@@ -1,7 +1,9 @@
-kapp_sot: helm        # source-of-truth. Works out what's already installed.
-installer: make
-acquirer: git
+# this file doesn't currently do anything
 
-# todo - pass these into commands. Probably don't need to be global flags...
-minikube_path: minikube
-kubectl_path: kubectl
+#kapp_sot: helm        # source-of-truth. Works out what's already installed.
+#installer: make
+#acquirer: git
+#
+## todo - pass these into commands. Probably don't need to be global flags...
+#minikube_path: minikube
+#kubectl_path: kubectl
