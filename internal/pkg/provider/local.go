@@ -19,6 +19,7 @@ package provider
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
@@ -30,8 +31,6 @@ type LocalProvider struct {
 }
 
 const LOCAL_PROVIDER_NAME = "local"
-const PROFILE_DIR = "profiles"
-const CLUSTER_DIR = "clusters"
 
 // Associate provider variables with the provider
 func (p *LocalProvider) setVars(values map[string]interface{}) {
@@ -63,8 +62,8 @@ func (p *LocalProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 			log.Logger.Debugf("Prepended dir of stack config to relative path. New path %s", path)
 		}
 
-		profileDir := filepath.Join(path, LOCAL_PROVIDER_NAME, PROFILE_DIR, sc.Profile)
-		clusterDir := filepath.Join(path, LOCAL_PROVIDER_NAME, PROFILE_DIR, sc.Profile, CLUSTER_DIR, sc.Cluster)
+		profileDir := filepath.Join(path, LOCAL_PROVIDER_NAME, constants.PROFILE_DIR, sc.Profile)
+		clusterDir := filepath.Join(path, LOCAL_PROVIDER_NAME, constants.PROFILE_DIR, sc.Profile, constants.CLUSTER_DIR, sc.Cluster)
 
 		if err := abortIfNotDir(profileDir,
 			fmt.Sprintf("No profile directory found at %s", profileDir)); err != nil {
@@ -78,9 +77,9 @@ func (p *LocalProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 
 		paths = append(paths, filepath.Join(path))
 		paths = append(paths, filepath.Join(path, LOCAL_PROVIDER_NAME))
-		paths = append(paths, filepath.Join(path, LOCAL_PROVIDER_NAME, PROFILE_DIR))
+		paths = append(paths, filepath.Join(path, LOCAL_PROVIDER_NAME, constants.PROFILE_DIR))
 		paths = append(paths, profileDir)
-		paths = append(paths, filepath.Join(path, LOCAL_PROVIDER_NAME, PROFILE_DIR, sc.Profile, CLUSTER_DIR))
+		paths = append(paths, filepath.Join(path, LOCAL_PROVIDER_NAME, constants.PROFILE_DIR, sc.Profile, constants.CLUSTER_DIR))
 		paths = append(paths, clusterDir)
 	}
 

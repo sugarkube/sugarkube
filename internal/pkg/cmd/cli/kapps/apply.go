@@ -27,17 +27,18 @@ import (
 )
 
 type applyCmd struct {
-	out         io.Writer
-	diffPath    string
-	cacheDir    string
-	dryRun      bool
-	approved    bool
-	oneShot     bool
-	force       bool
-	stackName   string
-	stackFile   string
-	provider    string
-	provisioner string
+	out           io.Writer
+	diffPath      string
+	cacheDir      string
+	dryRun        bool
+	approved      bool
+	oneShot       bool
+	force         bool
+	initManifests bool
+	stackName     string
+	stackFile     string
+	provider      string
+	provisioner   string
 	//kappVarsDirs cmd.Files
 	profile string
 	account string
@@ -76,6 +77,7 @@ func newApplyCmd(out io.Writer) *cobra.Command {
 		"'APPROVED=false' then 'APPROVED=true' to install/destroy kapps in a single invocation of sugarkube")
 	f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/destroy all the kapps "+
 		"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
+	f.BoolVarP(&c.initManifests, "init-manifests", "i", false, "only apply init manifests. If false (default) only apply normal manifests.")
 	f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to apply. If not given, a "+
 		"diff will be generated")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
@@ -150,7 +152,7 @@ func (c *applyCmd) run() error {
 		fmt.Fprintln(c.out, "Planning operations on kapps")
 
 		// force mode, so no need to perform validation. Just create a plan
-		actionPlan, err = plan.Create(stackConfig, c.cacheDir)
+		actionPlan, err = plan.Create(stackConfig, c.cacheDir, c.initManifests)
 		if err != nil {
 			return errors.WithStack(err)
 		}

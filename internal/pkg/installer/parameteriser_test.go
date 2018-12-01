@@ -116,8 +116,8 @@ func TestGetCliArgs(t *testing.T) {
 				providerImpl: &tfProviderImpl,
 			},
 			stackConfig: tfStackConfig,
-			expectValues: "tf-opts=-var-file {kappDir}/terraform_local/local.tfvars " +
-				"-var-file {kappDir}/terraform_local/large.tfvars",
+			expectValues: "tf-opts=-var-file {kappDir}/terraform_local/vars/local.tfvars " +
+				"-var-file {kappDir}/terraform_local/vars/large.tfvars",
 		},
 	}
 

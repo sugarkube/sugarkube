@@ -18,6 +18,7 @@ package provider
 
 import (
 	"fmt"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"path/filepath"
@@ -46,8 +47,8 @@ func (p *AwsProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 		}
 
 		accountDir := filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, sc.Account)
-		profileDir := filepath.Join(accountDir, PROFILE_DIR, sc.Profile)
-		clusterDir := filepath.Join(profileDir, CLUSTER_DIR, sc.Cluster)
+		profileDir := filepath.Join(accountDir, constants.PROFILE_DIR, sc.Profile)
+		clusterDir := filepath.Join(profileDir, constants.CLUSTER_DIR, sc.Cluster)
 		regionDir := filepath.Join(clusterDir, sc.Region)
 
 		p.region = sc.Region
@@ -76,9 +77,10 @@ func (p *AwsProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME))
 		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR))
 		paths = append(paths, accountDir)
-		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, sc.Account, PROFILE_DIR))
+		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, sc.Account, constants.PROFILE_DIR))
 		paths = append(paths, profileDir)
-		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, sc.Account, PROFILE_DIR, sc.Profile, CLUSTER_DIR))
+		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, sc.Account, constants.PROFILE_DIR,
+			sc.Profile, constants.CLUSTER_DIR))
 		paths = append(paths, clusterDir)
 		paths = append(paths, regionDir)
 	}

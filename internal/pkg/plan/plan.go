@@ -62,11 +62,21 @@ type job struct {
 // create a plan containing all kapps in the stackConfig, then filter out the
 // ones that don't need running based on the current state of the target cluster
 // as described by SOTs
-func Create(stackConfig *kapp.StackConfig, cacheDir string) (*Plan, error) {
+func Create(stackConfig *kapp.StackConfig, cacheDir string, initManifests bool) (*Plan, error) {
 
 	tranches := make([]Tranche, 0)
 
-	for _, manifest := range stackConfig.Manifests {
+	var manifests []kapp.Manifest
+
+	if initManifests {
+		manifests = stackConfig.InitManifests
+		log.Logger.Debugf("Creating a plan just for init manifests")
+	} else {
+		manifests = stackConfig.Manifests
+		log.Logger.Debugf("Creating a plan just for normal manifests")
+	}
+
+	for _, manifest := range manifests {
 		installables := make([]kapp.Kapp, 0)
 		destroyables := make([]kapp.Kapp, 0)
 

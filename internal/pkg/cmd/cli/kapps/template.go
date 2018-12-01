@@ -28,6 +28,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -285,6 +286,9 @@ func templateKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	yamlData, err := yaml.Marshal(&mergedVars)
+	log.Logger.Debugf("All merged vars:\n%s", yamlData)
 
 	for _, templateDefinition := range kappObj.Templates {
 		templateSource := templateDefinition.Source

@@ -17,3 +17,5 @@
 package constants
 
 const VALUES_FILE = "values.yaml"
+const PROFILE_DIR = "profiles"
+const CLUSTER_DIR = "clusters"

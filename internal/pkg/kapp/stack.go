@@ -204,6 +204,8 @@ func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 		s.Profile,
 		s.Cluster,
 		kappObj.Id,
+		constants.PROFILE_DIR,
+		constants.CLUSTER_DIR,
 	}
 
 	for _, acquirerObj := range kappObj.Sources {

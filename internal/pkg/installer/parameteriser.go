@@ -151,10 +151,14 @@ func (p *Parameteriser) GetCliArgs(configSubstrings []string) (string, error) {
 		argKey = "-f"
 	}
 
+	log.Logger.Debugf("Building CLI args for the '%s' parameteriser", p.Name)
+
+	// todo - only do this if approved=false. Terraform won't let us pass parameters when
+	//  applying a plan
 	if p.Name == IMPLEMENTS_TERRAFORM {
 		providerName := provider.GetName(*p.providerImpl)
 		terraformDir := fmt.Sprintf("terraform_%s", strings.ToLower(providerName))
-		filenameTemplate = filepath.Join(terraformDir, "{substring}.tfvars")
+		filenameTemplate = filepath.Join(terraformDir, "vars", "{substring}.tfvars")
 		argName = "tf-opts"
 		argKey = "-var-file"
 	}
@@ -163,6 +167,7 @@ func (p *Parameteriser) GetCliArgs(configSubstrings []string) (string, error) {
 		return "", nil
 	}
 
+	// todo - support defaults.yaml or defaults.tfvars
 	cliValues := []string{}
 	seenPaths := map[string]bool{}
 
@@ -229,6 +234,7 @@ func identifyKappInterfaces(kappObj *kapp.Kapp, providerImpl *provider.Provider)
 		return nil, errors.WithStack(err)
 	}
 	if len(chartPaths) > 0 {
+		log.Logger.Debugf("Kapp '%s' implements Helm", kappObj.FullyQualifiedId())
 		parameterisers = append(parameterisers, Parameteriser{
 			Name:         IMPLEMENTS_HELM,
 			kappObj:      kappObj,
@@ -243,6 +249,7 @@ func identifyKappInterfaces(kappObj *kapp.Kapp, providerImpl *provider.Provider)
 		return nil, errors.WithStack(err)
 	}
 	if len(terraformPaths) > 0 {
+		log.Logger.Debugf("Kapp '%s' implements Terraform", kappObj.FullyQualifiedId())
 		parameterisers = append(parameterisers, Parameteriser{
 			Name:         IMPLEMENTS_TERRAFORM,
 			kappObj:      kappObj,
