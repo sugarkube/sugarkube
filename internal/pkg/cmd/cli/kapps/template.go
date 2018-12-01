@@ -57,12 +57,18 @@ func newTemplateCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "template [flags]",
+		Use:   "template [cache-dir]",
 		Short: fmt.Sprintf("Render templates for kapps"),
 		Long: `Renders configured templates for kapps, useful for e.g. terraform backends 
 configured for the region the target cluster is in, generating Helm 
 'values.yaml' files, etc.`,
-		RunE: c.run,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return errors.New("the path to the kapp cache dir is required")
+			}
+			c.cacheDir = args[0]
+			return c.run()
+		},
 	}
 
 	f := cmd.Flags()
@@ -84,7 +90,7 @@ configured for the region the target cluster is in, generating Helm
 	return cmd
 }
 
-func (c *templateConfig) run(cmd *cobra.Command, args []string) error {
+func (c *templateConfig) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &kapp.StackConfig{
@@ -173,12 +179,10 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 		return errors.New("No kapps supplied to template function")
 	}
 
-	// make sure the cache dir exists if set
-	if cacheDir != "" {
-		if _, err := os.Stat(cacheDir); err != nil {
-			return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
-				cacheDir))
-		}
+	// make sure the cache dir exists
+	if _, err := os.Stat(cacheDir); err != nil {
+		return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
+			cacheDir))
 	}
 
 	candidateKappIds := []string{}

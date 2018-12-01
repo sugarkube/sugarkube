@@ -27,7 +27,7 @@ import (
 )
 
 // Returns a template rendered with the given input variables
-func RenderTemplate(inputTemplate string, vars map[string]interface{}) (string, error) {
+func renderTemplate(inputTemplate string, vars map[string]interface{}) (string, error) {
 	tpl := template.Must(
 		template.New("gotpl").Funcs(sprig.TxtFuncMap()).Parse(inputTemplate))
 
@@ -55,7 +55,7 @@ func TemplateFile(src string, outBuf *bytes.Buffer, vars map[string]interface{})
 
 	log.Logger.Debugf("Rendering template in '%s' with vars: %#v", src, vars)
 
-	rendered, err := RenderTemplate(string(srcTemplate[:]), vars)
+	rendered, err := renderTemplate(string(srcTemplate[:]), vars)
 	if err != nil {
 		return errors.WithStack(err)
 	}

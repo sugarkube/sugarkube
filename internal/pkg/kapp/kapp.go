@@ -68,6 +68,8 @@ const ID_KEY = "id"
 
 // Sets the root cache directory the kapp is checked out into
 func (k *Kapp) SetCacheDir(cacheDir string) {
+	log.Logger.Debugf("Setting cache dir on kapp '%s' to '%s'",
+		k.FullyQualifiedId(), cacheDir)
 	k.cacheDir = cacheDir
 }
 

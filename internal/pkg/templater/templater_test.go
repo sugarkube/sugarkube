@@ -65,7 +65,7 @@ func TestRenderTemplate(t *testing.T) {
 	tests := getFixture()
 
 	for _, test := range tests {
-		result, err := RenderTemplate(test.template, test.vars)
+		result, err := renderTemplate(test.template, test.vars)
 		assert.Nil(t, err)
 		assert.Equal(t, test.expected, result,
 			"Template rendering failed for %s", test.name)
