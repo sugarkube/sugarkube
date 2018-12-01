@@ -14,30 +14,26 @@
  * limitations under the License.
  */
 
-package templater
+package kapp
 
 import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"gopkg.in/yaml.v2"
 )
 
 // Merges all vars for a kapp from different sources. These can be used as template
 // values or as env vars/parameters to be passed to the kapp at runtime.
-func MergeVarsForKapp(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	providerImpl *provider.Provider) (map[string]interface{}, error) {
+func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
+	providerVars map[string]interface{}) (map[string]interface{}, error) {
 
 	rawStackConfigMap := stackConfig.AsMap()
 	// convert the map to the appropriate type and namespace it
 	stackConfigMap := map[string]interface{}{
 		"stack": convert.MapStringStringToMapStringInterface(rawStackConfigMap),
 	}
-
-	providerVars := provider.GetVars(*providerImpl)
 
 	mergedVars := map[string]interface{}{}
 	err := mergo.Merge(&mergedVars, stackConfigMap, mergo.WithOverride)

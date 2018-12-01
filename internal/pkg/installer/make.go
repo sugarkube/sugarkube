@@ -23,7 +23,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
-	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"path/filepath"
 	"strings"
@@ -64,8 +63,13 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 	absKappRoot := kappObj.CacheDir()
 
+	providerVars := provider.GetVars(*providerImpl)
+
+	// merge all the vars required to render the kapp's sugarkube.yaml file
+	mergedKappVars, err := kapp.MergeVarsForKapp(kappObj, stackConfig, providerVars)
+
 	// load the kapp's own config
-	err = kappObj.Load()
+	err = kappObj.Load(mergedKappVars)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -85,21 +89,14 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		envVars[upperKey] = fmt.Sprintf("%#v", v)
 	}
 
-	mergedKappVars, err := templater.MergeVarsForKapp(kappObj, stackConfig, providerImpl)
-	log.Logger.Debugf("remove this: %#v", mergedKappVars)
-
 	// add the env vars the kapp needs
 	for k, v := range kappObj.Config.EnvVars {
 		upperKey := strings.ToUpper(k)
-
-		// render env var values as templates so they can be populated by vars
-		rendered, err := templater.RenderTemplate(v.(string), mergedKappVars)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		envVars[upperKey] = rendered
+		envVars[upperKey] = fmt.Sprintf("%#v", v)
 	}
+
+	// todo - pull CLI args from sugarkube.yaml files and use defaults for
+	// particular supported kapp types (e.g. helm, terraform, etc.)
 
 	// get additional CLI args
 	//configSubstrings := []string{

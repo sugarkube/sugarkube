@@ -188,8 +188,10 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 
 	log.Logger.Debugf("Rendering templates for kapps: %s", strings.Join(candidateKappIds, ", "))
 
+	providerVars := provider.GetVars(providerImpl)
+
 	for _, kappObj := range kapps {
-		mergedKappVars, err := templater.MergeVarsForKapp(&kappObj, stackConfig, &providerImpl)
+		mergedKappVars, err := kapp.MergeVarsForKapp(&kappObj, stackConfig, providerVars)
 		err = templateKapp(&kappObj, mergedKappVars, stackConfig, cacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
