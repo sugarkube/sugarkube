@@ -138,8 +138,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Infof("Kapp '%s' successfully %sed", kappObj.FullyQualifiedId(),
-		makeTarget)
+	log.Logger.Infof("Kapp '%s' successfully processed", kappObj.FullyQualifiedId())
 
 	return nil
 }
