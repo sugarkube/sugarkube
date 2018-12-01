@@ -40,7 +40,7 @@ type Template struct {
 
 // Populated from the kapp's sugarkube.yaml file
 type Config struct {
-	EnvVars map[string]interface{}
+	EnvVars map[string]interface{} `yaml:"envVars"`
 	Version string
 }
 
