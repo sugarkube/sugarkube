@@ -61,7 +61,7 @@ migrated into kapps. You can migrate a bit at a time to see how it helps you.
 Sugarkube is a work in progress and not ready for production use just yet.
 
 # Installation & quick start
-* Install [cfssl](https://github.com/cloudflare/cfssl) (on OSX run `brew install cfssl`
+* Install [cfssl](https://github.com/cloudflare/cfssl) (on OSX run `brew install cfssl`)
 * Download a [release](https://github.com/sugarkube/sugarkube/releases).
 * Clone the [sample project](https://github.com/sugarkube/sample-project).
 * Launch a local minikube cluster (it may take a little while to come online):
@@ -70,7 +70,8 @@ Sugarkube is a work in progress and not ready for production use just yet.
     -v --log-level=info
 ```
 
-* Download the kapps to be installed:
+* Download the kapps to be installed into a local cache directory (`caches/local-web` 
+in the below command). Have a poke around in this later to see how it works.:
 ```
   ./sugarkube cache create -s sample-project/stacks.yaml -n local-web \
     caches/local-web -v --log-level=info 
@@ -102,8 +103,8 @@ echo $(minikube ip) wordpress.localhost | sudo tee -a /etc/hosts
 ~~And visit `https://wordpress.localhost`.~~
 
 ## Explore
-Have a look in `./examples/stacks.yaml` and look for `local-standard`. Follow the
-paths it declares. Then look in `./test-cache` to see how that relates to the
+Have a look in `sample-project/stacks.yaml` and look for `local-web`. Follow the
+paths it declares. Then look in `./caches/local-web` to see how that relates to the
 git repos defined in the manifests used in `stacks.yaml`.
 
 # FAQ
