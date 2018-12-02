@@ -91,7 +91,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	// add the env vars the kapp needs
 	for k, v := range kappObj.Config.EnvVars {
 		upperKey := strings.ToUpper(k)
-		envVars[upperKey] = fmt.Sprintf("%#v", v)
+		envVars[upperKey] = strings.Trim(fmt.Sprintf("%#v", v), "\"")
 	}
 
 	cliArgs := []string{makeTarget}
