@@ -61,22 +61,22 @@ migrated into kapps. You can migrate a bit at a time to see how it helps you.
 Sugarkube is a work in progress and not ready for production use just yet.
 
 # Installation & quick start
-1. Install [cfssl](https://github.com/cloudflare/cfssl) (on OSX run `brew install cfssl`
-1. Download a [release](https://github.com/sugarkube/sugarkube/releases).
-1. Clone the [sample project](https://github.com/sugarkube/sample-project).
-1. Launch a local minikube cluster (it may take a little while to come online):
+* Install [cfssl](https://github.com/cloudflare/cfssl) (on OSX run `brew install cfssl`
+* Download a [release](https://github.com/sugarkube/sugarkube/releases).
+* Clone the [sample project](https://github.com/sugarkube/sample-project).
+* Launch a local minikube cluster (it may take a little while to come online):
 ```
   ./sugarkube cluster create -s sample-project/stacks.yaml -n local-web \
     -v --log-level=info
 ```
 
-1. Download the kapps to be installed:
+* Download the kapps to be installed:
 ```
   ./sugarkube cache create -s sample-project/stacks.yaml -n local-web \
     caches/local-web -v --log-level=info 
 ```
 
-1. Install the kapps into the cluster:
+* Install the kapps into the cluster:
 ```
   ./sugarkube kapps install -s sample-project/stacks.yaml -n local-web \
     ./caches/local-web --force --one-shot 
