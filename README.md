@@ -61,49 +61,41 @@ migrated into kapps. You can migrate a bit at a time to see how it helps you.
 Sugarkube is a work in progress and not ready for production use just yet.
 
 # Installation & quick start
-Install `go`, `dep` and [cfssl](https://github.com/cloudflare/cfssl). On OSX run:
+1. Install [cfssl](https://github.com/cloudflare/cfssl) (on OSX run `brew install cfssl`
+1. Download a [release](https://github.com/sugarkube/sugarkube/releases).
+1. Clone the [sample project](https://github.com/sugarkube/sample-project).
+1. Launch a local minikube cluster (it may take a little while to come online):
 ```
-brew install go dep cfssl
-```
-
-Then clone and build with:
-```
-  mkdir -p $GOPATH/src/github.com/sugarkube
-  cd $GOPATH/src/github.com/sugarkube
-  git clone git@github.com:sugarkube/sugarkube.git
-  cd sugarkube
-  make deps
-  make test-all
-  make build
-```
-Alternatively download a [release](https://github.com/sugarkube/sugarkube/releases) 
-and then clone the repo as above.
-
-Launch a minikube cluster (it may take a little while to come online):
-```
-  ./bin/sugarkube cluster create -s ./examples/stacks.yaml -n local-standard
+  ./sugarkube cluster create -s sample-project/stacks.yaml -n local-web \
+    -v --log-level=info
 ```
 
-Download some kapps to be installed:
+1. Download the kapps to be installed:
 ```
-  ./bin/sugarkube cache create -s examples/stacks.yaml -n local-standard \
-    -d test-cache 
+  ./sugarkube cache create -s sample-project/stacks.yaml -n local-web \
+    caches/local-web -v --log-level=info 
 ```
 
-Install the kapps:
+1. Install the kapps into the cluster:
 ```
-  ./bin/sugarkube kapps install -s ./examples/stacks.yaml -n local-standard \
-    ./test-cache/ --force --one-shot 
+  ./sugarkube kapps install -s sample-project/stacks.yaml -n local-web \
+    ./caches/local-web --force --one-shot 
 ```
 
 You should now have a local minikube cluster set up with Tiller installed
-(configured for RBAC), along with Cert Manager, Nginx ingress, and a 
-Wordpress site. Access it with:
+(configured for RBAC), along with Cert Manager, Nginx ingress, and two 
+Wordpress sites, both with customised content in them. Access them with:
 
 ```
-minikube service -n wordpress --https wordpress-wordpress
+ minikube service -n wordpress-site1 --https wordpress-site1-wordpress
 ```
-~~or by hostname:~~(from 0.3.0)
+and
+```
+ minikube service -n wordpress-site2 --https wordpress-site2-wordpress
+```
+ 
+If you add the hostnames to your `/etc/hosts` file you should be able to access 
+them through that (WIP).
 ```
 echo $(minikube ip) wordpress.localhost | sudo tee -a /etc/hosts
 ```
