@@ -18,6 +18,7 @@ package utils
 
 import (
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -47,6 +48,10 @@ func AppendToFile(filename string, text string) error {
 // possible.
 func FindFilesByPattern(rootDir string, pattern string, recursive bool,
 	preferSymlinks bool) ([]string, error) {
+
+	log.Logger.Debugf("Searching for files matching regex '%s' under dir '%s'",
+		pattern, rootDir)
+
 	re := regexp.MustCompile(pattern)
 	results := make([]string, 0)
 

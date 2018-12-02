@@ -18,7 +18,9 @@ package templater
 
 import (
 	"fmt"
-	"path/filepath"
+	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"text/template"
 )
 
@@ -40,14 +42,28 @@ func mapPrintF(pattern string, items []string) []string {
 
 // Takes a list of file names and searches an input path for them recursively.
 // The result is a list of paths to files that exist matching the given patterns.
-func findFiles(root string, patterns []string) []string {
+func findFiles(root string, patterns []string) ([]string, error) {
 
-	// todo - implement (this is all garbage)
 	output := make([]string, 0)
 
 	for _, pattern := range patterns {
-		output = append(output, filepath.Join(root, pattern))
+		filePaths, err := utils.FindFilesByPattern(root, pattern, true, false)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error finding '%s' in '%s'", pattern, root)
+		}
+
+		if len(filePaths) == 1 {
+			log.Logger.Debugf("Found a file matching pattern '%s' under dir '%s': %s",
+				pattern, root, filePaths[0])
+			output = append(output, filePaths[0])
+		} else if len(filePaths) > 1 {
+			return nil, errors.New(fmt.Sprintf("Found multiple files matching pattern '%s' in '%s'. Don't "+
+				"know which to choose...", pattern, root))
+		} else {
+			log.Logger.Debugf("No files found matching pattern '%s' under dir '%s'",
+				pattern, root)
+		}
 	}
 
-	return output
+	return output, nil
 }

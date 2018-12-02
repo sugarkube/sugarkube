@@ -25,6 +25,8 @@ import (
 	"testing"
 )
 
+const testDir = "../../testdata"
+
 type TemplateTest struct {
 	name     string
 	template string
@@ -95,6 +97,11 @@ func TestTemplateFile(t *testing.T) {
 }
 
 func TestCustomFunctions(t *testing.T) {
+
+	absTestDir, err := filepath.Abs(testDir)
+	assert.Nil(t, err)
+	sampleKappCacheRoot := filepath.Join(absTestDir, "sample-cache", "sample-manifest", "sample-kapp")
+
 	tests := []struct {
 		name     string
 		input    string
@@ -104,15 +111,20 @@ func TestCustomFunctions(t *testing.T) {
 			name: "test findFiles",
 			// todo - this is intimidating. Perhaps we should offer some canned templates for helm/terraform users can
 			//  just refer to or load somehow
-			input:    `{{ mapPrintF "values-%s.yaml" .DefaultVars | findFiles .kappRoot | mapPrintF "-f %s" | join " " }}`,
-			expected: "-f fakeRoot/values-cat.yaml -f fakeRoot/values-dog.yaml -f fakeRoot/values-fish.yaml",
+			input: `-f {{ .kapp.cacheRoot }}/sample-chart/values.yaml {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | join " " }}`,
+			expected: fmt.Sprintf("-f %s/sample-chart/values.yaml -f %s/sample-chart/values-dev.yaml "+
+				"-f %s/sample-chart/values-dev1.yaml", sampleKappCacheRoot, sampleKappCacheRoot, sampleKappCacheRoot),
 		},
 	}
 
 	for _, test := range tests {
 		output, err := renderTemplate(test.input, map[string]interface{}{
-			"DefaultVars": []string{"cat", "dog", "fish"},
-			"kappRoot":    "fakeRoot",
+			"sugarkube": map[string]interface{}{
+				"defaultVars": []string{"missing-provider", "dev", "dev1", "missing-region"},
+			},
+			"kapp": map[string]interface{}{
+				"cacheRoot": sampleKappCacheRoot,
+			},
 		})
 		assert.Nil(t, err)
 		assert.Equal(t, test.expected, output)
