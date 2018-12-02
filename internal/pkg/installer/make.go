@@ -93,29 +93,16 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 		envVars[upperKey] = fmt.Sprintf("%#v", v)
 	}
 
-	// todo - pull CLI args from sugarkube.yaml files and use defaults for
-	// particular supported kapp types (e.g. helm, terraform, etc.)
-
-	// get additional CLI args
-	//configSubstrings := []string{
-	//	stackConfig.Provider,
-	//	stackConfig.Account, // may be blank depending on the provider
-	//	stackConfig.Profile,
-	//	stackConfig.Cluster,
-	//	stackConfig.Region, // may be blank depending on the provider
-	//}
-
 	cliArgs := []string{makeTarget}
-	//for _, parameteriser := range parameterisers {
-	//	arg, err := parameteriser.GetCliArgs(configSubstrings)
-	//	if err != nil {
-	//		return errors.WithStack(err)
-	//	}
-	//
-	//	if arg != "" {
-	//		cliArgs = append(cliArgs, arg)
-	//	}
-	//}
+
+	targetArgs := kappObj.Config.TargetArgs[makeTarget]["args"]
+	log.Logger.Debugf("Kapp '%s' has args for target '%s': %#v",
+		kappObj.FullyQualifiedId(), makeTarget, targetArgs)
+
+	for _, targetArg := range targetArgs {
+		cliArgs = append(cliArgs, strings.Join([]string{
+			targetArg["name"], targetArg["value"]}, "="))
+	}
 
 	makefilePath, err := filepath.Abs(makefilePaths[0])
 	if err != nil {
