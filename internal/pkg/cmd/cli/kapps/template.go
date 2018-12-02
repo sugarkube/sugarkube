@@ -195,7 +195,8 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 	providerVars := provider.GetVars(providerImpl)
 
 	for _, kappObj := range kapps {
-		mergedKappVars, err := kapp.MergeVarsForKapp(&kappObj, stackConfig, providerVars)
+		mergedKappVars, err := kapp.MergeVarsForKapp(&kappObj, stackConfig, providerVars,
+			map[string]interface{}{})
 		err = templateKapp(&kappObj, mergedKappVars, stackConfig, cacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)

@@ -64,7 +64,8 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 	providerVars := provider.GetVars(*providerImpl)
 
 	// merge all the vars required to render the kapp's sugarkube.yaml file
-	mergedKappVars, err := kapp.MergeVarsForKapp(kappObj, stackConfig, providerVars)
+	mergedKappVars, err := kapp.MergeVarsForKapp(kappObj, stackConfig, providerVars,
+		map[string]interface{}{"target": makeTarget, "approved": approved})
 
 	// load the kapp's own config
 	err = kappObj.Load(mergedKappVars)
