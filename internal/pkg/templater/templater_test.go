@@ -111,7 +111,7 @@ func TestCustomFunctions(t *testing.T) {
 			name: "test findFiles",
 			// todo - this is intimidating. Perhaps we should offer some canned templates for helm/terraform users can
 			//  just refer to or load somehow
-			input: `-f {{ .kapp.cacheRoot }}/sample-chart/values.yaml {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | join " " }}`,
+			input: `-f {{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | join " " }} {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | join " " }}`,
 			expected: fmt.Sprintf("-f %s/sample-chart/values.yaml -f %s/sample-chart/values-dev.yaml "+
 				"-f %s/sample-chart/values-dev1.yaml", sampleKappCacheRoot, sampleKappCacheRoot, sampleKappCacheRoot),
 		},

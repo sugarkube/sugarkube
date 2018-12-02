@@ -25,8 +25,19 @@ import (
 )
 
 var CustomFunctions = template.FuncMap{
-	"findFiles": findFiles,
-	"mapPrintF": mapPrintF,
+	"findFiles":  findFiles,
+	"mapPrintF":  mapPrintF,
+	"listString": listString,
+}
+
+func listString(elems ...string) []string {
+	output := make([]string, 0)
+
+	for _, elem := range elems {
+		output = append(output, elem)
+	}
+
+	return output
 }
 
 // Runs sprintf over all elements of a list
