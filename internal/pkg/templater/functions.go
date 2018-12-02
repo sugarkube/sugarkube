@@ -30,6 +30,7 @@ var CustomFunctions = template.FuncMap{
 	"listString": listString,
 }
 
+// Turn separate string parameters into a single []string array
 func listString(elems ...string) []string {
 	output := make([]string, 0)
 

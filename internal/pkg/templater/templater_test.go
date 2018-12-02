@@ -111,7 +111,7 @@ func TestCustomFunctions(t *testing.T) {
 			name: "test findFiles",
 			// todo - this is intimidating. Perhaps we should offer some canned templates for helm/terraform users can
 			//  just refer to or load somehow
-			input: `-f {{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | join " " }} {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | join " " }}`,
+			input: `-f {{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | uniq | join " " }} {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " }}`,
 			expected: fmt.Sprintf("-f %s/sample-chart/values.yaml -f %s/sample-chart/values-dev.yaml "+
 				"-f %s/sample-chart/values-dev1.yaml", sampleKappCacheRoot, sampleKappCacheRoot, sampleKappCacheRoot),
 		},
@@ -120,7 +120,8 @@ func TestCustomFunctions(t *testing.T) {
 	for _, test := range tests {
 		output, err := renderTemplate(test.input, map[string]interface{}{
 			"sugarkube": map[string]interface{}{
-				"defaultVars": []string{"missing-provider", "dev", "dev1", "missing-region"},
+				// duplicate matches should be stripped out (note "dev" would match twice)
+				"defaultVars": []string{"missing-provider", "dev", "dev", "dev1", "missing-region"},
 			},
 			"kapp": map[string]interface{}{
 				"cacheRoot": sampleKappCacheRoot,
