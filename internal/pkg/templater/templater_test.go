@@ -101,15 +101,18 @@ func TestCustomFunctions(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "test findFiles",
-			input:    `{{ .DefaultVars | mapPrintF "values-%s.yaml" | findFiles | join " " }}`,
-			expected: "Not*implemented",
+			name: "test findFiles",
+			// todo - this is intimidating. Perhaps we should offer some canned templates for helm/terraform users can
+			//  just refer to or load somehow
+			input:    `{{ mapPrintF "values-%s.yaml" .DefaultVars | findFiles .kappRoot | mapPrintF "-f %s" | join " " }}`,
+			expected: "-f fakeRoot/values-cat.yaml -f fakeRoot/values-dog.yaml -f fakeRoot/values-fish.yaml",
 		},
 	}
 
 	for _, test := range tests {
 		output, err := renderTemplate(test.input, map[string]interface{}{
 			"DefaultVars": []string{"cat", "dog", "fish"},
+			"kappRoot":    "fakeRoot",
 		})
 		assert.Nil(t, err)
 		assert.Equal(t, test.expected, output)

@@ -18,6 +18,7 @@ package templater
 
 import (
 	"fmt"
+	"path/filepath"
 	"text/template"
 )
 
@@ -30,8 +31,8 @@ var CustomFunctions = template.FuncMap{
 func mapPrintF(pattern string, items []string) []string {
 	output := make([]string, len(items))
 
-	for _, item := range items {
-		output = append(output, fmt.Sprintf(pattern, item))
+	for i, item := range items {
+		output[i] = fmt.Sprintf(pattern, item)
 	}
 
 	return output
@@ -39,7 +40,14 @@ func mapPrintF(pattern string, items []string) []string {
 
 // Takes a list of file names and searches an input path for them recursively.
 // The result is a list of paths to files that exist matching the given patterns.
-func findFiles(pattern []string) []string {
-	// todo - implement
-	return pattern
+func findFiles(root string, patterns []string) []string {
+
+	// todo - implement (this is all garbage)
+	output := make([]string, 0)
+
+	for _, pattern := range patterns {
+		output = append(output, filepath.Join(root, pattern))
+	}
+
+	return output
 }

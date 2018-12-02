@@ -126,7 +126,7 @@ func (k Kapp) AsMap() map[string]string {
 	return map[string]string{
 		"id":              k.Id,
 		"shouldBePresent": fmt.Sprintf("%#v", k.ShouldBePresent),
-		"cacheDir":        k.CacheDir(),
+		"cacheRoot":       k.CacheDir(),
 	}
 }
 

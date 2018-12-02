@@ -41,6 +41,18 @@ func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 		return nil, errors.WithStack(err)
 	}
 
+	defaultVars := []string{
+		stackConfig.Provider,
+		stackConfig.Account, // may be blank depending on the provider
+		stackConfig.Profile,
+		stackConfig.Cluster,
+		stackConfig.Region, // may be blank depending on the provider
+	}
+
+	mergedVars["sugarkube"] = map[string][]string{
+		"defaultVars": defaultVars,
+	}
+
 	err = mergo.Merge(&mergedVars, providerVars, mergo.WithOverride)
 	if err != nil {
 		return nil, errors.WithStack(err)

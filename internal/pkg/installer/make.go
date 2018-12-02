@@ -61,8 +61,6 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 			"not implemented yet: %s", strings.Join(makefilePaths, ", ")))
 	}
 
-	absKappRoot := kappObj.CacheDir()
-
 	providerVars := provider.GetVars(*providerImpl)
 
 	// merge all the vars required to render the kapp's sugarkube.yaml file
@@ -76,7 +74,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 	// populate env vars that are always supplied
 	envVars := map[string]string{
-		"KAPP_ROOT": absKappRoot,
+		"KAPP_ROOT": kappObj.CacheDir(),
 		"APPROVED":  fmt.Sprintf("%v", approved),
 		"CLUSTER":   stackConfig.Cluster,
 		"PROFILE":   stackConfig.Profile,
