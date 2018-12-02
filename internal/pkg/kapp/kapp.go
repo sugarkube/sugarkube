@@ -116,7 +116,7 @@ func (k Kapp) CacheDir() string {
 
 		cacheDir = absCacheDir
 	} else {
-		log.Logger.Infof("No cache dir has been set on kapp. Cache dir will " +
+		log.Logger.Debug("No cache dir has been set on kapp. Cache dir will " +
 			"not be converted to an absolute path.")
 	}
 
