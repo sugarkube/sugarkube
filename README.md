@@ -5,6 +5,10 @@ infrastructure and applications. Can be used to spin up and provision cloud
 infrastructure from scratch and to deploy your applications onto it. Can be
 used as a production release pipeline. Not specific to Kubernetes or Helm.
 
+Check out the [sample project](https://github.com/sugarkube/sample-project) that 
+launches a minikube cluster, installs nginx-ingress, cert-manager and 2 wordpress 
+sites, and loads different sample data into each of them. All this with 3 commands.
+
 ## Overview
 Sugarkube is dependency management for your infrastructure. 
 While its focus is Kubernetes-based clusters, it can be used to deploy your
@@ -71,7 +75,7 @@ Sugarkube is a work in progress and not ready for production use just yet.
 ```
 
 * Download the kapps to be installed into a local cache directory (`caches/local-web` 
-in the below command). Have a poke around in this later to see how it works.:
+in the below command). Have a poke around in this later to see how it works:
 ```
   ./sugarkube cache create -s sample-project/stacks.yaml -n local-web \
     caches/local-web -v --log-level=info 
