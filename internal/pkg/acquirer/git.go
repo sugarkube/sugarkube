@@ -35,7 +35,7 @@ type GitAcquirer struct {
 	includeValues bool
 }
 
-// todo - make configurable
+// todo - make configurable, or use go-git
 const GIT_PATH = "git"
 
 const NAME = "name"

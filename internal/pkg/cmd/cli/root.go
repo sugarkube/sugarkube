@@ -112,6 +112,7 @@ func NewCommand(name string) *cobra.Command {
 	return cmd
 }
 
+// todo - integrate with viper to load values from config files
 //func init() {
 //	cobra.OnInitialize()
 //

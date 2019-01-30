@@ -30,6 +30,8 @@ func init() {
 	Logger = NewLogger(config.Config())
 }
 
+// todo - remove the dependency on the config object so we can log in the config
+//  module (i.e. remove the circular dependency)
 func NewLogger(cfg config.Provider) *logrus.Logger {
 	l := logrus.New()
 	l.AddHook(filename.NewHook())
