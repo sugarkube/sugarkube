@@ -17,6 +17,6 @@
 package config
 
 type Conf struct {
-	JsonLogs bool
-	LogLevel string
+	JsonLogs bool   `mapstructure:"json-logs"`
+	LogLevel string `mapstructure:"log-level"`
 }
