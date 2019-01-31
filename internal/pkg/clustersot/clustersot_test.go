@@ -20,9 +20,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"testing"
 )
+
+func init() {
+	log.ConfigureLogger("debug", false)
+}
 
 func TestNewClusterSot(t *testing.T) {
 	actual, err := NewClusterSot(KUBECTL)

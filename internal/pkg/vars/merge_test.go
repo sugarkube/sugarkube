@@ -18,6 +18,7 @@ package vars
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"path/filepath"
 	"testing"
 )
@@ -27,6 +28,10 @@ var (
 	subPath1 = "../../testdata/value-merging/subdir1/values.yaml"
 	subPath2 = "../../testdata/value-merging/subdir1/subdir2/values.yaml"
 )
+
+func init() {
+	log.ConfigureLogger("debug", false)
+}
 
 func getAbsPath(t *testing.T, path string) string {
 	absPath, err := filepath.Abs(path)

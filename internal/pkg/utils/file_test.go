@@ -18,11 +18,16 @@ package utils
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"path/filepath"
 	"testing"
 )
 
 const testDir = "../../testdata"
+
+func init() {
+	log.ConfigureLogger("debug", false)
+}
 
 // Test against testdata
 func TestFindFilesByPattern(t *testing.T) {

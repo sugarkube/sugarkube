@@ -22,8 +22,10 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/version"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"io/ioutil"
+	"os"
+	"strconv"
 )
 
 const longUsage = `Sugarkube is dependency management for your infrastructure. 
@@ -79,44 +81,55 @@ migrated into Kapps. You can migrate a bit at a time to see how it helps you.
 See https://sugarkube.io for more info and documentation.
 `
 
+var rootCmd = &cobra.Command{
+	Short: "Sweet cluster dependency management",
+	Long:  longUsage,
+}
+
 func NewCommand(name string) *cobra.Command {
 
-	var verboseOutput bool
 	var logLevel string
+	var jsonLogs bool
 
-	cmd := &cobra.Command{
-		Use:   name,
-		Short: "Sweet cluster dependency management",
-		Long:  longUsage,
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if !verboseOutput {
-				log.Logger.Out = ioutil.Discard
-			} else {
-				log.SetLevel(log.Logger, logLevel)
-			}
-		},
-	}
+	rootCmd.Use = name
 
-	out := cmd.OutOrStdout()
+	out := rootCmd.OutOrStdout()
 
-	cmd.PersistentFlags().BoolVarP(&verboseOutput, "verbose", "v", false, "enable verbose output/logging")
-	cmd.PersistentFlags().StringVar(&logLevel, "log-level", "info", "log level. One of debug|info|warn")
+	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|debug|info|warn|error|fatal")
+	rootCmd.PersistentFlags().BoolVarP(&jsonLogs, "json-logs", "j", false, "whether to emit JSON-formatted logs")
 
-	cmd.AddCommand(
+	rootCmd.AddCommand(
 		version.NewCommand(),
 		cluster.NewClusterCmds(out),
 		kapps.NewKappsCmds(out),
 		cache.NewCacheCmds(out),
 	)
 
-	return cmd
+	return rootCmd
 }
 
-// todo - integrate with viper to load values from config files
-//func init() {
-//	cobra.OnInitialize()
-//
-//	// Cobra also supports local flags, which will only run
-//	// when this action is called directly.
-//	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-//}
+func init() {
+	// initialise a default logger
+	defaultLogLevel, ok := os.LookupEnv("SUGARKUBE_LOG_LEVEL")
+	if !ok {
+		defaultLogLevel = "info"
+	}
+
+	jsonLogsStr, ok := os.LookupEnv("SUGARKUBE_JSON_LOGS")
+	if !ok {
+		jsonLogsStr = "false"
+	}
+
+	jsonLogs, err := strconv.ParseBool(jsonLogsStr)
+	if err != nil {
+		jsonLogs = false
+	}
+
+	log.ConfigureLogger(defaultLogLevel, jsonLogs)
+
+	cobra.OnInitialize(func() {
+		// reconfigure the logger based on CLI args
+		log.ConfigureLogger(config.Config().GetString("log-level"),
+			config.Config().GetBool("json-logs"))
+	})
+}

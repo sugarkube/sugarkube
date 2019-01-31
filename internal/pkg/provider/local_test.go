@@ -19,8 +19,13 @@ package provider
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"testing"
 )
+
+func init() {
+	log.ConfigureLogger("debug", false)
+}
 
 func TestLocalVarsDirs(t *testing.T) {
 	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")

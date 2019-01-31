@@ -19,9 +19,14 @@ package kapp
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
 	"testing"
 )
+
+func init() {
+	log.ConfigureLogger("debug", false)
+}
 
 func TestParseManifestYaml(t *testing.T) {
 	tests := []struct {

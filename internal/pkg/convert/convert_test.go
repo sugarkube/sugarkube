@@ -18,8 +18,13 @@ package convert
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"testing"
 )
+
+func init() {
+	log.ConfigureLogger("debug", false)
+}
 
 func TestMapInterfaceInterfaceToMapStringString(t *testing.T) {
 	tests := []struct {

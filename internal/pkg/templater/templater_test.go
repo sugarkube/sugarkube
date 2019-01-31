@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
@@ -32,6 +33,10 @@ type TemplateTest struct {
 	template string
 	vars     map[string]interface{}
 	expected string
+}
+
+func init() {
+	log.ConfigureLogger("debug", false)
 }
 
 func getFixture() []TemplateTest {

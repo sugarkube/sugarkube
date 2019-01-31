@@ -18,8 +18,13 @@ package acquirer
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"testing"
 )
+
+func init() {
+	log.ConfigureLogger("debug", false)
+}
 
 func TestNewAcquirerError(t *testing.T) {
 	actual, err := acquirerFactory("nonsense", map[string]string{})

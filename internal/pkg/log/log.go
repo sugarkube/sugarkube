@@ -17,37 +17,51 @@
 package log
 
 import (
+	"io/ioutil"
 	"os"
 
 	"github.com/onrik/logrus/filename"
 	"github.com/sirupsen/logrus"
-	"github.com/sugarkube/sugarkube/internal/pkg/config"
 )
 
 var Logger *logrus.Logger
 
-func init() {
-	Logger = NewLogger(config.Config())
+func ConfigureLogger(logLevel string, jsonLogs bool) {
+	isFirstRun := false
+	if Logger == nil {
+		isFirstRun = true
+	} else {
+		Logger.Debugf("Reconfiguring logger to log level '%s' and "+
+			"setting json logs=%#v", logLevel, jsonLogs)
+	}
+
+	Logger = newLogger(logLevel, jsonLogs)
+
+	if isFirstRun {
+		Logger.Debugf("Initialised logger at log level '%s' and "+
+			"json logs=%#v", logLevel, jsonLogs)
+	}
 }
 
-// todo - remove the dependency on the config object so we can log in the config
-//  module (i.e. remove the circular dependency)
-func NewLogger(cfg config.Provider) *logrus.Logger {
+func newLogger(logLevel string, jsonLogs bool) *logrus.Logger {
 	l := logrus.New()
 	l.AddHook(filename.NewHook())
 
-	if cfg.GetBool("json_logs") {
+	if jsonLogs {
 		l.Formatter = new(logrus.JSONFormatter)
 	}
 	l.Out = os.Stderr
 
-	SetLevel(l, cfg.GetString("loglevel"))
+	setLevel(l, logLevel)
 
 	return l
 }
 
-func SetLevel(l *logrus.Logger, level string) {
+// Set the log level
+func setLevel(l *logrus.Logger, level string) {
 	switch level {
+	case "none":
+		l.Out = ioutil.Discard
 	case "debug":
 		l.Level = logrus.DebugLevel
 	case "info":
@@ -56,6 +70,10 @@ func SetLevel(l *logrus.Logger, level string) {
 		l.Level = logrus.WarnLevel
 	case "warning":
 		l.Level = logrus.WarnLevel
+	case "error":
+		l.Level = logrus.ErrorLevel
+	case "fatal":
+		l.Level = logrus.FatalLevel
 	default:
 		l.Level = logrus.InfoLevel
 	}

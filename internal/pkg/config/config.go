@@ -17,6 +17,7 @@
 package config
 
 import (
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -61,11 +62,12 @@ func readViperConfig(appName string) *viper.Viper {
 	v := viper.New()
 	v.SetEnvPrefix(appName)
 	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
 	// global defaults
 
-	v.SetDefault("json_logs", false)
-	v.SetDefault("loglevel", "debug")
+	v.SetDefault("json-logs", false)
+	v.SetDefault("log-level", "info")
 
 	return v
 }
