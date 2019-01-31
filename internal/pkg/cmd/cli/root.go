@@ -128,8 +128,13 @@ func init() {
 	log.ConfigureLogger(defaultLogLevel, jsonLogs)
 
 	cobra.OnInitialize(func() {
+		err := config.Load(config.ViperConfig)
+		if err != nil {
+			log.Logger.Fatalf("Error loading config: %+v", err)
+		}
+
 		// reconfigure the logger based on CLI args
-		log.ConfigureLogger(config.Config().GetString("log-level"),
-			config.Config().GetBool("json-logs"))
+		log.ConfigureLogger(config.Config.LogLevel,
+			config.Config.JsonLogs)
 	})
 }

@@ -17,57 +17,69 @@
 package config
 
 import (
-	"strings"
-	"time"
-
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"os"
+	"os/user"
+	"path"
+	"strings"
 )
 
-// Provider defines a set of read-only methods for accessing the application
-// configuration params as defined in one of the config files.
-type Provider interface {
-	ConfigFileUsed() string
-	Get(key string) interface{}
-	GetBool(key string) bool
-	GetDuration(key string) time.Duration
-	GetFloat64(key string) float64
-	GetInt(key string) int
-	GetInt64(key string) int64
-	GetSizeInBytes(key string) uint
-	GetString(key string) string
-	GetStringMap(key string) map[string]interface{}
-	GetStringMapString(key string) map[string]string
-	GetStringMapStringSlice(key string) map[string][]string
-	GetStringSlice(key string) []string
-	GetTime(key string) time.Time
-	InConfig(key string) bool
-	IsSet(key string) bool
-}
-
-var defaultConfig *viper.Viper
-
-func Config() Provider {
-	return defaultConfig
-}
-
-func LoadConfigProvider(appName string) Provider {
-	return readViperConfig(appName)
-}
+var Config *Conf
+var ViperConfig *viper.Viper
 
 func init() {
-	defaultConfig = readViperConfig("SUGARKUBE")
+	ViperConfig = initViper("SUGARKUBE")
 }
 
-func readViperConfig(appName string) *viper.Viper {
+func initViper(appName string) *viper.Viper {
 	v := viper.New()
 	v.SetEnvPrefix(appName)
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
 	// global defaults
-
 	v.SetDefault("json-logs", false)
 	v.SetDefault("log-level", "info")
 
+	v.SetConfigName("sugarkube")
+
+	// add look-up paths (from highest priority to lowest)
+	// current working directory
+	cwd, err := os.Getwd()
+	if err == nil {
+		v.AddConfigPath(cwd)
+	}
+
+	// user's home dir (if we can retrieve it)
+	usr, err := user.Current()
+	if err == nil {
+		v.AddConfigPath(path.Join(usr.HomeDir, ".sugarkube"))
+	}
+
+	v.AddConfigPath("/etc/sugarkube")
+
+	// add the directory containing this binary
+	v.AddConfigPath(".")
+
 	return v
+}
+
+// Load/Reload the configuration
+func Load(viperConfig *viper.Viper) error {
+	var newConf *Conf
+
+	err := viperConfig.ReadInConfig()
+	if err != nil {
+		return errors.Wrapf(err, "Error loading configuration")
+	}
+
+	err = viperConfig.Unmarshal(&newConf)
+	if err != nil {
+		return errors.Wrapf(err, "Error unmarshalling config")
+	}
+
+	Config = newConf
+
+	return nil
 }
