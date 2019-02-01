@@ -42,7 +42,7 @@ func initViper(appName string) *viper.Viper {
 	v.SetDefault("json-logs", false)
 	v.SetDefault("log-level", "info")
 
-	v.SetConfigName("sugarkube")
+	v.SetConfigName("sugarkube-conf")
 
 	// add look-up paths (from highest priority to lowest)
 	// current working directory

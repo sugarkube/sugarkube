@@ -86,17 +86,14 @@ var rootCmd = &cobra.Command{
 	Long:  longUsage,
 }
 
-func NewCommand(name string) *cobra.Command {
+var logLevel string
+var jsonLogs bool
 
-	var logLevel string
-	var jsonLogs bool
+func NewCommand(name string) *cobra.Command {
 
 	rootCmd.Use = name
 
 	out := rootCmd.OutOrStdout()
-
-	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|debug|info|warn|error|fatal")
-	rootCmd.PersistentFlags().BoolVarP(&jsonLogs, "json-logs", "j", false, "whether to emit JSON-formatted logs")
 
 	rootCmd.AddCommand(
 		version.NewCommand(),
@@ -137,4 +134,22 @@ func init() {
 		log.ConfigureLogger(config.Config.LogLevel,
 			config.Config.JsonLogs)
 	})
+
+	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|debug|info|warn|error|fatal")
+	rootCmd.PersistentFlags().BoolVarP(&jsonLogs, "json-logs", "j", false, "whether to emit JSON-formatted logs")
+
+	// bind viper to CLI args
+	bindings := map[string]string{
+		"log-level": "log-level",
+		"json-logs": "json-logs",
+	}
+
+	viperConfig := config.ViperConfig
+
+	for viperKey, pFlagName := range bindings {
+		err := viperConfig.BindPFlag(viperKey, rootCmd.PersistentFlags().Lookup(pFlagName))
+		if err != nil {
+			log.Logger.Fatalf("Error binding to CLI args: %+v", err)
+		}
+	}
 }
