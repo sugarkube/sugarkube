@@ -28,6 +28,8 @@ import (
 	"os/exec"
 )
 
+const MINIKUBE_PROVISIONER_NAME = "minikube"
+
 type MinikubeProvisioner struct {
 	clusterSot clustersot.ClusterSot
 }

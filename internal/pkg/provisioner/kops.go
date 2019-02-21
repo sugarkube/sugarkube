@@ -35,6 +35,8 @@ import (
 	"strings"
 )
 
+const KOPS_PROVISIONER_NAME = "kops"
+
 // todo - make configurable
 const KOPS_PATH = "kops"
 

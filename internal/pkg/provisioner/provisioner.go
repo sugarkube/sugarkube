@@ -40,11 +40,6 @@ type Provisioner interface {
 // key in Values that relates to this provisioner
 const PROVISIONER_KEY = "provisioner"
 
-// Implemented provisioner names
-const MINIKUBE_PROVISIONER_NAME = "minikube"
-const KOPS_PROVISIONER_NAME = "kops"
-const NOOP_PROVISIONER_NAME = "none"
-
 // Factory that creates providers
 func NewProvisioner(name string) (Provisioner, error) {
 	if name == MINIKUBE_PROVISIONER_NAME {
