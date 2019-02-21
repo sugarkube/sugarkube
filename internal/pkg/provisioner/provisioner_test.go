@@ -22,13 +22,19 @@ import (
 )
 
 func TestNewMinikubeProvisioner(t *testing.T) {
-	actual, err := NewProvisioner(MINIKUBE)
+	actual, err := NewProvisioner(MINIKUBE_PROVISIONER_NAME)
 	assert.Nil(t, err)
 	assert.Equal(t, MinikubeProvisioner{}, actual)
 }
 
-func TestNewKOPSProvisioner(t *testing.T) {
-	actual, err := NewProvisioner(KOPS)
+func TestNewKopsProvisioner(t *testing.T) {
+	actual, err := NewProvisioner(KOPS_PROVISIONER_NAME)
 	assert.Nil(t, err)
 	assert.Equal(t, KopsProvisioner{}, actual)
+}
+
+func TestNewNoOpProvisioner(t *testing.T) {
+	actual, err := NewProvisioner(NOOP_PROVISIONER_NAME)
+	assert.Nil(t, err)
+	assert.Equal(t, NoOpProvisioner{}, actual)
 }

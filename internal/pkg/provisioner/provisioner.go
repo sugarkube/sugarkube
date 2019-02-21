@@ -41,17 +41,22 @@ type Provisioner interface {
 const PROVISIONER_KEY = "provisioner"
 
 // Implemented provisioner names
-const MINIKUBE = "minikube"
-const KOPS = "kops"
+const MINIKUBE_PROVISIONER_NAME = "minikube"
+const KOPS_PROVISIONER_NAME = "kops"
+const NOOP_PROVISIONER_NAME = "none"
 
 // Factory that creates providers
 func NewProvisioner(name string) (Provisioner, error) {
-	if name == MINIKUBE {
+	if name == MINIKUBE_PROVISIONER_NAME {
 		return MinikubeProvisioner{}, nil
 	}
 
-	if name == KOPS {
+	if name == KOPS_PROVISIONER_NAME {
 		return KopsProvisioner{}, nil
+	}
+
+	if name == NOOP_PROVISIONER_NAME {
+		return NoOpProvisioner{}, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("Provisioner '%s' doesn't exist", name))
