@@ -23,7 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 )
 
-const NOOP_PROVISIONER_NAME = "none"
+const NOOP_PROVISIONER_NAME = "noop"
 
 // A no-op provisioner that doesn't create a cluster at all. This can be useful
 // if you just want to create raw resources without a K8s cluster, e.g. to
