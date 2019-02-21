@@ -35,14 +35,12 @@ type MinikubeProvisioner struct {
 }
 
 type MinikubeConfig struct {
+	Binary string // todo - raise an error if this isn't passed in
 	Params struct {
 		Global map[string]string
 		Start  map[string]string
 	}
 }
-
-// todo - make configurable
-const MINIKUBE_PATH = "minikube"
 
 // todo read docs re `minikube profile` to run multiple instances on the same host
 
@@ -74,7 +72,6 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 	if err != nil {
 		return errors.WithStack(err)
 	}
-
 	args := []string{"start"}
 	args = parameteriseValues(args, minikubeConfig.Params.Global)
 	args = parameteriseValues(args, minikubeConfig.Params.Start)
@@ -82,7 +79,7 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	log.Logger.Info("Launching Minikube cluster...")
-	err = utils.ExecCommand(MINIKUBE_PATH, args, map[string]string{}, &stdoutBuf,
+	err = utils.ExecCommand(minikubeConfig.Binary, args, map[string]string{}, &stdoutBuf,
 		&stderrBuf, "", 0, dryRun)
 	if err != nil {
 		return errors.Wrap(err, "Failed to start a Minikube cluster")
@@ -102,7 +99,19 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 // Returns whether a minikube cluster is already online
 func (p MinikubeProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
-	err := utils.ExecCommand(MINIKUBE_PATH, []string{"status"}, map[string]string{},
+
+	// todo - this is duplicated all over the place. Neaten it up (ideally add
+	// the config as a property of the provisioner instance)
+	providerVars := provider.GetVars(providerImpl)
+
+	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
+
+	minikubeConfig, err := getMinikubeProvisionerConfig(provisionerValues)
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	err = utils.ExecCommand(minikubeConfig.Binary, []string{"status"}, map[string]string{},
 		&stdoutBuf, &stderrBuf, "", 0, false)
 	if err != nil {
 		// assume no cluster is up if the command starts but doesn't complete successfully
