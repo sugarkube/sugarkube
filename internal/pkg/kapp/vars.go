@@ -110,13 +110,17 @@ func templateVars(vars map[string]interface{}) (map[string]interface{}, error) {
 
 		renderedYaml, err = templater.RenderTemplate(string(yamlData[:]), vars)
 		log.Logger.Debugf("Variables templated as:\n%s", renderedYaml)
+
+		// unmarshal the rendered template ready for another iteration
+		var renderedVars map[string]interface{}
+		err = yaml.UnmarshalStrict([]byte(renderedYaml), &renderedVars)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		// todo - optimise this by breaking if these are equal (so no more variables were interpolated)
+		vars = renderedVars
 	}
 
-	renderedVars := map[string]interface{}{}
-	err := yaml.UnmarshalStrict([]byte(renderedYaml), renderedVars)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return renderedVars, nil
+	return vars, nil
 }
