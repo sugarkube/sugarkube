@@ -146,7 +146,12 @@ func parseKapps(kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bo
 		valuesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(v.(map[interface{}]interface{}))
 		log.Logger.Debugf("valuesMap=%#v", valuesMap)
 
-		kapp.Id = valuesMap[ID_KEY].(string)
+		// make sure the kapp has an ID declared
+		var ok bool
+		kapp.Id, ok = valuesMap[ID_KEY].(string)
+		if !ok {
+			return errors.New(fmt.Sprintf("No ID declared for kapp: %#v", valuesMap))
+		}
 
 		if err != nil {
 			return errors.Wrapf(err, "Error converting manifest value to map")
