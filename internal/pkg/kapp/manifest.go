@@ -73,6 +73,9 @@ func ParseManifestFile(path string) (*Manifest, error) {
 	log.Logger.Debugf("Loaded manifest data: %#v", data)
 
 	kapps, err := parseManifestYaml(data)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 
 	parsedManifest := Manifest{}
 	err = vars.LoadYamlFile(path, &parsedManifest)
