@@ -75,7 +75,6 @@ configured for the region the target cluster is in, generating Helm
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
 	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
 	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
-	f.StringVarP(&c.cacheDir, "cache-dir", "d", "", "kapp cache directory")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
