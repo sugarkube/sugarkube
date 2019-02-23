@@ -72,7 +72,7 @@ func TestRenderTemplate(t *testing.T) {
 	tests := getFixture()
 
 	for _, test := range tests {
-		result, err := renderTemplate(test.template, test.vars)
+		result, err := RenderTemplate(test.template, test.vars)
 		assert.Nil(t, err)
 		assert.Equal(t, test.expected, result,
 			"Template rendering failed for %s", test.name)
@@ -123,7 +123,7 @@ func TestCustomFunctions(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		output, err := renderTemplate(test.input, map[string]interface{}{
+		output, err := RenderTemplate(test.input, map[string]interface{}{
 			"sugarkube": map[string]interface{}{
 				// duplicate matches should be stripped out (note "dev" would match twice)
 				"defaultVars": []string{"missing-provider", "dev", "dev", "dev1", "missing-region"},

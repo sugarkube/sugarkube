@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"gopkg.in/yaml.v2"
 )
 
@@ -77,8 +78,45 @@ func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 		return nil, errors.WithStack(err)
 	}
 
-	yamlData, err := yaml.Marshal(&mergedVars)
-	log.Logger.Debugf("All merged vars:\n%s", yamlData)
+	templatedVars, err := templateVars(mergedVars)
 
-	return mergedVars, nil
+	yamlData, err := yaml.Marshal(&templatedVars)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	log.Logger.Debugf("Vars after merging and templating:\n%s", yamlData)
+
+	return templatedVars, nil
+}
+
+// Iterate over the input variables trying to replace data as if it was a template. Keep iterating up to a maximum
+// number of times, or until the size of the input and output remain the same
+func templateVars(vars map[string]interface{}) (map[string]interface{}, error) {
+
+	// maximum number of iterations whils templating variables
+	maxIterations := 20
+
+	var renderedYaml string
+
+	for i := 0; i < maxIterations; i++ {
+		log.Logger.Debugf("Templating variables. Iteration %d (of max %d)", i, maxIterations)
+
+		// convert the input variables to YAML to simplify templating it
+		yamlData, err := yaml.Marshal(&vars)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		log.Logger.Debugf("Vars to template:\n%s", yamlData)
+
+		renderedYaml, err = templater.RenderTemplate(string(yamlData[:]), vars)
+		log.Logger.Debugf("Variables templated as:\n%s", renderedYaml)
+	}
+
+	renderedVars := map[string]interface{}{}
+	err := yaml.UnmarshalStrict([]byte(renderedYaml), renderedVars)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return renderedVars, nil
 }
