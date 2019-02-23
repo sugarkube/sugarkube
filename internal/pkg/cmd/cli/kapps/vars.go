@@ -8,6 +8,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"gopkg.in/yaml.v2"
 	"io"
 )
 
@@ -121,7 +122,7 @@ func (c *varsConfig) run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	_, err = fmt.Fprintf(c.out, "Displaying variables for %d kapps\n", len(candidateKapps))
+	_, err = fmt.Fprintf(c.out, "Displaying variables for %d kapps:\n", len(candidateKapps))
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -132,7 +133,14 @@ func (c *varsConfig) run(cmd *cobra.Command, args []string) error {
 		mergedKappVars, err := kapp.MergeVarsForKapp(&kappObj, stackConfig, providerVars,
 			map[string]interface{}{})
 
-		_, err = fmt.Fprintf(c.out, "Variables for kapp '%s': \n%s", kappObj.Id, mergedKappVars)
+		yamlData, err := yaml.Marshal(&mergedKappVars)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		_, err = fmt.Fprintf(c.out, "\n***** Start variables for kapp '%s' *****\n"+
+			"%s***** End variables for kapp '%s' *****\n",
+			kappObj.Id, yamlData, kappObj.Id)
 		if err != nil {
 			return errors.WithStack(err)
 		}
