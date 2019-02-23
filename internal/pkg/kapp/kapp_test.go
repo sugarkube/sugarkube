@@ -60,6 +60,11 @@ present:
     - uri: git@github.com:exampleA/repoA.git
       branch: branchA
       path: example/pathA
+    vars:
+      someVarA: valueA
+      someList:
+      - val1
+      - val2
 
 absent:
   - id: example3
@@ -103,6 +108,13 @@ absent:
 							"branchA",
 							"example/pathA",
 							""),
+					},
+					vars: map[string]interface{}{
+						"someVarA": "valueA",
+						"someList": []interface{}{
+							"val1",
+							"val2",
+						},
 					},
 				},
 				{

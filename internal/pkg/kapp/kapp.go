@@ -59,6 +59,7 @@ const PRESENT_KEY = "present"
 const ABSENT_KEY = "absent"
 const SOURCES_KEY = "sources"
 const TEMPLATES_KEY = "templates"
+const VARS_KEY = "vars"
 const ID_KEY = "id"
 
 // Sets the root cache directory the kapp is checked out into
@@ -149,6 +150,26 @@ func parseKapps(kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bo
 
 		if err != nil {
 			return errors.Wrapf(err, "Error converting manifest value to map")
+		}
+
+		// marshal and unmarshal any vars
+		rawKappVars, ok := valuesMap[VARS_KEY]
+		if ok {
+			varsBytes, err := yaml.Marshal(rawKappVars)
+			if err != nil {
+				return errors.Wrapf(err, "Error marshalling vars in kapp: %#v", v)
+			}
+
+			var parsedVars map[string]interface{}
+			err = yaml.Unmarshal(varsBytes, &parsedVars)
+			if err != nil {
+				return errors.Wrapf(err, "Error unmarshalling vars for kapp: %#v", v)
+			}
+
+			kapp.vars = parsedVars
+			log.Logger.Debugf("Parsed vars from kapp: %s", kapp.vars)
+		} else {
+			log.Logger.Debugf("No vars found in kapp")
 		}
 
 		// marshal and unmarshal the list of templates
