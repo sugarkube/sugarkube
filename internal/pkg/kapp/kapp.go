@@ -27,12 +27,6 @@ import (
 	"strings"
 )
 
-type installerConfig struct {
-	kapp         string
-	searchValues []string
-	params       map[string]string
-}
-
 type Template struct {
 	Source string
 	Dest   string
@@ -56,7 +50,7 @@ type Kapp struct {
 	// preserve ordering. This approach lets users strictly define the ordering
 	// of installation and deletion operations.
 	ShouldBePresent bool
-	installerConfig installerConfig
+	vars            map[string]interface{}
 	Sources         []acquirer.Acquirer
 	Templates       []Template
 }
