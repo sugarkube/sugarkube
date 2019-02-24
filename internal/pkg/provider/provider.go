@@ -67,29 +67,30 @@ func NewProvider(stackConfig *kapp.StackConfig) (Provider, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	stackConfigVars, err := stackConfigVars(providerImpl, stackConfig)
+	providerVars, err := providerVars(providerImpl, stackConfig)
 	if err != nil {
-		log.Logger.Warn("Error loading stack config variables")
+		log.Logger.Warn("Error loading provider variables")
 		return nil, errors.WithStack(err)
 	}
-	log.Logger.Debugf("Provider loaded vars: %#v", stackConfigVars)
+	log.Logger.Debugf("Provider loaded vars: %#v", providerVars)
 
-	if len(stackConfigVars) == 0 {
-		log.Logger.Fatal("No values loaded for stack")
-		return nil, errors.New("Failed to load values for stack")
+	if len(providerVars) == 0 {
+		log.Logger.Fatal("No values loaded for provider")
+		return nil, errors.New(fmt.Sprintf("Failed to load variables for provider %s",
+			providerImpl.getName()))
 	}
 
-	providerImpl.setVars(stackConfigVars)
+	providerImpl.setVars(providerVars)
 
 	return providerImpl, nil
 }
 
-// Searches for values.yaml files in configured directories and returns the
+// Searches for values.yaml files in directories specific to a provider implementation and returns the
 // result of merging them.
-func stackConfigVars(p Provider, sc *kapp.StackConfig) (map[string]interface{}, error) {
-	stackConfigVars := map[string]interface{}{}
+func providerVars(p Provider, stackConfig *kapp.StackConfig) (map[string]interface{}, error) {
+	providerVars := map[string]interface{}{}
 
-	varsDirs, err := p.varsDirs(sc)
+	varsDirs, err := p.varsDirs(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -103,13 +104,13 @@ func stackConfigVars(p Provider, sc *kapp.StackConfig) (map[string]interface{}, 
 			continue
 		}
 
-		err = vars.Merge(&stackConfigVars, valuePath)
+		err = vars.Merge(&providerVars, valuePath)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 	}
 
-	return stackConfigVars, nil
+	return providerVars, nil
 }
 
 // Return vars loaded from configs

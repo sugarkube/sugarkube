@@ -33,25 +33,25 @@ const AWS_PROVIDER_NAME = "aws"
 const AWS_ACCOUNT_DIR = "accounts"
 
 // Returns a list of directories to load vars files from
-func (p *AwsProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
+func (p *AwsProvider) varsDirs(stackConfig *kapp.StackConfig) ([]string, error) {
 
 	paths := make([]string, 0)
 
-	prefix := sc.Dir()
+	prefix := stackConfig.Dir()
 
-	for _, path := range sc.ProviderVarsDirs {
+	for _, path := range stackConfig.ProviderVarsDirs {
 		// prepend the directory of the stack config file if the path is relative
 		if !filepath.IsAbs(path) {
 			path = filepath.Join(prefix, path)
 			log.Logger.Debugf("Prepended dir of stack config to relative path. New path %s", path)
 		}
 
-		accountDir := filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, sc.Account)
-		profileDir := filepath.Join(accountDir, constants.PROFILE_DIR, sc.Profile)
-		clusterDir := filepath.Join(profileDir, constants.CLUSTER_DIR, sc.Cluster)
-		regionDir := filepath.Join(clusterDir, sc.Region)
+		accountDir := filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, stackConfig.Account)
+		profileDir := filepath.Join(accountDir, constants.PROFILE_DIR, stackConfig.Profile)
+		clusterDir := filepath.Join(profileDir, constants.CLUSTER_DIR, stackConfig.Cluster)
+		regionDir := filepath.Join(clusterDir, stackConfig.Region)
 
-		p.region = sc.Region
+		p.region = stackConfig.Region
 
 		if err := abortIfNotDir(accountDir,
 			fmt.Sprintf("No account directory found at %s", accountDir)); err != nil {
@@ -77,10 +77,11 @@ func (p *AwsProvider) varsDirs(sc *kapp.StackConfig) ([]string, error) {
 		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME))
 		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR))
 		paths = append(paths, accountDir)
-		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, sc.Account, constants.PROFILE_DIR))
+		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, stackConfig.Account,
+			constants.PROFILE_DIR))
 		paths = append(paths, profileDir)
-		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, sc.Account, constants.PROFILE_DIR,
-			sc.Profile, constants.CLUSTER_DIR))
+		paths = append(paths, filepath.Join(path, AWS_PROVIDER_NAME, AWS_ACCOUNT_DIR, stackConfig.Account,
+			constants.PROFILE_DIR, stackConfig.Profile, constants.CLUSTER_DIR))
 		paths = append(paths, clusterDir)
 		paths = append(paths, regionDir)
 	}

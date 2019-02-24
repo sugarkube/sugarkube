@@ -37,12 +37,6 @@ func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.Sta
 		return nil, nil, nil, errors.WithStack(err)
 	}
 
-	// todo - work out whether this should be uncommented or delete it
-	//cliManifests, err := kapp.ParseManifests(c.manifests)
-	//if err != nil {
-	//	return errors.WithStack(err)
-	//}
-
 	err = mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
 	if err != nil {
 		return nil, nil, nil, errors.WithStack(err)
