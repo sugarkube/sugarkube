@@ -108,7 +108,8 @@ func (k Kapp) CacheDir() string {
 	return cacheDir
 }
 
-func (k Kapp) AsMap() map[string]string {
+// Returns certain kapp data that should be exposed as variables when running kapps
+func (k Kapp) GetIntrinsicData() map[string]string {
 	return map[string]string{
 		"id":              k.Id,
 		"shouldBePresent": fmt.Sprintf("%#v", k.ShouldBePresent),
@@ -222,7 +223,8 @@ func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}
 	return nil
 }
 
-// Parses manifest YAML data and returns a list of kapps
+// Parses a manifest YAML. It separately parses all kapps that should be present and all those that should be
+// absent, and returns a single list containing them all.
 func parseManifestYaml(manifest *Manifest, data map[string]interface{}) ([]Kapp, error) {
 	kapps := make([]Kapp, 0)
 

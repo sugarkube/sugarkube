@@ -59,14 +59,14 @@ func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 		return nil, errors.WithStack(err)
 	}
 
-	kappMap := kappObj.AsMap()
+	kappIntrinsicData := kappObj.GetIntrinsicData()
 	kappVars, err := stackConfig.GetKappVars(kappObj)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	namespacedKappMap := map[string]interface{}{
-		"kapp": convert.MapStringStringToMapStringInterface(kappMap),
+		"kapp": convert.MapStringStringToMapStringInterface(kappIntrinsicData),
 	}
 	err = mergo.Merge(&mergedVars, namespacedKappMap, mergo.WithOverride)
 	if err != nil {
