@@ -26,6 +26,15 @@ import (
 
 const testDir = "../../testdata"
 
+// Helper to get acquirers in a single-valued context
+func discardErr(acquirer acquirer.Acquirer, err error) acquirer.Acquirer {
+	if err != nil {
+		panic(err)
+	}
+
+	return acquirer
+}
+
 func TestLoadStackConfigGarbagePath(t *testing.T) {
 	_, err := LoadStackConfig("fake-path", "/fake/~/some?/~/garbage")
 	assert.Error(t, err)
@@ -53,12 +62,12 @@ func TestLoadStackConfig(t *testing.T) {
 			ShouldBePresent: true,
 			manifest:        &manifest1,
 			Sources: []acquirer.Acquirer{
-				acquirer.NewGitAcquirer(
+				discardErr(acquirer.NewGitAcquirer(
 					"pathA",
 					"git@github.com:sugarkube/kapps-A.git",
 					"kappA-0.1.0",
 					"some/pathA",
-					""),
+					"")),
 			},
 		},
 	}
@@ -79,30 +88,30 @@ func TestLoadStackConfig(t *testing.T) {
 			ShouldBePresent: true,
 			manifest:        &manifest2,
 			Sources: []acquirer.Acquirer{
-				acquirer.NewGitAcquirer(
+				discardErr(acquirer.NewGitAcquirer(
 					"special",
 					"git@github.com:sugarkube/kapps-C.git",
 					"kappC-0.3.0",
 					"kappC/some/special-path",
-					""),
-				acquirer.NewGitAcquirer(
+					"")),
+				discardErr(acquirer.NewGitAcquirer(
 					"pathZ",
 					"git@github.com:sugarkube/kapps-C.git",
 					"kappZ-0.3.0",
 					"kappC/some/pathZ",
-					""),
-				acquirer.NewGitAcquirer(
+					"")),
+				discardErr(acquirer.NewGitAcquirer(
 					"pathX",
 					"git@github.com:sugarkube/kapps-C.git",
 					"kappX-0.3.0",
 					"kappC/some/pathX",
-					""),
-				acquirer.NewGitAcquirer(
+					"")),
+				discardErr(acquirer.NewGitAcquirer(
 					"pathY",
 					"git@github.com:sugarkube/kapps-C.git",
 					"kappY-0.3.0",
 					"kappC/some/pathY",
-					""),
+					"")),
 			},
 		},
 		{
@@ -110,12 +119,12 @@ func TestLoadStackConfig(t *testing.T) {
 			ShouldBePresent: true,
 			manifest:        &manifest2,
 			Sources: []acquirer.Acquirer{
-				acquirer.NewGitAcquirer(
+				discardErr(acquirer.NewGitAcquirer(
 					"pathB",
 					"git@github.com:sugarkube/kapps-B.git",
 					"kappB-0.2.0",
 					"some/pathB",
-					""),
+					"")),
 			},
 		},
 		{
@@ -123,12 +132,12 @@ func TestLoadStackConfig(t *testing.T) {
 			ShouldBePresent: true,
 			manifest:        &manifest2,
 			Sources: []acquirer.Acquirer{
-				acquirer.NewGitAcquirer(
+				discardErr(acquirer.NewGitAcquirer(
 					"pathD",
 					"git@github.com:sugarkube/kapps-D.git",
 					"kappD-0.2.0",
 					"some/pathD",
-					""),
+					"")),
 			},
 		},
 		{
@@ -136,12 +145,12 @@ func TestLoadStackConfig(t *testing.T) {
 			ShouldBePresent: true,
 			manifest:        &manifest2,
 			Sources: []acquirer.Acquirer{
-				acquirer.NewGitAcquirer(
+				discardErr(acquirer.NewGitAcquirer(
 					"pathA",
 					"git@github.com:sugarkube/kapps-A.git",
 					"kappA-0.2.0",
 					"some/pathA",
-					"false"),
+					"false")),
 			},
 		},
 	}
@@ -229,12 +238,12 @@ func TestFindKappVarsFiles(t *testing.T) {
 						Id:              "kappA",
 						ShouldBePresent: true,
 						Sources: []acquirer.Acquirer{
-							acquirer.NewGitAcquirer(
+							discardErr(acquirer.NewGitAcquirer(
 								"pathA",
 								"git@github.com:sugarkube/kapps-A.git",
 								"kappA-0.1.0",
 								"some/pathA",
-								""),
+								"")),
 						},
 					},
 				},
@@ -247,24 +256,24 @@ func TestFindKappVarsFiles(t *testing.T) {
 						Id:              "kappC",
 						ShouldBePresent: true,
 						Sources: []acquirer.Acquirer{
-							acquirer.NewGitAcquirer(
+							discardErr(acquirer.NewGitAcquirer(
 								"pathC",
 								"git@github.com:sugarkube/kapps-C.git",
 								"kappC-0.3.0",
 								"some/pathC",
-								""),
+								"")),
 						},
 					},
 					{
 						Id:              "kappB",
 						ShouldBePresent: true,
 						Sources: []acquirer.Acquirer{
-							acquirer.NewGitAcquirer(
+							discardErr(acquirer.NewGitAcquirer(
 								"pathB",
 								"git@github.com:sugarkube/kapps-B.git",
 								"kappB-0.2.0",
 								"some/pathB",
-								""),
+								"")),
 						},
 					},
 				},
@@ -316,12 +325,12 @@ func TestGetKappVars(t *testing.T) {
 						Id:              "kappA",
 						ShouldBePresent: true,
 						Sources: []acquirer.Acquirer{
-							acquirer.NewGitAcquirer(
+							discardErr(acquirer.NewGitAcquirer(
 								"pathA",
 								"git@github.com:sugarkube/kapps-A.git",
 								"kappA-0.1.0",
 								"some/pathA",
-								""),
+								"")),
 						},
 					},
 				},
@@ -334,24 +343,24 @@ func TestGetKappVars(t *testing.T) {
 						Id:              "kappC",
 						ShouldBePresent: true,
 						Sources: []acquirer.Acquirer{
-							acquirer.NewGitAcquirer(
+							discardErr(acquirer.NewGitAcquirer(
 								"pathC",
 								"git@github.com:sugarkube/kapps-C.git",
 								"kappC-0.3.0",
 								"some/pathC",
-								""),
+								"")),
 						},
 					},
 					{
 						Id:              "kappB",
 						ShouldBePresent: true,
 						Sources: []acquirer.Acquirer{
-							acquirer.NewGitAcquirer(
+							discardErr(acquirer.NewGitAcquirer(
 								"pathB",
 								"git@github.com:sugarkube/kapps-B.git",
 								"kappB-0.2.0",
 								"some/pathB",
-								""),
+								"")),
 						},
 					},
 				},

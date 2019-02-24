@@ -21,7 +21,26 @@ import (
 	"testing"
 )
 
+// Helper to get acquirers in a single-valued context
+func discardErr(acquirer Acquirer, err error) Acquirer {
+	if err != nil {
+		panic(err)
+	}
+
+	return acquirer
+}
+
 func TestId(t *testing.T) {
+	// the URI is invalid. It should cause an error
+	invalidUriAcquirer, err := NewGitAcquirer(
+		"",
+		"git@github.com:helm:thing/charts.git",
+		"master",
+		"stable/wordpress",
+		"")
+	assert.Nil(t, invalidUriAcquirer)
+	assert.NotNil(t, err)
+
 	tests := []struct {
 		name         string
 		desc         string
@@ -32,46 +51,35 @@ func TestId(t *testing.T) {
 		{
 			name: "good",
 			desc: "check IDs are generated with expected input",
-			input: NewGitAcquirer(
+			input: discardErr(NewGitAcquirer(
 				"",
 				"git@github.com:helm/charts.git",
 				"master",
 				"stable/wordpress",
-				""),
+				"")),
 			expectValues: "helm-charts-wordpress",
 		},
 		{
 			name: "good_path_leading_trailing_slash",
 			desc: "check leading/trailing slashes on paths don't affect IDs",
-			input: NewGitAcquirer(
+			input: discardErr(NewGitAcquirer(
 				"",
 				"git@github.com:helm/charts.git",
 				"master",
 				"/stable/wordpress/",
-				""),
+				"")),
 			expectValues: "helm-charts-wordpress",
 		},
 		{
 			name: "good_name_in_id",
 			desc: "check explicit names are put into IDs",
-			input: NewGitAcquirer(
+			input: discardErr(NewGitAcquirer(
 				"site1-values",
 				"git@github.com:sugarkube/sugarkube.git",
 				"master",
 				"examples/values/wordpress/site1/",
-				""),
+				"")),
 			expectValues: "sugarkube-sugarkube-site1-values",
-		},
-		{
-			name: "error_invalid_uri",
-			desc: "check invalid git URIs cause errors",
-			input: NewGitAcquirer(
-				"",
-				"git@github.com:helm:thing/charts.git",
-				"master",
-				"stable/wordpress",
-				""),
-			expectError: true,
 		},
 	}
 

@@ -90,18 +90,18 @@ absent:
 						},
 					},
 					Sources: []acquirer.Acquirer{
-						acquirer.NewGitAcquirer(
+						discardErr(acquirer.NewGitAcquirer(
 							"pathA",
 							"git@github.com:exampleA/repoA.git",
 							"branchA",
 							"example/pathA",
-							""),
-						acquirer.NewGitAcquirer(
+							"")),
+						discardErr(acquirer.NewGitAcquirer(
 							"sampleNameB",
 							"git@github.com:exampleB/repoB.git",
 							"branchB",
 							"example/pathB",
-							""),
+							"")),
 					},
 				},
 				{
@@ -109,12 +109,12 @@ absent:
 					ShouldBePresent: true,
 					manifest:        &manifest,
 					Sources: []acquirer.Acquirer{
-						acquirer.NewGitAcquirer(
+						discardErr(acquirer.NewGitAcquirer(
 							"pathA",
 							"git@github.com:exampleA/repoA.git",
 							"branchA",
 							"example/pathA",
-							""),
+							"")),
 					},
 					vars: map[string]interface{}{
 						"someVarA": "valueA",
@@ -129,12 +129,12 @@ absent:
 					ShouldBePresent: false, // should be absent
 					manifest:        &manifest,
 					Sources: []acquirer.Acquirer{
-						acquirer.NewGitAcquirer(
+						discardErr(acquirer.NewGitAcquirer(
 							"pathA",
 							"git@github.com:exampleA/repoA.git",
 							"branchA",
 							"example/pathA",
-							""),
+							"")),
 					},
 				},
 			},
