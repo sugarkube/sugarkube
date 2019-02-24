@@ -59,7 +59,7 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 
 Create a configured cluster, e.g.:
 
-	$ sugarkube cluster create dev1 /path/to/stacks.yaml
+	$ sugarkube cluster create /path/to/stacks.yaml dev1
 
 Certain values can be provided to override values from the stack config file, e.g. to change the 
 region, etc. 

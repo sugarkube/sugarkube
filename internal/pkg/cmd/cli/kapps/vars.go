@@ -33,7 +33,7 @@ func newVarsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "vars",
+		Use:   "vars [flags] [stack-file] [stack-name]",
 		Short: fmt.Sprintf("Display all variables available for a kapp"),
 		Long: `Merges variables from all sources and displays them. If a kapp is given, variables available for that 
 specific kapp will be displayed. If not, all generally avaialble variables for the stack will be shown.`,

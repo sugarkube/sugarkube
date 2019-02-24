@@ -59,7 +59,7 @@ func newUpdateCmd(out io.Writer) *cobra.Command {
 
 Update a configured cluster, e.g.:
 
-	$ sugarkube cluster update --stack-name dev1 --stack-config /path/to/stacks.yaml
+	$ sugarkube cluster update /path/to/stacks.yaml dev1 
 
 Certain values can be provided to override values from the stack config file, e.g. to change the 
 region, etc. 
