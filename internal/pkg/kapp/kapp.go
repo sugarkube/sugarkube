@@ -81,14 +81,6 @@ func (k Kapp) FullyQualifiedId() string {
 
 // Returns the physical path to this kapp in a cache
 func (k Kapp) CacheDir() string {
-	if k.manifest == nil {
-		// todo - remove panics in favour of returning errors like everywhere else
-		panic("Kapp manifest not set")
-	}
-	if k.Id == "" {
-		panic("Empty kapp ID")
-	}
-
 	cacheDir := filepath.Join(k.cacheDir, k.manifest.Id, k.Id)
 
 	// if no cache dir has been set (e.g. because the user is doing a dry-run),
@@ -159,85 +151,112 @@ func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}
 
 		// Return a useful error message if no ID has been declared. We need to do this here as well as when
 		// instantiating a kapp because this catches if the ID key is missing altogether
-		kappId, ok := valuesMap[ID_KEY].(string)
+		id, ok := valuesMap[ID_KEY].(string)
 		if !ok {
 			return errors.New(fmt.Sprintf("No ID declared for kapp: %#v", valuesMap))
 		}
 
-		// marshal and unmarshal any vars
-		var kappVars map[string]interface{}
-
-		rawKappVars, ok := valuesMap[VARS_KEY]
-		if ok {
-			varsBytes, err := yaml.Marshal(rawKappVars)
-			if err != nil {
-				return errors.Wrapf(err, "Error marshalling vars in kapp: %#v", v)
-			}
-
-			err = yaml.Unmarshal(varsBytes, &kappVars)
-			if err != nil {
-				return errors.Wrapf(err, "Error unmarshalling vars for kapp: %#v", v)
-			}
-
-			log.Logger.Debugf("Parsed vars from kapp: %s", kappVars)
-		} else {
-			log.Logger.Debugf("No vars found in kapp")
-		}
-
-		// marshal and unmarshal the list of templates
-		templateBytes, err := yaml.Marshal(valuesMap[TEMPLATES_KEY])
+		vars, err := parseVariables(valuesMap)
 		if err != nil {
-			return errors.Wrapf(err, "Error marshalling kapp templates: %#v", v)
+			return errors.WithStack(err)
 		}
 
-		log.Logger.Debugf("Marshalled templates YAML: %s", templateBytes)
-
-		kappTemplates := []Template{}
-		err = yaml.Unmarshal(templateBytes, &kappTemplates)
+		templates, err := parseTemplates(valuesMap)
 		if err != nil {
-			return errors.Wrapf(err, "Error unmarshalling template YAML: %s", templateBytes)
+			return errors.WithStack(err)
 		}
 
-		// marshal and unmarshal the list of sources
-		sourcesBytes, err := yaml.Marshal(valuesMap[SOURCES_KEY])
+		acquirers, err := parseAcquirers(valuesMap)
 		if err != nil {
-			return errors.Wrapf(err, "Error marshalling sources yaml: %#v", v)
+			return errors.WithStack(err)
 		}
 
-		log.Logger.Debugf("Marshalled sources YAML: %s", sourcesBytes)
-
-		sourcesMaps := []map[interface{}]interface{}{}
-		err = yaml.UnmarshalStrict(sourcesBytes, &sourcesMaps)
-		if err != nil {
-			return errors.Wrapf(err, "Error unmarshalling yaml: %s", sourcesBytes)
-		}
-
-		log.Logger.Debugf("kapp sourcesMaps=%#v", sourcesMaps)
-
-		kappSources := make([]acquirer.Acquirer, 0)
-		// now we have a list of sources, get the acquirer for each one
-		for _, sourceMap := range sourcesMaps {
-			sourceStringMap, err := convert.MapInterfaceInterfaceToMapStringString(sourceMap)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			acquirerImpl, err := acquirer.NewAcquirer(sourceStringMap)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			log.Logger.Debugf("Got acquirer %#v", acquirerImpl)
-
-			kappSources = append(kappSources, acquirerImpl)
-		}
-
-		kapp, err := newKapp(manifest, kappId, shouldBePresent, kappVars, kappTemplates, kappSources)
+		kapp, err := newKapp(manifest, id, shouldBePresent, vars, templates, acquirers)
 
 		*kapps = append(*kapps, *kapp)
 	}
 
 	return nil
+}
+
+// Parse variables in a Kapp values map
+func parseVariables(valuesMap map[string]interface{}) (map[string]interface{}, error) {
+	var kappVars map[string]interface{}
+
+	rawKappVars, ok := valuesMap[VARS_KEY]
+	if ok {
+		varsBytes, err := yaml.Marshal(rawKappVars)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error marshalling vars in kapp: %#v", valuesMap)
+		}
+
+		err = yaml.Unmarshal(varsBytes, &kappVars)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error unmarshalling vars for kapp: %#v", valuesMap)
+		}
+
+		log.Logger.Debugf("Parsed vars from kapp: %s", kappVars)
+	} else {
+		log.Logger.Debugf("No vars found in kapp")
+	}
+
+	return kappVars, nil
+}
+
+// Parse templates from a Kapp values map
+func parseTemplates(valuesMap map[string]interface{}) ([]Template, error) {
+	templateBytes, err := yaml.Marshal(valuesMap[TEMPLATES_KEY])
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error marshalling kapp templates: %#v", valuesMap)
+	}
+
+	log.Logger.Debugf("Marshalled templates YAML: %s", templateBytes)
+
+	templates := []Template{}
+	err = yaml.Unmarshal(templateBytes, &templates)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error unmarshalling template YAML: %s", templateBytes)
+	}
+
+	return templates, nil
+}
+
+// Parse acquirers from a Kapp values map
+func parseAcquirers(valuesMap map[string]interface{}) ([]acquirer.Acquirer, error) {
+	sourcesBytes, err := yaml.Marshal(valuesMap[SOURCES_KEY])
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error marshalling sources yaml: %#v", valuesMap)
+	}
+
+	log.Logger.Debugf("Marshalled sources YAML: %s", sourcesBytes)
+
+	sourcesMaps := []map[interface{}]interface{}{}
+	err = yaml.UnmarshalStrict(sourcesBytes, &sourcesMaps)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error unmarshalling yaml: %s", sourcesBytes)
+	}
+
+	log.Logger.Debugf("kapp sourcesMaps=%#v", sourcesMaps)
+
+	kappSources := make([]acquirer.Acquirer, 0)
+	// now we have a list of sources, get the acquirer for each one
+	for _, sourceMap := range sourcesMaps {
+		sourceStringMap, err := convert.MapInterfaceInterfaceToMapStringString(sourceMap)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		acquirerImpl, err := acquirer.NewAcquirer(sourceStringMap)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		log.Logger.Debugf("Got acquirer %#v", acquirerImpl)
+
+		kappSources = append(kappSources, acquirerImpl)
+	}
+
+	return kappSources, nil
 }
 
 // Parses a manifest YAML. It separately parses all kapps that should be present and all those that should be
