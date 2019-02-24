@@ -29,6 +29,11 @@ func init() {
 }
 
 func TestParseManifestYaml(t *testing.T) {
+	manifest := Manifest{
+		Uri: "fake/uri",
+		Id:  "test-manifest",
+	}
+
 	tests := []struct {
 		name                 string
 		desc                 string
@@ -77,6 +82,7 @@ absent:
 				{
 					Id:              "example1",
 					ShouldBePresent: true,
+					manifest:        &manifest,
 					Templates: []Template{
 						{
 							"example/template1.tpl",
@@ -101,6 +107,7 @@ absent:
 				{
 					Id:              "example2",
 					ShouldBePresent: true,
+					manifest:        &manifest,
 					Sources: []acquirer.Acquirer{
 						acquirer.NewGitAcquirer(
 							"pathA",
@@ -120,6 +127,7 @@ absent:
 				{
 					Id:              "example3",
 					ShouldBePresent: false, // should be absent
+					manifest:        &manifest,
 					Sources: []acquirer.Acquirer{
 						acquirer.NewGitAcquirer(
 							"pathA",
@@ -139,7 +147,7 @@ absent:
 		err := yaml.Unmarshal([]byte(test.input), inputYaml)
 		assert.Nil(t, err)
 
-		result, err := parseManifestYaml(inputYaml)
+		result, err := parseManifestYaml(&manifest, inputYaml)
 		if test.expectedError {
 			assert.NotNil(t, err)
 			assert.Nil(t, result)
@@ -148,4 +156,6 @@ absent:
 			assert.Nil(t, err)
 		}
 	}
+
+	assert.NotEqual(t, manifest, Manifest{})
 }

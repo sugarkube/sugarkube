@@ -72,11 +72,6 @@ func ParseManifestFile(path string) (*Manifest, error) {
 
 	log.Logger.Debugf("Loaded manifest data: %#v", data)
 
-	kapps, err := parseManifestYaml(data)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
 	parsedManifest := Manifest{}
 	err = vars.LoadYamlFile(path, &parsedManifest)
 	if err != nil {
@@ -84,18 +79,14 @@ func ParseManifestFile(path string) (*Manifest, error) {
 	}
 
 	manifest := newManifest(path)
-	manifest.Kapps = kapps
 	manifest.Options = parsedManifest.Options
 
-	for i, kappObj := range manifest.Kapps {
-		log.Logger.Debugf("Setting manifest reference")
-		err = kappObj.SetManifest(&manifest)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		// we've modified the kapp, so reassign it
-		manifest.Kapps[i] = kappObj
+	kapps, err := parseManifestYaml(&manifest, data)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
+
+	manifest.Kapps = kapps
 
 	log.Logger.Debugf("Returning manifest: %#v", manifest)
 

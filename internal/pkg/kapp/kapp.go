@@ -70,18 +70,6 @@ func (k *Kapp) SetCacheDir(cacheDir string) {
 	k.cacheDir = cacheDir
 }
 
-// Sets the manifest the kapp is part of
-func (k *Kapp) SetManifest(manifest *Manifest) error {
-	if manifest == nil {
-		return errors.New(fmt.Sprintf("Can't associate nil manifest with kapp %s", k.FullyQualifiedId()))
-	}
-
-	log.Logger.Debugf("Setting manifest for kapp %s to %#v",
-		k.FullyQualifiedId(), manifest)
-	k.manifest = manifest
-	return nil
-}
-
 // Returns the fully-qualified ID of a kapp
 func (k Kapp) FullyQualifiedId() string {
 	if k.manifest == nil {
@@ -129,11 +117,12 @@ func (k Kapp) AsMap() map[string]string {
 }
 
 // Parses kapps and adds them to an array
-func parseKapps(kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bool) error {
+func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bool) error {
 
 	// parse each kapp definition
 	for _, v := range kappDefinitions {
 		kapp := Kapp{
+			manifest:        manifest,
 			ShouldBePresent: shouldBePresent,
 		}
 
@@ -234,14 +223,14 @@ func parseKapps(kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bo
 }
 
 // Parses manifest YAML data and returns a list of kapps
-func parseManifestYaml(data map[string]interface{}) ([]Kapp, error) {
+func parseManifestYaml(manifest *Manifest, data map[string]interface{}) ([]Kapp, error) {
 	kapps := make([]Kapp, 0)
 
 	log.Logger.Debugf("Manifest data to parse: %#v", data)
 
 	presentKapps, ok := data[PRESENT_KEY]
 	if ok {
-		err := parseKapps(&kapps, presentKapps.([]interface{}), true)
+		err := parseKapps(manifest, &kapps, presentKapps.([]interface{}), true)
 		if err != nil {
 			return nil, errors.Wrap(err, "Error parsing present kapps")
 		}
@@ -249,7 +238,7 @@ func parseManifestYaml(data map[string]interface{}) ([]Kapp, error) {
 
 	absentKapps, ok := data[ABSENT_KEY]
 	if ok {
-		err := parseKapps(&kapps, absentKapps.([]interface{}), false)
+		err := parseKapps(manifest, &kapps, absentKapps.([]interface{}), false)
 		if err != nil {
 			return nil, errors.Wrap(err, "Error parsing absent kapps")
 		}
