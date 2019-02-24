@@ -49,7 +49,24 @@ const INCLUDE_VALUES = "includeValues"
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
 func NewGitAcquirer(name string, uri string, branch string, path string,
-	includeValues string) GitAcquirer {
+	includeValues string) (*GitAcquirer, error) {
+
+	name = strings.TrimSpace(name)
+	uri = strings.TrimSpace(uri)
+	branch = strings.TrimSpace(branch)
+	path = strings.TrimSpace(path)
+
+	if uri == "" || branch == "" || path == "" {
+		return nil, errors.New("Invalid git parameters. The uri, " +
+			"branch and path are all mandatory.")
+	}
+
+	if strings.Count(uri, ":") != 1 {
+		return nil, errors.New(
+			fmt.Sprintf("Unexpected git URI. Expected a single ':' "+
+				"character in URI %s", uri))
+	}
+
 	if name == "" {
 		name = filepath.Base(path)
 	}
@@ -61,24 +78,17 @@ func NewGitAcquirer(name string, uri string, branch string, path string,
 		includeValuesBool = false
 	}
 
-	return GitAcquirer{
+	return &GitAcquirer{
 		name:          name,
 		uri:           uri,
 		branch:        branch,
 		path:          path,
 		includeValues: includeValuesBool,
-	}
+	}, nil
 }
 
 // Generate an ID
 func (a GitAcquirer) Id() (string, error) {
-	// testing here simplifies testing but does mean invalid objects can be created...
-	if strings.Count(a.uri, ":") != 1 {
-		return "", errors.New(
-			fmt.Sprintf("Unexpected git URI. Expected a single ':' "+
-				"character in URI %s", a.uri))
-	}
-
 	// this doesn't contain the branch because we don't want to create complications
 	// in case users create their own branches (e.g. if we've checked out into a
 	// directory containing 'master' and they create a feature branch the dir name

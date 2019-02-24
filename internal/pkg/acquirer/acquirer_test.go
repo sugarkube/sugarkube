@@ -46,7 +46,7 @@ var defaultSettings = map[string]string{
 	"path":   "incubator/tiller/",
 }
 
-var expectedAcquirer = GitAcquirer{
+var expectedAcquirer = &GitAcquirer{
 	name:          "tiller",
 	uri:           "git@github.com:sugarkube/kapps.git",
 	branch:        "master",

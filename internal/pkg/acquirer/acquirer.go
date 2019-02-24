@@ -28,7 +28,7 @@ type Acquirer interface {
 	Id() (string, error)
 	Name() string
 	Path() string
-	IncludeValues() bool
+	IncludeValues() bool // todo - clarify if this is actually used, and if not, remove it
 }
 
 const ACQUIRER_KEY = "acquirer"
@@ -38,13 +38,19 @@ func acquirerFactory(name string, settings map[string]string) (Acquirer, error) 
 	log.Logger.Debugf("Returning new %s acquirer", name)
 
 	if name == GIT_ACQUIRER {
-		if settings[URI] == "" || settings[BRANCH] == "" || settings[PATH] == "" {
-			return nil, errors.New("Invalid git parameters. The uri, " +
-				"branch and path are all mandatory.")
+		acquirerObj, err := NewGitAcquirer(settings[NAME], settings[URI], settings[BRANCH],
+			settings[PATH], settings[INCLUDE_VALUES])
+		if err != nil {
+			return nil, errors.WithStack(err)
 		}
+		return acquirerObj, nil
 
-		return NewGitAcquirer(settings[NAME], settings[URI], settings[BRANCH],
-			settings[PATH], settings[INCLUDE_VALUES]), nil
+	} else if name == FILE_ACQUIRER {
+		acquirerObj, err := NewFileAcquirer(settings[NAME], settings[URI])
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		return acquirerObj, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("Acquirer '%s' doesn't exist", name))
