@@ -25,17 +25,19 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"io"
+	"strings"
 )
 
 // Loads a stack config from a file
 func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.StackConfig,
 	out io.Writer) (*kapp.StackConfig, provider.Provider, provisioner.Provisioner, error) {
 
-	stackConfig, err := MaybeLoadStackConfig(stackName, stackFile)
+	stackConfig, err := LoadStackConfig(stackName, stackFile)
 	if err != nil {
 		return nil, nil, nil, errors.WithStack(err)
 	}
 
+	// todo - work out whether this should be uncommented or delete it
 	//cliManifests, err := kapp.ParseManifests(c.manifests)
 	//if err != nil {
 	//	return errors.WithStack(err)
@@ -78,23 +80,20 @@ func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.Sta
 	return stackConfig, providerImpl, provisionerImpl, nil
 }
 
-// Loads a stack config from a named file if given, or returns an empty StackConfig.
-func MaybeLoadStackConfig(stackName string, stackFile string) (*kapp.StackConfig, error) {
-	stackConfig := &kapp.StackConfig{}
-	var err error
+// Loads a named stack from a stack config file or returns an error
+func LoadStackConfig(stackName string, stackFile string) (*kapp.StackConfig, error) {
 
-	// make sure both stack name and stack file are supplied if either are supplied
-	if stackName != "" || stackFile != "" {
-		if stackName == "" {
-			return nil, errors.New("A stack name is required when supplying the path to a stack config file.")
-		}
+	if strings.TrimSpace(stackName) == "" {
+		return nil, errors.New("The stack name is required")
+	}
 
-		if stackFile != "" {
-			stackConfig, err = kapp.LoadStackConfig(stackName, stackFile)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
-		}
+	if strings.TrimSpace(stackFile) == "" {
+		return nil, errors.New("A stack config file path is required")
+	}
+
+	stackConfig, err := kapp.LoadStackConfig(stackName, stackFile)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	log.Logger.Debugf("Parsed stack CLI args to stack config: %#v", stackConfig)

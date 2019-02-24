@@ -42,9 +42,8 @@ type createCmd struct {
 	account          string
 	cluster          string
 	region           string
-	//manifests        cmd.Files
-	onlineTimeout uint32
-	readyTimeout  uint32
+	onlineTimeout    uint32
+	readyTimeout     uint32
 }
 
 func newCreateCmd(out io.Writer) *cobra.Command {
@@ -54,45 +53,46 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	}
 
 	command := &cobra.Command{
-		Use:   "create [flags]",
+		Use:   "create [flags] [stack-file] [stack-name]",
 		Short: fmt.Sprintf("Create a cluster"),
 		Long: `Create a new cluster, either local or remote.
 
-If creating a named stack, just pass the stack name and path to the config file 
-it's defined in, e.g.
+Create a configured cluster, e.g.:
 
-	$ sugarkube cluster create --stack-name dev1 --stack-config /path/to/stacks.yaml
+	$ sugarkube cluster create dev1 /path/to/stacks.yaml
 
-Otherwise specify the provider, profile, etc. on the command line, or to override
-values in a stack config file. CLI args take precedence over values in stack 
-config files.
+Certain values can be provided to override values from the stack config file, e.g. to change the 
+region, etc. 
 
 Note: Not all providers require all arguments. See documentation for help.
 `,
-		RunE: c.run,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 2 {
+				return errors.New("the name of the stack to run, and the path to the stack file are required")
+			}
+			c.stackFile = args[0]
+			c.stackName = args[1]
+			return c.run()
+		},
 	}
 
 	f := command.Flags()
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
-	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
-	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	f.VarP(&c.providerVarsDirs, "dir", "f", "Paths to YAML directory to load provider configs from (can specify multiple)")
-	// commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
-	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple)")
+	f.VarP(&c.providerVarsDirs, "provider-dir", "f", "Paths to YAML directory to load provider configs from (can specify multiple times)")
 	f.Uint32Var(&c.onlineTimeout, "online-timeout", 600, "max number of seconds to wait for the cluster to come online")
 	f.Uint32Var(&c.readyTimeout, "ready-timeout", 600, "max number of seconds to wait for the cluster to become ready")
 	return command
 }
 
-func (c *createCmd) run(cmd *cobra.Command, args []string) error {
+func (c *createCmd) run() error {
 
-	// CLI overrides - will be merged with any loaded from a stack config file
+	// CLI overrides - will be merged with and take precedence over values loaded from the stack config file
 	cliStackConfig := &kapp.StackConfig{
 		Provider:         c.provider,
 		Provisioner:      c.provisioner,
@@ -101,9 +101,8 @@ func (c *createCmd) run(cmd *cobra.Command, args []string) error {
 		Region:           c.region,
 		Account:          c.account,
 		ProviderVarsDirs: c.providerVarsDirs,
-		//Manifests:        cliManifests,
-		ReadyTimeout:  c.readyTimeout,
-		OnlineTimeout: c.onlineTimeout,
+		ReadyTimeout:     c.readyTimeout,
+		OnlineTimeout:    c.onlineTimeout,
 	}
 
 	stackConfig, providerImpl, provisionerImpl, err := utils.ProcessCliArgs(c.stackName,
