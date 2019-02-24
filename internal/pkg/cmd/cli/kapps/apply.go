@@ -105,8 +105,7 @@ func (c *applyCmd) run() error {
 		//KappVarsDirs: c.kappVarsDirs,
 	}
 
-	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
-		c.stackFile, cliStackConfig, c.out)
+	stackConfig, providerImpl, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -57,24 +57,24 @@ func newTemplateCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "template [cache-dir]",
+		Use:   "template [flags] [stack-file] [stack-name] [cache-dir]",
 		Short: fmt.Sprintf("Render templates for kapps"),
 		Long: `Renders configured templates for kapps, useful for e.g. terraform backends 
 configured for the region the target cluster is in, generating Helm 
 'values.yaml' files, etc.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return errors.New("the path to the kapp cache dir is required")
+			if len(args) < 3 {
+				return errors.New("some required arguments are missing")
 			}
-			c.cacheDir = args[0]
+			c.stackFile = args[0]
+			c.stackName = args[1]
+			c.cacheDir = args[2]
 			return c.run()
 		},
 	}
 
 	f := cmd.Flags()
 	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
-	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
-	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -103,8 +103,7 @@ func (c *templateConfig) run() error {
 		//Manifests:    cliManifests,
 	}
 
-	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
-		c.stackFile, cliStackConfig, c.out)
+	stackConfig, providerImpl, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}

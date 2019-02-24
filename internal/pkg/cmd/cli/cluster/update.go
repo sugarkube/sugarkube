@@ -105,14 +105,18 @@ func (c *updateCmd) run() error {
 		OnlineTimeout:    c.onlineTimeout,
 	}
 
-	stackConfig, providerImpl, provisionerImpl, err := utils.ProcessCliArgs(c.stackName,
-		c.stackFile, cliStackConfig, c.out)
+	stackConfig, providerImpl, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	_, err = fmt.Fprintf(c.out, "Checking whether the target cluster '%s' is already "+
 		"online...\n", stackConfig.Cluster)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner)
 	if err != nil {
 		return errors.WithStack(err)
 	}

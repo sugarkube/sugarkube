@@ -23,40 +23,34 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
-	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"io"
 	"strings"
 )
 
 // Loads a stack config from a file
 func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.StackConfig,
-	out io.Writer) (*kapp.StackConfig, provider.Provider, provisioner.Provisioner, error) {
+	out io.Writer) (*kapp.StackConfig, provider.Provider, error) {
 
 	stackConfig, err := LoadStackConfig(stackName, stackFile)
 	if err != nil {
-		return nil, nil, nil, errors.WithStack(err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	err = mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
 	if err != nil {
-		return nil, nil, nil, errors.WithStack(err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	log.Logger.Debugf("Final stack config: %#v", stackConfig)
 
 	providerImpl, err := provider.NewProvider(stackConfig)
 	if err != nil {
-		return nil, nil, nil, errors.WithStack(err)
-	}
-
-	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner)
-	if err != nil {
-		return nil, nil, nil, errors.WithStack(err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	err = kapp.ValidateStackConfig(stackConfig)
 	if err != nil {
-		return nil, nil, nil, errors.WithStack(err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	numKapps := 0
@@ -68,10 +62,10 @@ func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.Sta
 		"init manifest(s), %d manifest(s) and %d kapps in total.\n",
 		len(stackConfig.InitManifests), len(stackConfig.Manifests), numKapps)
 	if err != nil {
-		return nil, nil, nil, errors.WithStack(err)
+		return nil, nil, errors.WithStack(err)
 	}
 
-	return stackConfig, providerImpl, provisionerImpl, nil
+	return stackConfig, providerImpl, nil
 }
 
 // Loads a named stack from a stack config file or returns an error

@@ -20,11 +20,10 @@ type varsConfig struct {
 	provider    string
 	provisioner string
 	//kappVarsDirs cmd.Files
-	profile string
-	account string
-	cluster string
-	region  string
-	//manifests    cmd.Files
+	profile      string
+	account      string
+	cluster      string
+	region       string
 	includeKapps []string
 	excludeKapps []string
 }
@@ -39,13 +38,17 @@ func newVarsCmd(out io.Writer) *cobra.Command {
 		Short: fmt.Sprintf("Display all variables available for a kapp"),
 		Long: `Merges variables from all sources and displays them. If a kapp is given, variables available for that 
 specific kapp will be displayed. If not, all generally avaialble variables for the stack will be shown.`,
-		RunE: c.run,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 2 {
+				return errors.New("the name of the stack to run, and the path to the stack file are required")
+			}
+			c.stackFile = args[0]
+			c.stackName = args[1]
+			return c.run()
+		},
 	}
 
 	f := cmd.Flags()
-	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
-	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
-	f.StringVarP(&c.cacheDir, "cache-dir", "d", "", "kapp cache directory")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -60,7 +63,7 @@ specific kapp will be displayed. If not, all generally avaialble variables for t
 	return cmd
 }
 
-func (c *varsConfig) run(cmd *cobra.Command, args []string) error {
+func (c *varsConfig) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &kapp.StackConfig{
@@ -71,11 +74,9 @@ func (c *varsConfig) run(cmd *cobra.Command, args []string) error {
 		Region:      c.region,
 		Account:     c.account,
 		//KappVarsDirs: c.kappVarsDirs,
-		//Manifests:    cliManifests,
 	}
 
-	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
-		c.stackFile, cliStackConfig, c.out)
+	stackConfig, providerImpl, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}

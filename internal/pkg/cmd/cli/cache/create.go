@@ -73,8 +73,7 @@ func (c *createCmd) run() error {
 	// CLI args override configured args, so merge them in
 	cliStackConfig := &kapp.StackConfig{}
 
-	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
-		c.stackFile, cliStackConfig, c.out)
+	stackConfig, providerImpl, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
