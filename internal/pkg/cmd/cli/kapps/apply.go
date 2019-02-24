@@ -44,7 +44,6 @@ type applyCmd struct {
 	account string
 	cluster string
 	region  string
-	//manifests    cmd.Files
 	// todo - add options to :
 	// * filter the kapps to be processed (use strings like e.g. manifest:kapp-id to refer to kapps)
 	// * exclude manifests / kapps from being processed
@@ -56,14 +55,16 @@ func newApplyCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "apply [cache-dir]",
+		Use:   "apply [flags] [stack-file] [stack-name] [cache-dir]",
 		Short: fmt.Sprintf("Install/destroy kapps into a cluster"),
 		Long:  `Apply cached kapps to a target cluster according to manifests.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return errors.New("the path to the kapp cache dir is required")
+			if len(args) < 3 {
+				return errors.New("some required arguments are missing")
 			}
-			c.cacheDir = args[0]
+			c.stackFile = args[0]
+			c.stackName = args[1]
+			c.cacheDir = args[2]
 			return c.run()
 		},
 	}
@@ -80,8 +81,6 @@ func newApplyCmd(out io.Writer) *cobra.Command {
 	f.BoolVarP(&c.initManifests, "init-manifests", "i", false, "only apply init manifests. If false (default) only apply normal manifests.")
 	f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to apply. If not given, a "+
 		"diff will be generated")
-	f.StringVarP(&c.stackName, "stack-name", "n", "", "name of a stack to launch (required when passing --stack-config)")
-	f.StringVarP(&c.stackFile, "stack-config", "s", "", "path to file defining stacks by name")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -90,7 +89,6 @@ func newApplyCmd(out io.Writer) *cobra.Command {
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
 	// these are commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
 	//f.VarP(&c.kappVarsDirs, "dir", "f", "Paths to YAML directory to load kapp values from (can specify multiple)")
-	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple but will replace any configured in a stack)")
 	return cmd
 }
 
@@ -105,7 +103,6 @@ func (c *applyCmd) run() error {
 		Region:      c.region,
 		Account:     c.account,
 		//KappVarsDirs: c.kappVarsDirs,
-		//Manifests:    cliManifests,
 	}
 
 	stackConfig, providerImpl, _, err := utils.ProcessCliArgs(c.stackName,
