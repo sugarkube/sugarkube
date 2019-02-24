@@ -48,7 +48,7 @@ type StackConfig struct {
 	Cluster          string
 	ProviderVarsDirs []string               `yaml:"providerVarsDirs"`
 	providerVars     map[string]interface{} // set after loading and merging all provider vars files
-	KappVarsDirs     []string               `yaml:"kappVars"`
+	KappVarsDirs     []string               `yaml:"kappVarsDirs"`
 	InitManifests    []Manifest             `yaml:"initManifests"`
 	Manifests        []Manifest
 	TemplateDirs     []string `yaml:"templateDirs"`
