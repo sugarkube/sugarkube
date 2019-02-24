@@ -59,7 +59,6 @@ specific kapp will be displayed. If not, all generally avaialble variables for t
 	f.StringArrayVarP(&c.excludeKapps, "exclude", "x", []string{}, "exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id)")
 	// these are commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
 	//f.VarP(&c.kappVarsDirs, "dir", "f", "Paths to YAML directory to load kapp values from (can specify multiple)")
-	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple but will replace any configured in a stack)")
 	return cmd
 }
 

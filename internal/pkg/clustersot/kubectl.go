@@ -37,7 +37,7 @@ const KUBECTL_PATH = "kubectl"
 const KUBE_CONTEXT_KEY = "kube_context"
 
 // Tests whether the cluster is online
-func (c KubeCtlClusterSot) isOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
+func (c KubeCtlClusterSot) isOnline(stackConfig *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 	providerVars := provider.GetVars(providerImpl)
 	context := providerVars[KUBE_CONTEXT_KEY].(string)
 
@@ -59,7 +59,7 @@ func (c KubeCtlClusterSot) isOnline(sc *kapp.StackConfig, providerImpl provider.
 }
 
 // Tests whether all pods are Ready
-func (c KubeCtlClusterSot) isReady(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
+func (c KubeCtlClusterSot) isReady(stackConfig *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
 	providerVars := provider.GetVars(providerImpl)
 	context := providerVars[KUBE_CONTEXT_KEY].(string)
 

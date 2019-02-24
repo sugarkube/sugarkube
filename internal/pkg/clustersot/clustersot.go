@@ -43,38 +43,38 @@ func NewClusterSot(name string) (ClusterSot, error) {
 
 // Uses an implementation to determine whether the cluster is reachable/online, but it
 // may not be ready to install Kapps into yet.
-func IsOnline(c ClusterSot, sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
-	if sc.Status.IsOnline {
+func IsOnline(c ClusterSot, stackConfig *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
+	if stackConfig.Status.IsOnline {
 		return true, nil
 	}
 
-	online, err := c.isOnline(sc, providerImpl)
+	online, err := c.isOnline(stackConfig, providerImpl)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
 
 	if online {
 		log.Logger.Info("Cluster is online. Updating cluster status.")
-		sc.Status.IsOnline = true
+		stackConfig.Status.IsOnline = true
 	}
 
 	return online, nil
 }
 
 // Uses an implementation to determine whether the cluster is ready to install kapps into
-func IsReady(c ClusterSot, sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
-	if sc.Status.IsReady {
+func IsReady(c ClusterSot, stackConfig *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
+	if stackConfig.Status.IsReady {
 		return true, nil
 	}
 
-	ready, err := c.isReady(sc, providerImpl)
+	ready, err := c.isReady(stackConfig, providerImpl)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
 
 	if ready {
 		log.Logger.Info("Cluster is ready. Updating cluster status.")
-		sc.Status.IsReady = true
+		stackConfig.Status.IsReady = true
 	}
 
 	return ready, nil
