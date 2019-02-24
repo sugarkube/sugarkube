@@ -54,7 +54,6 @@ type job struct {
 	stackConfig      *kapp.StackConfig
 	manifestCacheDir string
 	install          bool
-	providerImpl     provider.Provider
 	approved         bool
 	dryRun           bool
 }
@@ -113,7 +112,7 @@ func Create(stackConfig *kapp.StackConfig, cacheDir string, initManifests bool) 
 // Run a plan to make a target cluster have the necessary kapps installed/
 // destroyed to match the input manifests. Each tranche is run sequentially,
 // and each kapp in each tranche is processed in parallel.
-func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) error {
+func (p *Plan) Run(approved bool, dryRun bool) error {
 
 	if p.tranche == nil {
 		log.Logger.Info("No tranches in plan to process")
@@ -144,12 +143,11 @@ func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) e
 			trancheKapp.SetCacheDir(p.cacheDir)
 
 			job := job{
-				approved:     approved,
-				dryRun:       dryRun,
-				install:      install,
-				kappObj:      trancheKapp,
-				providerImpl: providerImpl,
-				stackConfig:  p.stackConfig,
+				approved:    approved,
+				dryRun:      dryRun,
+				install:     install,
+				kappObj:     trancheKapp,
+				stackConfig: p.stackConfig,
 			}
 
 			jobs <- job
@@ -160,12 +158,11 @@ func (p *Plan) Run(approved bool, providerImpl provider.Provider, dryRun bool) e
 			trancheKapp.SetCacheDir(p.cacheDir)
 
 			job := job{
-				approved:     approved,
-				dryRun:       dryRun,
-				install:      install,
-				kappObj:      trancheKapp,
-				providerImpl: providerImpl,
-				stackConfig:  p.stackConfig,
+				approved:    approved,
+				dryRun:      dryRun,
+				install:     install,
+				kappObj:     trancheKapp,
+				stackConfig: p.stackConfig,
 			}
 
 			jobs <- job
@@ -200,7 +197,6 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 
 	for job := range jobs {
 		kappObj := job.kappObj
-		providerImpl := job.providerImpl
 		stackConfig := job.stackConfig
 		approved := job.approved
 		dryRun := job.dryRun
@@ -217,6 +213,11 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 			errCh <- errors.Wrap(err, msg)
 		}
 
+		providerImpl, err := provider.NewProvider(stackConfig)
+		if err != nil {
+			errCh <- errors.WithStack(err)
+		}
+
 		// kapp exists, run the appropriate installer method (for now, this will
 		// always be a Make installer)
 		installerImpl, err := installer.NewInstaller(installer.MAKE, providerImpl)
@@ -227,14 +228,12 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 
 		// install the kapp
 		if job.install {
-			err := installer.Install(installerImpl, &kappObj, stackConfig, approved,
-				providerImpl, dryRun)
+			err := installer.Install(installerImpl, &kappObj, stackConfig, approved, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", kappObj.Id)
 			}
 		} else { // destroy the kapp
-			err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved,
-				providerImpl, dryRun)
+			err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", kappObj.Id)
 			}

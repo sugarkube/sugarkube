@@ -22,7 +22,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"os/exec"
@@ -62,10 +61,9 @@ func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 }
 
 // Creates a new minikube cluster
-func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.Provider,
-	dryRun bool) error {
+func (p MinikubeProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) error {
 
-	providerVars := provider.GetVars(providerImpl)
+	providerVars := stackConfig.GetProviderVars()
 
 	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
 	minikubeConfig, err := getMinikubeProvisionerConfig(provisionerValues)
@@ -89,23 +87,20 @@ func (p MinikubeProvisioner) create(sc *kapp.StackConfig, providerImpl provider.
 		log.Logger.Infof("Minikube cluster successfully started")
 	}
 
-	sc.Status.StartedThisRun = true
+	stackConfig.Status.StartedThisRun = true
 	// only sleep before checking the cluster fo readiness if we started it
-	sc.Status.SleepBeforeReadyCheck = MINIKUBE_SLEEP_SECONDS_BEFORE_READY_CHECK
+	stackConfig.Status.SleepBeforeReadyCheck = MINIKUBE_SLEEP_SECONDS_BEFORE_READY_CHECK
 
 	return nil
 }
 
 // Returns whether a minikube cluster is already online
-func (p MinikubeProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
+func (p MinikubeProvisioner) isAlreadyOnline(stackConfig *kapp.StackConfig) (bool, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	// todo - this is duplicated all over the place. Neaten it up (ideally add
-	// the config as a property of the provisioner instance)
-	providerVars := provider.GetVars(providerImpl)
+	providerVars := stackConfig.GetProviderVars()
 
 	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-
 	minikubeConfig, err := getMinikubeProvisionerConfig(provisionerValues)
 	if err != nil {
 		return false, errors.WithStack(err)
@@ -128,8 +123,7 @@ func (p MinikubeProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl 
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p MinikubeProvisioner) update(sc *kapp.StackConfig, providerImpl provider.Provider,
-	dryRun bool) error {
+func (p MinikubeProvisioner) update(sc *kapp.StackConfig, dryRun bool) error {
 	log.Logger.Warn("Updating minikube clusters has no effect. Ignoring.")
 	return nil
 }

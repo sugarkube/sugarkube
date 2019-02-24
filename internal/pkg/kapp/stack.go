@@ -46,14 +46,25 @@ type StackConfig struct {
 	Region           string
 	Profile          string
 	Cluster          string
-	ProviderVarsDirs []string   `yaml:"providerVars"`
-	KappVarsDirs     []string   `yaml:"kappVars"`
-	InitManifests    []Manifest `yaml:"initManifests"`
+	ProviderVarsDirs []string               `yaml:"providerVarsDirs"`
+	providerVars     map[string]interface{} // set after loading and merging all provider vars files
+	KappVarsDirs     []string               `yaml:"kappVars"`
+	InitManifests    []Manifest             `yaml:"initManifests"`
 	Manifests        []Manifest
 	TemplateDirs     []string `yaml:"templateDirs"`
 	Status           ClusterStatus
 	OnlineTimeout    uint32
 	ReadyTimeout     uint32
+}
+
+// Sets provider vars
+func (s *StackConfig) SetProviderVars(vars map[string]interface{}) {
+	s.providerVars = vars
+}
+
+// Gets provider vars
+func (s *StackConfig) GetProviderVars() map[string]interface{} {
+	return s.providerVars
 }
 
 // Returns all manifests in the stack

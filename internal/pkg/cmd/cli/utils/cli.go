@@ -27,30 +27,49 @@ import (
 	"strings"
 )
 
-// Loads a stack config from a file
+// Loads a stack config from a file. Values are merged with CLI args (which take precedence), and provider
+// variables are loaded and set as a property on the stackConfig. So after this step, stackConfig contains
+// all config values for the entire stack (although it won't have been templated yet so any '{{var_name}}'
+// type strings won't have been interpolated yet.
 func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.StackConfig,
-	out io.Writer) (*kapp.StackConfig, provider.Provider, error) {
+	out io.Writer) (*kapp.StackConfig, error) {
 
 	stackConfig, err := LoadStackConfig(stackName, stackFile)
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	err = mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	log.Logger.Debugf("Final stack config: %#v", stackConfig)
 
+	// initialise the provider and load its variables
 	providerImpl, err := provider.NewProvider(stackConfig)
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
+
+	providerVars, err := provider.LoadProviderVars(providerImpl, stackConfig)
+	if err != nil {
+		log.Logger.Warn("Error loading provider variables")
+		return nil, errors.WithStack(err)
+	}
+	log.Logger.Debugf("Provider loaded vars: %#v", providerVars)
+
+	if len(providerVars) == 0 {
+		log.Logger.Fatal("No values loaded for provider")
+		return nil, errors.New(fmt.Sprintf("Failed to load variables for provider %s",
+			provider.GetName(providerImpl)))
+	}
+
+	stackConfig.SetProviderVars(providerVars)
 
 	err = kapp.ValidateStackConfig(stackConfig)
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	numKapps := 0
@@ -62,10 +81,10 @@ func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.Sta
 		"init manifest(s), %d manifest(s) and %d kapps in total.\n",
 		len(stackConfig.InitManifests), len(stackConfig.Manifests), numKapps)
 	if err != nil {
-		return nil, nil, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
-	return stackConfig, providerImpl, nil
+	return stackConfig, nil
 }
 
 // Loads a named stack from a stack config file or returns an error

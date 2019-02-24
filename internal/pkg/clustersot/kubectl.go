@@ -22,7 +22,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os"
 	"os/exec"
@@ -37,8 +36,8 @@ const KUBECTL_PATH = "kubectl"
 const KUBE_CONTEXT_KEY = "kube_context"
 
 // Tests whether the cluster is online
-func (c KubeCtlClusterSot) isOnline(stackConfig *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
-	providerVars := provider.GetVars(providerImpl)
+func (c KubeCtlClusterSot) isOnline(stackConfig *kapp.StackConfig) (bool, error) {
+	providerVars := stackConfig.GetProviderVars()
 	context := providerVars[KUBE_CONTEXT_KEY].(string)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
@@ -59,8 +58,8 @@ func (c KubeCtlClusterSot) isOnline(stackConfig *kapp.StackConfig, providerImpl 
 }
 
 // Tests whether all pods are Ready
-func (c KubeCtlClusterSot) isReady(stackConfig *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
-	providerVars := provider.GetVars(providerImpl)
+func (c KubeCtlClusterSot) isReady(stackConfig *kapp.StackConfig) (bool, error) {
+	providerVars := stackConfig.GetProviderVars()
 	context := providerVars[KUBE_CONTEXT_KEY].(string)
 
 	// todo - simplify this by using ExecCommand to get the data from kubectl with a timeout,

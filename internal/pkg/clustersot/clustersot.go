@@ -21,12 +21,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 )
 
 type ClusterSot interface {
-	isOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error)
-	isReady(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error)
+	isOnline(sc *kapp.StackConfig) (bool, error)
+	isReady(sc *kapp.StackConfig) (bool, error)
 }
 
 // Implemented ClusterSot names
@@ -43,12 +42,12 @@ func NewClusterSot(name string) (ClusterSot, error) {
 
 // Uses an implementation to determine whether the cluster is reachable/online, but it
 // may not be ready to install Kapps into yet.
-func IsOnline(c ClusterSot, stackConfig *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
+func IsOnline(c ClusterSot, stackConfig *kapp.StackConfig) (bool, error) {
 	if stackConfig.Status.IsOnline {
 		return true, nil
 	}
 
-	online, err := c.isOnline(stackConfig, providerImpl)
+	online, err := c.isOnline(stackConfig)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -62,12 +61,12 @@ func IsOnline(c ClusterSot, stackConfig *kapp.StackConfig, providerImpl provider
 }
 
 // Uses an implementation to determine whether the cluster is ready to install kapps into
-func IsReady(c ClusterSot, stackConfig *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
+func IsReady(c ClusterSot, stackConfig *kapp.StackConfig) (bool, error) {
 	if stackConfig.Status.IsReady {
 		return true, nil
 	}
 
-	ready, err := c.isReady(stackConfig, providerImpl)
+	ready, err := c.isReady(stackConfig)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}

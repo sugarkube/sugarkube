@@ -20,7 +20,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 )
 
 const NOOP_PROVISIONER_NAME = "none"
@@ -39,26 +38,22 @@ func (p NoOpProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 }
 
 // Creates a new noop cluster
-func (p NoOpProvisioner) create(sc *kapp.StackConfig, providerImpl provider.Provider,
-	dryRun bool) error {
+func (p NoOpProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) error {
 
 	log.Logger.Infof("Noop provisioner - no cluster will be created")
-
 	return nil
 }
 
 // Returns whether a noop cluster is already online
-func (p NoOpProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
+func (p NoOpProvisioner) isAlreadyOnline(stackConfig *kapp.StackConfig) (bool, error) {
 
 	log.Logger.Infof("Noop provisioner - pretending a cluster is online")
-
 	// return that the cluster is online
 	return true, nil
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p NoOpProvisioner) update(sc *kapp.StackConfig, providerImpl provider.Provider,
-	dryRun bool) error {
+func (p NoOpProvisioner) update(stackConfig *kapp.StackConfig, dryRun bool) error {
 
 	log.Logger.Infof("Noop provisioner - no cluster will be updated")
 	return nil

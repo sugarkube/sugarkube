@@ -67,27 +67,12 @@ func NewProvider(stackConfig *kapp.StackConfig) (Provider, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	providerVars, err := providerVars(providerImpl, stackConfig)
-	if err != nil {
-		log.Logger.Warn("Error loading provider variables")
-		return nil, errors.WithStack(err)
-	}
-	log.Logger.Debugf("Provider loaded vars: %#v", providerVars)
-
-	if len(providerVars) == 0 {
-		log.Logger.Fatal("No values loaded for provider")
-		return nil, errors.New(fmt.Sprintf("Failed to load variables for provider %s",
-			providerImpl.getName()))
-	}
-
-	providerImpl.setVars(providerVars)
-
 	return providerImpl, nil
 }
 
 // Searches for values.yaml files in directories specific to a provider implementation and returns the
 // result of merging them.
-func providerVars(p Provider, stackConfig *kapp.StackConfig) (map[string]interface{}, error) {
+func LoadProviderVars(p Provider, stackConfig *kapp.StackConfig) (map[string]interface{}, error) {
 	providerVars := map[string]interface{}{}
 
 	varsDirs, err := p.varsDirs(stackConfig)

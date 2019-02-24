@@ -105,7 +105,7 @@ func (c *createCmd) run() error {
 		OnlineTimeout:    c.onlineTimeout,
 	}
 
-	stackConfig, providerImpl, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackConfig, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -121,7 +121,7 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig, providerImpl)
+	online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -141,7 +141,7 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = provisioner.Create(provisionerImpl, stackConfig, providerImpl, c.dryRun)
+	err = provisioner.Create(provisionerImpl, stackConfig, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -149,7 +149,7 @@ func (c *createCmd) run() error {
 	if c.dryRun {
 		log.Logger.Infof("Dry run. Skipping cluster readiness check.")
 	} else {
-		err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig, providerImpl)
+		err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig)
 		if err != nil {
 			return errors.WithStack(err)
 		}

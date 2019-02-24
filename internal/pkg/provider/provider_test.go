@@ -37,7 +37,7 @@ func TestStackConfigVars(t *testing.T) {
 	providerImpl, err := newProviderImpl(sc.Provider)
 	assert.Nil(t, err)
 
-	actual, err := providerVars(providerImpl, sc)
+	actual, err := LoadProviderVars(providerImpl, sc)
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual, "Mismatching vars")
 }

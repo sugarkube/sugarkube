@@ -105,7 +105,7 @@ func (c *applyCmd) run() error {
 		//KappVarsDirs: c.kappVarsDirs,
 	}
 
-	stackConfig, providerImpl, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackConfig, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -164,7 +164,7 @@ func (c *applyCmd) run() error {
 		}
 
 		// run the plan either preparing or applying changes
-		err := actionPlan.Run(c.approved, providerImpl, c.dryRun)
+		err := actionPlan.Run(c.approved, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -181,7 +181,7 @@ func (c *applyCmd) run() error {
 		}
 
 		// one-shot mode, so prepare and apply the plan straight away
-		err = actionPlan.Run(false, providerImpl, c.dryRun)
+		err = actionPlan.Run(false, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -191,7 +191,7 @@ func (c *applyCmd) run() error {
 			return errors.WithStack(err)
 		}
 
-		err = actionPlan.Run(true, providerImpl, c.dryRun)
+		err = actionPlan.Run(true, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

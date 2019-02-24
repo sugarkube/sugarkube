@@ -26,7 +26,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -80,9 +79,9 @@ func (p KopsProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 }
 
 // Returns a bool indicating whether the cluster configuration has already been created
-func (p KopsProvisioner) clusterConfigExists(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
+func (p KopsProvisioner) clusterConfigExists(stackConfig *kapp.StackConfig) (bool, error) {
 
-	providerVars := provider.GetVars(providerImpl)
+	providerVars := stackConfig.GetProviderVars()
 	log.Logger.Info("Checking if a Kops cluster config already exists...")
 	log.Logger.Debugf("Checking if a Kops cluster config exists for values: %#v", providerVars)
 
@@ -120,10 +119,9 @@ func (p KopsProvisioner) clusterConfigExists(sc *kapp.StackConfig, providerImpl 
 
 // Creates a Kops cluster config. Note: This doesn't actually launch a Kops cluster,
 // that only happens when 'kops update' is run.
-func (p KopsProvisioner) create(sc *kapp.StackConfig, providerImpl provider.Provider,
-	dryRun bool) error {
+func (p KopsProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) error {
 
-	providerVars := provider.GetVars(providerImpl)
+	providerVars := stackConfig.GetProviderVars()
 	log.Logger.Debugf("Provider vars: %#v", providerVars)
 
 	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
@@ -150,21 +148,21 @@ func (p KopsProvisioner) create(sc *kapp.StackConfig, providerImpl provider.Prov
 		log.Logger.Infof("Kops cluster config created")
 	}
 
-	err = p.patch(sc, providerImpl, dryRun)
+	err = p.patch(stackConfig, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	sc.Status.StartedThisRun = true
+	stackConfig.Status.StartedThisRun = true
 	// only sleep before checking the cluster fo readiness if we started it
-	sc.Status.SleepBeforeReadyCheck = KOPS_SLEEP_SECONDS_BEFORE_READY_CHECK
+	stackConfig.Status.SleepBeforeReadyCheck = KOPS_SLEEP_SECONDS_BEFORE_READY_CHECK
 
 	return nil
 }
 
 // Returns a boolean indicating whether the cluster is already online
-func (p KopsProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
-	configExists, err := p.clusterConfigExists(sc, providerImpl)
+func (p KopsProvisioner) isAlreadyOnline(stackConfig *kapp.StackConfig) (bool, error) {
+	configExists, err := p.clusterConfigExists(stackConfig)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -178,7 +176,7 @@ func (p KopsProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl prov
 		return false, errors.WithStack(err)
 	}
 
-	online, err := clustersot.IsOnline(clusterSot, sc, providerImpl)
+	online, err := clustersot.IsOnline(clusterSot, stackConfig)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -187,15 +185,14 @@ func (p KopsProvisioner) isAlreadyOnline(sc *kapp.StackConfig, providerImpl prov
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p KopsProvisioner) update(sc *kapp.StackConfig, providerImpl provider.Provider,
-	dryRun bool) error {
+func (p KopsProvisioner) update(stackConfig *kapp.StackConfig, dryRun bool) error {
 
-	err := p.patch(sc, providerImpl, dryRun)
+	err := p.patch(stackConfig, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	providerVars := provider.GetVars(providerImpl)
+	providerVars := stackConfig.GetProviderVars()
 
 	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
 	kopsConfig, err := getKopsProvisionerConfig(provisionerValues)
@@ -234,9 +231,8 @@ func (p KopsProvisioner) update(sc *kapp.StackConfig, providerImpl provider.Prov
 
 // Patches a Kops cluster configuration. Downloads the current config then merges in any configured
 // spec.
-func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provider,
-	dryRun bool) error {
-	configExists, err := p.clusterConfigExists(sc, providerImpl)
+func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error {
+	configExists, err := p.clusterConfigExists(stackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -246,7 +242,7 @@ func (p KopsProvisioner) patch(sc *kapp.StackConfig, providerImpl provider.Provi
 		return nil
 	}
 
-	providerVars := provider.GetVars(providerImpl)
+	providerVars := stackConfig.GetProviderVars()
 	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
 	kopsConfig, err := getKopsProvisionerConfig(provisionerValues)
 	if err != nil {

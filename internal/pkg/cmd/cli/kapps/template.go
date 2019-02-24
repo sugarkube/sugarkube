@@ -24,7 +24,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"io"
 	"io/ioutil"
@@ -103,7 +102,7 @@ func (c *templateConfig) run() error {
 		//Manifests:    cliManifests,
 	}
 
-	stackConfig, providerImpl, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackConfig, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -155,8 +154,7 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = RenderTemplates(candidateKapps, c.cacheDir, stackConfig, providerImpl,
-		c.dryRun)
+	err = RenderTemplates(candidateKapps, c.cacheDir, stackConfig, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -171,7 +169,7 @@ func (c *templateConfig) run() error {
 
 // Render templates for kapps defined in a stack config
 func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
-	stackConfig *kapp.StackConfig, providerImpl provider.Provider, dryRun bool) error {
+	stackConfig *kapp.StackConfig, dryRun bool) error {
 
 	if len(kapps) == 0 {
 		return errors.New("No kapps supplied to template function")
@@ -190,7 +188,7 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 
 	log.Logger.Debugf("Rendering templates for kapps: %s", strings.Join(candidateKappIds, ", "))
 
-	providerVars := provider.GetVars(providerImpl)
+	providerVars := stackConfig.GetProviderVars()
 
 	for _, kappObj := range kapps {
 		mergedKappVars, err := kapp.MergeVarsForKapp(&kappObj, stackConfig, providerVars,

@@ -3,7 +3,7 @@ standard:
   provisioner: minikube
   profile: local
   cluster: standard
-  providerVars:               # paths to yaml files to load data from. Keys will be merged.
+  providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
   - providers/minikube/
 #  manifests:
 #  - git@.../manifest1.yaml
@@ -14,7 +14,7 @@ large:
   provisioner: minikube
   profile: local
   cluster: large
-  providerVars:               # paths to yaml files to load data from. Keys will be merged.
+  providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
   - ./stacks/
   manifests:
   - uri: manifests/manifest1.yaml

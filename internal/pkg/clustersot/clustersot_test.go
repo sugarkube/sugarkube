@@ -39,13 +39,13 @@ type MockClusterSot struct {
 	mock.Mock
 }
 
-func (m MockClusterSot) isOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
-	args := m.Called(sc.Cluster)
+func (m MockClusterSot) isOnline(stackConfig *kapp.StackConfig) (bool, error) {
+	args := m.Called(stackConfig.Cluster)
 	return args.Bool(0), args.Error(1)
 }
 
-func (m MockClusterSot) isReady(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
-	args := m.Called(sc.Cluster)
+func (m MockClusterSot) isReady(stackConfig *kapp.StackConfig) (bool, error) {
+	args := m.Called(stackConfig.Cluster)
 	return args.Bool(0), args.Error(1)
 }
 
@@ -69,7 +69,7 @@ func TestIsOnlineTrue(t *testing.T) {
 	assert.False(t, sc.Status.IsOnline)
 
 	// call the code we are testing
-	_, err := IsOnline(testObj, &sc, testProvider)
+	_, err := IsOnline(testObj, &sc)
 	assert.Nil(t, err)
 
 	// assert that the expectations were met
@@ -88,21 +88,21 @@ func TestIsOnlineFalse(t *testing.T) {
 	testObj.On("isOnline", clusterName).Return(false, nil)
 
 	status := kapp.ClusterStatus{IsOnline: false}
-	sc := kapp.StackConfig{
+	stackConfig := kapp.StackConfig{
 		Cluster: clusterName,
 		Status:  status,
 	}
 
-	assert.False(t, sc.Status.IsOnline)
+	assert.False(t, stackConfig.Status.IsOnline)
 
 	// call the code we are testing
-	_, err := IsOnline(testObj, &sc, testProvider)
+	_, err := IsOnline(testObj, &stackConfig)
 	assert.Nil(t, err)
 
 	// assert that the expectations were met
 	testObj.AssertExpectations(t)
 
-	assert.False(t, sc.Status.IsOnline)
+	assert.False(t, stackConfig.Status.IsOnline)
 }
 
 func TestIsReadyTrue(t *testing.T) {
@@ -115,21 +115,21 @@ func TestIsReadyTrue(t *testing.T) {
 	testObj.On("isReady", clusterName).Return(true, nil)
 
 	status := kapp.ClusterStatus{IsReady: false}
-	sc := kapp.StackConfig{
+	stackConfig := kapp.StackConfig{
 		Cluster: clusterName,
 		Status:  status,
 	}
 
-	assert.False(t, sc.Status.IsReady)
+	assert.False(t, stackConfig.Status.IsReady)
 
 	// call the code we are testing
-	_, err := IsReady(testObj, &sc, testProvider)
+	_, err := IsReady(testObj, &stackConfig)
 	assert.Nil(t, err)
 
 	// assert that the expectations were met
 	testObj.AssertExpectations(t)
 
-	assert.True(t, sc.Status.IsReady)
+	assert.True(t, stackConfig.Status.IsReady)
 }
 
 func TestIsReadyFalse(t *testing.T) {
@@ -142,19 +142,19 @@ func TestIsReadyFalse(t *testing.T) {
 	testObj.On("isReady", clusterName).Return(false, nil)
 
 	status := kapp.ClusterStatus{IsReady: false}
-	sc := kapp.StackConfig{
+	stackConfig := kapp.StackConfig{
 		Cluster: clusterName,
 		Status:  status,
 	}
 
-	assert.False(t, sc.Status.IsReady)
+	assert.False(t, stackConfig.Status.IsReady)
 
 	// call the code we are testing
-	_, err := IsReady(testObj, &sc, testProvider)
+	_, err := IsReady(testObj, &stackConfig)
 	assert.Nil(t, err)
 
 	// assert that the expectations were met
 	testObj.AssertExpectations(t)
 
-	assert.False(t, sc.Status.IsReady)
+	assert.False(t, stackConfig.Status.IsReady)
 }

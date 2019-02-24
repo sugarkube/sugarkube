@@ -30,17 +30,15 @@ import (
 
 // Installs kapps with make
 type MakeInstaller struct {
-	provider        provider.Provider
-	stackConfigVars map[string]interface{}
+	provider provider.Provider
 }
 
 const TARGET_INSTALL = "install"
 const TARGET_DESTROY = "destroy"
 
 // Run the given make target
-func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
-	stackConfig *kapp.StackConfig, approved bool, providerImpl *provider.Provider,
-	dryRun bool) error {
+func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
+	approved bool, dryRun bool) error {
 
 	// search for the Makefile
 	makefilePaths, err := utils.FindFilesByPattern(kappObj.CacheDir(), "Makefile",
@@ -61,7 +59,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 			"not implemented yet: %s", strings.Join(makefilePaths, ", ")))
 	}
 
-	providerVars := provider.GetVars(*providerImpl)
+	providerVars := stackConfig.GetProviderVars()
 
 	// merge all the vars required to render the kapp's sugarkube.yaml file
 	mergedKappVars, err := kapp.MergeVarsForKapp(kappObj, stackConfig, providerVars,
@@ -131,12 +129,12 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp,
 
 // Install a kapp
 func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, providerImpl provider.Provider, dryRun bool) error {
-	return i.run(TARGET_INSTALL, kappObj, stackConfig, approved, &providerImpl, dryRun)
+	approved bool, dryRun bool) error {
+	return i.run(TARGET_INSTALL, kappObj, stackConfig, approved, dryRun)
 }
 
 // Destroy a kapp
 func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, providerImpl provider.Provider, dryRun bool) error {
-	return i.run(TARGET_DESTROY, kappObj, stackConfig, approved, &providerImpl, dryRun)
+	approved bool, dryRun bool) error {
+	return i.run(TARGET_DESTROY, kappObj, stackConfig, approved, dryRun)
 }

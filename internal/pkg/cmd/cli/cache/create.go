@@ -73,7 +73,7 @@ func (c *createCmd) run() error {
 	// CLI args override configured args, so merge them in
 	cliStackConfig := &kapp.StackConfig{}
 
-	stackConfig, providerImpl, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackConfig, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -133,8 +133,7 @@ func (c *createCmd) run() error {
 			}
 		}
 
-		err = kapps.RenderTemplates(candidateKapps, absCacheDir, stackConfig, providerImpl,
-			c.dryRun)
+		err = kapps.RenderTemplates(candidateKapps, absCacheDir, stackConfig, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

@@ -22,7 +22,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"time"
 )
 
@@ -30,11 +29,11 @@ type Provisioner interface {
 	// Returns the ClusterSot for this provisioner
 	ClusterSot() (clustersot.ClusterSot, error)
 	// Creates a cluster
-	create(sc *kapp.StackConfig, providerImpl provider.Provider, dryRun bool) error
+	create(sc *kapp.StackConfig, dryRun bool) error
 	// Returns whether the cluster is already running
-	isAlreadyOnline(sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error)
+	isAlreadyOnline(sc *kapp.StackConfig) (bool, error)
 	// Update the cluster config if supported by the provisioner
-	update(sc *kapp.StackConfig, providerImpl provider.Provider, dryRun bool) error
+	update(sc *kapp.StackConfig, dryRun bool) error
 }
 
 // key in Values that relates to this provisioner
@@ -58,37 +57,37 @@ func NewProvisioner(name string) (Provisioner, error) {
 }
 
 // Creates a cluster using an implementation of a Provisioner
-func Create(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider, dryRun bool) error {
-	return p.create(sc, providerImpl, dryRun)
+func Create(p Provisioner, sc *kapp.StackConfig, dryRun bool) error {
+	return p.create(sc, dryRun)
 }
 
 // Updates a cluster using an implementation of a Provisioner
-func Update(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider, dryRun bool) error {
-	return p.update(sc, providerImpl, dryRun)
+func Update(p Provisioner, sc *kapp.StackConfig, dryRun bool) error {
+	return p.update(sc, dryRun)
 }
 
 // Return whether the cluster is already online
-func IsAlreadyOnline(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider) (bool, error) {
+func IsAlreadyOnline(p Provisioner, stackConfig *kapp.StackConfig) (bool, error) {
 
-	log.Logger.Infof("Checking whether cluster '%s' is already online...", sc.Cluster)
+	log.Logger.Infof("Checking whether cluster '%s' is already online...", stackConfig.Cluster)
 
-	online, err := p.isAlreadyOnline(sc, providerImpl)
+	online, err := p.isAlreadyOnline(stackConfig)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
 
 	if online {
-		log.Logger.Infof("Cluster '%s' is online", sc.Cluster)
+		log.Logger.Infof("Cluster '%s' is online", stackConfig.Cluster)
 	} else {
-		log.Logger.Infof("Cluster '%s' is not online", sc.Cluster)
+		log.Logger.Infof("Cluster '%s' is not online", stackConfig.Cluster)
 	}
 
-	sc.Status.IsOnline = online
+	stackConfig.Status.IsOnline = online
 	return online, nil
 }
 
 // Wait for a cluster to come online, then to become ready.
-func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, providerImpl provider.Provider) error {
+func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig) error {
 	clusterSot, err := p.ClusterSot()
 	if err != nil {
 		return errors.WithStack(err)
@@ -102,7 +101,7 @@ func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, providerImpl p
 
 	timeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
 	for time.Now().Before(timeoutTime) {
-		online, err := clustersot.IsOnline(clusterSot, sc, providerImpl)
+		online, err := clustersot.IsOnline(clusterSot, sc)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -140,7 +139,7 @@ func WaitForClusterReadiness(p Provisioner, sc *kapp.StackConfig, providerImpl p
 
 	readinessTimeoutTime := time.Now().Add(time.Second * time.Duration(sc.OnlineTimeout))
 	for time.Now().Before(readinessTimeoutTime) {
-		ready, err := clustersot.IsReady(clusterSot, sc, providerImpl)
+		ready, err := clustersot.IsReady(clusterSot, sc)
 		if err != nil {
 			return errors.WithStack(err)
 		}
