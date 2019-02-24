@@ -294,8 +294,8 @@ func (s *StackConfig) GetKappVars(kappObj *Kapp) (map[string]interface{}, error)
 	return values, nil
 }
 
-// Returns most fields of the stack config struct as a map
-func (s *StackConfig) AsMap() map[string]string {
+// Returns certain stack data that should be exposed as variables when running kapps
+func (s *StackConfig) GetIntrinsicData() map[string]string {
 	return map[string]string{
 		"name":        s.Name,
 		"filePath":    s.FilePath,

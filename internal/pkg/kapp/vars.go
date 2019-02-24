@@ -30,10 +30,10 @@ import (
 func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 	providerVars map[string]interface{}, sugarkubeVars map[string]interface{}) (map[string]interface{}, error) {
 
-	rawStackConfigMap := stackConfig.AsMap()
+	stackIntrinsicData := stackConfig.GetIntrinsicData()
 	// convert the map to the appropriate type and namespace it
 	stackConfigMap := map[string]interface{}{
-		"stack": convert.MapStringStringToMapStringInterface(rawStackConfigMap),
+		"stack": convert.MapStringStringToMapStringInterface(stackIntrinsicData),
 	}
 
 	mergedVars := map[string]interface{}{}
