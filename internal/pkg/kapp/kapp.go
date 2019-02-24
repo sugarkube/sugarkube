@@ -50,9 +50,10 @@ type Kapp struct {
 	// preserve ordering. This approach lets users strictly define the ordering
 	// of installation and deletion operations.
 	ShouldBePresent bool
-	vars            map[string]interface{}
-	Sources         []acquirer.Acquirer
-	Templates       []Template
+	// todo - merge these values with the rest of the merged values prior to invoking a kapp
+	vars      map[string]interface{}
+	Sources   []acquirer.Acquirer
+	Templates []Template
 }
 
 const PRESENT_KEY = "present"
@@ -70,14 +71,15 @@ func (k *Kapp) SetCacheDir(cacheDir string) {
 }
 
 // Sets the manifest the kapp is part of
-func (k *Kapp) SetManifest(manifest *Manifest) {
+func (k *Kapp) SetManifest(manifest *Manifest) error {
 	if manifest == nil {
-		log.Logger.Fatalf("Can't associate nil manifest with kapp")
+		return errors.New(fmt.Sprintf("Can't associate nil manifest with kapp %s", k.FullyQualifiedId()))
 	}
 
 	log.Logger.Debugf("Setting manifest for kapp %s to %#v",
 		k.FullyQualifiedId(), manifest)
 	k.manifest = manifest
+	return nil
 }
 
 // Returns the fully-qualified ID of a kapp

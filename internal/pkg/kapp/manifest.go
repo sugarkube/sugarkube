@@ -89,7 +89,10 @@ func ParseManifestFile(path string) (*Manifest, error) {
 
 	for i, kappObj := range manifest.Kapps {
 		log.Logger.Debugf("Setting manifest reference")
-		kappObj.SetManifest(&manifest)
+		err = kappObj.SetManifest(&manifest)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
 		// we've modified the kapp, so reassign it
 		manifest.Kapps[i] = kappObj
 	}

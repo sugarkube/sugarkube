@@ -156,7 +156,8 @@ func TestLoadStackConfig(t *testing.T) {
 	// set the reference to the manifest on each kapp
 	for i, manifestObj := range expected.Manifests {
 		for j, kappObj := range manifestObj.Kapps {
-			kappObj.SetManifest(&expected.Manifests[i])
+			err := kappObj.SetManifest(&expected.Manifests[i])
+			assert.Nil(t, err)
 			expected.Manifests[i].Kapps[j] = kappObj
 		}
 	}
