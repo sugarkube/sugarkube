@@ -166,7 +166,7 @@ func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}
 			return errors.WithStack(err)
 		}
 
-		// prepare the map containing acquirer values
+		// prepare and parse the map containing acquirer values
 		sourcesBytes, err := yaml.Marshal(valuesMap[SOURCES_KEY])
 		if err != nil {
 			return errors.Wrapf(err, "Error marshalling sources yaml: %#v", valuesMap)
@@ -182,7 +182,7 @@ func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}
 
 		log.Logger.Debugf("kapp sourcesMaps=%#v", sourcesMaps)
 
-		acquirers, err := parseAcquirers(sourcesMaps)
+		acquirers, err := acquirer.ParseAcquirers(sourcesMaps)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -235,29 +235,6 @@ func parseTemplates(valuesMap map[string]interface{}) ([]Template, error) {
 	}
 
 	return templates, nil
-}
-
-// Parse acquirers from a values map
-func parseAcquirers(acquirerMaps []map[interface{}]interface{}) ([]acquirer.Acquirer, error) {
-	acquirers := make([]acquirer.Acquirer, 0)
-	// now we have a list of sources, get the acquirer for each one
-	for _, acquirerMap := range acquirerMaps {
-		acquirerStringMap, err := convert.MapInterfaceInterfaceToMapStringString(acquirerMap)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		acquirerImpl, err := acquirer.NewAcquirer(acquirerStringMap)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		log.Logger.Debugf("Got acquirer %#v", acquirerImpl)
-
-		acquirers = append(acquirers, acquirerImpl)
-	}
-
-	return acquirers, nil
 }
 
 // Parses a manifest YAML. It separately parses all kapps that should be present and all those that should be
