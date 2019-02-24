@@ -166,7 +166,23 @@ func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}
 			return errors.WithStack(err)
 		}
 
-		acquirers, err := parseAcquirers(valuesMap)
+		// prepare the map containing acquirer values
+		sourcesBytes, err := yaml.Marshal(valuesMap[SOURCES_KEY])
+		if err != nil {
+			return errors.Wrapf(err, "Error marshalling sources yaml: %#v", valuesMap)
+		}
+
+		log.Logger.Debugf("Marshalled sources YAML: %s", sourcesBytes)
+
+		sourcesMaps := []map[interface{}]interface{}{}
+		err = yaml.UnmarshalStrict(sourcesBytes, &sourcesMaps)
+		if err != nil {
+			return errors.Wrapf(err, "Error unmarshalling yaml: %s", sourcesBytes)
+		}
+
+		log.Logger.Debugf("kapp sourcesMaps=%#v", sourcesMaps)
+
+		acquirers, err := parseAcquirers(sourcesMaps)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -221,42 +237,27 @@ func parseTemplates(valuesMap map[string]interface{}) ([]Template, error) {
 	return templates, nil
 }
 
-// Parse acquirers from a Kapp values map
-func parseAcquirers(valuesMap map[string]interface{}) ([]acquirer.Acquirer, error) {
-	sourcesBytes, err := yaml.Marshal(valuesMap[SOURCES_KEY])
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error marshalling sources yaml: %#v", valuesMap)
-	}
-
-	log.Logger.Debugf("Marshalled sources YAML: %s", sourcesBytes)
-
-	sourcesMaps := []map[interface{}]interface{}{}
-	err = yaml.UnmarshalStrict(sourcesBytes, &sourcesMaps)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error unmarshalling yaml: %s", sourcesBytes)
-	}
-
-	log.Logger.Debugf("kapp sourcesMaps=%#v", sourcesMaps)
-
-	kappSources := make([]acquirer.Acquirer, 0)
+// Parse acquirers from a values map
+func parseAcquirers(acquirerMaps []map[interface{}]interface{}) ([]acquirer.Acquirer, error) {
+	acquirers := make([]acquirer.Acquirer, 0)
 	// now we have a list of sources, get the acquirer for each one
-	for _, sourceMap := range sourcesMaps {
-		sourceStringMap, err := convert.MapInterfaceInterfaceToMapStringString(sourceMap)
+	for _, acquirerMap := range acquirerMaps {
+		acquirerStringMap, err := convert.MapInterfaceInterfaceToMapStringString(acquirerMap)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
-		acquirerImpl, err := acquirer.NewAcquirer(sourceStringMap)
+		acquirerImpl, err := acquirer.NewAcquirer(acquirerStringMap)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
 		log.Logger.Debugf("Got acquirer %#v", acquirerImpl)
 
-		kappSources = append(kappSources, acquirerImpl)
+		acquirers = append(acquirers, acquirerImpl)
 	}
 
-	return kappSources, nil
+	return acquirers, nil
 }
 
 // Parses a manifest YAML. It separately parses all kapps that should be present and all those that should be
