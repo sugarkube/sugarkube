@@ -105,7 +105,7 @@ func (c *updateCmd) run() error {
 		OnlineTimeout:    c.onlineTimeout,
 	}
 
-	stackConfig, err := utils.ProcessCliArgs(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackConfig, err := utils.BuildStackConfig(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}

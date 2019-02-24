@@ -31,7 +31,7 @@ import (
 // variables are loaded and set as a property on the stackConfig. So after this step, stackConfig contains
 // all config values for the entire stack (although it won't have been templated yet so any '{{var_name}}'
 // type strings won't have been interpolated yet.
-func ProcessCliArgs(stackName string, stackFile string, cliStackConfig *kapp.StackConfig,
+func BuildStackConfig(stackName string, stackFile string, cliStackConfig *kapp.StackConfig,
 	out io.Writer) (*kapp.StackConfig, error) {
 
 	stackConfig, err := LoadStackConfig(stackName, stackFile)
