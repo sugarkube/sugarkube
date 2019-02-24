@@ -117,34 +117,56 @@ func (k Kapp) GetIntrinsicData() map[string]string {
 	}
 }
 
+// Instantiates a new Kapp, returning errors if any required settings are missing
+func newKapp(manifest *Manifest, id string, shouldBePresent bool, vars map[string]interface{},
+	templates []Template, sources []acquirer.Acquirer) (*Kapp, error) {
+
+	if id == "" {
+		return nil, errors.New("Can't instantiate a kapp with no ID")
+	}
+
+	if manifest == nil {
+		return nil, errors.New("Can't instantiate a kapp with no associated manifest")
+	}
+
+	kappObj := Kapp{
+		Id:              id,
+		manifest:        manifest,
+		ShouldBePresent: shouldBePresent,
+		vars:            vars,
+		Templates:       templates,
+		Sources:         sources,
+	}
+
+	log.Logger.Debugf("Instantiated kapp: %#v", kappObj)
+
+	return &kappObj, nil
+}
+
 // Parses kapps and adds them to an array
 func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bool) error {
 
 	// parse each kapp definition
 	for _, v := range kappDefinitions {
-		kapp := Kapp{
-			manifest:        manifest,
-			ShouldBePresent: shouldBePresent,
-		}
+		log.Logger.Debugf("Parsing kapp from values: %#v", v)
 
-		log.Logger.Debugf("kapp=%#v, v=%#v", kapp, v)
-
-		// parse the list of sources
 		valuesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(v.(map[interface{}]interface{}))
-		log.Logger.Debugf("valuesMap=%#v", valuesMap)
-
-		// make sure the kapp has an ID declared
-		var ok bool
-		kapp.Id, ok = valuesMap[ID_KEY].(string)
-		if !ok {
-			return errors.New(fmt.Sprintf("No ID declared for kapp: %#v", valuesMap))
-		}
-
 		if err != nil {
 			return errors.Wrapf(err, "Error converting manifest value to map")
 		}
 
+		log.Logger.Debugf("kapp valuesMap=%#v", valuesMap)
+
+		// Return a useful error message if no ID has been declared. We need to do this here as well as when
+		// instantiating a kapp because this catches if the ID key is missing altogether
+		kappId, ok := valuesMap[ID_KEY].(string)
+		if !ok {
+			return errors.New(fmt.Sprintf("No ID declared for kapp: %#v", valuesMap))
+		}
+
 		// marshal and unmarshal any vars
+		var kappVars map[string]interface{}
+
 		rawKappVars, ok := valuesMap[VARS_KEY]
 		if ok {
 			varsBytes, err := yaml.Marshal(rawKappVars)
@@ -152,14 +174,12 @@ func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}
 				return errors.Wrapf(err, "Error marshalling vars in kapp: %#v", v)
 			}
 
-			var parsedVars map[string]interface{}
-			err = yaml.Unmarshal(varsBytes, &parsedVars)
+			err = yaml.Unmarshal(varsBytes, &kappVars)
 			if err != nil {
 				return errors.Wrapf(err, "Error unmarshalling vars for kapp: %#v", v)
 			}
 
-			kapp.vars = parsedVars
-			log.Logger.Debugf("Parsed vars from kapp: %s", kapp.vars)
+			log.Logger.Debugf("Parsed vars from kapp: %s", kappVars)
 		} else {
 			log.Logger.Debugf("No vars found in kapp")
 		}
@@ -172,12 +192,11 @@ func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}
 
 		log.Logger.Debugf("Marshalled templates YAML: %s", templateBytes)
 
-		templates := []Template{}
-		err = yaml.Unmarshal(templateBytes, &templates)
+		kappTemplates := []Template{}
+		err = yaml.Unmarshal(templateBytes, &kappTemplates)
 		if err != nil {
 			return errors.Wrapf(err, "Error unmarshalling template YAML: %s", templateBytes)
 		}
-		kapp.Templates = templates
 
 		// marshal and unmarshal the list of sources
 		sourcesBytes, err := yaml.Marshal(valuesMap[SOURCES_KEY])
@@ -193,9 +212,9 @@ func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}
 			return errors.Wrapf(err, "Error unmarshalling yaml: %s", sourcesBytes)
 		}
 
-		log.Logger.Debugf("sourcesMaps=%#v", sourcesMaps)
+		log.Logger.Debugf("kapp sourcesMaps=%#v", sourcesMaps)
 
-		acquirers := make([]acquirer.Acquirer, 0)
+		kappSources := make([]acquirer.Acquirer, 0)
 		// now we have a list of sources, get the acquirer for each one
 		for _, sourceMap := range sourcesMaps {
 			sourceStringMap, err := convert.MapInterfaceInterfaceToMapStringString(sourceMap)
@@ -210,14 +229,12 @@ func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}
 
 			log.Logger.Debugf("Got acquirer %#v", acquirerImpl)
 
-			acquirers = append(acquirers, acquirerImpl)
+			kappSources = append(kappSources, acquirerImpl)
 		}
 
-		kapp.Sources = acquirers
+		kapp, err := newKapp(manifest, kappId, shouldBePresent, kappVars, kappTemplates, kappSources)
 
-		log.Logger.Debugf("Parsed kapp=%#v", kapp)
-
-		*kapps = append(*kapps, kapp)
+		*kapps = append(*kapps, *kapp)
 	}
 
 	return nil
