@@ -69,6 +69,8 @@ Note: Not all providers require all arguments. See documentation for help.
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return errors.New("the name of the stack to run, and the path to the stack file are required")
+			} else if len(args) > 2 {
+				return errors.New("too many arguments supplied")
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]

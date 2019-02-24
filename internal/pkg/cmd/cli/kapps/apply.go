@@ -61,6 +61,8 @@ func newApplyCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")
+			} else if len(args) > 3 {
+				return errors.New("too many arguments supplied")
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]

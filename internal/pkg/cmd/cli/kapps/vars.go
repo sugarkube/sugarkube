@@ -40,6 +40,8 @@ specific kapp will be displayed. If not, all generally avaialble variables for t
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return errors.New("the name of the stack to run, and the path to the stack file are required")
+			} else if len(args) > 2 {
+				return errors.New("too many arguments supplied")
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
