@@ -33,7 +33,7 @@ func TestNewAcquirerError(t *testing.T) {
 }
 
 func TestNewGitAcquirerPartial(t *testing.T) {
-	actual, err := acquirerFactory(GIT, map[string]string{
+	actual, err := acquirerFactory(GIT_ACQUIRER, map[string]string{
 		"branch": "master",
 	})
 	assert.NotNil(t, err)
@@ -55,7 +55,7 @@ var expectedAcquirer = GitAcquirer{
 }
 
 func TestNewGitAcquirerFull(t *testing.T) {
-	actual, err := acquirerFactory(GIT, defaultSettings)
+	actual, err := acquirerFactory(GIT_ACQUIRER, defaultSettings)
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Fully-defined git acquirer incorrectly created")
@@ -70,7 +70,7 @@ func TestNewAcquirerGit(t *testing.T) {
 func TestNewAcquirerGitExplicit(t *testing.T) {
 	actual, err := NewAcquirer(
 		map[string]string{
-			ACQUIRER_KEY: GIT,
+			ACQUIRER_KEY: GIT_ACQUIRER,
 			"uri":        "git@github.com:sugarkube/kapps.git",
 			"branch":     "master",
 			"path":       "incubator/tiller/",

@@ -32,13 +32,12 @@ type Acquirer interface {
 }
 
 const ACQUIRER_KEY = "acquirer"
-const GIT = "git"
 
 // Factory that creates acquirers
 func acquirerFactory(name string, settings map[string]string) (Acquirer, error) {
 	log.Logger.Debugf("Returning new %s acquirer", name)
 
-	if name == GIT {
+	if name == GIT_ACQUIRER {
 		if settings[URI] == "" || settings[BRANCH] == "" || settings[PATH] == "" {
 			return nil, errors.New("Invalid git parameters. The uri, " +
 				"branch and path are all mandatory.")
@@ -58,8 +57,8 @@ func NewAcquirer(settings map[string]string) (Acquirer, error) {
 
 	uri := settings[URI]
 
-	if strings.Contains(uri, ".git") || acquirer == GIT {
-		return acquirerFactory(GIT, settings)
+	if strings.Contains(uri, ".git") || acquirer == GIT_ACQUIRER {
+		return acquirerFactory(GIT_ACQUIRER, settings)
 	}
 
 	return nil, errors.New(fmt.Sprintf("Couldn't identify acquirer for URI '%s'", uri))
