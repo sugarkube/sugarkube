@@ -40,11 +40,9 @@ type GitAcquirer struct {
 // todo - make configurable, or use go-git
 const GIT_PATH = "git"
 
-const NAME = "name"
-const URI = "uri"
-const BRANCH = "branch"
-const PATH = "path"
-const INCLUDE_VALUES = "includeValues"
+const BRANCH_KEY = "branch"
+const PATH_KEY = "path"
+const INCLUDE_VALUES_KEY = "includeValues"
 
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
@@ -87,7 +85,7 @@ func NewGitAcquirer(name string, uri string, branch string, path string,
 	}, nil
 }
 
-// Generate an ID
+// Generate an ID based on the URI and name
 func (a GitAcquirer) Id() (string, error) {
 	// this doesn't contain the branch because we don't want to create complications
 	// in case users create their own branches (e.g. if we've checked out into a
@@ -101,7 +99,7 @@ func (a GitAcquirer) Id() (string, error) {
 	return strings.Join([]string{hyphenatedOrg, hyphenatedName}, "-"), nil
 }
 
-// return the name
+// Return the name. This is used as a subcomponent of the generated ID and can be explicitly configured in config
 func (a GitAcquirer) Name() string {
 	return a.name
 }

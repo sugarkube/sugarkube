@@ -33,21 +33,23 @@ type Acquirer interface {
 }
 
 const ACQUIRER_KEY = "acquirer"
+const NAME_KEY = "name"
+const URI_KEY = "uri"
 
 // Factory that creates acquirers
 func acquirerFactory(name string, settings map[string]string) (Acquirer, error) {
 	log.Logger.Debugf("Returning new %s acquirer", name)
 
 	if name == GIT_ACQUIRER {
-		acquirerObj, err := NewGitAcquirer(settings[NAME], settings[URI], settings[BRANCH],
-			settings[PATH], settings[INCLUDE_VALUES])
+		acquirerObj, err := NewGitAcquirer(settings[NAME_KEY], settings[URI_KEY], settings[BRANCH_KEY],
+			settings[PATH_KEY], settings[INCLUDE_VALUES_KEY])
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 		return acquirerObj, nil
 
 	} else if name == FILE_ACQUIRER {
-		acquirerObj, err := NewFileAcquirer(settings[NAME], settings[URI])
+		acquirerObj, err := NewFileAcquirer(settings[NAME_KEY], settings[URI_KEY])
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -62,7 +64,7 @@ func NewAcquirer(settings map[string]string) (Acquirer, error) {
 	// perhaps the acquirer is explicitly declared in settings
 	acquirer := settings[ACQUIRER_KEY]
 
-	uri := settings[URI]
+	uri := settings[URI_KEY]
 
 	if strings.Contains(uri, ".git") || acquirer == GIT_ACQUIRER {
 		return acquirerFactory(GIT_ACQUIRER, settings)
