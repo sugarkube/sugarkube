@@ -39,7 +39,7 @@ func TestParseManifestYaml(t *testing.T) {
 		desc                 string
 		input                string
 		inputShouldBePresent bool
-		expectUnparsed       []map[string]Kapp
+		expectUnparsed       []Kapp
 		expectedError        bool
 	}{
 		{
@@ -47,66 +47,64 @@ func TestParseManifestYaml(t *testing.T) {
 			desc: "check parsing acceptable input works",
 			input: `
 kapps:
-  - example1:
-      state: present
-      templates:        
-        - source: example/template1.tpl
-          dest: example/dest.txt
-      sources:
-        - id: pathASpecial
-          uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
-      sampleNameB:
-        - uri: git@github.com:exampleB/repoB.git//example/pathB#branchB
+  - id: example1
+    state: present
+    templates:        
+      - source: example/template1.tpl
+        dest: example/dest.txt
+    sources:
+      - id: pathASpecial
+        uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+    sampleNameB:
+      - uri: git@github.com:exampleB/repoB.git//example/pathB#branchB
 
-  - example2:
-      state: present
-      sources:
-      - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
-      vars:
-        someVarA: valueA
-        someList:
-        - val1
-        - val2
+  - id: example2
+    state: present
+    sources:
+    - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+    vars:
+      someVarA: valueA
+      someList:
+      - val1
+      - val2
 
-  - example3:
-      state: absent
-      sources:
-      - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+  - id: example3
+    state: absent
+    sources:
+    - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
 `,
-			expectUnparsed: []map[string]Kapp{
+			expectUnparsed: []Kapp{
 				{
-					"example1": {
-						Id:       "",
-						State:    "present",
-						manifest: nil,
-						Templates: []Template{
-							{
-								"example/template1.tpl",
-								"example/dest.txt",
-							},
-						},
-						//Sources: []acquirer.Acquirer{
-						//	discardErr(acquirer.NewGitAcquirer(
-						//		"pathA",
-						//		"git@github.com:exampleA/repoA.git",
-						//		"branchA",
-						//		"example/pathA",
-						//		"")),
-						//	discardErr(acquirer.NewGitAcquirer(
-						//		"sampleNameB",
-						//		"git@github.com:exampleB/repoB.git",
-						//		"branchB",
-						//		"example/pathB",
-						//		"")),
-						//},
-						Sources: []acquirer.Source{
-							{Id: "pathASpecial",
-								Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA"},
+					Id:       "example1",
+					State:    "present",
+					manifest: nil,
+					Templates: []Template{
+						{
+							"example/template1.tpl",
+							"example/dest.txt",
 						},
 					},
+					//Sources: []acquirer.Acquirer{
+					//	discardErr(acquirer.NewGitAcquirer(
+					//		"pathA",
+					//		"git@github.com:exampleA/repoA.git",
+					//		"branchA",
+					//		"example/pathA",
+					//		"")),
+					//	discardErr(acquirer.NewGitAcquirer(
+					//		"sampleNameB",
+					//		"git@github.com:exampleB/repoB.git",
+					//		"branchB",
+					//		"example/pathB",
+					//		"")),
+					//},
+					Sources: []acquirer.Source{
+						{Id: "pathASpecial",
+							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA"},
+					},
 				},
-				{"example2": {
-					Id:       "",
+				{
+					Id:       "example2",
 					State:    "present",
 					manifest: nil,
 					//Sources: []acquirer.Acquirer{
@@ -128,9 +126,8 @@ kapps:
 						},
 					},
 				},
-				},
-				{"example3": {
-					Id:       "",
+				{
+					Id:       "example3",
 					State:    "absent",
 					manifest: nil,
 					//Sources: []acquirer.Acquirer{
@@ -146,7 +143,6 @@ kapps:
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
 						},
 					},
-				},
 				},
 			},
 			expectedError: false,

@@ -32,7 +32,7 @@ type ManifestOptions struct {
 type Manifest struct {
 	ConfiguredId  string `yaml:"id"` // a default will be used if no explicitly set. Used to namespace cache entries
 	Uri           string
-	UnparsedKapps []map[string]Kapp `yaml:"kapps"`
+	UnparsedKapps []Kapp `yaml:"kapps"`
 	Options       ManifestOptions
 }
 
@@ -49,6 +49,19 @@ func (m *Manifest) Id() string {
 
 func (m *Manifest) ParsedKapps() []Kapp {
 	// todo - implement
+	//parsedKapps := make([]Kapp, len(m.UnparsedKapps))
+	//
+	//for i, kapps := range m.UnparsedKapps {
+	//	var parsedKapp Kapp
+	//
+	//	for kappId, unparsedKapp := range kapps {
+	//		unparsedKapp.Id = kappId
+	//		unparsedKapp.manifest = &m
+	//	}
+	//
+	//	parsedKapps[i] =
+	//}
+
 	return nil
 }
 
@@ -73,13 +86,6 @@ func ParseManifestFile(path string) (*Manifest, error) {
 	}
 
 	parsedManifest.Uri = path
-
-	//for i, kapps := range parsedManifest.UnparsedKapps {
-	//	for kappId, unparsedKapp := range kapps {
-	//		unparsedKapp.Id = kappId
-	//		unparsedKapp.manifest = &parsedManifest
-	//	}
-	//}
 
 	//kapps, err := parseManifestYaml(&manifest, data)
 	//if err != nil {

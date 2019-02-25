@@ -32,9 +32,9 @@ func TestValidateManifest(t *testing.T) {
 			name: "good",
 			desc: "kapp IDs should be unique",
 			input: Manifest{
-				UnparsedKapps: []map[string]Kapp{
-					{"example1": Kapp{}},
-					{"example2": Kapp{}},
+				UnparsedKapps: []Kapp{
+					{Id: "example1"},
+					{Id: "example2"},
 				},
 			},
 		},
@@ -42,10 +42,10 @@ func TestValidateManifest(t *testing.T) {
 			name: "error_multiple_kapps_same_id",
 			desc: "error when kapp IDs aren't unique",
 			input: Manifest{
-				UnparsedKapps: []map[string]Kapp{
-					{"example1": Kapp{}},
-					{"example2": Kapp{}},
-					{"example1": Kapp{}},
+				UnparsedKapps: []Kapp{
+					{Id: "example1"},
+					{Id: "example2"},
+					{Id: "example1"},
 				},
 			},
 		},

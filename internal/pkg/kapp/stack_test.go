@@ -56,9 +56,9 @@ func GetTestManifests() (Manifest, Manifest) {
 		Uri:          "../../testdata/manifests/manifest1.yaml",
 	}
 
-	manifest1UnparsedKapps := []map[string]Kapp{
-		{"kappA": {
-			Id:       "",
+	manifest1UnparsedKapps := []Kapp{
+		{
+			Id:       "kappA",
 			State:    "present",
 			manifest: nil,
 			//Sources: []acquirer.Acquirer{
@@ -75,7 +75,6 @@ func GetTestManifests() (Manifest, Manifest) {
 				},
 			},
 		},
-		},
 	}
 
 	manifest1.UnparsedKapps = manifest1UnparsedKapps
@@ -88,9 +87,9 @@ func GetTestManifests() (Manifest, Manifest) {
 		},
 	}
 
-	manifest2UnparsedKapps := []map[string]Kapp{
-		{"kappC": {
-			Id:       "",
+	manifest2UnparsedKapps := []Kapp{
+		{
+			Id:       "kappC",
 			State:    "present",
 			manifest: nil,
 			//Sources: []acquirer.Acquirer{
@@ -129,9 +128,8 @@ func GetTestManifests() (Manifest, Manifest) {
 				{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0"},
 			},
 		},
-		},
-		{"kappB": {
-			Id:       "",
+		{
+			Id:       "kappB",
 			State:    "present",
 			manifest: nil,
 			//Sources: []acquirer.Acquirer{
@@ -146,9 +144,8 @@ func GetTestManifests() (Manifest, Manifest) {
 				{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
 			},
 		},
-		},
-		{"kappD": {
-			Id:       "",
+		{
+			Id:       "kappD",
 			State:    "present",
 			manifest: nil,
 			//Sources: []acquirer.Acquirer{
@@ -163,9 +160,8 @@ func GetTestManifests() (Manifest, Manifest) {
 				{Uri: "git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0"},
 			},
 		},
-		},
-		{"kappA": {
-			Id:       "",
+		{
+			Id:       "kappA",
 			State:    "present",
 			manifest: nil,
 			//Sources: []acquirer.Acquirer{
@@ -180,7 +176,6 @@ func GetTestManifests() (Manifest, Manifest) {
 				{IncludeValues: false,
 					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.2.0"},
 			},
-		},
 		},
 	}
 
