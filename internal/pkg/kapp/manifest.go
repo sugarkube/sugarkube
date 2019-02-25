@@ -30,32 +30,22 @@ type ManifestOptions struct {
 }
 
 type Manifest struct {
-	// defaults to the file basename, but can be explicitly specified to avoid
-	// clashes. This is also used to namespace entries in the cache.
-	Id      string
-	Uri     string
-	Kapps   []Kapp
-	Options ManifestOptions
-}
-
-func newManifest(uri string) Manifest {
-	manifest := Manifest{
-		Uri: uri,
-	}
-
-	SetManifestDefaults(&manifest)
-	return manifest
+	ConfiguredId  string `yaml:"id"` // a default will be used if no explicitly set. Used to namespace cache entries
+	Uri           string
+	Kapps         []Kapp
+	UnparsedKapps []map[string]Kapp
+	Options       ManifestOptions
 }
 
 // Sets fields to default values
-func SetManifestDefaults(manifest *Manifest) {
+func (m *Manifest) Id() string {
+	if len(m.ConfiguredId) > 0 {
+		return m.ConfiguredId
+	}
+
 	// use the basename after stripping the extension by default
 	// todo - get this from the acquirer for the manifest
-	defaultId := strings.Replace(filepath.Base(manifest.Uri), filepath.Ext(manifest.Uri), "", 1)
-
-	if manifest.Id == "" {
-		manifest.Id = defaultId
-	}
+	return strings.Replace(filepath.Base(m.Uri), filepath.Ext(m.Uri), "", 1)
 }
 
 // Load a single manifest file and parse the kapps it defines
@@ -78,19 +68,18 @@ func ParseManifestFile(path string) (*Manifest, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	manifest := newManifest(path)
-	manifest.Options = parsedManifest.Options
+	parsedManifest.Uri = path
 
-	kapps, err := parseManifestYaml(&manifest, data)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+	//kapps, err := parseManifestYaml(&manifest, data)
+	//if err != nil {
+	//	return nil, errors.WithStack(err)
+	//}
+	//
+	//manifest.Kapps = kapps
 
-	manifest.Kapps = kapps
+	log.Logger.Debugf("Returning manifest: %#v", parsedManifest)
 
-	log.Logger.Debugf("Returning manifest: %#v", manifest)
-
-	return &manifest, nil
+	return &parsedManifest, nil
 }
 
 // Validates that there aren't multiple kapps with the same ID in the manifest,
@@ -106,7 +95,7 @@ func ValidateManifest(manifest *Manifest) error {
 				"the same id: %s", id))
 		}
 
-		for _, acquirer := range kapp.Sources {
+		for _, acquirer := range kapp.Acquirers() {
 			// verify all IDs can be generated successfully
 			_, err := acquirer.FullyQualifiedId()
 			if err != nil {

@@ -81,7 +81,7 @@ func ValidateStackConfig(sc *StackConfig) error {
 	ids := map[string]bool{}
 
 	for _, manifest := range sc.AllManifests() {
-		id := manifest.Id
+		id := manifest.Id()
 
 		if _, ok := ids[id]; ok {
 			return errors.New(fmt.Sprintf("Multiple manifests exist with "+
@@ -154,8 +154,8 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 		}
 
 		// todo - remove this. It should be handled by an acquirer
-		SetManifestDefaults(&initManifest)
-		parsedInitManifest.Id = initManifest.Id
+		//SetManifestDefaults(&initManifest)
+		//parsedInitManifest.Id = initManifest.Id
 
 		stack.InitManifests[i] = *parsedInitManifest
 	}
@@ -177,8 +177,8 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 		}
 
 		// todo - remove this. It should be handled by an acquirer
-		SetManifestDefaults(&manifest)
-		parsedManifest.Id = manifest.Id
+		//SetManifestDefaults(&manifest)
+		//parsedManifest.Id = manifest.Id
 
 		stack.Manifests[i] = *parsedManifest
 	}
@@ -219,7 +219,7 @@ func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 		constants.CLUSTER_DIR,
 	}
 
-	for _, acquirerObj := range kappObj.Sources {
+	for _, acquirerObj := range kappObj.Acquirers() {
 		validNames = append(validNames, acquirerObj.Id())
 
 		id, err := acquirerObj.FullyQualifiedId()

@@ -30,7 +30,7 @@ const CACHE_DIR = ".sugarkube"
 
 // Returns the cache dir for a manifest
 func GetManifestCachePath(cacheDir string, manifest kapp.Manifest) string {
-	return filepath.Join(cacheDir, manifest.Id)
+	return filepath.Join(cacheDir, manifest.Id())
 }
 
 // Returns the path of a kapp's cache dir where the different sources are
@@ -82,7 +82,7 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 			}
 		}
 
-		err = acquireSource(manifest, kappObj.Sources, kappObj.CacheDir(), sugarkubeCacheDir, dryRun)
+		err = acquireSource(manifest, kappObj.Acquirers(), kappObj.CacheDir(), sugarkubeCacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -98,7 +98,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 
-	log.Logger.Infof("Acquiring sources for manifest '%s'", manifest.Id)
+	log.Logger.Infof("Acquiring sources for manifest '%s'", manifest.Id())
 
 	for _, acquirerImpl := range acquirers {
 		go func(a acquirer.Acquirer) {
@@ -169,14 +169,14 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 			close(doneCh)
 			log.Logger.Warnf("Error in acquirer goroutines: %s", err)
 			return errors.Wrapf(err, "Error running acquirer in goroutine "+
-				"for manifest '%s'", manifest.Id)
+				"for manifest '%s'", manifest.Id())
 		case <-doneCh:
 			log.Logger.Infof("%d acquirer(s) successfully completed for manifest '%s'",
-				success+1, manifest.Id)
+				success+1, manifest.Id())
 		}
 	}
 
-	log.Logger.Infof("Finished acquiring sources for manifest '%s'", manifest.Id)
+	log.Logger.Infof("Finished acquiring sources for manifest '%s'", manifest.Id())
 
 	return nil
 }

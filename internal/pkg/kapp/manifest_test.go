@@ -32,9 +32,9 @@ func TestValidateManifest(t *testing.T) {
 			name: "good",
 			desc: "kapp IDs should be unique",
 			input: Manifest{
-				Kapps: []Kapp{
-					{Id: "example1"},
-					{Id: "example2"},
+				UnparsedKapps: []map[string]Kapp{
+					{"example1": Kapp{}},
+					{"example2": Kapp{}},
 				},
 			},
 		},
@@ -42,10 +42,10 @@ func TestValidateManifest(t *testing.T) {
 			name: "error_multiple_kapps_same_id",
 			desc: "error when kapp IDs aren't unique",
 			input: Manifest{
-				Kapps: []Kapp{
-					{Id: "example1"},
-					{Id: "example2"},
-					{Id: "example1"},
+				UnparsedKapps: []map[string]Kapp{
+					{"example1": Kapp{}},
+					{"example2": Kapp{}},
+					{"example1": Kapp{}},
 				},
 			},
 		},
@@ -71,13 +71,12 @@ func TestSetManifestDefaults(t *testing.T) {
 		{
 			name:     "good",
 			desc:     "default manifest IDs should be the URI basename minus extension",
-			input:    newManifest("example/manifest.yaml"),
+			input:    Manifest{ConfiguredId: "", Uri: "example/manifest.yaml"},
 			expected: "manifest",
 		},
 	}
 
 	for _, test := range tests {
-		SetManifestDefaults(&test.input)
-		assert.Equal(t, test.expected, test.input.Id)
+		assert.Equal(t, test.expected, test.input.Id())
 	}
 }

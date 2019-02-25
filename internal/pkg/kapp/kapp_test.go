@@ -30,8 +30,8 @@ func init() {
 
 func TestParseManifestYaml(t *testing.T) {
 	manifest := Manifest{
-		Uri: "fake/uri",
-		Id:  "test-manifest",
+		Uri:          "fake/uri",
+		ConfiguredId: "test-manifest",
 	}
 
 	tests := []struct {
@@ -46,75 +46,80 @@ func TestParseManifestYaml(t *testing.T) {
 			name: "good_parse",
 			desc: "check parsing acceptable input works",
 			input: `
-present:
-  - id: example1
+kapps:
+  example1:
+    state: present
     templates:        
       - source: example/template1.tpl
         dest: example/dest.txt
     sources:
-    - uri: git@github.com:exampleA/repoA.git
-      branch: branchA
-      path: example/pathA
-    - uri: git@github.com:exampleB/repoB.git
-      branch: branchB
-      path: example/pathB
-      id: sampleNameB
+      pathA:
+        uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+    sampleNameB:
+      uri: git@github.com:exampleB/repoB.git//example/pathB#branchB
 
-  - id: example2
+  example2:
+    state: present
     sources:
-    - uri: git@github.com:exampleA/repoA.git
-      branch: branchA
-      path: example/pathA
+      pathA:
+        uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
     vars:
       someVarA: valueA
       someList:
       - val1
       - val2
 
-absent:
-  - id: example3
+  example3:
+    state: absent
     sources:
-    - uri: git@github.com:exampleA/repoA.git
-      branch: branchA
-      path: example/pathA
+      pathA:
+        uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
 `,
 			expectValues: []Kapp{
 				{
-					Id:              "example1",
-					ShouldBePresent: true,
-					manifest:        &manifest,
+					Id:       "example1",
+					State:    "present",
+					manifest: &manifest,
 					Templates: []Template{
 						{
 							"example/template1.tpl",
 							"example/dest.txt",
 						},
 					},
-					Sources: []acquirer.Acquirer{
-						discardErr(acquirer.NewGitAcquirer(
-							"pathA",
-							"git@github.com:exampleA/repoA.git",
-							"branchA",
-							"example/pathA",
-							"")),
-						discardErr(acquirer.NewGitAcquirer(
-							"sampleNameB",
-							"git@github.com:exampleB/repoB.git",
-							"branchB",
-							"example/pathB",
-							"")),
+					//Sources: []acquirer.Acquirer{
+					//	discardErr(acquirer.NewGitAcquirer(
+					//		"pathA",
+					//		"git@github.com:exampleA/repoA.git",
+					//		"branchA",
+					//		"example/pathA",
+					//		"")),
+					//	discardErr(acquirer.NewGitAcquirer(
+					//		"sampleNameB",
+					//		"git@github.com:exampleB/repoB.git",
+					//		"branchB",
+					//		"example/pathB",
+					//		"")),
+					//},
+					Sources: []acquirer.Source{
+						{Id: "pathA",
+							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA"},
 					},
 				},
 				{
-					Id:              "example2",
-					ShouldBePresent: true,
-					manifest:        &manifest,
-					Sources: []acquirer.Acquirer{
-						discardErr(acquirer.NewGitAcquirer(
-							"pathA",
-							"git@github.com:exampleA/repoA.git",
-							"branchA",
-							"example/pathA",
-							"")),
+					Id:       "example2",
+					State:    "present",
+					manifest: &manifest,
+					//Sources: []acquirer.Acquirer{
+					//	discardErr(acquirer.NewGitAcquirer(
+					//		"pathA",
+					//		"git@github.com:exampleA/repoA.git",
+					//		"branchA",
+					//		"example/pathA",
+					//		"")),
+					//},
+					Sources: []acquirer.Source{
+						{Id: "pathA",
+							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA"},
 					},
 					vars: map[string]interface{}{
 						"someVarA": "valueA",
@@ -125,16 +130,22 @@ absent:
 					},
 				},
 				{
-					Id:              "example3",
-					ShouldBePresent: false, // should be absent
-					manifest:        &manifest,
-					Sources: []acquirer.Acquirer{
-						discardErr(acquirer.NewGitAcquirer(
-							"pathA",
-							"git@github.com:exampleA/repoA.git",
-							"branchA",
-							"example/pathA",
-							"")),
+					Id:       "example3",
+					State:    "absent",
+					manifest: &manifest,
+					//Sources: []acquirer.Acquirer{
+					//	discardErr(acquirer.NewGitAcquirer(
+					//		"pathA",
+					//		"git@github.com:exampleA/repoA.git",
+					//		"branchA",
+					//		"example/pathA",
+					//		"")),
+					//},
+					Sources: []acquirer.Source{
+						{
+							Id:  "pathA",
+							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
+						},
 					},
 				},
 			},
@@ -143,11 +154,10 @@ absent:
 	}
 
 	for _, test := range tests {
-		inputYaml := map[string]interface{}{}
-		err := yaml.Unmarshal([]byte(test.input), inputYaml)
+		result := map[string]interface{}{}
+		err := yaml.Unmarshal([]byte(test.input), &manifest)
 		assert.Nil(t, err)
 
-		result, err := parseManifestYaml(&manifest, inputYaml)
 		if test.expectedError {
 			assert.NotNil(t, err)
 			assert.Nil(t, result)

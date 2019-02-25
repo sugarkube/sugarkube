@@ -32,6 +32,12 @@ type Acquirer interface {
 	IncludeValues() bool // todo - clarify if this is actually used, and if not, remove it
 }
 
+type Source struct {
+	Id            string
+	Uri           string
+	IncludeValues bool // todo - see if we actually need this
+}
+
 const ACQUIRER_KEY = "acquirer"
 const ID_KEY = "id"
 const URI_KEY = "uri"

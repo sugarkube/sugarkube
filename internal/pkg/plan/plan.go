@@ -80,10 +80,14 @@ func Create(stackConfig *kapp.StackConfig, cacheDir string, initManifests bool) 
 		destroyables := make([]kapp.Kapp, 0)
 
 		for _, manifestKapp := range manifest.Kapps {
-			if manifestKapp.ShouldBePresent {
+			if manifestKapp.State == kapp.PRESENT_KEY {
 				installables = append(installables, manifestKapp)
-			} else {
+			} else if manifestKapp.State == kapp.ABSENT_KEY {
 				destroyables = append(destroyables, manifestKapp)
+			} else {
+				log.Logger.Warnf("State of kapp '%s' is '%s'. Use '%s' or '%s' to install or delete the kapp. "+
+					"It will be ignored.", manifestKapp.FullyQualifiedId(), manifestKapp.State, kapp.PRESENT_KEY,
+					kapp.ABSENT_KEY)
 			}
 		}
 

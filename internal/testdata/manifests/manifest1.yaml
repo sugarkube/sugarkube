@@ -1,6 +1,5 @@
-present:
-  - id: kappA
-    sources:
-    - uri: git@github.com:sugarkube/kapps-A.git
-      branch: kappA-0.1.0
-      path: some/pathA
+kapps:
+  - kappA:
+      state: present
+      sources:
+      - uri: git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0

@@ -124,7 +124,7 @@ func (c *templateConfig) run() error {
 
 		// select all kapps
 		for _, manifest := range stackConfig.AllManifests() {
-			log.Logger.Debugf("Manifest '%s' contains %d kapps", manifest.Id, len(manifest.Kapps))
+			log.Logger.Debugf("Manifest '%s' contains %d kapps", manifest.Id(), len(manifest.Kapps))
 
 			for _, manifestKapp := range manifest.Kapps {
 				candidateKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
@@ -223,7 +223,7 @@ func getKappsByFullyQualifiedId(kapps []string, stackConfig *kapp.StackConfig) (
 		kappId := splitKappId[1]
 
 		for _, manifest := range stackConfig.AllManifests() {
-			if manifestId != manifest.Id {
+			if manifestId != manifest.Id() {
 				continue
 			}
 

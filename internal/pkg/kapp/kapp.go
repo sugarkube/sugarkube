@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
-	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
 	"path/filepath"
@@ -40,19 +39,14 @@ type Config struct {
 }
 
 type Kapp struct {
-	Id       string
+	Id       string // todo - make private and add an accessor
 	manifest *Manifest
 	cacheDir string
 	Config   Config
-	// if true, this kapp should be present after completing, otherwise it
-	// should be absent. This is here instead of e.g. putting all kapps into
-	// an enclosing struct with 'present' and 'absent' properties so we can
-	// preserve ordering. This approach lets users strictly define the ordering
-	// of installation and deletion operations.
-	ShouldBePresent bool
+	State    string
 	// todo - merge these values with the rest of the merged values prior to invoking a kapp
 	vars      map[string]interface{}
-	Sources   []acquirer.Acquirer
+	Sources   []acquirer.Source
 	Templates []Template
 }
 
@@ -62,6 +56,7 @@ const SOURCES_KEY = "sources"
 const TEMPLATES_KEY = "templates"
 const VARS_KEY = "vars"
 const ID_KEY = "id"
+const STATE_KEY = "state"
 
 // Sets the root cache directory the kapp is checked out into
 func (k *Kapp) SetCacheDir(cacheDir string) {
@@ -75,13 +70,13 @@ func (k Kapp) FullyQualifiedId() string {
 	if k.manifest == nil {
 		return k.Id
 	} else {
-		return strings.Join([]string{k.manifest.Id, k.Id}, ":")
+		return strings.Join([]string{k.manifest.Id(), k.Id}, ":")
 	}
 }
 
 // Returns the physical path to this kapp in a cache
 func (k Kapp) CacheDir() string {
-	cacheDir := filepath.Join(k.cacheDir, k.manifest.Id, k.Id)
+	cacheDir := filepath.Join(k.cacheDir, k.manifest.Id(), k.Id)
 
 	// if no cache dir has been set (e.g. because the user is doing a dry-run),
 	// don't return an absolute path
@@ -103,97 +98,110 @@ func (k Kapp) CacheDir() string {
 // Returns certain kapp data that should be exposed as variables when running kapps
 func (k Kapp) GetIntrinsicData() map[string]string {
 	return map[string]string{
-		"id":              k.Id,
-		"shouldBePresent": fmt.Sprintf("%#v", k.ShouldBePresent),
-		"cacheRoot":       k.CacheDir(),
+		"id":        k.Id,
+		"State":     k.State,
+		"cacheRoot": k.CacheDir(),
 	}
 }
 
-// Instantiates a new Kapp, returning errors if any required settings are missing
-func newKapp(manifest *Manifest, id string, shouldBePresent bool, vars map[string]interface{},
-	templates []Template, sources []acquirer.Acquirer) (*Kapp, error) {
-
-	if id == "" {
-		return nil, errors.New("Can't instantiate a kapp with no ID")
-	}
-
-	if manifest == nil {
-		return nil, errors.New("Can't instantiate a kapp with no associated manifest")
-	}
-
-	kappObj := Kapp{
-		Id:              id,
-		manifest:        manifest,
-		ShouldBePresent: shouldBePresent,
-		vars:            vars,
-		Templates:       templates,
-		Sources:         sources,
-	}
-
-	log.Logger.Debugf("Instantiated kapp: %#v", kappObj)
-
-	return &kappObj, nil
-}
-
-// Parses kapps and adds them to an array
-func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bool) error {
-
-	// parse each kapp definition
-	for _, v := range kappDefinitions {
-		log.Logger.Debugf("Parsing kapp from values: %#v", v)
-
-		valuesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(v.(map[interface{}]interface{}))
-		if err != nil {
-			return errors.Wrapf(err, "Error converting manifest value to map")
-		}
-
-		log.Logger.Debugf("kapp valuesMap=%#v", valuesMap)
-
-		// Return a useful error message if no ID has been declared. We need to do this here as well as when
-		// instantiating a kapp because this catches if the ID key is missing altogether
-		id, ok := valuesMap[ID_KEY].(string)
-		if !ok {
-			return errors.New(fmt.Sprintf("No ID declared for kapp: %#v", valuesMap))
-		}
-
-		vars, err := parseVariables(valuesMap)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		templates, err := parseTemplates(valuesMap)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		// prepare and parse the map containing acquirer values
-		sourcesBytes, err := yaml.Marshal(valuesMap[SOURCES_KEY])
-		if err != nil {
-			return errors.Wrapf(err, "Error marshalling sources yaml: %#v", valuesMap)
-		}
-
-		log.Logger.Debugf("Marshalled sources YAML: %s", sourcesBytes)
-
-		sourcesMaps := []map[interface{}]interface{}{}
-		err = yaml.UnmarshalStrict(sourcesBytes, &sourcesMaps)
-		if err != nil {
-			return errors.Wrapf(err, "Error unmarshalling yaml: %s", sourcesBytes)
-		}
-
-		log.Logger.Debugf("kapp sourcesMaps=%#v", sourcesMaps)
-
-		acquirers, err := acquirer.ParseAcquirers(sourcesMaps)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		kapp, err := newKapp(manifest, id, shouldBePresent, vars, templates, acquirers)
-
-		*kapps = append(*kapps, *kapp)
-	}
+// Returns an array of acquirers configured for the sources for this kapp
+func (k *Kapp) Acquirers() []acquirer.Acquirer {
+	// todo - implement. parse each source and return an acquirer. Add it as a property on the instance after
+	// parsing them the first time
 
 	return nil
 }
+
+// Instantiates a new Kapp, returning errors if any required settings are missing
+//func newKapp(manifest *Manifest, id string, state string, vars map[string]interface{},
+//	templates []Template, sources []acquirer.Acquirer) (*Kapp, error) {
+//
+//	if id == "" {
+//		return nil, errors.New("Can't instantiate a kapp with no ID")
+//	}
+//
+//	if manifest == nil {
+//		return nil, errors.New("Can't instantiate a kapp with no associated manifest")
+//	}
+//
+//	kappObj := Kapp{
+//		Id:        id,
+//		manifest:  manifest,
+//		State:     state,
+//		vars:      vars,
+//		Templates: templates,
+//		Sources:   sources,
+//	}
+//
+//	log.Logger.Debugf("Instantiated kapp: %#v", kappObj)
+//
+//	return &kappObj, nil
+//}
+
+// Parses kapps and adds them to an array
+//func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bool) error {
+//
+//	// parse each kapp definition
+//	for _, v := range kappDefinitions {
+//		log.Logger.Debugf("Parsing kapp from values: %#v", v)
+//
+//		valuesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(v.(map[interface{}]interface{}))
+//		if err != nil {
+//			return errors.Wrapf(err, "Error converting manifest value to map")
+//		}
+//
+//		log.Logger.Debugf("kapp valuesMap=%#v", valuesMap)
+//
+//		// Return a useful error message if no ID has been declared. We need to do this here as well as when
+//		// instantiating a kapp because this catches if the ID key is missing altogether
+//		id, ok := valuesMap[ID_KEY].(string)
+//		if !ok {
+//			return errors.New(fmt.Sprintf("No ID declared for kapp: %#v", valuesMap))
+//		}
+//
+//		state, ok := valuesMap[STATE_KEY].(string)
+//		if !ok {
+//			state = ""
+//		}
+//
+//		vars, err := parseVariables(valuesMap)
+//		if err != nil {
+//			return errors.WithStack(err)
+//		}
+//
+//		templates, err := parseTemplates(valuesMap)
+//		if err != nil {
+//			return errors.WithStack(err)
+//		}
+//
+//		// prepare and parse the map containing acquirer values
+//		sourcesBytes, err := yaml.Marshal(valuesMap[SOURCES_KEY])
+//		if err != nil {
+//			return errors.Wrapf(err, "Error marshalling sources yaml: %#v", valuesMap)
+//		}
+//
+//		log.Logger.Debugf("Marshalled sources YAML: %s", sourcesBytes)
+//
+//		sourcesMaps := []map[interface{}]interface{}{}
+//		err = yaml.UnmarshalStrict(sourcesBytes, &sourcesMaps)
+//		if err != nil {
+//			return errors.Wrapf(err, "Error unmarshalling yaml: %s", sourcesBytes)
+//		}
+//
+//		log.Logger.Debugf("kapp sourcesMaps=%#v", sourcesMaps)
+//
+//		acquirers, err := acquirer.ParseAcquirers(sourcesMaps)
+//		if err != nil {
+//			return errors.WithStack(err)
+//		}
+//
+//		kapp, err := newKapp(manifest, id, state, vars, templates, acquirers)
+//
+//		*kapps = append(*kapps, *kapp)
+//	}
+//
+//	return nil
+//}
 
 // Parse variables in a Kapp values map
 func parseVariables(valuesMap map[string]interface{}) (map[string]interface{}, error) {
@@ -239,28 +247,28 @@ func parseTemplates(valuesMap map[string]interface{}) ([]Template, error) {
 
 // Parses a manifest YAML. It separately parses all kapps that should be present and all those that should be
 // absent, and returns a single list containing them all.
-func parseManifestYaml(manifest *Manifest, data map[string]interface{}) ([]Kapp, error) {
-	kapps := make([]Kapp, 0)
-
-	log.Logger.Debugf("Manifest data to parse: %#v", data)
-
-	presentKapps, ok := data[PRESENT_KEY]
-	if ok {
-		err := parseKapps(manifest, &kapps, presentKapps.([]interface{}), true)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error parsing present kapps")
-		}
-	}
-
-	absentKapps, ok := data[ABSENT_KEY]
-	if ok {
-		err := parseKapps(manifest, &kapps, absentKapps.([]interface{}), false)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error parsing absent kapps")
-		}
-	}
-
-	log.Logger.Debugf("Parsed kapps to install and remove: %#v", kapps)
-
-	return kapps, nil
-}
+//func parseManifestYaml(manifest *Manifest, data map[string]interface{}) ([]Kapp, error) {
+//	kapps := make([]Kapp, 0)
+//
+//	log.Logger.Debugf("Manifest data to parse: %#v", data)
+//
+//	presentKapps, ok := data[PRESENT_KEY]
+//	if ok {
+//		err := parseKapps(manifest, &kapps, presentKapps.([]interface{}), true)
+//		if err != nil {
+//			return nil, errors.Wrap(err, "Error parsing present kapps")
+//		}
+//	}
+//
+//	absentKapps, ok := data[ABSENT_KEY]
+//	if ok {
+//		err := parseKapps(manifest, &kapps, absentKapps.([]interface{}), false)
+//		if err != nil {
+//			return nil, errors.Wrap(err, "Error parsing absent kapps")
+//		}
+//	}
+//
+//	log.Logger.Debugf("Parsed kapps to install and remove: %#v", kapps)
+//
+//	return kapps, nil
+//}

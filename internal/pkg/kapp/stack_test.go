@@ -52,22 +52,28 @@ func TestLoadStackConfigDir(t *testing.T) {
 
 func TestLoadStackConfig(t *testing.T) {
 	manifest1 := Manifest{
-		Id:  "manifest1",
-		Uri: "../../testdata/manifests/manifest1.yaml",
+		ConfiguredId: "manifest1",
+		Uri:          "../../testdata/manifests/manifest1.yaml",
 	}
 
 	manifest1Kapps := []Kapp{
 		{
-			Id:              "kappA",
-			ShouldBePresent: true,
-			manifest:        &manifest1,
-			Sources: []acquirer.Acquirer{
-				discardErr(acquirer.NewGitAcquirer(
-					"pathA",
-					"git@github.com:sugarkube/kapps-A.git",
-					"kappA-0.1.0",
-					"some/pathA",
-					"")),
+			Id:       "kappA",
+			State:    "present",
+			manifest: &manifest1,
+			//Sources: []acquirer.Acquirer{
+			//	discardErr(acquirer.NewGitAcquirer(
+			//		"pathA",
+			//		"git@github.com:sugarkube/kapps-A.git",
+			//		"kappA-0.1.0",
+			//		"some/pathA",
+			//		"")),
+			//},
+			Sources: []acquirer.Source{
+				{
+					Id:  "kappA",
+					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
+				},
 			},
 		},
 	}
@@ -75,8 +81,8 @@ func TestLoadStackConfig(t *testing.T) {
 	manifest1.Kapps = manifest1Kapps
 
 	manifest2 := Manifest{
-		Id:  "exampleManifest2",
-		Uri: "../../testdata/manifests/manifest2.yaml",
+		ConfiguredId: "exampleManifest2",
+		Uri:          "../../testdata/manifests/manifest2.yaml",
 		Options: ManifestOptions{
 			Parallelisation: uint16(1),
 		},
@@ -84,73 +90,92 @@ func TestLoadStackConfig(t *testing.T) {
 
 	manifest2Kapps := []Kapp{
 		{
-			Id:              "kappC",
-			ShouldBePresent: true,
-			manifest:        &manifest2,
-			Sources: []acquirer.Acquirer{
-				discardErr(acquirer.NewGitAcquirer(
-					"special",
-					"git@github.com:sugarkube/kapps-C.git",
-					"kappC-0.3.0",
-					"kappC/some/special-path",
-					"")),
-				discardErr(acquirer.NewGitAcquirer(
-					"pathZ",
-					"git@github.com:sugarkube/kapps-C.git",
-					"kappZ-0.3.0",
-					"kappC/some/pathZ",
-					"")),
-				discardErr(acquirer.NewGitAcquirer(
-					"pathX",
-					"git@github.com:sugarkube/kapps-C.git",
-					"kappX-0.3.0",
-					"kappC/some/pathX",
-					"")),
-				discardErr(acquirer.NewGitAcquirer(
-					"pathY",
-					"git@github.com:sugarkube/kapps-C.git",
-					"kappY-0.3.0",
-					"kappC/some/pathY",
-					"")),
+			Id:       "kappC",
+			State:    "present",
+			manifest: &manifest2,
+			//Sources: []acquirer.Acquirer{
+			//	discardErr(acquirer.NewGitAcquirer(
+			//		"special",
+			//		"git@github.com:sugarkube/kapps-C.git",
+			//		"kappC-0.3.0",
+			//		"kappC/some/special-path",
+			//		"")),
+			//	discardErr(acquirer.NewGitAcquirer(
+			//		"pathZ",
+			//		"git@github.com:sugarkube/kapps-C.git",
+			//		"kappZ-0.3.0",
+			//		"kappC/some/pathZ",
+			//		"")),
+			//	discardErr(acquirer.NewGitAcquirer(
+			//		"pathX",
+			//		"git@github.com:sugarkube/kapps-C.git",
+			//		"kappX-0.3.0",
+			//		"kappC/some/pathX",
+			//		"")),
+			//	discardErr(acquirer.NewGitAcquirer(
+			//		"pathY",
+			//		"git@github.com:sugarkube/kapps-C.git",
+			//		"kappY-0.3.0",
+			//		"kappC/some/pathY",
+			//		"")),
+			//},
+			Sources: []acquirer.Source{
+				{
+					Id:  "special",
+					Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/special-path#kappC-0.3.0",
+				},
+				{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathZ#kappZ-0.3.0"},
+				{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathX#kappX-0.3.0"},
+				{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0"},
 			},
 		},
 		{
-			Id:              "kappB",
-			ShouldBePresent: true,
-			manifest:        &manifest2,
-			Sources: []acquirer.Acquirer{
-				discardErr(acquirer.NewGitAcquirer(
-					"pathB",
-					"git@github.com:sugarkube/kapps-B.git",
-					"kappB-0.2.0",
-					"some/pathB",
-					"")),
+			Id:       "kappB",
+			State:    "present",
+			manifest: &manifest2,
+			//Sources: []acquirer.Acquirer{
+			//	discardErr(acquirer.NewGitAcquirer(
+			//		"pathB",
+			//		"git@github.com:sugarkube/kapps-B.git",
+			//		"kappB-0.2.0",
+			//		"some/pathB",
+			//		"")),
+			//},
+			Sources: []acquirer.Source{
+				{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
 			},
 		},
 		{
-			Id:              "kappD",
-			ShouldBePresent: true,
-			manifest:        &manifest2,
-			Sources: []acquirer.Acquirer{
-				discardErr(acquirer.NewGitAcquirer(
-					"pathD",
-					"git@github.com:sugarkube/kapps-D.git",
-					"kappD-0.2.0",
-					"some/pathD",
-					"")),
+			Id:       "kappD",
+			State:    "present",
+			manifest: &manifest2,
+			//Sources: []acquirer.Acquirer{
+			//	discardErr(acquirer.NewGitAcquirer(
+			//		"pathD",
+			//		"git@github.com:sugarkube/kapps-D.git",
+			//		"kappD-0.2.0",
+			//		"some/pathD",
+			//		"")),
+			//},
+			Sources: []acquirer.Source{
+				{Uri: "git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0"},
 			},
 		},
 		{
-			Id:              "kappA",
-			ShouldBePresent: true,
-			manifest:        &manifest2,
-			Sources: []acquirer.Acquirer{
-				discardErr(acquirer.NewGitAcquirer(
-					"pathA",
-					"git@github.com:sugarkube/kapps-A.git",
-					"kappA-0.2.0",
-					"some/pathA",
-					"false")),
+			Id:       "kappA",
+			State:    "present",
+			manifest: &manifest2,
+			//Sources: []acquirer.Acquirer{
+			//	discardErr(acquirer.NewGitAcquirer(
+			//		"pathA",
+			//		"git@github.com:sugarkube/kapps-A.git",
+			//		"kappA-0.2.0",
+			//		"some/pathA",
+			//		"false")),
+			//},
+			Sources: []acquirer.Source{
+				{IncludeValues: false,
+					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.2.0"},
 			},
 		},
 	}
@@ -231,49 +256,67 @@ func TestFindKappVarsFiles(t *testing.T) {
 		},
 		Manifests: []Manifest{
 			{
-				Id:  "manifest1",
-				Uri: "../../testdata/manifests/manifest1.yaml",
+				ConfiguredId: "manifest1",
+				Uri:          "../../testdata/manifests/manifest1.yaml",
 				Kapps: []Kapp{
 					{
-						Id:              "kappA",
-						ShouldBePresent: true,
-						Sources: []acquirer.Acquirer{
-							discardErr(acquirer.NewGitAcquirer(
-								"pathA",
-								"git@github.com:sugarkube/kapps-A.git",
-								"kappA-0.1.0",
-								"some/pathA",
-								"")),
+						Id:    "kappA",
+						State: "present",
+						//Sources: []acquirer.Acquirer{
+						//	discardErr(acquirer.NewGitAcquirer(
+						//		"pathA",
+						//		"git@github.com:sugarkube/kapps-A.git",
+						//		"kappA-0.1.0",
+						//		"some/pathA",
+						//		"")),
+						//},
+						Sources: []acquirer.Source{
+							{
+								Id:  "kappA",
+								Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
+							},
 						},
 					},
 				},
 			},
 			{
-				Id:  "exampleManifest2",
-				Uri: "../../testdata/manifests/manifest2.yaml",
+				ConfiguredId: "exampleManifest2",
+				Uri:          "../../testdata/manifests/manifest2.yaml",
 				Kapps: []Kapp{
 					{
-						Id:              "kappC",
-						ShouldBePresent: true,
-						Sources: []acquirer.Acquirer{
-							discardErr(acquirer.NewGitAcquirer(
-								"pathC",
-								"git@github.com:sugarkube/kapps-C.git",
-								"kappC-0.3.0",
-								"some/pathC",
-								"")),
+						Id:    "kappC",
+						State: "present",
+						//Sources: []acquirer.Acquirer{
+						//	discardErr(acquirer.NewGitAcquirer(
+						//		"pathC",
+						//		"git@github.com:sugarkube/kapps-C.git",
+						//		"kappC-0.3.0",
+						//		"some/pathC",
+						//		"")),
+						//},
+						Sources: []acquirer.Source{
+							{
+								Id:  "special",
+								Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/special-path#kappC-0.3.0",
+							},
+							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathZ#kappZ-0.3.0"},
+							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathX#kappX-0.3.0"},
+							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0"},
 						},
 					},
 					{
-						Id:              "kappB",
-						ShouldBePresent: true,
-						Sources: []acquirer.Acquirer{
-							discardErr(acquirer.NewGitAcquirer(
-								"pathB",
-								"git@github.com:sugarkube/kapps-B.git",
-								"kappB-0.2.0",
-								"some/pathB",
-								"")),
+						Id:    "kappB",
+						State: "present",
+						//Sources: []acquirer.Acquirer{
+						//	discardErr(acquirer.NewGitAcquirer(
+						//		"pathB",
+						//		"git@github.com:sugarkube/kapps-B.git",
+						//		"kappB-0.2.0",
+						//		"some/pathB",
+						//		"")),
+						//},
+						Sources: []acquirer.Source{
+							{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
 						},
 					},
 				},
@@ -318,49 +361,67 @@ func TestGetKappVars(t *testing.T) {
 		},
 		Manifests: []Manifest{
 			{
-				Id:  "manifest1",
-				Uri: "../../testdata/manifests/manifest1.yaml",
+				ConfiguredId: "manifest1",
+				Uri:          "../../testdata/manifests/manifest1.yaml",
 				Kapps: []Kapp{
 					{
-						Id:              "kappA",
-						ShouldBePresent: true,
-						Sources: []acquirer.Acquirer{
-							discardErr(acquirer.NewGitAcquirer(
-								"pathA",
-								"git@github.com:sugarkube/kapps-A.git",
-								"kappA-0.1.0",
-								"some/pathA",
-								"")),
+						Id:    "kappA",
+						State: "present",
+						//Sources: []acquirer.Acquirer{
+						//	discardErr(acquirer.NewGitAcquirer(
+						//		"pathA",
+						//		"git@github.com:sugarkube/kapps-A.git",
+						//		"kappA-0.1.0",
+						//		"some/pathA",
+						//		"")),
+						//},
+						Sources: []acquirer.Source{
+							{
+								Id:  "kappA",
+								Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
+							},
 						},
 					},
 				},
 			},
 			{
-				Id:  "exampleManifest2",
-				Uri: "../../testdata/manifests/manifest2.yaml",
+				ConfiguredId: "exampleManifest2",
+				Uri:          "../../testdata/manifests/manifest2.yaml",
 				Kapps: []Kapp{
 					{
-						Id:              "kappC",
-						ShouldBePresent: true,
-						Sources: []acquirer.Acquirer{
-							discardErr(acquirer.NewGitAcquirer(
-								"pathC",
-								"git@github.com:sugarkube/kapps-C.git",
-								"kappC-0.3.0",
-								"some/pathC",
-								"")),
+						Id:    "kappC",
+						State: "present",
+						//Sources: []acquirer.Acquirer{
+						//	discardErr(acquirer.NewGitAcquirer(
+						//		"pathC",
+						//		"git@github.com:sugarkube/kapps-C.git",
+						//		"kappC-0.3.0",
+						//		"some/pathC",
+						//		"")),
+						//},
+						Sources: []acquirer.Source{
+							{
+								Id:  "special",
+								Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/special-path#kappC-0.3.0",
+							},
+							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathZ#kappZ-0.3.0"},
+							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathX#kappX-0.3.0"},
+							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0"},
 						},
 					},
 					{
-						Id:              "kappB",
-						ShouldBePresent: true,
-						Sources: []acquirer.Acquirer{
-							discardErr(acquirer.NewGitAcquirer(
-								"pathB",
-								"git@github.com:sugarkube/kapps-B.git",
-								"kappB-0.2.0",
-								"some/pathB",
-								"")),
+						Id:    "kappB",
+						State: "present",
+						//Sources: []acquirer.Acquirer{
+						//	discardErr(acquirer.NewGitAcquirer(
+						//		"pathB",
+						//		"git@github.com:sugarkube/kapps-B.git",
+						//		"kappB-0.2.0",
+						//		"some/pathB",
+						//		"")),
+						//},
+						Sources: []acquirer.Source{
+							{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
 						},
 					},
 				},
