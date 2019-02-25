@@ -4,8 +4,7 @@
 * Code of conduct
 
 ## Code-related tasks
-* Support acquiring manifests with the acquirers
-* Create a filesystem acquirer. If there's no protocol, assume file:// 
+* Support acquiring manifests with the acquirers - would this really help?
 * Print important info instead of logging it
 * Add support for verifying signed tags
 * More tests 
