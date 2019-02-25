@@ -7,7 +7,7 @@ present:
     - uri: git@github.com:sugarkube/kapps-C.git
       branch: kappC-0.3.0
       path: kappC/some/special-path
-      name: special
+      id: special
     - uri: git@github.com:sugarkube/kapps-C.git
       branch: kappZ-0.3.0
       path: kappC/some/pathZ

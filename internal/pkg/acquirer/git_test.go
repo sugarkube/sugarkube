@@ -84,7 +84,7 @@ func TestId(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result, err := test.input.Id()
+		result, err := test.input.FullyQualifiedId()
 
 		if test.expectError {
 			assert.NotNil(t, err)

@@ -108,7 +108,7 @@ func ValidateManifest(manifest *Manifest) error {
 
 		for _, acquirer := range kapp.Sources {
 			// verify all IDs can be generated successfully
-			_, err := acquirer.Id()
+			_, err := acquirer.FullyQualifiedId()
 			if err != nil {
 				return errors.WithStack(err)
 			}

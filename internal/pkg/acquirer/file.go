@@ -31,8 +31,8 @@ const FILE_PROTOCOL = "file://"
 // An acquirer for files already on the local filesystem. This is analogous to a no-op acquirer and allows us
 // to use a common interface for acquisition operations
 type FileAcquirer struct {
-	name string
-	uri  string
+	id  string
+	uri string
 }
 
 // Returns an instance. This allows us to build objects for testing instead of
@@ -54,19 +54,19 @@ func NewFileAcquirer(name string, uri string) (*FileAcquirer, error) {
 	}
 
 	return &FileAcquirer{
-		name: name,
-		uri:  strings.TrimSpace(uri),
+		id:  name,
+		uri: strings.TrimSpace(uri),
 	}, nil
 }
 
-// Returns an ID, either the explicitly set name or the basename of the last component
-func (a FileAcquirer) Id() (string, error) {
+// Returns an ID, either the explicitly set id or the basename of the last component
+func (a FileAcquirer) FullyQualifiedId() (string, error) {
 	return filepath.Base(a.Path()), nil
 }
 
-// return the name
-func (a FileAcquirer) Name() string {
-	return a.name
+// return the id
+func (a FileAcquirer) Id() string {
+	return a.id
 }
 
 // return the path (i.e. the URI with the file:// prefix removed)

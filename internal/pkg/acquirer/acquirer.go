@@ -26,14 +26,14 @@ import (
 
 type Acquirer interface {
 	acquire(dest string) error
-	Id() (string, error)
-	Name() string
+	FullyQualifiedId() (string, error)
+	Id() string
 	Path() string
 	IncludeValues() bool // todo - clarify if this is actually used, and if not, remove it
 }
 
 const ACQUIRER_KEY = "acquirer"
-const NAME_KEY = "name"
+const ID_KEY = "id"
 const URI_KEY = "uri"
 
 // Factory that creates acquirers
@@ -41,7 +41,7 @@ func acquirerFactory(name string, settings map[string]string) (Acquirer, error) 
 	log.Logger.Debugf("Returning new %s acquirer", name)
 
 	if name == GIT_ACQUIRER {
-		acquirerObj, err := NewGitAcquirer(settings[NAME_KEY], settings[URI_KEY], settings[BRANCH_KEY],
+		acquirerObj, err := NewGitAcquirer(settings[ID_KEY], settings[URI_KEY], settings[BRANCH_KEY],
 			settings[PATH_KEY], settings[INCLUDE_VALUES_KEY])
 		if err != nil {
 			return nil, errors.WithStack(err)
@@ -49,7 +49,7 @@ func acquirerFactory(name string, settings map[string]string) (Acquirer, error) 
 		return acquirerObj, nil
 
 	} else if name == FILE_ACQUIRER {
-		acquirerObj, err := NewFileAcquirer(settings[NAME_KEY], settings[URI_KEY])
+		acquirerObj, err := NewFileAcquirer(settings[ID_KEY], settings[URI_KEY])
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

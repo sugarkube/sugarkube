@@ -102,7 +102,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 
 	for _, acquirerImpl := range acquirers {
 		go func(a acquirer.Acquirer) {
-			acquirerId, err := a.Id()
+			acquirerId, err := a.FullyQualifiedId()
 			if err != nil {
 				errCh <- errors.Wrap(err, "Invalid acquirer ID")
 				return
@@ -126,7 +126,7 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 			sourcePath = strings.TrimPrefix(sourcePath, rootDir)
 			sourcePath = strings.TrimPrefix(sourcePath, "/")
 
-			symLinkTarget := filepath.Join(rootDir, a.Name())
+			symLinkTarget := filepath.Join(rootDir, a.Id())
 
 			var symLinksExist bool
 

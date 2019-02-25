@@ -220,9 +220,9 @@ func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 	}
 
 	for _, acquirerObj := range kappObj.Sources {
-		validNames = append(validNames, acquirerObj.Name())
+		validNames = append(validNames, acquirerObj.Id())
 
-		id, err := acquirerObj.Id()
+		id, err := acquirerObj.FullyQualifiedId()
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

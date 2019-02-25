@@ -58,7 +58,7 @@ present:
     - uri: git@github.com:exampleB/repoB.git
       branch: branchB
       path: example/pathB
-      name: sampleNameB
+      id: sampleNameB
 
   - id: example2
     sources:

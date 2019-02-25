@@ -30,7 +30,7 @@ import (
 const GIT_ACQUIRER = "git"
 
 type GitAcquirer struct {
-	name          string
+	id            string
 	uri           string
 	branch        string
 	path          string
@@ -46,10 +46,10 @@ const INCLUDE_VALUES_KEY = "includeValues"
 
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
-func NewGitAcquirer(name string, uri string, branch string, path string,
+func NewGitAcquirer(id string, uri string, branch string, path string,
 	includeValues string) (*GitAcquirer, error) {
 
-	name = strings.TrimSpace(name)
+	id = strings.TrimSpace(id)
 	uri = strings.TrimSpace(uri)
 	branch = strings.TrimSpace(branch)
 	path = strings.TrimSpace(path)
@@ -65,8 +65,8 @@ func NewGitAcquirer(name string, uri string, branch string, path string,
 				"character in URI %s", uri))
 	}
 
-	if name == "" {
-		name = filepath.Base(path)
+	if id == "" {
+		id = filepath.Base(path)
 	}
 
 	// defaults to true
@@ -77,7 +77,7 @@ func NewGitAcquirer(name string, uri string, branch string, path string,
 	}
 
 	return &GitAcquirer{
-		name:          name,
+		id:            id,
 		uri:           uri,
 		branch:        branch,
 		path:          path,
@@ -85,23 +85,23 @@ func NewGitAcquirer(name string, uri string, branch string, path string,
 	}, nil
 }
 
-// Generate an ID based on the URI and name
-func (a GitAcquirer) Id() (string, error) {
+// Generate an ID based on the URI and ID
+func (a GitAcquirer) FullyQualifiedId() (string, error) {
 	// this doesn't contain the branch because we don't want to create complications
 	// in case users create their own branches (e.g. if we've checked out into a
-	// directory containing 'master' and they create a feature branch the dir name
+	// directory containing 'master' and they create a feature branch the dir id
 	// will be misleading).
 	orgRepo := strings.SplitAfter(a.uri, ":")
 	hyphenatedOrg := strings.Replace(orgRepo[1], "/", "-", -1)
 	hyphenatedOrg = strings.TrimSuffix(hyphenatedOrg, ".git")
-	hyphenatedName := strings.Replace(a.name, "/", "-", -1)
+	hyphenatedName := strings.Replace(a.id, "/", "-", -1)
 
 	return strings.Join([]string{hyphenatedOrg, hyphenatedName}, "-"), nil
 }
 
-// Return the name. This is used as a subcomponent of the generated ID and can be explicitly configured in config
-func (a GitAcquirer) Name() string {
-	return a.name
+// Return the ID. This is used as a subcomponent of a fully-qualified ID and can be explicitly configured in config
+func (a GitAcquirer) Id() string {
+	return a.id
 }
 
 // return the path
