@@ -130,7 +130,7 @@ func (c *createCmd) run() error {
 		candidateKapps := map[string]kapp.Kapp{}
 
 		for _, manifest := range stackConfig.AllManifests() {
-			for _, manifestKapp := range manifest.Kapps {
+			for _, manifestKapp := range manifest.ParsedKapps() {
 				candidateKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
 			}
 		}

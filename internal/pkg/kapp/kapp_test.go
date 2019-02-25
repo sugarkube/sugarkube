@@ -47,33 +47,30 @@ func TestParseManifestYaml(t *testing.T) {
 			desc: "check parsing acceptable input works",
 			input: `
 kapps:
-  example1:
-    state: present
-    templates:        
-      - source: example/template1.tpl
-        dest: example/dest.txt
-    sources:
-      pathA:
-        uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
-    sampleNameB:
-      uri: git@github.com:exampleB/repoB.git//example/pathB#branchB
+  - example1:
+      state: present
+      templates:        
+        - source: example/template1.tpl
+          dest: example/dest.txt
+      sources:
+        - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+      sampleNameB:
+        - uri: git@github.com:exampleB/repoB.git//example/pathB#branchB
 
-  example2:
-    state: present
-    sources:
-      pathA:
-        uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
-    vars:
-      someVarA: valueA
-      someList:
-      - val1
-      - val2
+  - example2:
+      state: present
+      sources:
+      - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+      vars:
+        someVarA: valueA
+        someList:
+        - val1
+        - val2
 
-  example3:
-    state: absent
-    sources:
-      pathA:
-        uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+  - example3:
+      state: absent
+      sources:
+      - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
 `,
 			expectValues: []Kapp{
 				{
@@ -154,15 +151,14 @@ kapps:
 	}
 
 	for _, test := range tests {
-		result := map[string]interface{}{}
 		err := yaml.Unmarshal([]byte(test.input), &manifest)
 		assert.Nil(t, err)
 
 		if test.expectedError {
 			assert.NotNil(t, err)
-			assert.Nil(t, result)
+			assert.Nil(t, manifest.UnparsedKapps)
 		} else {
-			assert.Equal(t, test.expectValues, result, "unexpected conversion result for %s", test.name)
+			assert.Equal(t, test.expectValues, manifest.UnparsedKapps, "unexpected conversion result for %s", test.name)
 			assert.Nil(t, err)
 		}
 	}

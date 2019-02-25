@@ -50,14 +50,14 @@ func TestLoadStackConfigDir(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestLoadStackConfig(t *testing.T) {
+func GetTestManifests() (Manifest, Manifest) {
 	manifest1 := Manifest{
 		ConfiguredId: "manifest1",
 		Uri:          "../../testdata/manifests/manifest1.yaml",
 	}
 
-	manifest1Kapps := []Kapp{
-		{
+	manifest1Kapps := []map[string]Kapp{
+		{"kappA": {
 			Id:       "kappA",
 			State:    "present",
 			manifest: &manifest1,
@@ -76,9 +76,10 @@ func TestLoadStackConfig(t *testing.T) {
 				},
 			},
 		},
+		},
 	}
 
-	manifest1.Kapps = manifest1Kapps
+	manifest1.UnparsedKapps = manifest1Kapps
 
 	manifest2 := Manifest{
 		ConfiguredId: "exampleManifest2",
@@ -88,8 +89,8 @@ func TestLoadStackConfig(t *testing.T) {
 		},
 	}
 
-	manifest2Kapps := []Kapp{
-		{
+	manifest2Kapps := []map[string]Kapp{
+		{"kappC": {
 			Id:       "kappC",
 			State:    "present",
 			manifest: &manifest2,
@@ -129,7 +130,8 @@ func TestLoadStackConfig(t *testing.T) {
 				{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0"},
 			},
 		},
-		{
+		},
+		{"kappB": {
 			Id:       "kappB",
 			State:    "present",
 			manifest: &manifest2,
@@ -145,7 +147,8 @@ func TestLoadStackConfig(t *testing.T) {
 				{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
 			},
 		},
-		{
+		},
+		{"kappD": {
 			Id:       "kappD",
 			State:    "present",
 			manifest: &manifest2,
@@ -161,7 +164,8 @@ func TestLoadStackConfig(t *testing.T) {
 				{Uri: "git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0"},
 			},
 		},
-		{
+		},
+		{"kappA": {
 			Id:       "kappA",
 			State:    "present",
 			manifest: &manifest2,
@@ -178,9 +182,17 @@ func TestLoadStackConfig(t *testing.T) {
 					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.2.0"},
 			},
 		},
+		},
 	}
 
-	manifest2.Kapps = manifest2Kapps
+	manifest2.UnparsedKapps = manifest2Kapps
+
+	return manifest1, manifest2
+}
+
+func TestLoadStackConfig(t *testing.T) {
+
+	manifest1, manifest2 := GetTestManifests()
 
 	expected := &StackConfig{
 		Name:        "large",
@@ -238,6 +250,8 @@ func TestFindKappVarsFiles(t *testing.T) {
 	absTestDir, err := filepath.Abs(testDir)
 	assert.Nil(t, err)
 
+	manifest1, manifest2 := GetTestManifests()
+
 	stackConfig := StackConfig{
 		Name:        "large",
 		FilePath:    "../../testdata/stacks.yaml",
@@ -255,75 +269,8 @@ func TestFindKappVarsFiles(t *testing.T) {
 			"./sample-kapp-vars/kapp-vars2/",
 		},
 		Manifests: []Manifest{
-			{
-				ConfiguredId: "manifest1",
-				Uri:          "../../testdata/manifests/manifest1.yaml",
-				Kapps: []Kapp{
-					{
-						Id:    "kappA",
-						State: "present",
-						//Sources: []acquirer.Acquirer{
-						//	discardErr(acquirer.NewGitAcquirer(
-						//		"pathA",
-						//		"git@github.com:sugarkube/kapps-A.git",
-						//		"kappA-0.1.0",
-						//		"some/pathA",
-						//		"")),
-						//},
-						Sources: []acquirer.Source{
-							{
-								Id:  "kappA",
-								Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
-							},
-						},
-					},
-				},
-			},
-			{
-				ConfiguredId: "exampleManifest2",
-				Uri:          "../../testdata/manifests/manifest2.yaml",
-				Kapps: []Kapp{
-					{
-						Id:    "kappC",
-						State: "present",
-						//Sources: []acquirer.Acquirer{
-						//	discardErr(acquirer.NewGitAcquirer(
-						//		"pathC",
-						//		"git@github.com:sugarkube/kapps-C.git",
-						//		"kappC-0.3.0",
-						//		"some/pathC",
-						//		"")),
-						//},
-						Sources: []acquirer.Source{
-							{
-								Id:  "special",
-								Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/special-path#kappC-0.3.0",
-							},
-							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathZ#kappZ-0.3.0"},
-							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathX#kappX-0.3.0"},
-							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0"},
-						},
-					},
-					{
-						Id:    "kappB",
-						State: "present",
-						//Sources: []acquirer.Acquirer{
-						//	discardErr(acquirer.NewGitAcquirer(
-						//		"pathB",
-						//		"git@github.com:sugarkube/kapps-B.git",
-						//		"kappB-0.2.0",
-						//		"some/pathB",
-						//		"")),
-						//},
-						Sources: []acquirer.Source{
-							{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
-						},
-					},
-				},
-				Options: ManifestOptions{
-					Parallelisation: uint16(1),
-				},
-			},
+			manifest1,
+			manifest2,
 		},
 	}
 
@@ -335,13 +282,15 @@ func TestFindKappVarsFiles(t *testing.T) {
 		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/test-region1/kappA.yaml"),
 	}
 
-	results, err := stackConfig.findKappVarsFiles(&stackConfig.Manifests[0].Kapps[0])
+	results, err := stackConfig.findKappVarsFiles(&stackConfig.Manifests[0].ParsedKapps()[0])
 	assert.Nil(t, err)
 
 	assert.Equal(t, expected, results)
 }
 
 func TestGetKappVars(t *testing.T) {
+
+	manifest1, manifest2 := GetTestManifests()
 
 	stackConfig := StackConfig{
 		Name:        "large",
@@ -360,75 +309,8 @@ func TestGetKappVars(t *testing.T) {
 			"./sample-kapp-vars/kapp-vars2/",
 		},
 		Manifests: []Manifest{
-			{
-				ConfiguredId: "manifest1",
-				Uri:          "../../testdata/manifests/manifest1.yaml",
-				Kapps: []Kapp{
-					{
-						Id:    "kappA",
-						State: "present",
-						//Sources: []acquirer.Acquirer{
-						//	discardErr(acquirer.NewGitAcquirer(
-						//		"pathA",
-						//		"git@github.com:sugarkube/kapps-A.git",
-						//		"kappA-0.1.0",
-						//		"some/pathA",
-						//		"")),
-						//},
-						Sources: []acquirer.Source{
-							{
-								Id:  "kappA",
-								Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
-							},
-						},
-					},
-				},
-			},
-			{
-				ConfiguredId: "exampleManifest2",
-				Uri:          "../../testdata/manifests/manifest2.yaml",
-				Kapps: []Kapp{
-					{
-						Id:    "kappC",
-						State: "present",
-						//Sources: []acquirer.Acquirer{
-						//	discardErr(acquirer.NewGitAcquirer(
-						//		"pathC",
-						//		"git@github.com:sugarkube/kapps-C.git",
-						//		"kappC-0.3.0",
-						//		"some/pathC",
-						//		"")),
-						//},
-						Sources: []acquirer.Source{
-							{
-								Id:  "special",
-								Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/special-path#kappC-0.3.0",
-							},
-							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathZ#kappZ-0.3.0"},
-							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathX#kappX-0.3.0"},
-							{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0"},
-						},
-					},
-					{
-						Id:    "kappB",
-						State: "present",
-						//Sources: []acquirer.Acquirer{
-						//	discardErr(acquirer.NewGitAcquirer(
-						//		"pathB",
-						//		"git@github.com:sugarkube/kapps-B.git",
-						//		"kappB-0.2.0",
-						//		"some/pathB",
-						//		"")),
-						//},
-						Sources: []acquirer.Source{
-							{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
-						},
-					},
-				},
-				Options: ManifestOptions{
-					Parallelisation: uint16(1),
-				},
-			},
+			manifest1,
+			manifest2,
 		},
 	}
 
@@ -442,7 +324,7 @@ region: test-region1-val
 regionOverride: region-val-override
 `
 
-	results, err := stackConfig.GetKappVars(&stackConfig.Manifests[0].Kapps[0])
+	results, err := stackConfig.GetKappVars(&stackConfig.Manifests[0].ParsedKapps()[0])
 	assert.Nil(t, err)
 
 	yamlResults, err := yaml.Marshal(results)

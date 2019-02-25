@@ -32,8 +32,7 @@ type ManifestOptions struct {
 type Manifest struct {
 	ConfiguredId  string `yaml:"id"` // a default will be used if no explicitly set. Used to namespace cache entries
 	Uri           string
-	Kapps         []Kapp
-	UnparsedKapps []map[string]Kapp
+	UnparsedKapps []map[string]Kapp `yaml:"kapps"`
 	Options       ManifestOptions
 }
 
@@ -46,6 +45,11 @@ func (m *Manifest) Id() string {
 	// use the basename after stripping the extension by default
 	// todo - get this from the acquirer for the manifest
 	return strings.Replace(filepath.Base(m.Uri), filepath.Ext(m.Uri), "", 1)
+}
+
+func (m *Manifest) ParsedKapps() []Kapp {
+	// todo - implement
+	return nil
 }
 
 // Load a single manifest file and parse the kapps it defines
@@ -87,7 +91,7 @@ func ParseManifestFile(path string) (*Manifest, error) {
 func ValidateManifest(manifest *Manifest) error {
 	ids := map[string]bool{}
 
-	for _, kapp := range manifest.Kapps {
+	for _, kapp := range manifest.ParsedKapps() {
 		id := kapp.Id
 
 		if _, ok := ids[id]; ok {

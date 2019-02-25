@@ -60,7 +60,7 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 	}
 
 	// acquire each kapp and cache it
-	for _, kappObj := range manifest.Kapps {
+	for _, kappObj := range manifest.ParsedKapps() {
 		// build a directory path for the kapp in the manifest cache directory
 		kappObj.SetCacheDir(cacheDir)
 

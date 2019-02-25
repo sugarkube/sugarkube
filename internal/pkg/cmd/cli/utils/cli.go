@@ -74,7 +74,7 @@ func BuildStackConfig(stackName string, stackFile string, cliStackConfig *kapp.S
 
 	numKapps := 0
 	for _, manifest := range stackConfig.AllManifests() {
-		numKapps += len(manifest.Kapps)
+		numKapps += len(manifest.ParsedKapps())
 	}
 
 	_, err = fmt.Fprintf(out, "Successfully loaded stack config containing %d "+

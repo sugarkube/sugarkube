@@ -79,7 +79,7 @@ func Create(stackConfig *kapp.StackConfig, cacheDir string, initManifests bool) 
 		installables := make([]kapp.Kapp, 0)
 		destroyables := make([]kapp.Kapp, 0)
 
-		for _, manifestKapp := range manifest.Kapps {
+		for _, manifestKapp := range manifest.ParsedKapps() {
 			if manifestKapp.State == kapp.PRESENT_KEY {
 				installables = append(installables, manifestKapp)
 			} else if manifestKapp.State == kapp.ABSENT_KEY {
