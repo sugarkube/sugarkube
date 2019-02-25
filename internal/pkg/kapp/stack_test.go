@@ -52,15 +52,15 @@ func TestLoadStackConfigDir(t *testing.T) {
 
 func GetTestManifests() (Manifest, Manifest) {
 	manifest1 := Manifest{
-		ConfiguredId: "manifest1",
+		ConfiguredId: "",
 		Uri:          "../../testdata/manifests/manifest1.yaml",
 	}
 
-	manifest1Kapps := []map[string]Kapp{
+	manifest1UnparsedKapps := []map[string]Kapp{
 		{"kappA": {
-			Id:       "kappA",
+			Id:       "",
 			State:    "present",
-			manifest: &manifest1,
+			manifest: nil,
 			//Sources: []acquirer.Acquirer{
 			//	discardErr(acquirer.NewGitAcquirer(
 			//		"pathA",
@@ -71,7 +71,6 @@ func GetTestManifests() (Manifest, Manifest) {
 			//},
 			Sources: []acquirer.Source{
 				{
-					Id:  "kappA",
 					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
 				},
 			},
@@ -79,7 +78,7 @@ func GetTestManifests() (Manifest, Manifest) {
 		},
 	}
 
-	manifest1.UnparsedKapps = manifest1Kapps
+	manifest1.UnparsedKapps = manifest1UnparsedKapps
 
 	manifest2 := Manifest{
 		ConfiguredId: "exampleManifest2",
@@ -89,11 +88,11 @@ func GetTestManifests() (Manifest, Manifest) {
 		},
 	}
 
-	manifest2Kapps := []map[string]Kapp{
+	manifest2UnparsedKapps := []map[string]Kapp{
 		{"kappC": {
-			Id:       "kappC",
+			Id:       "",
 			State:    "present",
-			manifest: &manifest2,
+			manifest: nil,
 			//Sources: []acquirer.Acquirer{
 			//	discardErr(acquirer.NewGitAcquirer(
 			//		"special",
@@ -132,9 +131,9 @@ func GetTestManifests() (Manifest, Manifest) {
 		},
 		},
 		{"kappB": {
-			Id:       "kappB",
+			Id:       "",
 			State:    "present",
-			manifest: &manifest2,
+			manifest: nil,
 			//Sources: []acquirer.Acquirer{
 			//	discardErr(acquirer.NewGitAcquirer(
 			//		"pathB",
@@ -149,9 +148,9 @@ func GetTestManifests() (Manifest, Manifest) {
 		},
 		},
 		{"kappD": {
-			Id:       "kappD",
+			Id:       "",
 			State:    "present",
-			manifest: &manifest2,
+			manifest: nil,
 			//Sources: []acquirer.Acquirer{
 			//	discardErr(acquirer.NewGitAcquirer(
 			//		"pathD",
@@ -166,9 +165,9 @@ func GetTestManifests() (Manifest, Manifest) {
 		},
 		},
 		{"kappA": {
-			Id:       "kappA",
+			Id:       "",
 			State:    "present",
-			manifest: &manifest2,
+			manifest: nil,
 			//Sources: []acquirer.Acquirer{
 			//	discardErr(acquirer.NewGitAcquirer(
 			//		"pathA",
@@ -185,7 +184,7 @@ func GetTestManifests() (Manifest, Manifest) {
 		},
 	}
 
-	manifest2.UnparsedKapps = manifest2Kapps
+	manifest2.UnparsedKapps = manifest2UnparsedKapps
 
 	return manifest1, manifest2
 }

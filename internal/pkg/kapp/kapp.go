@@ -45,7 +45,7 @@ type Kapp struct {
 	Config   Config
 	State    string
 	// todo - merge these values with the rest of the merged values prior to invoking a kapp
-	vars      map[string]interface{}
+	Vars      map[string]interface{}
 	Sources   []acquirer.Source
 	Templates []Template
 }

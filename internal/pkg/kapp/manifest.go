@@ -74,6 +74,13 @@ func ParseManifestFile(path string) (*Manifest, error) {
 
 	parsedManifest.Uri = path
 
+	//for i, kapps := range parsedManifest.UnparsedKapps {
+	//	for kappId, unparsedKapp := range kapps {
+	//		unparsedKapp.Id = kappId
+	//		unparsedKapp.manifest = &parsedManifest
+	//	}
+	//}
+
 	//kapps, err := parseManifestYaml(&manifest, data)
 	//if err != nil {
 	//	return nil, errors.WithStack(err)

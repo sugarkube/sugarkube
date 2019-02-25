@@ -39,7 +39,7 @@ func TestParseManifestYaml(t *testing.T) {
 		desc                 string
 		input                string
 		inputShouldBePresent bool
-		expectValues         []Kapp
+		expectUnparsed       []map[string]Kapp
 		expectedError        bool
 	}{
 		{
@@ -53,7 +53,8 @@ kapps:
         - source: example/template1.tpl
           dest: example/dest.txt
       sources:
-        - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+        - id: pathASpecial
+          uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
       sampleNameB:
         - uri: git@github.com:exampleB/repoB.git//example/pathB#branchB
 
@@ -72,40 +73,42 @@ kapps:
       sources:
       - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
 `,
-			expectValues: []Kapp{
+			expectUnparsed: []map[string]Kapp{
 				{
-					Id:       "example1",
-					State:    "present",
-					manifest: &manifest,
-					Templates: []Template{
-						{
-							"example/template1.tpl",
-							"example/dest.txt",
+					"example1": {
+						Id:       "",
+						State:    "present",
+						manifest: nil,
+						Templates: []Template{
+							{
+								"example/template1.tpl",
+								"example/dest.txt",
+							},
+						},
+						//Sources: []acquirer.Acquirer{
+						//	discardErr(acquirer.NewGitAcquirer(
+						//		"pathA",
+						//		"git@github.com:exampleA/repoA.git",
+						//		"branchA",
+						//		"example/pathA",
+						//		"")),
+						//	discardErr(acquirer.NewGitAcquirer(
+						//		"sampleNameB",
+						//		"git@github.com:exampleB/repoB.git",
+						//		"branchB",
+						//		"example/pathB",
+						//		"")),
+						//},
+						Sources: []acquirer.Source{
+							{Id: "pathASpecial",
+								Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA"},
 						},
 					},
-					//Sources: []acquirer.Acquirer{
-					//	discardErr(acquirer.NewGitAcquirer(
-					//		"pathA",
-					//		"git@github.com:exampleA/repoA.git",
-					//		"branchA",
-					//		"example/pathA",
-					//		"")),
-					//	discardErr(acquirer.NewGitAcquirer(
-					//		"sampleNameB",
-					//		"git@github.com:exampleB/repoB.git",
-					//		"branchB",
-					//		"example/pathB",
-					//		"")),
-					//},
-					Sources: []acquirer.Source{
-						{Id: "pathA",
-							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA"},
-					},
 				},
-				{
-					Id:       "example2",
+				{"example2": {
+					Id:       "",
 					State:    "present",
-					manifest: &manifest,
+					manifest: nil,
 					//Sources: []acquirer.Acquirer{
 					//	discardErr(acquirer.NewGitAcquirer(
 					//		"pathA",
@@ -115,10 +118,9 @@ kapps:
 					//		"")),
 					//},
 					Sources: []acquirer.Source{
-						{Id: "pathA",
-							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA"},
+						{Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA"},
 					},
-					vars: map[string]interface{}{
+					Vars: map[string]interface{}{
 						"someVarA": "valueA",
 						"someList": []interface{}{
 							"val1",
@@ -126,10 +128,11 @@ kapps:
 						},
 					},
 				},
-				{
-					Id:       "example3",
+				},
+				{"example3": {
+					Id:       "",
 					State:    "absent",
-					manifest: &manifest,
+					manifest: nil,
 					//Sources: []acquirer.Acquirer{
 					//	discardErr(acquirer.NewGitAcquirer(
 					//		"pathA",
@@ -140,10 +143,10 @@ kapps:
 					//},
 					Sources: []acquirer.Source{
 						{
-							Id:  "pathA",
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
 						},
 					},
+				},
 				},
 			},
 			expectedError: false,
@@ -158,7 +161,7 @@ kapps:
 			assert.NotNil(t, err)
 			assert.Nil(t, manifest.UnparsedKapps)
 		} else {
-			assert.Equal(t, test.expectValues, manifest.UnparsedKapps, "unexpected conversion result for %s", test.name)
+			assert.Equal(t, test.expectUnparsed, manifest.UnparsedKapps, "unexpected conversion result for %s", test.name)
 			assert.Nil(t, err)
 		}
 	}
