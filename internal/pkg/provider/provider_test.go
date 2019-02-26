@@ -28,9 +28,14 @@ func TestStackConfigVars(t *testing.T) {
 
 	expected := map[string]interface{}{
 		"provisioner": map[interface{}]interface{}{
-			"memory":    4096,
-			"cpus":      4,
-			"disk_size": "120g",
+			"binary": "minikube",
+			"params": map[interface{}]interface{}{
+				"start": map[interface{}]interface{}{
+					"disk_size": "120g",
+					"memory":    4096,
+					"cpus":      4,
+				},
+			},
 		},
 	}
 

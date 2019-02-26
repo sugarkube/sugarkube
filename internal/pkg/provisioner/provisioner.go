@@ -42,7 +42,12 @@ const PROVISIONER_KEY = "provisioner"
 // Factory that creates providers
 func NewProvisioner(name string, stackConfig *kapp.StackConfig) (Provisioner, error) {
 	if name == MINIKUBE_PROVISIONER_NAME {
-		return MinikubeProvisioner{}, nil
+		minikubeProvisioner, err := newMinikubeProvisioner(stackConfig)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		return *minikubeProvisioner, nil
 	}
 
 	if name == KOPS_PROVISIONER_NAME {

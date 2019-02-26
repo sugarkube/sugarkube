@@ -1,4 +1,7 @@
 provisioner:
-  memory: 4096
-  cpus: 4
-  disk_size: 120g
+  binary: minikube
+  params:
+    start:
+      memory: 4096
+      cpus: 4
+      disk_size: 120g

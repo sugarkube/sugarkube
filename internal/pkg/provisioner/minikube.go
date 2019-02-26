@@ -30,7 +30,9 @@ import (
 const MINIKUBE_PROVISIONER_NAME = "minikube"
 
 type MinikubeProvisioner struct {
-	clusterSot clustersot.ClusterSot
+	clusterSot     clustersot.ClusterSot
+	stackConfig    *kapp.StackConfig
+	minikubeConfig MinikubeConfig
 }
 
 type MinikubeConfig struct {
@@ -46,6 +48,19 @@ type MinikubeConfig struct {
 // Seconds to sleep after the cluster is online but before checking whether it's ready.
 // This gives pods a chance to be launched. If we check immediately there are no pods.
 const MINIKUBE_SLEEP_SECONDS_BEFORE_READY_CHECK = 30
+
+// Instantiates a new instance
+func newMinikubeProvisioner(stackConfig *kapp.StackConfig) (*MinikubeProvisioner, error) {
+	config, err := parseMinikubeConfig(stackConfig)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &MinikubeProvisioner{
+		stackConfig:    stackConfig,
+		minikubeConfig: *config,
+	}, nil
+}
 
 func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 	if p.clusterSot == nil {
@@ -63,21 +78,14 @@ func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 // Creates a new minikube cluster
 func (p MinikubeProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) error {
 
-	providerVars := stackConfig.GetProviderVars()
-
-	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-	minikubeConfig, err := getMinikubeProvisionerConfig(provisionerValues)
-	if err != nil {
-		return errors.WithStack(err)
-	}
 	args := []string{"start"}
-	args = parameteriseValues(args, minikubeConfig.Params.Global)
-	args = parameteriseValues(args, minikubeConfig.Params.Start)
+	args = parameteriseValues(args, p.minikubeConfig.Params.Global)
+	args = parameteriseValues(args, p.minikubeConfig.Params.Start)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	log.Logger.Info("Launching Minikube cluster...")
-	err = utils.ExecCommand(minikubeConfig.Binary, args, map[string]string{}, &stdoutBuf,
+	err := utils.ExecCommand(p.minikubeConfig.Binary, args, map[string]string{}, &stdoutBuf,
 		&stderrBuf, "", 0, dryRun)
 	if err != nil {
 		return errors.Wrap(err, "Failed to start a Minikube cluster")
@@ -98,15 +106,7 @@ func (p MinikubeProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) 
 func (p MinikubeProvisioner) isAlreadyOnline(stackConfig *kapp.StackConfig) (bool, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	providerVars := stackConfig.GetProviderVars()
-
-	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-	minikubeConfig, err := getMinikubeProvisionerConfig(provisionerValues)
-	if err != nil {
-		return false, errors.WithStack(err)
-	}
-
-	err = utils.ExecCommand(minikubeConfig.Binary, []string{"status"}, map[string]string{},
+	err := utils.ExecCommand(p.minikubeConfig.Binary, []string{"status"}, map[string]string{},
 		&stdoutBuf, &stderrBuf, "", 0, false)
 	if err != nil {
 		// assume no cluster is up if the command starts but doesn't complete successfully
@@ -129,8 +129,13 @@ func (p MinikubeProvisioner) update(sc *kapp.StackConfig, dryRun bool) error {
 }
 
 // Parses the provisioner config
-func getMinikubeProvisionerConfig(provisionerValues map[interface{}]interface{}) (
-	*MinikubeConfig, error) {
+func parseMinikubeConfig(stackConfig *kapp.StackConfig) (*MinikubeConfig, error) {
+	providerVars := stackConfig.GetProviderVars()
+	provisionerValues, ok := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
+	if !ok {
+		return nil, errors.New("No provisioner found in stack config. You must set the binary path.")
+	}
+
 	log.Logger.Debugf("Marshalling: %#v", provisionerValues)
 
 	// marshal then unmarshal the provisioner values to get the command parameters

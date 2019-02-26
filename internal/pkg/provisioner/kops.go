@@ -66,7 +66,7 @@ type KopsConfig struct {
 	}
 }
 
-// Instantiates a new KopsProvisioner
+// Instantiates a new instance
 func newKopsProvisioner(stackConfig *kapp.StackConfig) (*KopsProvisioner, error) {
 	kopsConfig, err := parseKopsConfig(stackConfig)
 	if err != nil {

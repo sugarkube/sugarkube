@@ -1,6 +1,8 @@
 provisioner:
-  memory: 2048
-  cpus: 2
-  disk_size: 30g
-  should_be: absent    # this isn't in the params for 'large', so if it gets
-                       # returned after merging vars, we know the logic is faulty.
+  binary: minikube
+  params:
+    start:
+      memory: 2048
+      cpus: 2
+      disk_size: 30g
+      should_be: present

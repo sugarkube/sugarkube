@@ -4,7 +4,7 @@ standard:
   profile: local
   cluster: standard
   providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
-  - providers/minikube/
+  - ./stacks/
 #  manifests:
 #  - git@.../manifest1.yaml
 #  - git@.../manifest2.yaml

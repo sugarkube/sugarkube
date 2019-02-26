@@ -36,9 +36,30 @@ func TestNewNonExistentProvisioner(t *testing.T) {
 }
 
 func TestNewMinikubeProvisioner(t *testing.T) {
-	actual, err := NewProvisioner(MINIKUBE_PROVISIONER_NAME, &kapp.StackConfig{})
+	stackConfig, err := utils.BuildStackConfig("standard", "../../testdata/stacks.yaml",
+		&kapp.StackConfig{}, os.Stdout)
 	assert.Nil(t, err)
-	assert.Equal(t, MinikubeProvisioner{}, actual)
+
+	actual, err := NewProvisioner(MINIKUBE_PROVISIONER_NAME, stackConfig)
+	assert.Nil(t, err)
+	assert.Equal(t, MinikubeProvisioner{
+		stackConfig: stackConfig,
+		minikubeConfig: MinikubeConfig{
+			Binary: "minikube",
+			Params: struct {
+				Global map[string]string
+				Start  map[string]string
+			}{
+				nil,
+				map[string]string{
+					"cpus":      "2",
+					"disk_size": "30g",
+					"memory":    "2048",
+					"should_be": "present",
+				},
+			},
+		},
+	}, actual)
 }
 
 func TestNewKopsProvisioner(t *testing.T) {
