@@ -42,8 +42,6 @@ func getKappCachePath(kappRootPath string) string {
 // Build a cache for a manifest into a directory
 func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 
-	var err error
-
 	// create a directory to cache all kapps in this manifest in
 	manifestCacheDir := GetManifestCachePath(cacheDir, manifest)
 

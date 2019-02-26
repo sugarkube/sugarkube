@@ -56,8 +56,8 @@ kapps:
     sources:
       - id: pathASpecial
         uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
-    sampleNameB:
-      - uri: git@github.com:exampleB/repoB.git//example/pathB#branchB
+      - id: sampleNameB
+        uri: git@github.com:exampleB/repoB.git//example/pathB#branchB
 
   - id: example2
     state: present
@@ -88,6 +88,8 @@ kapps:
 					Sources: []acquirer.Source{
 						{Id: "pathASpecial",
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA"},
+						{Id: "sampleNameB",
+							Uri: "git@github.com:exampleB/repoB.git//example/pathB#branchB"},
 					},
 				},
 				{
@@ -120,35 +122,31 @@ kapps:
 				{
 					// kapp1
 					discardErr(acquirer.NewGitAcquirer(
-						"pathA",
-						"git@github.com:exampleA/repoA.git",
-						"branchA",
-						"example/pathA",
-						"")),
+						acquirer.Source{
+							Id:  "pathASpecial",
+							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
+						},
+					)),
 					discardErr(acquirer.NewGitAcquirer(
-						"sampleNameB",
-						"git@github.com:exampleB/repoB.git",
-						"branchB",
-						"example/pathB",
-						"")),
+						acquirer.Source{
+							Id:  "sampleNameB",
+							Uri: "git@github.com:exampleB/repoB.git//example/pathB#branchB",
+						})),
 				},
 				// kapp 2
 				{
 					discardErr(acquirer.NewGitAcquirer(
-						"pathA",
-						"git@github.com:exampleA/repoA.git",
-						"branchA",
-						"example/pathA",
-						"")),
+						acquirer.Source{
+							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
+						})),
 				},
 				// kapp3
 				{
 					discardErr(acquirer.NewGitAcquirer(
-						"pathA",
-						"git@github.com:exampleA/repoA.git",
-						"branchA",
-						"example/pathA",
-						"")),
+						acquirer.Source{
+							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
+						},
+					)),
 				},
 			},
 			expectedError: false,
@@ -167,6 +165,7 @@ kapps:
 			assert.Nil(t, err)
 
 			for i, parsedKapp := range manifest.ParsedKapps() {
+				log.Logger.Infof("%#v", parsedKapp)
 				acquirers, err := parsedKapp.Acquirers()
 				assert.Nil(t, err)
 				assert.Equal(t, test.expectAcquirers[i], acquirers, "unexpected acquirers for %s", test.name)
