@@ -27,7 +27,7 @@ import (
 )
 
 func TestGitAcquire(t *testing.T) {
-	acquirer, err := NewAcquirer(defaultSettings)
+	acquirer, err := newAcquirer(defaultSettings)
 	assert.Nil(t, err)
 
 	tempDir, err := ioutil.TempDir("", "git-")

@@ -115,7 +115,12 @@ func ValidateManifest(manifest *Manifest) error {
 				"the same id: %s", id))
 		}
 
-		for _, acquirer := range kapp.Acquirers() {
+		acquirers, err := kapp.Acquirers()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		for _, acquirer := range acquirers {
 			// verify all IDs can be generated successfully
 			_, err := acquirer.FullyQualifiedId()
 			if err != nil {

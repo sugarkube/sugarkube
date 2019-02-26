@@ -40,19 +40,29 @@ type GitAcquirer struct {
 // todo - make configurable, or use go-git
 const GIT_PATH = "git"
 
-const BRANCH_KEY = "branch"
-const PATH_KEY = "path"
-const INCLUDE_VALUES_KEY = "includeValues"
+const PATH_SEPARATOR = "//"
+const BRANCH_SEPARATOR = "#"
 
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
-func NewGitAcquirer(id string, uri string, branch string, path string,
-	includeValues string) (*GitAcquirer, error) {
+// todo - this is only public so we can use it in tests. We should find a way to make it private again
+func NewGitAcquirer(source Source) (*GitAcquirer, error) {
 
-	id = strings.TrimSpace(id)
-	uri = strings.TrimSpace(uri)
-	branch = strings.TrimSpace(branch)
-	path = strings.TrimSpace(path)
+	uriPathBranch := strings.Split(source.Uri, PATH_SEPARATOR)
+	if len(uriPathBranch) != 2 {
+		return nil, errors.New(fmt.Sprintf("No path separator ('%s') found in git URI '%s'", PATH_SEPARATOR,
+			source.Uri))
+	}
+
+	pathBranch := strings.Split(uriPathBranch[1], BRANCH_SEPARATOR)
+	if len(pathBranch) != 2 {
+		return nil, errors.New(fmt.Sprintf("No branch separator ('%s') found in git URI '%s'", BRANCH_SEPARATOR,
+			source.Uri))
+	}
+
+	uri := strings.TrimSpace(uriPathBranch[0])
+	path := strings.TrimSpace(pathBranch[0])
+	branch := strings.TrimSpace(pathBranch[1])
 
 	if uri == "" || branch == "" || path == "" {
 		return nil, errors.New("Invalid git parameters. The uri, " +
@@ -65,15 +75,10 @@ func NewGitAcquirer(id string, uri string, branch string, path string,
 				"character in URI %s", uri))
 	}
 
+	id := source.Id
+
 	if id == "" {
 		id = filepath.Base(path)
-	}
-
-	// defaults to true
-	includeValuesBool := true
-
-	if strings.ToLower(includeValues) == "false" {
-		includeValuesBool = false
 	}
 
 	return &GitAcquirer{
@@ -81,7 +86,7 @@ func NewGitAcquirer(id string, uri string, branch string, path string,
 		uri:           uri,
 		branch:        branch,
 		path:          path,
-		includeValues: includeValuesBool,
+		includeValues: source.IncludeValues,
 	}, nil
 }
 

@@ -22,67 +22,46 @@ import (
 	"testing"
 )
 
+const GOOD_GIT_URI = "git@github.com:sugarkube/kapps.git//incubator/tiller/#master"
+
 func init() {
 	log.ConfigureLogger("debug", false)
 }
 
 func TestNewAcquirerError(t *testing.T) {
-	actual, err := acquirerFactory("nonsense", map[string]string{})
+	actual, err := newAcquirer(Source{Id: "nonsense"})
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
 
-func TestNewGitAcquirerPartial(t *testing.T) {
-	actual, err := acquirerFactory(GIT_ACQUIRER, map[string]string{
-		"branch": "master",
-	})
-	assert.NotNil(t, err)
-	assert.Nil(t, actual)
-}
+func TestNewGitAcquirer(t *testing.T) {
+	var expectedAcquirer = &GitAcquirer{
+		id:            "tiller",
+		uri:           "git@github.com:sugarkube/kapps.git",
+		branch:        "master",
+		path:          "incubator/tiller/",
+		includeValues: true,
+	}
 
-var defaultSettings = map[string]string{
-	"uri":    "git@github.com:sugarkube/kapps.git",
-	"branch": "master",
-	"path":   "incubator/tiller/",
-}
-
-var expectedAcquirer = &GitAcquirer{
-	id:            "tiller",
-	uri:           "git@github.com:sugarkube/kapps.git",
-	branch:        "master",
-	path:          "incubator/tiller/",
-	includeValues: true,
-}
-
-func TestNewGitAcquirerFull(t *testing.T) {
-	actual, err := acquirerFactory(GIT_ACQUIRER, defaultSettings)
+	actual, err := newAcquirer(Source{
+		Id: "", Uri: GOOD_GIT_URI,
+		IncludeValues: true})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Fully-defined git acquirer incorrectly created")
 }
 
-func TestNewAcquirerGit(t *testing.T) {
-	actual, err := NewAcquirer(defaultSettings)
-	assert.Nil(t, err)
-	assert.Equal(t, expectedAcquirer, actual)
-}
+func TestNewGitAcquirerExplicitId(t *testing.T) {
+	var expectedAcquirer = &GitAcquirer{
+		id:            "banana",
+		uri:           "git@github.com:sugarkube/kapps.git",
+		branch:        "master",
+		path:          "incubator/tiller/",
+		includeValues: false,
+	}
 
-func TestNewAcquirerGitExplicit(t *testing.T) {
-	actual, err := NewAcquirer(
-		map[string]string{
-			ACQUIRER_KEY: GIT_ACQUIRER,
-			"uri":        "git@github.com:sugarkube/kapps.git",
-			"branch":     "master",
-			"path":       "incubator/tiller/",
-		})
+	actual, err := newAcquirer(Source{Id: "banana", Uri: GOOD_GIT_URI})
 	assert.Nil(t, err)
-	assert.Equal(t, expectedAcquirer, actual)
-}
-
-func TestNewAcquirerNilUriError(t *testing.T) {
-	actual, err := NewAcquirer(map[string]string{
-		"uri": "",
-	})
-	assert.NotNil(t, err)
-	assert.Nil(t, actual)
+	assert.Equal(t, expectedAcquirer, actual,
+		"Git acquirer with explicitly set ID incorrectly created")
 }

@@ -19,8 +19,6 @@ package acquirer
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/convert"
-	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"strings"
 )
 
@@ -39,44 +37,49 @@ type Source struct {
 }
 
 const ACQUIRER_KEY = "acquirer"
-const ID_KEY = "id"
-const URI_KEY = "uri"
 
 // Factory that creates acquirers
-func acquirerFactory(name string, settings map[string]string) (Acquirer, error) {
-	log.Logger.Debugf("Returning new %s acquirer", name)
+//func acquirerFactory(name string, settings map[string]string) (Acquirer, error) {
+//	log.Logger.Debugf("Returning new %s acquirer", name)
+//
+//	if name == GIT_ACQUIRER {
+//		acquirerObj, err := NewGitAcquirer(settings[ID_KEY], settings[URI_KEY], settings[BRANCH_KEY],
+//			settings[PATH_KEY], settings[INCLUDE_VALUES_KEY])
+//		if err != nil {
+//			return nil, errors.WithStack(err)
+//		}
+//		return acquirerObj, nil
+//
+//	} else if name == FILE_ACQUIRER {
+//		acquirerObj, err := NewFileAcquirer(settings[ID_KEY], settings[URI_KEY])
+//		if err != nil {
+//			return nil, errors.WithStack(err)
+//		}
+//		return acquirerObj, nil
+//	}
+//
+//	return nil, errors.New(fmt.Sprintf("Acquirer '%s' doesn't exist", name))
+//}
 
-	if name == GIT_ACQUIRER {
-		acquirerObj, err := NewGitAcquirer(settings[ID_KEY], settings[URI_KEY], settings[BRANCH_KEY],
-			settings[PATH_KEY], settings[INCLUDE_VALUES_KEY])
+// Instantiates a new acquirer from a source
+func newAcquirer(source Source) (Acquirer, error) {
+
+	if strings.Contains(source.Uri, ".git") {
+		acquirerObj, err := NewGitAcquirer(source)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 		return acquirerObj, nil
+	} else if strings.HasPrefix(source.Uri, FILE_PROTOCOL) {
 
-	} else if name == FILE_ACQUIRER {
-		acquirerObj, err := NewFileAcquirer(settings[ID_KEY], settings[URI_KEY])
+		acquirerObj, err := newFileAcquirer(source)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 		return acquirerObj, nil
 	}
 
-	return nil, errors.New(fmt.Sprintf("Acquirer '%s' doesn't exist", name))
-}
-
-// Identifies the acquirer based on its settings, and returns a new instance of it
-func NewAcquirer(settings map[string]string) (Acquirer, error) {
-	// perhaps the acquirer is explicitly declared in settings
-	acquirer := settings[ACQUIRER_KEY]
-
-	uri := settings[URI_KEY]
-
-	if strings.Contains(uri, ".git") || acquirer == GIT_ACQUIRER {
-		return acquirerFactory(GIT_ACQUIRER, settings)
-	}
-
-	return nil, errors.New(fmt.Sprintf("Couldn't identify acquirer for URI '%s'", uri))
+	return nil, errors.New(fmt.Sprintf("Couldn't identify acquirer for URI '%s'", source.Uri))
 }
 
 // Delegate to an acquirer implementation
@@ -85,23 +88,38 @@ func Acquire(a Acquirer, dest string) error {
 }
 
 // Parse acquirers from a values map
-func ParseAcquirers(acquirerMaps []map[interface{}]interface{}) ([]Acquirer, error) {
-	acquirers := make([]Acquirer, 0)
-	// now we have a list of sources, get the acquirer for each one
-	for _, acquirerMap := range acquirerMaps {
-		acquirerStringMap, err := convert.MapInterfaceInterfaceToMapStringString(acquirerMap)
+//func ParseAcquirers(acquirerMaps []map[interface{}]interface{}) ([]Acquirer, error) {
+//	acquirers := make([]Acquirer, 0)
+//	// now we have a list of sources, get the acquirer for each one
+//	for _, acquirerMap := range acquirerMaps {
+//		acquirerStringMap, err := convert.MapInterfaceInterfaceToMapStringString(acquirerMap)
+//		if err != nil {
+//			return nil, errors.WithStack(err)
+//		}
+//
+//		acquirerImpl, err := NewAcquirer(acquirerStringMap)
+//		if err != nil {
+//			return nil, errors.WithStack(err)
+//		}
+//
+//		log.Logger.Debugf("Got acquirer %#v", acquirerImpl)
+//
+//		acquirers = append(acquirers, acquirerImpl)
+//	}
+//
+//	return acquirers, nil
+//}
+
+// Takes a list of Sources and returns a list of instantiated acquirers that represent them
+func GetAcquirersFromSources(sources []Source) ([]Acquirer, error) {
+	acquirers := make([]Acquirer, len(sources))
+
+	for i, source := range sources {
+		acquirer, err := newAcquirer(source)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-
-		acquirerImpl, err := NewAcquirer(acquirerStringMap)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		log.Logger.Debugf("Got acquirer %#v", acquirerImpl)
-
-		acquirers = append(acquirers, acquirerImpl)
+		acquirers[i] = acquirer
 	}
 
 	return acquirers, nil

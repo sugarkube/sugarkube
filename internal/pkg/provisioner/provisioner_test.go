@@ -21,6 +21,12 @@ import (
 	"testing"
 )
 
+func TestNewNonExistentProvisioner(t *testing.T) {
+	actual, err := NewProvisioner("bananas")
+	assert.NotNil(t, err)
+	assert.Nil(t, actual)
+}
+
 func TestNewMinikubeProvisioner(t *testing.T) {
 	actual, err := NewProvisioner(MINIKUBE_PROVISIONER_NAME)
 	assert.Nil(t, err)

@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"gopkg.in/yaml.v2"
 	"path/filepath"
 	"strings"
 )
@@ -48,6 +47,7 @@ type Kapp struct {
 	Vars      map[string]interface{}
 	Sources   []acquirer.Source
 	Templates []Template
+	acquirers []acquirer.Acquirer
 }
 
 const PRESENT_KEY = "present"
@@ -105,38 +105,20 @@ func (k Kapp) GetIntrinsicData() map[string]string {
 }
 
 // Returns an array of acquirers configured for the sources for this kapp
-func (k *Kapp) Acquirers() []acquirer.Acquirer {
-	// todo - implement. parse each source and return an acquirer. Add it as a property on the instance after
-	// parsing them the first time
+func (k *Kapp) Acquirers() ([]acquirer.Acquirer, error) {
+	if len(k.acquirers) > 0 {
+		return k.acquirers, nil
+	}
 
-	return nil
+	acquirers, err := acquirer.GetAcquirersFromSources(k.Sources)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	k.acquirers = acquirers
+
+	return acquirers, nil
 }
-
-// Instantiates a new Kapp, returning errors if any required settings are missing
-//func newKapp(manifest *Manifest, id string, state string, vars map[string]interface{},
-//	templates []Template, sources []acquirer.Acquirer) (*Kapp, error) {
-//
-//	if id == "" {
-//		return nil, errors.New("Can't instantiate a kapp with no ID")
-//	}
-//
-//	if manifest == nil {
-//		return nil, errors.New("Can't instantiate a kapp with no associated manifest")
-//	}
-//
-//	kappObj := Kapp{
-//		Id:        id,
-//		manifest:  manifest,
-//		State:     state,
-//		vars:      vars,
-//		Templates: templates,
-//		Sources:   sources,
-//	}
-//
-//	log.Logger.Debugf("Instantiated kapp: %#v", kappObj)
-//
-//	return &kappObj, nil
-//}
 
 // Parses kapps and adds them to an array
 //func parseKapps(manifest *Manifest, kapps *[]Kapp, kappDefinitions []interface{}, shouldBePresent bool) error {
@@ -204,46 +186,46 @@ func (k *Kapp) Acquirers() []acquirer.Acquirer {
 //}
 
 // Parse variables in a Kapp values map
-func parseVariables(valuesMap map[string]interface{}) (map[string]interface{}, error) {
-	var kappVars map[string]interface{}
-
-	rawKappVars, ok := valuesMap[VARS_KEY]
-	if ok {
-		varsBytes, err := yaml.Marshal(rawKappVars)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error marshalling vars in kapp: %#v", valuesMap)
-		}
-
-		err = yaml.Unmarshal(varsBytes, &kappVars)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error unmarshalling vars for kapp: %#v", valuesMap)
-		}
-
-		log.Logger.Debugf("Parsed vars from kapp: %s", kappVars)
-	} else {
-		log.Logger.Debugf("No vars found in kapp")
-	}
-
-	return kappVars, nil
-}
+//func parseVariables(valuesMap map[string]interface{}) (map[string]interface{}, error) {
+//	var kappVars map[string]interface{}
+//
+//	rawKappVars, ok := valuesMap[VARS_KEY]
+//	if ok {
+//		varsBytes, err := yaml.Marshal(rawKappVars)
+//		if err != nil {
+//			return nil, errors.Wrapf(err, "Error marshalling vars in kapp: %#v", valuesMap)
+//		}
+//
+//		err = yaml.Unmarshal(varsBytes, &kappVars)
+//		if err != nil {
+//			return nil, errors.Wrapf(err, "Error unmarshalling vars for kapp: %#v", valuesMap)
+//		}
+//
+//		log.Logger.Debugf("Parsed vars from kapp: %s", kappVars)
+//	} else {
+//		log.Logger.Debugf("No vars found in kapp")
+//	}
+//
+//	return kappVars, nil
+//}
 
 // Parse templates from a Kapp values map
-func parseTemplates(valuesMap map[string]interface{}) ([]Template, error) {
-	templateBytes, err := yaml.Marshal(valuesMap[TEMPLATES_KEY])
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error marshalling kapp templates: %#v", valuesMap)
-	}
-
-	log.Logger.Debugf("Marshalled templates YAML: %s", templateBytes)
-
-	templates := []Template{}
-	err = yaml.Unmarshal(templateBytes, &templates)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error unmarshalling template YAML: %s", templateBytes)
-	}
-
-	return templates, nil
-}
+//func parseTemplates(valuesMap map[string]interface{}) ([]Template, error) {
+//	templateBytes, err := yaml.Marshal(valuesMap[TEMPLATES_KEY])
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "Error marshalling kapp templates: %#v", valuesMap)
+//	}
+//
+//	log.Logger.Debugf("Marshalled templates YAML: %s", templateBytes)
+//
+//	templates := []Template{}
+//	err = yaml.Unmarshal(templateBytes, &templates)
+//	if err != nil {
+//		return nil, errors.Wrapf(err, "Error unmarshalling template YAML: %s", templateBytes)
+//	}
+//
+//	return templates, nil
+//}
 
 // Parses a manifest YAML. It separately parses all kapps that should be present and all those that should be
 // absent, and returns a single list containing them all.

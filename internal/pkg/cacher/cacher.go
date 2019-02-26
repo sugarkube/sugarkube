@@ -82,7 +82,12 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 			}
 		}
 
-		err = acquireSource(manifest, kappObj.Acquirers(), kappObj.CacheDir(), sugarkubeCacheDir, dryRun)
+		acquirers, err := kappObj.Acquirers()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		err = acquireSource(manifest, acquirers, kappObj.CacheDir(), sugarkubeCacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

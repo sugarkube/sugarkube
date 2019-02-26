@@ -219,7 +219,12 @@ func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 		constants.CLUSTER_DIR,
 	}
 
-	for _, acquirerObj := range kappObj.Acquirers() {
+	acquirers, err := kappObj.Acquirers()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	for _, acquirerObj := range acquirers {
 		validNames = append(validNames, acquirerObj.Id())
 
 		id, err := acquirerObj.FullyQualifiedId()

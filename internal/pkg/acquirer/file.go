@@ -25,7 +25,6 @@ import (
 	"strings"
 )
 
-const FILE_ACQUIRER = "file"
 const FILE_PROTOCOL = "file://"
 
 // An acquirer for files already on the local filesystem. This is analogous to a no-op acquirer and allows us
@@ -37,9 +36,11 @@ type FileAcquirer struct {
 
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
-func NewFileAcquirer(name string, uri string) (*FileAcquirer, error) {
+func newFileAcquirer(source Source) (*FileAcquirer, error) {
 
-	if strings.TrimSpace(uri) == "" {
+	uri := source.Uri
+
+	if uri == "" {
 		return nil, errors.New("Missing URI for file acquirer")
 	}
 
@@ -49,12 +50,14 @@ func NewFileAcquirer(name string, uri string) (*FileAcquirer, error) {
 				"character in URI %s", uri))
 	}
 
-	if strings.TrimSpace(name) == "" {
-		name = filepath.Base(uri)
+	id := source.Id
+
+	if id == "" {
+		id = filepath.Base(uri)
 	}
 
 	return &FileAcquirer{
-		id:  name,
+		id:  id,
 		uri: strings.TrimSpace(uri),
 	}, nil
 }
