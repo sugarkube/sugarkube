@@ -30,8 +30,6 @@ import (
 type Provider interface {
 	// Returns the name of the provider
 	getName() string
-	// Returns the variables loaded by the Provider
-	getVars() map[string]interface{}
 	// Associate provider variables with the provider
 	setVars(map[string]interface{})
 	// Returns variables installers should pass on to kapps
@@ -97,11 +95,6 @@ func LoadProviderVars(p Provider, stackConfig *kapp.StackConfig) (map[string]int
 
 	return providerVars, nil
 }
-
-// Return vars loaded from configs
-//func GetVars(p Provider) map[string]interface{} {
-//	return p.getVars()
-//}
 
 // Return vars loaded from configs that should be passed on to kapps by Installers
 func GetInstallerVars(p Provider) map[string]interface{} {

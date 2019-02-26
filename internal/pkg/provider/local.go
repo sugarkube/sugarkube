@@ -37,11 +37,6 @@ func (p *LocalProvider) setVars(values map[string]interface{}) {
 	p.stackConfigVars = values
 }
 
-// Returns the variables loaded by the Provider
-func (p *LocalProvider) getVars() map[string]interface{} {
-	return p.stackConfigVars
-}
-
 // Return vars loaded from configs that should be passed on to all kapps by
 // installers so kapps can be installed into this provider
 func (p *LocalProvider) getInstallerVars() map[string]interface{} {
