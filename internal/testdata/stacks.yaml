@@ -23,3 +23,19 @@ large:
   templateDirs:
   - templates1/
   - templates2/
+
+kops:
+  provider: aws
+  provisioner: kops
+  account: dev
+  profile: dev
+  cluster: dev
+  providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
+  - ./stacks/
+  manifests:
+  - uri: manifests/manifest1.yaml
+  - uri: manifests/manifest2.yaml
+    id: exampleManifest2
+  templateDirs:
+  - templates1/
+  - templates2/

@@ -50,9 +50,9 @@ const KOPS_INSTANCE_GROUPS_KEY = "instanceGroups"
 type KopsProvisioner struct {
 	clusterSot  clustersot.ClusterSot
 	stackConfig *kapp.StackConfig
+	kopsConfig  KopsConfig
 }
 
-// This isn't a property of KopsProvisioner because it's generated from the stack config.
 type KopsConfig struct {
 	Binary string // path to the kops binary
 	Params struct {
@@ -67,10 +67,16 @@ type KopsConfig struct {
 }
 
 // Instantiates a new KopsProvisioner
-func newKopsProvisioner(stackConfig *kapp.StackConfig) KopsProvisioner {
-	return KopsProvisioner{
-		stackConfig: stackConfig,
+func newKopsProvisioner(stackConfig *kapp.StackConfig) (*KopsProvisioner, error) {
+	kopsConfig, err := parseKopsConfig(stackConfig)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
+
+	return &KopsProvisioner{
+		stackConfig: stackConfig,
+		kopsConfig:  *kopsConfig,
+	}, nil
 }
 
 func (p KopsProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
@@ -93,18 +99,13 @@ func (p KopsProvisioner) clusterConfigExists(stackConfig *kapp.StackConfig) (boo
 	log.Logger.Info("Checking if a Kops cluster config already exists...")
 	log.Logger.Debugf("Checking if a Kops cluster config exists for values: %#v", providerVars)
 
-	kopsConfig, err := p.kopsConfig()
-	if err != nil {
-		return false, errors.WithStack(err)
-	}
-
 	args := []string{"get", "clusters"}
-	args = parameteriseValues(args, kopsConfig.Params.Global)
-	args = parameteriseValues(args, kopsConfig.Params.GetClusters)
+	args = parameteriseValues(args, p.kopsConfig.Params.Global)
+	args = parameteriseValues(args, p.kopsConfig.Params.GetClusters)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	err = utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
+	err := utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
 		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS, false)
 	if err != nil {
 		if errors.Cause(err) == context.DeadlineExceeded {
@@ -131,19 +132,14 @@ func (p KopsProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) erro
 	providerVars := stackConfig.GetProviderVars()
 	log.Logger.Debugf("Provider vars: %#v", providerVars)
 
-	kopsConfig, err := p.kopsConfig()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	args := []string{"create", "cluster"}
-	args = parameteriseValues(args, kopsConfig.Params.Global)
-	args = parameteriseValues(args, kopsConfig.Params.CreateCluster)
+	args = parameteriseValues(args, p.kopsConfig.Params.Global)
+	args = parameteriseValues(args, p.kopsConfig.Params.CreateCluster)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	log.Logger.Info("Creating Kops cluster config...")
-	err = utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
+	err := utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
 		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
@@ -198,11 +194,6 @@ func (p KopsProvisioner) update(stackConfig *kapp.StackConfig, dryRun bool) erro
 		return errors.WithStack(err)
 	}
 
-	kopsConfig, err := p.kopsConfig()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	log.Logger.Infof("Performing a rolling update to apply config changes to the kops cluster...")
 	// todo make the --yes flag configurable, perhaps through a CLI arg so people can verify their
 	// changes before applying them
@@ -212,13 +203,13 @@ func (p KopsProvisioner) update(stackConfig *kapp.StackConfig, dryRun bool) erro
 		"--yes",
 	}
 
-	args = parameteriseValues(args, kopsConfig.Params.Global)
-	args = parameteriseValues(args, kopsConfig.Params.RollingUpdate)
+	args = parameteriseValues(args, p.kopsConfig.Params.Global)
+	args = parameteriseValues(args, p.kopsConfig.Params.RollingUpdate)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	log.Logger.Info("Running Kops rolling update...")
-	err = utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
+	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
@@ -245,11 +236,6 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 		return nil
 	}
 
-	kopsConfig, err := p.kopsConfig()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	// get the kops config
 	args := []string{
 		"get",
@@ -258,14 +244,14 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 		"yaml",
 	}
 
-	args = parameteriseValues(args, kopsConfig.Params.Global)
-	args = parameteriseValues(args, kopsConfig.Params.GetClusters)
+	args = parameteriseValues(args, p.kopsConfig.Params.Global)
+	args = parameteriseValues(args, p.kopsConfig.Params.GetClusters)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	log.Logger.Info("Downloading config for kops cluster...")
 
-	err = utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
+	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
@@ -339,10 +325,10 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 		tmpfile.Name(),
 	}
 
-	args = parameteriseValues(args, kopsConfig.Params.Global)
-	args = parameteriseValues(args, kopsConfig.Params.Replace)
+	args = parameteriseValues(args, p.kopsConfig.Params.Global)
+	args = parameteriseValues(args, p.kopsConfig.Params.Replace)
 
-	err = utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
+	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
@@ -358,7 +344,7 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 
 	for instanceGroupName, newSpec := range igSpecs {
 		specValues := map[string]interface{}{"spec": newSpec}
-		err = p.patchInstanceGroup(kopsConfig, instanceGroupName.(string), specValues)
+		err = p.patchInstanceGroup(p.kopsConfig, instanceGroupName.(string), specValues)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -370,12 +356,12 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 		"--yes",
 	}
 
-	args = parameteriseValues(args, kopsConfig.Params.Global)
-	args = parameteriseValues(args, kopsConfig.Params.UpdateCluster)
+	args = parameteriseValues(args, p.kopsConfig.Params.Global)
+	args = parameteriseValues(args, p.kopsConfig.Params.UpdateCluster)
 
 	log.Logger.Info("Updating Kops cluster...")
 
-	err = utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
+	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
@@ -384,7 +370,7 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 	return nil
 }
 
-func (p KopsProvisioner) patchInstanceGroup(kopsConfig *KopsConfig, instanceGroupName string,
+func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroupName string,
 	newSpec map[string]interface{}) error {
 	args := []string{
 		"get",
@@ -486,9 +472,12 @@ func parameteriseValues(args []string, valueMap map[string]string) []string {
 }
 
 // Parses the Kops provisioner config
-func (p KopsProvisioner) kopsConfig() (*KopsConfig, error) {
-	providerVars := p.stackConfig.GetProviderVars()
-	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
+func parseKopsConfig(stackConfig *kapp.StackConfig) (*KopsConfig, error) {
+	providerVars := stackConfig.GetProviderVars()
+	provisionerValues, ok := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
+	if !ok {
+		return nil, errors.New("No provisioner found in stack config. You must set the binary path.")
+	}
 	log.Logger.Debugf("Marshalling: %#v", provisionerValues)
 
 	// marshal then unmarshal the provisioner values to get the command parameters

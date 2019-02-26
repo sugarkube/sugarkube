@@ -46,7 +46,12 @@ func NewProvisioner(name string, stackConfig *kapp.StackConfig) (Provisioner, er
 	}
 
 	if name == KOPS_PROVISIONER_NAME {
-		return newKopsProvisioner(stackConfig), nil
+		kopsProvisioner, err := newKopsProvisioner(stackConfig)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		return *kopsProvisioner, nil
 	}
 
 	if name == NOOP_PROVISIONER_NAME {

@@ -95,6 +95,12 @@ func ValidateStackConfig(sc *StackConfig) error {
 // Loads a stack config from a YAML file and returns it or an error
 func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, errors.Wrap(err, "Can't load non-existent stack file")
+	}
+
+	log.Logger.Debugf("Loading stack config from '%s'", path)
+
 	data := map[string]interface{}{}
 	err := vars.LoadYamlFile(path, &data)
 	if err != nil {
