@@ -303,18 +303,17 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 	// write the merged data to a temp file because we can't pipe it into kops
 	tmpfile, err := ioutil.TempFile("", "kops.*.yaml")
 	if err != nil {
-		// todo - either remove this use of log.Logger.Fatal and return an error, or use it throughout
-		log.Logger.Fatal(err)
+		return errors.WithStack(err)
 	}
 
+	defer tmpfile.Close()
 	defer os.Remove(tmpfile.Name()) // clean up
 
 	if _, err := tmpfile.Write([]byte(yamlString)); err != nil {
-		tmpfile.Close()
-		log.Logger.Fatal(err)
+		return errors.WithStack(err)
 	}
 	if err := tmpfile.Close(); err != nil {
-		log.Logger.Fatal(err)
+		return errors.WithStack(err)
 	}
 
 	// Replace the cluster config
@@ -421,17 +420,17 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 	// write the merged data to a temp file because we can't pipe it into kops
 	tmpfile, err := ioutil.TempFile("", "kops.*.yaml")
 	if err != nil {
-		log.Logger.Fatal(err)
+		return errors.WithStack(err)
 	}
 
+	defer tmpfile.Close()
 	defer os.Remove(tmpfile.Name()) // clean up
 
 	if _, err := tmpfile.Write([]byte(yamlString)); err != nil {
-		tmpfile.Close()
-		log.Logger.Fatal(err)
+		return errors.WithStack(err)
 	}
 	if err := tmpfile.Close(); err != nil {
-		log.Logger.Fatal(err)
+		return errors.WithStack(err)
 	}
 
 	// replace the cluster config
