@@ -2,7 +2,7 @@ options:
   parallelisation: 1       # don't install kapps in this manifest in parallel
 
 kapps:
-  - id: kappC:
+  - id: kappC
     state: present
     sources:
     - id: special
@@ -10,15 +10,15 @@ kapps:
     - uri: git@github.com:sugarkube/kapps-C.git//kappC/some/pathZ#kappZ-0.3.0
     - uri: git@github.com:sugarkube/kapps-C.git//kappC/some/pathX#kappX-0.3.0
     - uri: git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0
-  - id: kappB:
+  - id: kappB
     state: present
     sources:
     - uri: git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0
-  - id: kappD:
+  - id: kappD
     state: present
     sources:
     - uri: git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0
-  - id: kappA:
+  - id: kappA
     state: present
     sources:
     - uri: git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.2.0

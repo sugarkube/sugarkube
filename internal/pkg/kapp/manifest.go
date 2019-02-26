@@ -33,6 +33,7 @@ type Manifest struct {
 	ConfiguredId  string `yaml:"id"` // a default will be used if no explicitly set. Used to namespace cache entries
 	Uri           string
 	UnparsedKapps []Kapp `yaml:"kapps"`
+	kappsParsed   bool
 	Options       ManifestOptions
 }
 
@@ -47,22 +48,24 @@ func (m *Manifest) Id() string {
 	return strings.Replace(filepath.Base(m.Uri), filepath.Ext(m.Uri), "", 1)
 }
 
+// After parsing a YAML manifest, we need to add additional fields to each kapp. This method does so and
+// returns the updated kapps. Having this method simplifies loading kapps because we can directly unmarshal
+// them into a struct.
 func (m *Manifest) ParsedKapps() []Kapp {
-	// todo - implement
-	//parsedKapps := make([]Kapp, len(m.UnparsedKapps))
-	//
-	//for i, kapps := range m.UnparsedKapps {
-	//	var parsedKapp Kapp
-	//
-	//	for kappId, unparsedKapp := range kapps {
-	//		unparsedKapp.Id = kappId
-	//		unparsedKapp.manifest = &m
-	//	}
-	//
-	//	parsedKapps[i] =
-	//}
+	if m.kappsParsed {
+		return m.UnparsedKapps
+	}
 
-	return nil
+	// modify the unparsedKapps array since we won't need it in future - it's just a stepping stone after
+	// loading the a manifest
+	for i, unparsedKapp := range m.UnparsedKapps {
+		unparsedKapp.manifest = m
+		m.UnparsedKapps[i] = unparsedKapp
+	}
+
+	m.kappsParsed = true
+
+	return m.UnparsedKapps
 }
 
 // Load a single manifest file and parse the kapps it defines
