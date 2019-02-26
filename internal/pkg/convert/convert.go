@@ -97,11 +97,11 @@ func MapStringStringToMapStringInterface(input map[string]string) map[string]int
 }
 
 // Converts a map[string]interface{} to a map[string]string
-func InterfaceToMapStringString(input interface{}) map[string]string {
-	output := map[string]string{}
-	for k, v := range input.(map[string]interface{}) {
-		output[k] = v.(string)
-	}
-
-	return output
-}
+//func InterfaceToMapStringString(input interface{}) map[string]string {
+//	output := map[string]string{}
+//	for k, v := range input.(map[string]interface{}) {
+//		output[k] = v.(string)
+//	}
+//
+//	return output
+//}

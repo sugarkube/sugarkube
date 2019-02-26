@@ -99,9 +99,9 @@ func LoadProviderVars(p Provider, stackConfig *kapp.StackConfig) (map[string]int
 }
 
 // Return vars loaded from configs
-func GetVars(p Provider) map[string]interface{} {
-	return p.getVars()
-}
+//func GetVars(p Provider) map[string]interface{} {
+//	return p.getVars()
+//}
 
 // Return vars loaded from configs that should be passed on to kapps by Installers
 func GetInstallerVars(p Provider) map[string]interface{} {

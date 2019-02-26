@@ -90,13 +90,6 @@ func ParseManifestFile(path string) (*Manifest, error) {
 
 	parsedManifest.Uri = path
 
-	//kapps, err := parseManifestYaml(&manifest, data)
-	//if err != nil {
-	//	return nil, errors.WithStack(err)
-	//}
-	//
-	//manifest.Kapps = kapps
-
 	log.Logger.Debugf("Returning manifest: %#v", parsedManifest)
 
 	return &parsedManifest, nil

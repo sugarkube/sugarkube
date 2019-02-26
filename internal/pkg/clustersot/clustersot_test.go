@@ -21,7 +21,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"testing"
 )
 
@@ -48,8 +47,6 @@ func (m MockClusterSot) isReady(stackConfig *kapp.StackConfig) (bool, error) {
 	args := m.Called(stackConfig.Cluster)
 	return args.Bool(0), args.Error(1)
 }
-
-var testProvider = &provider.LocalProvider{}
 
 func TestIsOnlineTrue(t *testing.T) {
 	clusterName := "myCluster"

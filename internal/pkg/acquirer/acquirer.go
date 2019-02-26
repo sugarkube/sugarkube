@@ -36,31 +36,6 @@ type Source struct {
 	IncludeValues bool // todo - see if we actually need this
 }
 
-const ACQUIRER_KEY = "acquirer"
-
-// Factory that creates acquirers
-//func acquirerFactory(name string, settings map[string]string) (Acquirer, error) {
-//	log.Logger.Debugf("Returning new %s acquirer", name)
-//
-//	if name == GIT_ACQUIRER {
-//		acquirerObj, err := NewGitAcquirer(settings[ID_KEY], settings[URI_KEY], settings[BRANCH_KEY],
-//			settings[PATH_KEY], settings[INCLUDE_VALUES_KEY])
-//		if err != nil {
-//			return nil, errors.WithStack(err)
-//		}
-//		return acquirerObj, nil
-//
-//	} else if name == FILE_ACQUIRER {
-//		acquirerObj, err := NewFileAcquirer(settings[ID_KEY], settings[URI_KEY])
-//		if err != nil {
-//			return nil, errors.WithStack(err)
-//		}
-//		return acquirerObj, nil
-//	}
-//
-//	return nil, errors.New(fmt.Sprintf("Acquirer '%s' doesn't exist", name))
-//}
-
 // Instantiates a new acquirer from a source
 func newAcquirer(source Source) (Acquirer, error) {
 

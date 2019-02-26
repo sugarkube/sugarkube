@@ -27,8 +27,6 @@ import (
 	"strings"
 )
 
-const GIT_ACQUIRER = "git"
-
 type GitAcquirer struct {
 	id            string
 	uri           string

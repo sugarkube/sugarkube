@@ -183,7 +183,7 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 			cacheDir))
 	}
 
-	candidateKappIds := []string{}
+	candidateKappIds := make([]string, 0)
 	for k := range kapps {
 		candidateKappIds = append(candidateKappIds, k)
 	}

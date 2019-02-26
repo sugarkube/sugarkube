@@ -27,26 +27,26 @@ import (
 	"strings"
 )
 
-const KAPP_CONFIG_FILE = "sugarkube.yaml"
+const CONFIG_FILE = "sugarkube.yaml"
 
 // Loads the kapp's sugarkube.yaml file, renders it and sets its attributes as
 // an attribute on the kapp
 func (k *Kapp) Load(mergedKappVars map[string]interface{}) error {
 
-	configFilePaths, err := utils.FindFilesByPattern(k.CacheDir(), KAPP_CONFIG_FILE,
+	configFilePaths, err := utils.FindFilesByPattern(k.CacheDir(), CONFIG_FILE,
 		true, false)
 	if err != nil {
 		return errors.Wrapf(err, "Error finding '%s' in '%s'",
-			KAPP_CONFIG_FILE, k.CacheDir())
+			CONFIG_FILE, k.CacheDir())
 	}
 
 	if len(configFilePaths) == 0 {
 		return errors.New(fmt.Sprintf("No '%s' file found for kapp "+
-			"'%s' in %s", KAPP_CONFIG_FILE, k.FullyQualifiedId(), k.CacheDir()))
+			"'%s' in %s", CONFIG_FILE, k.FullyQualifiedId(), k.CacheDir()))
 	} else if len(configFilePaths) > 1 {
 		// todo - have a way of declaring the 'right' one in the manifest
 		panic(fmt.Sprintf("Multiple '%s' found for kapp '%s'. Disambiguation "+
-			"not implemented yet: %s", KAPP_CONFIG_FILE, k.FullyQualifiedId(),
+			"not implemented yet: %s", CONFIG_FILE, k.FullyQualifiedId(),
 			strings.Join(configFilePaths, ", ")))
 	}
 
@@ -58,14 +58,14 @@ func (k *Kapp) Load(mergedKappVars map[string]interface{}) error {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Rendered %s file at '%s' to: \n%s", KAPP_CONFIG_FILE,
+	log.Logger.Debugf("Rendered %s file at '%s' to: \n%s", CONFIG_FILE,
 		configFilePath, outBuf.String())
 
 	config := Config{}
 	err = yaml.Unmarshal(outBuf.Bytes(), &config)
 	if err != nil {
 		return errors.Wrapf(err, "Error unmarshalling rendered %s file: %s",
-			KAPP_CONFIG_FILE, outBuf.String())
+			CONFIG_FILE, outBuf.String())
 	}
 
 	k.Config = config
