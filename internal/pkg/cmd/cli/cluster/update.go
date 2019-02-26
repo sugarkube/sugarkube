@@ -118,7 +118,7 @@ func (c *updateCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner)
+	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner, stackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -40,13 +40,13 @@ type Provisioner interface {
 const PROVISIONER_KEY = "provisioner"
 
 // Factory that creates providers
-func NewProvisioner(name string) (Provisioner, error) {
+func NewProvisioner(name string, stackConfig *kapp.StackConfig) (Provisioner, error) {
 	if name == MINIKUBE_PROVISIONER_NAME {
 		return MinikubeProvisioner{}, nil
 	}
 
 	if name == KOPS_PROVISIONER_NAME {
-		return KopsProvisioner{}, nil
+		return newKopsProvisioner(stackConfig), nil
 	}
 
 	if name == NOOP_PROVISIONER_NAME {

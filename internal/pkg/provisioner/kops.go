@@ -48,10 +48,11 @@ const KOPS_CLUSTER_KEY = "cluster"
 const KOPS_INSTANCE_GROUPS_KEY = "instanceGroups"
 
 type KopsProvisioner struct {
-	clusterSot clustersot.ClusterSot
+	clusterSot  clustersot.ClusterSot
+	stackConfig *kapp.StackConfig
 }
 
-// todo - make this a property of KopsProvisioner (or document why it can't be)
+// This isn't a property of KopsProvisioner because it's generated from the stack config.
 type KopsConfig struct {
 	Binary string // path to the kops binary
 	Params struct {
@@ -62,6 +63,13 @@ type KopsConfig struct {
 		GetInstanceGroups map[string]string `yaml:"get_instance_groups"`
 		RollingUpdate     map[string]string `yaml:"rolling_update"`
 		Replace           map[string]string
+	}
+}
+
+// Instantiates a new KopsProvisioner
+func newKopsProvisioner(stackConfig *kapp.StackConfig) KopsProvisioner {
+	return KopsProvisioner{
+		stackConfig: stackConfig,
 	}
 }
 
@@ -85,8 +93,7 @@ func (p KopsProvisioner) clusterConfigExists(stackConfig *kapp.StackConfig) (boo
 	log.Logger.Info("Checking if a Kops cluster config already exists...")
 	log.Logger.Debugf("Checking if a Kops cluster config exists for values: %#v", providerVars)
 
-	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-	kopsConfig, err := getKopsProvisionerConfig(provisionerValues)
+	kopsConfig, err := p.kopsConfig()
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -124,8 +131,7 @@ func (p KopsProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) erro
 	providerVars := stackConfig.GetProviderVars()
 	log.Logger.Debugf("Provider vars: %#v", providerVars)
 
-	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-	kopsConfig, err := getKopsProvisionerConfig(provisionerValues)
+	kopsConfig, err := p.kopsConfig()
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -192,10 +198,7 @@ func (p KopsProvisioner) update(stackConfig *kapp.StackConfig, dryRun bool) erro
 		return errors.WithStack(err)
 	}
 
-	providerVars := stackConfig.GetProviderVars()
-
-	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-	kopsConfig, err := getKopsProvisionerConfig(provisionerValues)
+	kopsConfig, err := p.kopsConfig()
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -242,9 +245,7 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 		return nil
 	}
 
-	providerVars := stackConfig.GetProviderVars()
-	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
-	kopsConfig, err := getKopsProvisionerConfig(provisionerValues)
+	kopsConfig, err := p.kopsConfig()
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -279,6 +280,9 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 	if err != nil {
 		return errors.Wrap(err, "Error parsing kops config")
 	}
+
+	providerVars := stackConfig.GetProviderVars()
+	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
 
 	specs, err := convert.MapInterfaceInterfaceToMapStringInterface(
 		provisionerValues[KOPS_SPECS_KEY].(map[interface{}]interface{}))
@@ -482,7 +486,9 @@ func parameteriseValues(args []string, valueMap map[string]string) []string {
 }
 
 // Parses the Kops provisioner config
-func getKopsProvisionerConfig(provisionerValues map[interface{}]interface{}) (*KopsConfig, error) {
+func (p KopsProvisioner) kopsConfig() (*KopsConfig, error) {
+	providerVars := p.stackConfig.GetProviderVars()
+	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
 	log.Logger.Debugf("Marshalling: %#v", provisionerValues)
 
 	// marshal then unmarshal the provisioner values to get the command parameters

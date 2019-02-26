@@ -31,8 +31,10 @@ type Acquirer interface {
 }
 
 type Source struct {
-	Id            string
-	Uri           string
+	Id  string
+	Uri string
+	// todo - implement
+	Options       map[string]interface{}
 	IncludeValues bool // todo - see if we actually need this
 }
 

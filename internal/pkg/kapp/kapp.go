@@ -38,7 +38,7 @@ type Config struct {
 }
 
 type Kapp struct {
-	Id       string // todo - make private and add an accessor
+	Id       string
 	manifest *Manifest
 	cacheDir string
 	Config   Config

@@ -18,29 +18,33 @@ package provisioner
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"testing"
 )
 
 func TestNewNonExistentProvisioner(t *testing.T) {
-	actual, err := NewProvisioner("bananas")
+	actual, err := NewProvisioner("bananas", &kapp.StackConfig{})
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
 
 func TestNewMinikubeProvisioner(t *testing.T) {
-	actual, err := NewProvisioner(MINIKUBE_PROVISIONER_NAME)
+	actual, err := NewProvisioner(MINIKUBE_PROVISIONER_NAME, &kapp.StackConfig{})
 	assert.Nil(t, err)
 	assert.Equal(t, MinikubeProvisioner{}, actual)
 }
 
 func TestNewKopsProvisioner(t *testing.T) {
-	actual, err := NewProvisioner(KOPS_PROVISIONER_NAME)
+	stackConfig := kapp.StackConfig{}
+	actual, err := NewProvisioner(KOPS_PROVISIONER_NAME, &stackConfig)
 	assert.Nil(t, err)
-	assert.Equal(t, KopsProvisioner{}, actual)
+	assert.Equal(t, KopsProvisioner{
+		stackConfig: &stackConfig,
+	}, actual)
 }
 
 func TestNewNoOpProvisioner(t *testing.T) {
-	actual, err := NewProvisioner(NOOP_PROVISIONER_NAME)
+	actual, err := NewProvisioner(NOOP_PROVISIONER_NAME, &kapp.StackConfig{})
 	assert.Nil(t, err)
 	assert.Equal(t, NoOpProvisioner{}, actual)
 }
