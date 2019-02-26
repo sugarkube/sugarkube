@@ -10,6 +10,7 @@
 * More tests 
 * See if we can suppress warning in overridden makefiles by using the technique
   by mpb [described here](https://stackoverflow.com/questions/11958626/make-file-warning-overriding-commands-for-target)
+
 * Need a way of dynamically adding variables to the databag. Perhaps if kapps write JSON to a file it could be 
   merged in? Then it'd be easy for users to control the frequency it runs. This is required to get the KMS key
   ARN which can then be templated into kapps. For now we can hardcode values because templating was expected
@@ -17,14 +18,16 @@
   with values supplied dynamically. We could add a flag to kapps.install: '--jit-templating' and 
   to enable this or keep the current behaviour
 * Add '--jit-templating' (or make that the default?) so that kapps can have their templates written with dynamic content.
+
 * Allow overriding manifest data from a stack file to permit, e.g. specifying the branch of a kapp at the stack level
   or extra vars, etc.
+* Allow vars to be specified inside manifest files per kapp
+
 * Emit a warning for kapps without a branch specified, but ignore them and proceed anyway
 * Allow filtering kapps to apply/install
 * Don't bomb out if there's no config file
 * Don't always display usage if an error is thrown
 * Implement deletion to tear down a stack
-* Allow vars to be specified inside manifest files per kapp
 * Run automated scanning to check where errors aren't handled correctly
 * Fix failing integration test
 
