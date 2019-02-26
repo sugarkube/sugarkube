@@ -123,18 +123,23 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig)
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	if c.dryRun {
+		log.Logger.Infof("Dry run. Won't check if the cluster is already online.")
 
-	if online && !c.dryRun {
-		_, err = fmt.Fprintln(c.out, "Cluster is already online. Aborting.")
+	} else {
+		online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		return nil
+		if online {
+			_, err = fmt.Fprintln(c.out, "Cluster is already online. Aborting.")
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			return nil
+		}
 	}
 
 	_, err = fmt.Fprintln(c.out, "Cluster is not online. Will create it now (this "+
