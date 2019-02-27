@@ -212,3 +212,15 @@ func TestManifestOverrides(t *testing.T) {
 
 	assert.Equal(t, expectedOverrides, actualOverrides)
 }
+
+func TestManifestOverridesNil(t *testing.T) {
+
+	// testing the correctness of this stack is handled in stack_test.go
+	stackConfig, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
+	assert.Nil(t, err)
+	assert.NotNil(t, stackConfig)
+
+	actualOverrides, err := stackConfig.Manifests[1].ParsedKapps()[0].manifestOverrides()
+	assert.Nil(t, err)
+	assert.Nil(t, actualOverrides)
+}
