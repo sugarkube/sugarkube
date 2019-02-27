@@ -18,6 +18,7 @@ package kapp
 
 import (
 	"fmt"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
@@ -53,6 +54,11 @@ type Kapp struct {
 const PRESENT_KEY = "present"
 const ABSENT_KEY = "absent"
 
+const STATE_KEY = "state"
+const SOURCES_KEY = "sources"
+const VARS_KEY = "vars"
+const TEMPLATES_KEY = "templates"
+
 // Sets the root cache directory the kapp is checked out into
 func (k *Kapp) SetCacheDir(cacheDir string) {
 	log.Logger.Debugf("Setting cache dir on kapp '%s' to '%s'",
@@ -67,6 +73,39 @@ func (k Kapp) FullyQualifiedId() string {
 	} else {
 		return strings.Join([]string{k.manifest.Id(), k.Id}, ":")
 	}
+}
+
+// Updates the kapp's struct after merging any manifest overrides
+func (k *Kapp) refresh() error {
+	manifestOverrides, err := k.manifestOverrides()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if manifestOverrides != nil {
+		// we can't just unmarshal it to YAML, merge the overrides and marshal it again because overrides
+		// use keys whose values are IDs of e.g. sources instead of referring to sources by index.
+		overriddenState, ok := manifestOverrides[STATE_KEY]
+		if ok {
+			k.State = overriddenState.(string)
+		}
+
+		overriddenVars, ok := manifestOverrides[VARS_KEY]
+		if ok {
+			overriddenVarsConverted, err := convert.MapInterfaceInterfaceToMapStringInterface(
+				overriddenVars.(map[interface{}]interface{}))
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			err = mergo.Merge(&k.Vars, overriddenVarsConverted, mergo.WithOverride)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+	}
+
+	return nil
 }
 
 // Return overrides specified in the manifest associated with this kapp if there are any

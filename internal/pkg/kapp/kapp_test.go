@@ -224,3 +224,23 @@ func TestManifestOverridesNil(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Nil(t, actualOverrides)
 }
+
+func TestApplyingManifestOverrides(t *testing.T) {
+
+	// testing the correctness of this stack is handled in stack_test.go
+	stackConfig, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
+	assert.Nil(t, err)
+	assert.NotNil(t, stackConfig)
+
+	// in the actual manifest, the state is set to present
+	kappObj := stackConfig.Manifests[0].ParsedKapps()[0]
+	assert.Equal(t, PRESENT_KEY, kappObj.State)
+	assert.Equal(t, "big", kappObj.Vars["sizeVar"].(string))
+
+	// but in the stack config file, the state is overridden to absent
+	err = kappObj.refresh()
+	assert.Nil(t, err)
+	assert.Equal(t, ABSENT_KEY, kappObj.State)
+	// sizeVar is also overridden
+	assert.Equal(t, "mediumOverridden", kappObj.Vars["sizeVar"].(string))
+}
