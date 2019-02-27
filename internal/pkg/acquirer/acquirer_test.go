@@ -56,12 +56,24 @@ func TestNewAcquirerGit(t *testing.T) {
 	}
 
 	actual, err := newAcquirer(Source{
-		Id: "", Uri: GOOD_GIT_URI,
+		Id:            "",
+		Uri:           GOOD_GIT_URI,
 		IncludeValues: true,
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Fully-defined git acquirer incorrectly created")
+}
+
+func TestNewAcquirerGitNoBranch(t *testing.T) {
+
+	actual, err := newAcquirer(Source{
+		Id:            "",
+		Uri:           "git@github.com:sugarkube/kapps.git//incubator/tiller/",
+		IncludeValues: true,
+	})
+	assert.NotNil(t, err)
+	assert.Nil(t, actual)
 }
 
 func TestNewAcquirerGitWithOptions(t *testing.T) {
@@ -76,6 +88,29 @@ func TestNewAcquirerGitWithOptions(t *testing.T) {
 	actual, err := newAcquirer(Source{
 		Id:  "",
 		Uri: GOOD_GIT_URI,
+		Options: map[string]interface{}{
+			"branch": "my-branch",
+		},
+		IncludeValues: true,
+	})
+	assert.Nil(t, err)
+	assert.Equal(t, expectedAcquirer, actual,
+		"Git acquirer with additional options incorrectly created")
+}
+
+func TestNewAcquirerGitWithOptionsNoDefault(t *testing.T) {
+	var expectedAcquirer = &GitAcquirer{
+		id:            "tiller",
+		uri:           "git@github.com:sugarkube/kapps.git",
+		branch:        "my-branch",
+		path:          "incubator/tiller/",
+		includeValues: true,
+	}
+
+	actual, err := newAcquirer(Source{
+		Id: "",
+		// this URI has no branch at all so it must come from the options
+		Uri: "git@github.com:sugarkube/kapps.git//incubator/tiller/",
 		Options: map[string]interface{}{
 			"branch": "my-branch",
 		},

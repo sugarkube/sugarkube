@@ -64,16 +64,18 @@ func NewGitAcquirer(source Source) (*GitAcquirer, error) {
 	}
 
 	pathBranch := strings.Split(uriPathBranch[1], BRANCH_SEPARATOR)
-	if len(pathBranch) != 2 || (len(pathBranch) == 1 && branchFromOptions != "") {
+	if len(pathBranch) != 2 && !(len(pathBranch) == 1 && branchFromOptions != "") {
 		return nil, errors.New(fmt.Sprintf("No branch separator ('%s') found in git URI '%s'", BRANCH_SEPARATOR,
 			source.Uri))
 	}
 
 	uri := strings.TrimSpace(uriPathBranch[0])
 	path := strings.TrimSpace(pathBranch[0])
-	branch := strings.TrimSpace(pathBranch[1])
+	var branch string
 
-	if branchFromOptions != "" {
+	if branchFromOptions == "" {
+		branch = strings.TrimSpace(pathBranch[1])
+	} else {
 		branch = branchFromOptions
 	}
 
