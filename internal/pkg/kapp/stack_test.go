@@ -92,32 +92,6 @@ func GetTestManifests() (Manifest, Manifest) {
 			Id:       "kappC",
 			State:    "present",
 			manifest: nil,
-			//Sources: []acquirer.Acquirer{
-			//	discardErr(acquirer.NewGitAcquirer(
-			//		"special",
-			//		"git@github.com:sugarkube/kapps-C.git",
-			//		"kappC-0.3.0",
-			//		"kappC/some/special-path",
-			//		"")),
-			//	discardErr(acquirer.NewGitAcquirer(
-			//		"pathZ",
-			//		"git@github.com:sugarkube/kapps-C.git",
-			//		"kappZ-0.3.0",
-			//		"kappC/some/pathZ",
-			//		"")),
-			//	discardErr(acquirer.NewGitAcquirer(
-			//		"pathX",
-			//		"git@github.com:sugarkube/kapps-C.git",
-			//		"kappX-0.3.0",
-			//		"kappC/some/pathX",
-			//		"")),
-			//	discardErr(acquirer.NewGitAcquirer(
-			//		"pathY",
-			//		"git@github.com:sugarkube/kapps-C.git",
-			//		"kappY-0.3.0",
-			//		"kappC/some/pathY",
-			//		"")),
-			//},
 			Sources: []acquirer.Source{
 				{
 					Id:  "special",
@@ -132,14 +106,6 @@ func GetTestManifests() (Manifest, Manifest) {
 			Id:       "kappB",
 			State:    "present",
 			manifest: nil,
-			//Sources: []acquirer.Acquirer{
-			//	discardErr(acquirer.NewGitAcquirer(
-			//		"pathB",
-			//		"git@github.com:sugarkube/kapps-B.git",
-			//		"kappB-0.2.0",
-			//		"some/pathB",
-			//		"")),
-			//},
 			Sources: []acquirer.Source{
 				{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
 			},
@@ -148,14 +114,6 @@ func GetTestManifests() (Manifest, Manifest) {
 			Id:       "kappD",
 			State:    "present",
 			manifest: nil,
-			//Sources: []acquirer.Acquirer{
-			//	discardErr(acquirer.NewGitAcquirer(
-			//		"pathD",
-			//		"git@github.com:sugarkube/kapps-D.git",
-			//		"kappD-0.2.0",
-			//		"some/pathD",
-			//		"")),
-			//},
 			Sources: []acquirer.Source{
 				{
 					Uri: "git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0",
@@ -169,14 +127,6 @@ func GetTestManifests() (Manifest, Manifest) {
 			Id:       "kappA",
 			State:    "present",
 			manifest: nil,
-			//Sources: []acquirer.Acquirer{
-			//	discardErr(acquirer.NewGitAcquirer(
-			//		"pathA",
-			//		"git@github.com:sugarkube/kapps-A.git",
-			//		"kappA-0.2.0",
-			//		"some/pathA",
-			//		"false")),
-			//},
 			Sources: []acquirer.Source{
 				{IncludeValues: false,
 					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.2.0"},
