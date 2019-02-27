@@ -21,7 +21,6 @@
 
 * Allow overriding manifest data from a stack file to permit, e.g. specifying the branch of a kapp at the stack level
   or extra vars, etc.
-* Allow vars to be specified inside manifest files per kapp
 
 * Emit a warning for kapps without a branch specified, but ignore them and proceed anyway
 * Allow filtering kapps to apply/install

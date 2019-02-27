@@ -16,6 +16,7 @@ func TestMergeVarsForKapp(t *testing.T) {
 		"colours": []interface{}{
 			"green",
 		},
+		"location": "kappFile",
 	}
 
 	kappObj := &stackConfig.Manifests[0].ParsedKapps()[0]
@@ -54,8 +55,11 @@ func TestMergeVarsForKapp(t *testing.T) {
 			"cacheRoot": "manifest1/kappA",
 			"vars": map[interface{}]interface{}{
 				"colours": []interface{}{
-					"green",
+					"red",
+					"black",
 				},
+				"location": "kappFile",
+				"sizeVar":  "big",
 			},
 		},
 	}

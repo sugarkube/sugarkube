@@ -3,8 +3,8 @@ kapps:
     state: present
     sources:
     - uri: git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0
-    vars:
-      size: big
+    vars:     # variables defined here have higher precedence than those defined in kapp vars files
+      sizeVar: big
       colours:
         - red
         - black

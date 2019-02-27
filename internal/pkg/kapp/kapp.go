@@ -38,12 +38,11 @@ type Config struct {
 }
 
 type Kapp struct {
-	Id       string
-	manifest *Manifest
-	cacheDir string
-	Config   Config
-	State    string
-	// todo - merge these values with the rest of the merged values prior to invoking a kapp
+	Id        string
+	manifest  *Manifest
+	cacheDir  string
+	Config    Config
+	State     string
 	Vars      map[string]interface{}
 	Sources   []acquirer.Source
 	Templates []Template

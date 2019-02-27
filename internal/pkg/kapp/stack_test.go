@@ -67,7 +67,7 @@ func GetTestManifests() (Manifest, Manifest) {
 				},
 			},
 			Vars: map[string]interface{}{
-				"size": "big",
+				"sizeVar": "big",
 				"colours": []interface{}{
 					"red",
 					"black",
