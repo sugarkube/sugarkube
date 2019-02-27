@@ -235,7 +235,12 @@ func TestApplyingManifestOverrides(t *testing.T) {
 	// in the actual manifest, the state is set to present
 	kappObj := stackConfig.Manifests[0].ParsedKapps()[0]
 	assert.Equal(t, PRESENT_KEY, kappObj.State)
-	assert.Equal(t, "big", kappObj.Vars["sizeVar"].(string))
+	assert.Equal(t, map[string]interface{}{
+		"sizeVar": "big",
+		"colours": []interface{}{
+			"red",
+			"black",
+		}}, kappObj.Vars)
 
 	// make the kapp update itself based on overrides
 	err = kappObj.refresh()
@@ -244,7 +249,12 @@ func TestApplyingManifestOverrides(t *testing.T) {
 	// but in the stack config file, the state is overridden to absent
 	assert.Equal(t, ABSENT_KEY, kappObj.State)
 	// sizeVar is also overridden
-	assert.Equal(t, "mediumOverridden", kappObj.Vars["sizeVar"].(string))
+	assert.Equal(t, map[string]interface{}{
+		"sizeVar": "mediumOverridden",
+		"colours": []interface{}{
+			"red",
+			"black",
+		}}, kappObj.Vars)
 
 	acquirers, err := kappObj.Acquirers()
 	assert.Nil(t, err)
