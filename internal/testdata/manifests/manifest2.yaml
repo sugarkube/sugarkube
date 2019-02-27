@@ -18,6 +18,8 @@ kapps:
     state: present
     sources:
     - uri: git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0
+      options:
+        branch: kappDBranch
   - id: kappA
     state: present
     sources:

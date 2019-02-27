@@ -157,7 +157,12 @@ func GetTestManifests() (Manifest, Manifest) {
 			//		"")),
 			//},
 			Sources: []acquirer.Source{
-				{Uri: "git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0"},
+				{
+					Uri: "git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0",
+					Options: map[string]interface{}{
+						"branch": "kappDBranch",
+					},
+				},
 			},
 		},
 		{
