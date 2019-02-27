@@ -28,7 +28,7 @@ import (
 // Merges all vars for a kapp from different sources. These can be used as template
 // values or as env vars/parameters to be passed to the kapp at runtime.
 func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
-	providerVars map[string]interface{}, installerVars map[string]interface{}) (map[string]interface{}, error) {
+	installerVars map[string]interface{}) (map[string]interface{}, error) {
 
 	stackIntrinsicData := stackConfig.GetIntrinsicData()
 	// convert the map to the appropriate type and namespace it
@@ -53,6 +53,8 @@ func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 	// store additional runtime values under the "sugarkube" key
 	installerVars["defaultVars"] = defaultVars
 	mergedVars["sugarkube"] = installerVars
+
+	providerVars := stackConfig.GetProviderVars()
 
 	err = mergo.Merge(&mergedVars, providerVars, mergo.WithOverride)
 	if err != nil {

@@ -128,11 +128,8 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	providerVars := stackConfig.GetProviderVars()
-
 	for _, kappObj := range candidateKapps {
-		mergedKappVars, err := kapp.MergeVarsForKapp(&kappObj, stackConfig, providerVars,
-			map[string]interface{}{})
+		mergedKappVars, err := kapp.MergeVarsForKapp(&kappObj, stackConfig, map[string]interface{}{})
 
 		yamlData, err := yaml.Marshal(&mergedKappVars)
 		if err != nil {
