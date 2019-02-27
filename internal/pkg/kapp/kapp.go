@@ -23,6 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"gopkg.in/yaml.v2"
 	"path/filepath"
 	"strings"
 )
@@ -48,7 +49,6 @@ type Kapp struct {
 	Vars      map[string]interface{}
 	Sources   []acquirer.Source
 	Templates []Template
-	acquirers []acquirer.Acquirer
 }
 
 const PRESENT_KEY = "present"
@@ -57,7 +57,9 @@ const ABSENT_KEY = "absent"
 const STATE_KEY = "state"
 const SOURCES_KEY = "sources"
 const VARS_KEY = "vars"
-const TEMPLATES_KEY = "templates"
+
+// todo - allow templates to be overridden in manifest overides blocks
+//const TEMPLATES_KEY = "templates"
 
 // Sets the root cache directory the kapp is checked out into
 func (k *Kapp) SetCacheDir(cacheDir string) {
@@ -90,6 +92,7 @@ func (k *Kapp) refresh() error {
 			k.State = overriddenState.(string)
 		}
 
+		// update any overridden variables
 		overriddenVars, ok := manifestOverrides[VARS_KEY]
 		if ok {
 			overriddenVarsConverted, err := convert.MapInterfaceInterfaceToMapStringInterface(
@@ -101,6 +104,70 @@ func (k *Kapp) refresh() error {
 			err = mergo.Merge(&k.Vars, overriddenVarsConverted, mergo.WithOverride)
 			if err != nil {
 				return errors.WithStack(err)
+			}
+		}
+
+		// update sources
+		overriddenSources, ok := manifestOverrides[SOURCES_KEY]
+		if ok {
+			overriddenSourcesConverted, err := convert.MapInterfaceInterfaceToMapStringInterface(
+				overriddenSources.(map[interface{}]interface{}))
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			currentAcquirers, err := k.Acquirers()
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			// sources are overridden by specifying the ID of a source as the key. So we need to iterate through
+			// the overrides and also through the list of sources to update values
+			for sourceId, v := range overriddenSourcesConverted {
+				sourceOverridesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(
+					v.(map[interface{}]interface{}))
+				if err != nil {
+					return errors.WithStack(err)
+				}
+
+				for i, source := range k.Sources {
+					if sourceId == currentAcquirers[i].Id() {
+						sourceYaml, err := yaml.Marshal(source)
+						if err != nil {
+							return errors.WithStack(err)
+						}
+
+						sourceMapInterface := map[string]interface{}{}
+						err = yaml.Unmarshal(sourceYaml, sourceMapInterface)
+						if err != nil {
+							return errors.WithStack(err)
+						}
+
+						// we now have the overridden source values and the original source values as
+						// types compatible for merging
+
+						err = mergo.Merge(&sourceMapInterface, sourceOverridesMap, mergo.WithOverride)
+						if err != nil {
+							return errors.WithStack(err)
+						}
+
+						// convert the merged generic values back to a Source
+						mergedSourceYaml, err := yaml.Marshal(sourceMapInterface)
+						if err != nil {
+							return errors.WithStack(err)
+						}
+
+						mergedSource := acquirer.Source{}
+						err = yaml.Unmarshal(mergedSourceYaml, &mergedSource)
+						if err != nil {
+							return errors.WithStack(err)
+						}
+
+						log.Logger.Debugf("Updating kapp source at index %d to: %#v", i, mergedSource)
+
+						k.Sources[i] = mergedSource
+					}
+				}
 			}
 		}
 	}
@@ -154,18 +221,13 @@ func (k Kapp) GetIntrinsicData() map[string]string {
 	}
 }
 
-// Returns an array of acquirers configured for the sources for this kapp
+// Returns an array of acquirers configured for the sources for this kapp. We need to recompute these each time
+// instead of caching them so that any manifest overrides will take effect.
 func (k *Kapp) Acquirers() ([]acquirer.Acquirer, error) {
-	if len(k.acquirers) > 0 {
-		return k.acquirers, nil
-	}
-
 	acquirers, err := acquirer.GetAcquirersFromSources(k.Sources)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-
-	k.acquirers = acquirers
 
 	return acquirers, nil
 }

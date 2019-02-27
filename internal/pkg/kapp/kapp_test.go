@@ -237,10 +237,16 @@ func TestApplyingManifestOverrides(t *testing.T) {
 	assert.Equal(t, PRESENT_KEY, kappObj.State)
 	assert.Equal(t, "big", kappObj.Vars["sizeVar"].(string))
 
-	// but in the stack config file, the state is overridden to absent
+	// make the kapp update itself based on overrides
 	err = kappObj.refresh()
 	assert.Nil(t, err)
+
+	// but in the stack config file, the state is overridden to absent
 	assert.Equal(t, ABSENT_KEY, kappObj.State)
 	// sizeVar is also overridden
 	assert.Equal(t, "mediumOverridden", kappObj.Vars["sizeVar"].(string))
+
+	acquirers, err := kappObj.Acquirers()
+	assert.Nil(t, err)
+	assert.Equal(t, "git@github.com:sugarkube/kapps-A.git//some/pathA#stable", acquirers[0].Uri())
 }

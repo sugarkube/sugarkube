@@ -27,6 +27,7 @@ type Acquirer interface {
 	FullyQualifiedId() (string, error)
 	Id() string
 	Path() string
+	Uri() string
 	IncludeValues() bool // todo - clarify if this is actually used, and if not, remove it
 }
 

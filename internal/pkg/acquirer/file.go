@@ -77,6 +77,11 @@ func (a FileAcquirer) Path() string {
 	return strings.TrimPrefix(a.uri, FILE_PROTOCOL)
 }
 
+// return the path (i.e. the URI with the file:// prefix removed)
+func (a FileAcquirer) Uri() string {
+	return a.uri
+}
+
 // return whether this source should be searched for values files
 func (a FileAcquirer) IncludeValues() bool {
 	// todo - delete this method if we don't need it

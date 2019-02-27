@@ -92,6 +92,8 @@ func NewGitAcquirer(source Source) (*GitAcquirer, error) {
 
 	id := source.Id
 
+	log.Logger.Warnf("*** source.id='%s'", id)
+
 	if id == "" {
 		id = filepath.Base(path)
 	}
@@ -127,6 +129,11 @@ func (a GitAcquirer) Id() string {
 // return the path
 func (a GitAcquirer) Path() string {
 	return a.path
+}
+
+// return the uri
+func (a GitAcquirer) Uri() string {
+	return strings.Join([]string{a.uri, PATH_SEPARATOR, a.path, BRANCH_SEPARATOR, a.branch}, "")
 }
 
 // return whether this source should be searched for values files
