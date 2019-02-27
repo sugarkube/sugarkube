@@ -61,17 +61,16 @@ func GetTestManifests() (Manifest, Manifest) {
 			Id:       "kappA",
 			State:    "present",
 			manifest: nil,
-			//Sources: []acquirer.Acquirer{
-			//	discardErr(acquirer.NewGitAcquirer(
-			//		"pathA",
-			//		"git@github.com:sugarkube/kapps-A.git",
-			//		"kappA-0.1.0",
-			//		"some/pathA",
-			//		"")),
-			//},
 			Sources: []acquirer.Source{
 				{
 					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
+				},
+			},
+			Vars: map[string]interface{}{
+				"size": "big",
+				"colours": []interface{}{
+					"red",
+					"black",
 				},
 			},
 		},
