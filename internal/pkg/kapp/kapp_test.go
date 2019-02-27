@@ -203,7 +203,8 @@ func TestManifestOverrides(t *testing.T) {
 			},
 		},
 		"vars": map[interface{}]interface{}{
-			"sizeVar": "mediumOverridden",
+			"stackVar": "setInOverrides",
+			"sizeVar":  "mediumOverridden",
 		},
 	}
 
@@ -250,7 +251,8 @@ func TestApplyingManifestOverrides(t *testing.T) {
 	assert.Equal(t, ABSENT_KEY, kappObj.State)
 	// sizeVar is also overridden
 	assert.Equal(t, map[string]interface{}{
-		"sizeVar": "mediumOverridden",
+		"sizeVar":  "mediumOverridden",
+		"stackVar": "setInOverrides",
 		"colours": []interface{}{
 			"red",
 			"black",

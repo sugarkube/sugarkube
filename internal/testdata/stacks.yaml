@@ -24,6 +24,7 @@ large:
               branch: stable
         vars:
           sizeVar: mediumOverridden
+          stackVar: setInOverrides
   - uri: manifests/manifest2.yaml
     id: exampleManifest2
   templateDirs:
