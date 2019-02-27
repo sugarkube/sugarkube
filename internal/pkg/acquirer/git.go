@@ -41,10 +41,21 @@ const GIT_PATH = "git"
 const PATH_SEPARATOR = "//"
 const BRANCH_SEPARATOR = "#"
 
+const BRANCH_KEY = "branch"
+
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
 // todo - this is only public so we can use it in tests. We should find a way to make it private again
 func NewGitAcquirer(source Source) (*GitAcquirer, error) {
+
+	branchFromOptions := ""
+
+	if len(source.Options) > 0 {
+		_, ok := source.Options[BRANCH_KEY]
+		if ok {
+			branchFromOptions = source.Options[BRANCH_KEY].(string)
+		}
+	}
 
 	uriPathBranch := strings.Split(source.Uri, PATH_SEPARATOR)
 	if len(uriPathBranch) != 2 {
@@ -53,7 +64,7 @@ func NewGitAcquirer(source Source) (*GitAcquirer, error) {
 	}
 
 	pathBranch := strings.Split(uriPathBranch[1], BRANCH_SEPARATOR)
-	if len(pathBranch) != 2 {
+	if len(pathBranch) != 2 || (len(pathBranch) == 1 && branchFromOptions != "") {
 		return nil, errors.New(fmt.Sprintf("No branch separator ('%s') found in git URI '%s'", BRANCH_SEPARATOR,
 			source.Uri))
 	}
@@ -61,6 +72,10 @@ func NewGitAcquirer(source Source) (*GitAcquirer, error) {
 	uri := strings.TrimSpace(uriPathBranch[0])
 	path := strings.TrimSpace(pathBranch[0])
 	branch := strings.TrimSpace(pathBranch[1])
+
+	if branchFromOptions != "" {
+		branch = branchFromOptions
+	}
 
 	if uri == "" || branch == "" || path == "" {
 		return nil, errors.New("Invalid git parameters. The uri, " +

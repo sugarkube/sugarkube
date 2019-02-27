@@ -64,6 +64,28 @@ func TestNewAcquirerGit(t *testing.T) {
 		"Fully-defined git acquirer incorrectly created")
 }
 
+func TestNewAcquirerGitWithOptions(t *testing.T) {
+	var expectedAcquirer = &GitAcquirer{
+		id:            "tiller",
+		uri:           "git@github.com:sugarkube/kapps.git",
+		branch:        "my-branch",
+		path:          "incubator/tiller/",
+		includeValues: true,
+	}
+
+	actual, err := newAcquirer(Source{
+		Id:  "",
+		Uri: GOOD_GIT_URI,
+		Options: map[string]interface{}{
+			"branch": "my-branch",
+		},
+		IncludeValues: true,
+	})
+	assert.Nil(t, err)
+	assert.Equal(t, expectedAcquirer, actual,
+		"Git acquirer with additional options incorrectly created")
+}
+
 func TestNewAcquirerGitExplicitId(t *testing.T) {
 	var expectedAcquirer = &GitAcquirer{
 		id:            "banana",
