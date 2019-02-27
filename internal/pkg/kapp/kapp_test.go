@@ -185,3 +185,30 @@ kapps:
 
 	assert.NotEqual(t, manifest, Manifest{})
 }
+
+func TestManifestOverrides(t *testing.T) {
+
+	// testing the correctness of this stack is handled in stack_test.go
+	stackConfig, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
+	assert.Nil(t, err)
+	assert.NotNil(t, stackConfig)
+
+	expectedOverrides := map[string]interface{}{
+		"state": "absent",
+		"sources": map[interface{}]interface{}{
+			"pathA": map[interface{}]interface{}{
+				"options": map[interface{}]interface{}{
+					"branch": "stable",
+				},
+			},
+		},
+		"vars": map[interface{}]interface{}{
+			"sizeVar": "mediumOverridden",
+		},
+	}
+
+	actualOverrides, err := stackConfig.Manifests[0].ParsedKapps()[0].manifestOverrides()
+	assert.Nil(t, err)
+
+	assert.Equal(t, expectedOverrides, actualOverrides)
+}

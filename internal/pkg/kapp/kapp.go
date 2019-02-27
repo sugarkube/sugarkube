@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"path/filepath"
 	"strings"
@@ -66,6 +67,22 @@ func (k Kapp) FullyQualifiedId() string {
 	} else {
 		return strings.Join([]string{k.manifest.Id(), k.Id}, ":")
 	}
+}
+
+// Return overrides specified in the manifest associated with this kapp if there are any
+func (k Kapp) manifestOverrides() (map[string]interface{}, error) {
+	rawOverrides, ok := k.manifest.Overrides[k.Id]
+	if ok {
+		overrides, err := convert.MapInterfaceInterfaceToMapStringInterface(
+			rawOverrides.(map[interface{}]interface{}))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		return overrides, nil
+	}
+
+	return nil, nil
 }
 
 // Returns the physical path to this kapp in a cache

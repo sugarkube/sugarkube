@@ -16,7 +16,8 @@
   ARN which can then be templated into kapps. For now we can hardcode values because templating was expected
   to happen when creating a cache, but it would be more flexible to allow kapps to be templated just-in-time
   with values supplied dynamically. We could add a flag to kapps.install: '--jit-templating' and 
-  to enable this or keep the current behaviour
+  to enable this or keep the current behaviour. Variables are merged just before kapps are installed, so just 
+  updating variables in various sources (e.g. 'Manifest.Overrides') should be enough to implement this behaviour. 
 * Add '--jit-templating' (or make that the default?) so that kapps can have their templates written with dynamic content.
 
 * Allow overriding manifest data from a stack file to permit, e.g. specifying the branch of a kapp at the stack level
