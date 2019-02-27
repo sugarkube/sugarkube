@@ -15,6 +15,15 @@ large:
   - ./stacks/
   manifests:
   - uri: manifests/manifest1.yaml
+    overrides:
+      kappA:
+        state: absent
+        sources:
+          pathA:
+            options:
+              branch: stable
+        vars:
+          sizeVar: mediumOverridden
   - uri: manifests/manifest2.yaml
     id: exampleManifest2
   templateDirs:

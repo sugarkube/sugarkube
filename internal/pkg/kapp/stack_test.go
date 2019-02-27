@@ -54,6 +54,21 @@ func GetTestManifests() (Manifest, Manifest) {
 	manifest1 := Manifest{
 		ConfiguredId: "",
 		Uri:          "../../testdata/manifests/manifest1.yaml",
+		Overrides: map[string]interface{}{
+			"kappA": map[interface{}]interface{}{
+				"state": "absent",
+				"sources": map[interface{}]interface{}{
+					"pathA": map[interface{}]interface{}{
+						"options": map[interface{}]interface{}{
+							"branch": "stable",
+						},
+					},
+				},
+				"vars": map[interface{}]interface{}{
+					"sizeVar": "mediumOverridden",
+				},
+			},
+		},
 	}
 
 	manifest1UnparsedKapps := []Kapp{

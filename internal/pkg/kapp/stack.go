@@ -162,6 +162,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 		// todo - remove this. It should be handled by an acquirer
 		//SetManifestDefaults(&initManifest)
 		parsedInitManifest.ConfiguredId = initManifest.ConfiguredId
+		parsedInitManifest.Overrides = initManifest.Overrides
 
 		stack.InitManifests[i] = *parsedInitManifest
 	}
@@ -185,6 +186,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 		// todo - remove this. It should be handled by an acquirer
 		//SetManifestDefaults(&manifest)
 		parsedManifest.ConfiguredId = manifest.ConfiguredId
+		parsedManifest.Overrides = manifest.Overrides
 
 		stack.Manifests[i] = *parsedManifest
 	}

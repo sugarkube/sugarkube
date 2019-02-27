@@ -34,9 +34,8 @@ type Manifest struct {
 	Uri           string
 	UnparsedKapps []Kapp `yaml:"kapps"`
 	kappsParsed   bool
-	// todo - implement
-	Overrides map[string]interface{}
-	Options   ManifestOptions
+	Overrides     map[string]interface{}
+	Options       ManifestOptions
 }
 
 // Sets fields to default values
