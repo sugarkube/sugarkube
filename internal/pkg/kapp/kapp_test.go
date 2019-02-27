@@ -63,6 +63,8 @@ kapps:
     state: present
     sources:
     - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+      options:
+        branch: new-branch
     vars:
       someVarA: valueA
       someList:
@@ -97,7 +99,12 @@ kapps:
 					State:    "present",
 					manifest: nil,
 					Sources: []acquirer.Source{
-						{Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA"},
+						{
+							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
+							Options: map[string]interface{}{
+								"branch": "new-branch",
+							},
+						},
 					},
 					Vars: map[string]interface{}{
 						"someVarA": "valueA",
@@ -138,6 +145,9 @@ kapps:
 					discardErr(acquirer.NewGitAcquirer(
 						acquirer.Source{
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
+							Options: map[string]interface{}{
+								"branch": "new-branch",
+							},
 						})),
 				},
 				// kapp3
