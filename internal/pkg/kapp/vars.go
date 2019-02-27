@@ -54,25 +54,24 @@ func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 	installerVars["defaultVars"] = defaultVars
 	mergedVars["sugarkube"] = installerVars
 
-	providerVars := stackConfig.GetProviderVars()
-
-	err = mergo.Merge(&mergedVars, providerVars, mergo.WithOverride)
+	err = mergo.Merge(&mergedVars, stackConfig.GetProviderVars(), mergo.WithOverride)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	kappIntrinsicData := kappObj.GetIntrinsicData()
-	kappVars, err := stackConfig.GetKappVarsFromFiles(kappObj)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
 
-	// todo - merge in kapp.Vars here and note the order of precedence
+	// todo - merge in kapp.Vars somewhere round here and note the order of precedence
 
 	namespacedKappMap := map[string]interface{}{
 		"kapp": convert.MapStringStringToMapStringInterface(kappIntrinsicData),
 	}
 	err = mergo.Merge(&mergedVars, namespacedKappMap, mergo.WithOverride)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	kappVars, err := stackConfig.GetKappVarsFromFiles(kappObj)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

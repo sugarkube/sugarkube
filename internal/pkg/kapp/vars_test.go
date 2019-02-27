@@ -18,11 +18,48 @@ func TestMergeVarsForKapp(t *testing.T) {
 		},
 	}
 
-	results, err := stackConfig.GetKappVarsFromFiles(&stackConfig.Manifests[0].ParsedKapps()[0])
+	kappObj := &stackConfig.Manifests[0].ParsedKapps()[0]
+
+	results, err := stackConfig.GetKappVarsFromFiles(kappObj)
 	assert.Nil(t, err)
 
 	assert.Equal(t, expectedVarsFromFiles, results)
 
 	// now we've loaded kapp variables from a file, test merging vars for the kapp
+	expectedMergedVars := map[string]interface{}{
+		"stack": map[interface{}]interface{}{
+			"name":        "large",
+			"profile":     "local",
+			"provider":    "local",
+			"provisioner": "minikube",
+			"region":      "",
+			"account":     "",
+			"cluster":     "large",
+			"filePath":    "../../testdata/stacks.yaml",
+		},
+		"sugarkube": map[interface{}]interface{}{
+			"target":   "myTarget",
+			"approved": true,
+			"defaultVars": []interface{}{
+				"local",
+				"",
+				"local",
+				"large",
+				"",
+			},
+		},
+		"kapp": map[interface{}]interface{}{
+			"id":        "kappA",
+			"state":     "present",
+			"cacheRoot": "manifest1/kappA",
+		},
+		"colours": []interface{}{
+			"green",
+		},
+	}
 
+	mergedKappVars, err := MergeVarsForKapp(kappObj, stackConfig,
+		map[string]interface{}{"target": "myTarget", "approved": true})
+
+	assert.Equal(t, expectedMergedVars, mergedKappVars)
 }

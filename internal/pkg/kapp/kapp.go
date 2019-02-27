@@ -94,7 +94,7 @@ func (k Kapp) CacheDir() string {
 func (k Kapp) GetIntrinsicData() map[string]string {
 	return map[string]string{
 		"id":        k.Id,
-		"State":     k.State,
+		"state":     k.State,
 		"cacheRoot": k.CacheDir(),
 	}
 }
