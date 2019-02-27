@@ -34,7 +34,19 @@ func TestNewAcquirerError(t *testing.T) {
 	assert.Nil(t, actual)
 }
 
-func TestNewGitAcquirer(t *testing.T) {
+func TestNewAcquirerFile(t *testing.T) {
+	var expectedAcquirer = &FileAcquirer{
+		id:  "test.txt",
+		uri: "file:///tmp/test.txt",
+	}
+
+	actual, err := newAcquirer(Source{Uri: "file:///tmp/test.txt"})
+	assert.Nil(t, err)
+	assert.Equal(t, expectedAcquirer, actual)
+	assert.Equal(t, "/tmp/test.txt", actual.Path())
+}
+
+func TestNewAcquirerGit(t *testing.T) {
 	var expectedAcquirer = &GitAcquirer{
 		id:            "tiller",
 		uri:           "git@github.com:sugarkube/kapps.git",
@@ -45,13 +57,14 @@ func TestNewGitAcquirer(t *testing.T) {
 
 	actual, err := newAcquirer(Source{
 		Id: "", Uri: GOOD_GIT_URI,
-		IncludeValues: true})
+		IncludeValues: true,
+	})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Fully-defined git acquirer incorrectly created")
 }
 
-func TestNewGitAcquirerExplicitId(t *testing.T) {
+func TestNewAcquirerGitExplicitId(t *testing.T) {
 	var expectedAcquirer = &GitAcquirer{
 		id:            "banana",
 		uri:           "git@github.com:sugarkube/kapps.git",
