@@ -244,7 +244,7 @@ func TestApplyingManifestOverrides(t *testing.T) {
 		}}, kappObj.Vars)
 
 	// make the kapp update itself based on overrides
-	err = kappObj.refresh()
+	err = kappObj.Refresh()
 	assert.Nil(t, err)
 
 	// but in the stack config file, the state is overridden to absent

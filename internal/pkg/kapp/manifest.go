@@ -61,9 +61,6 @@ func (m *Manifest) ParsedKapps() []Kapp {
 	// loading the a manifest
 	for i, unparsedKapp := range m.UnparsedKapps {
 		unparsedKapp.manifest = m
-		// todo - uncomment this and propagate errors. We may actually want to keep a copy of the unparsed kapps
-		// so we can continue to run `refresh` to merge overrides/variables from dynamic sources
-		//err := unparsedKapp.refresh()
 		m.UnparsedKapps[i] = unparsedKapp
 	}
 

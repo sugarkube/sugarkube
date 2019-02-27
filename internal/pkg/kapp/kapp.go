@@ -78,7 +78,7 @@ func (k Kapp) FullyQualifiedId() string {
 }
 
 // Updates the kapp's struct after merging any manifest overrides
-func (k *Kapp) refresh() error {
+func (k *Kapp) Refresh() error {
 	manifestOverrides, err := k.manifestOverrides()
 	if err != nil {
 		return errors.WithStack(err)

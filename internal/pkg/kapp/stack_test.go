@@ -65,7 +65,8 @@ func GetTestManifests() (Manifest, Manifest) {
 					},
 				},
 				"vars": map[interface{}]interface{}{
-					"sizeVar": "mediumOverridden",
+					"sizeVar":  "mediumOverridden",
+					"stackVar": "setInOverrides",
 				},
 			},
 		},
