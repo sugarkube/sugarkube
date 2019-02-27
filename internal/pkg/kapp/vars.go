@@ -60,10 +60,12 @@ func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 	}
 
 	kappIntrinsicData := kappObj.GetIntrinsicData()
-	kappVars, err := stackConfig.GetKappVars(kappObj)
+	kappVars, err := stackConfig.GetKappVarsFromFiles(kappObj)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	// todo - merge in kapp.Vars here and note the order of precedence
 
 	namespacedKappMap := map[string]interface{}{
 		"kapp": convert.MapStringStringToMapStringInterface(kappIntrinsicData),

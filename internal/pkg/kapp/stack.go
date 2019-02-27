@@ -300,7 +300,7 @@ func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 }
 
 // Merges YAML files that may contain values for the given kapp
-func (s *StackConfig) GetKappVars(kappObj *Kapp) (map[string]interface{}, error) {
+func (s *StackConfig) GetKappVarsFromFiles(kappObj *Kapp) (map[string]interface{}, error) {
 	dirs, err := s.findKappVarsFiles(kappObj)
 	if err != nil {
 		return nil, errors.WithStack(err)
