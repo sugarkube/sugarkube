@@ -51,7 +51,7 @@ func TestMergeVarsForKapp(t *testing.T) {
 		},
 		"kapp": map[interface{}]interface{}{
 			"id":        "kappA",
-			"state":     "present",
+			"state":     "absent",
 			"cacheRoot": "manifest1/kappA",
 			"vars": map[interface{}]interface{}{
 				"colours": []interface{}{
@@ -59,7 +59,8 @@ func TestMergeVarsForKapp(t *testing.T) {
 					"black",
 				},
 				"location": "kappFile",
-				"sizeVar":  "big",
+				"sizeVar":  "mediumOverridden",
+				"stackVar": "setInOverrides",
 			},
 		},
 	}

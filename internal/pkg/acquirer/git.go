@@ -92,8 +92,6 @@ func NewGitAcquirer(source Source) (*GitAcquirer, error) {
 
 	id := source.Id
 
-	log.Logger.Warnf("*** source.id='%s'", id)
-
 	if id == "" {
 		id = filepath.Base(path)
 	}

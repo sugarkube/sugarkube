@@ -61,6 +61,11 @@ func (m *Manifest) ParsedKapps() []Kapp {
 	// loading the a manifest
 	for i, unparsedKapp := range m.UnparsedKapps {
 		unparsedKapp.manifest = m
+		err := unparsedKapp.refresh()
+		if err != nil {
+			// todo - return this error after deciding how to deal with adding variables dynamically
+			log.Logger.Fatalf("Error refreshing kapp: %#v - Error was: %#v", unparsedKapp, err)
+		}
 		m.UnparsedKapps[i] = unparsedKapp
 	}
 
