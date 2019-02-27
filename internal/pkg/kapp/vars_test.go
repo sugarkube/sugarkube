@@ -52,9 +52,11 @@ func TestMergeVarsForKapp(t *testing.T) {
 			"id":        "kappA",
 			"state":     "present",
 			"cacheRoot": "manifest1/kappA",
-		},
-		"colours": []interface{}{
-			"green",
+			"vars": map[interface{}]interface{}{
+				"colours": []interface{}{
+					"green",
+				},
+			},
 		},
 	}
 
