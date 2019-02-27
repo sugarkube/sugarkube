@@ -5,9 +5,6 @@ standard:
   cluster: standard
   providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
   - ./stacks/
-#  manifests:
-#  - git@.../manifest1.yaml
-#  - git@.../manifest2.yaml
 
 large:
   provider: local
@@ -23,6 +20,8 @@ large:
   templateDirs:
   - templates1/
   - templates2/
+  kappVarsDirs:
+  - sample-kapp-vars/
 
 kops:
   provider: aws

@@ -160,6 +160,9 @@ func TestLoadStackConfig(t *testing.T) {
 			manifest1,
 			manifest2,
 		},
+		KappVarsDirs: []string{
+			"sample-kapp-vars/",
+		},
 	}
 
 	actual, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
@@ -236,7 +239,7 @@ func TestFindKappVarsFiles(t *testing.T) {
 	assert.Equal(t, expected, results)
 }
 
-func TestGetKappVars(t *testing.T) {
+func TestGetKappVarsFromFiles(t *testing.T) {
 
 	manifest1, manifest2 := GetTestManifests()
 
@@ -253,6 +256,7 @@ func TestGetKappVars(t *testing.T) {
 			"./stacks/",
 		},
 		KappVarsDirs: []string{
+			"./sample-kapp-vars",
 			"./sample-kapp-vars/kapp-vars/",
 			"./sample-kapp-vars/kapp-vars2/",
 		},
