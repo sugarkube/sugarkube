@@ -17,6 +17,7 @@
 package kapp
 
 import (
+	"bytes"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
@@ -104,10 +105,11 @@ func templateVars(vars map[string]interface{}) (map[string]interface{}, error) {
 	// maximum number of iterations whils templating variables
 	maxIterations := 20
 
+	var previousBytes []byte
 	var renderedYaml string
 
 	for i := 0; i < maxIterations; i++ {
-		log.Logger.Debugf("Templating variables. Iteration %d (of max %d)", i, maxIterations)
+		log.Logger.Debugf("Templating variables. Iteration %d of max %d", i, maxIterations)
 
 		// convert the input variables to YAML to simplify templating it
 		yamlData, err := yaml.Marshal(&vars)
@@ -121,14 +123,20 @@ func templateVars(vars map[string]interface{}) (map[string]interface{}, error) {
 		log.Logger.Debugf("Variables templated as:\n%s", renderedYaml)
 
 		// unmarshal the rendered template ready for another iteration
+		currentBytes := []byte(renderedYaml)
 		var renderedVars map[string]interface{}
-		err = yaml.UnmarshalStrict([]byte(renderedYaml), &renderedVars)
+		err = yaml.UnmarshalStrict(currentBytes, &renderedVars)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
-		// todo - optimise this loop by breaking if these are equal (so no more variables were interpolated)
 		vars = renderedVars
+		if previousBytes != nil && bytes.Equal(previousBytes, currentBytes) {
+			log.Logger.Debugf("Breaking out of templating variables after %d iterations", i)
+			break
+		}
+
+		previousBytes = currentBytes
 	}
 
 	return vars, nil

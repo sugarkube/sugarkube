@@ -48,7 +48,7 @@ func LoadYamlFile(path string, out interface{}) error {
 		return errors.Wrapf(err, "Error loading YAML file %s", path)
 	}
 
-	log.Logger.Debugf("YAML file: %#v", out)
+	log.Logger.Debugf("Loaded YAML file: %#v", out)
 
 	return nil
 }
