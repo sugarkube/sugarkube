@@ -130,6 +130,9 @@ func (c *varsConfig) run() error {
 
 	for _, kappObj := range candidateKapps {
 		mergedKappVars, err := kapp.MergeVarsForKapp(&kappObj, stackConfig, map[string]interface{}{})
+		if err != nil {
+			return errors.WithStack(err)
+		}
 
 		yamlData, err := yaml.Marshal(&mergedKappVars)
 		if err != nil {
