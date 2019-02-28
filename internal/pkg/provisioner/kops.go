@@ -35,6 +35,7 @@ import (
 )
 
 const KOPS_PROVISIONER_NAME = "kops"
+const KOPS_DEFAULT_BINARY = "kops"
 
 // number of seconds to timeout after while running kops commands (apart from updates)
 const KOPS_COMMAND_TIMEOUT_SECONDS = 30
@@ -494,8 +495,10 @@ func parseKopsConfig(stackConfig *kapp.StackConfig) (*KopsConfig, error) {
 	}
 
 	if kopsConfig.Binary == "" {
-		return nil, errors.New(fmt.Sprintf("You must set the name/path of the %s binary in a provisioner "+
-			"YAML block", KOPS_PROVISIONER_NAME))
+		kopsConfig.Binary = KOPS_DEFAULT_BINARY
+		log.Logger.Warnf("Using default %s binary '%s'. It's safer to explicitly set the path to a versioned "+
+			"binary (e.g. %s-1.2.3) in the provisioner configuration", KOPS_PROVISIONER_NAME, KOPS_DEFAULT_BINARY,
+			KOPS_DEFAULT_BINARY)
 	}
 
 	return &kopsConfig, nil

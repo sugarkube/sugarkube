@@ -18,7 +18,6 @@ package provisioner
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
@@ -29,6 +28,7 @@ import (
 )
 
 const MINIKUBE_PROVISIONER_NAME = "minikube"
+const MINIKUBE_DEFAULT_BINARY = "minikube"
 
 type MinikubeProvisioner struct {
 	clusterSot     clustersot.ClusterSot
@@ -154,8 +154,10 @@ func parseMinikubeConfig(stackConfig *kapp.StackConfig) (*MinikubeConfig, error)
 	}
 
 	if minikubeConfig.Binary == "" {
-		return nil, errors.New(fmt.Sprintf("You must set the name/path of the %s binary in a provisioner "+
-			"YAML block", MINIKUBE_PROVISIONER_NAME))
+		minikubeConfig.Binary = MINIKUBE_DEFAULT_BINARY
+		log.Logger.Warnf("Using default %s binary '%s'. It's safer to explicitly set the path to a versioned "+
+			"binary (e.g. %s-1.2.3) in the provisioner configuration", MINIKUBE_PROVISIONER_NAME, MINIKUBE_DEFAULT_BINARY,
+			MINIKUBE_DEFAULT_BINARY)
 	}
 
 	return &minikubeConfig, nil
