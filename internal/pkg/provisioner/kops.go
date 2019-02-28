@@ -475,7 +475,7 @@ func parseKopsConfig(stackConfig *kapp.StackConfig) (*KopsConfig, error) {
 	providerVars := stackConfig.GetProviderVars()
 	provisionerValues, ok := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
 	if !ok {
-		return nil, errors.New("No provisioner found in stack config. You must set the binary path.")
+		return nil, errors.New("No provisioner found in stack config. You must at least set the binary path.")
 	}
 	log.Logger.Debugf("Marshalling: %#v", provisionerValues)
 
@@ -491,6 +491,11 @@ func parseKopsConfig(stackConfig *kapp.StackConfig) (*KopsConfig, error) {
 	err = yaml.Unmarshal(byteData, &kopsConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
+	}
+
+	if kopsConfig.Binary == "" {
+		return nil, errors.New(fmt.Sprintf("You must set the name/path of the %s binary in a provisioner "+
+			"YAML block", KOPS_PROVISIONER_NAME))
 	}
 
 	return &kopsConfig, nil

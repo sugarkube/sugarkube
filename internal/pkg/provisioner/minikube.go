@@ -18,6 +18,7 @@ package provisioner
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
@@ -36,7 +37,7 @@ type MinikubeProvisioner struct {
 }
 
 type MinikubeConfig struct {
-	Binary string // todo - raise an error if this isn't passed in
+	Binary string
 	Params struct {
 		Global map[string]string
 		Start  map[string]string
@@ -150,6 +151,11 @@ func parseMinikubeConfig(stackConfig *kapp.StackConfig) (*MinikubeConfig, error)
 	err = yaml.Unmarshal(byteData, &minikubeConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
+	}
+
+	if minikubeConfig.Binary == "" {
+		return nil, errors.New(fmt.Sprintf("You must set the name/path of the %s binary in a provisioner "+
+			"YAML block", MINIKUBE_PROVISIONER_NAME))
 	}
 
 	return &minikubeConfig, nil
