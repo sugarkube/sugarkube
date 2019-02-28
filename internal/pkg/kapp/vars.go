@@ -88,6 +88,9 @@ func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 	}
 
 	templatedVars, err := templateVars(mergedVars)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 
 	yamlData, err := yaml.Marshal(&templatedVars)
 	if err != nil {
@@ -120,6 +123,9 @@ func templateVars(vars map[string]interface{}) (map[string]interface{}, error) {
 		log.Logger.Debugf("Vars to template as YAML:\n%s", yamlData)
 
 		renderedYaml, err = templater.RenderTemplate(string(yamlData[:]), vars)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
 		log.Logger.Debugf("Variables templated as:\n%s", renderedYaml)
 
 		// unmarshal the rendered template ready for another iteration
