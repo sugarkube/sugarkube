@@ -67,11 +67,19 @@ func (s *StackConfig) GetProviderVars() map[string]interface{} {
 	return s.providerVars
 }
 
-// Returns all manifests in the stack
-func (s *StackConfig) AllManifests() []Manifest {
-	allManifests := make([]Manifest, 0)
-	allManifests = append(allManifests, s.InitManifests...)
-	allManifests = append(allManifests, s.Manifests...)
+// Returns an array of pointers to all manifests in the stack. We need pointers so any modifications to the
+// manifests affect the underlying manifests/init manifests
+func (s *StackConfig) AllManifests() []*Manifest {
+	allManifests := make([]*Manifest, 0)
+
+	for i, _ := range s.InitManifests {
+		allManifests = append(allManifests, &s.InitManifests[i])
+	}
+
+	for i, _ := range s.Manifests {
+		allManifests = append(allManifests, &s.Manifests[i])
+	}
+
 	return allManifests
 }
 

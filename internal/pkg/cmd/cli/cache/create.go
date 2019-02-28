@@ -85,7 +85,7 @@ func (c *createCmd) run() error {
 
 	// todo - why is this here? why don't we always validate manifests?
 	for _, manifest := range stackConfig.AllManifests() {
-		err = kapp.ValidateManifest(&manifest)
+		err = kapp.ValidateManifest(manifest)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -107,7 +107,7 @@ func (c *createCmd) run() error {
 	}
 
 	for _, manifest := range stackConfig.AllManifests() {
-		err := cacher.CacheManifest(manifest, absCacheDir, c.dryRun)
+		err := cacher.CacheManifest(*manifest, absCacheDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

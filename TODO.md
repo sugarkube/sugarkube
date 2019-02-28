@@ -18,6 +18,8 @@
   with values supplied dynamically. We could add a flag to kapps.install: '--jit-templating' and 
   to enable this or keep the current behaviour. Variables are merged just before kapps are installed, so just 
   updating variables in various sources (e.g. 'Manifest.Overrides') should be enough to implement this behaviour. 
+  We could have kapps declare the name of a JSON file in their sugarkube.yaml file that should be merged with 
+  vars to allow them to dynamically update kapp vars. Or they could specify that stdout should be used, etc.
 * Add '--jit-templating' (or make that the default?) so that kapps can have their templates written with dynamic content.
 
 * Emit a warning for kapps without a branch specified, but ignore them and proceed anyway
