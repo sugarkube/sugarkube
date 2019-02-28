@@ -69,7 +69,7 @@ func (s *StackConfig) GetProviderVars() map[string]interface{} {
 
 // Returns all manifests in the stack
 func (s *StackConfig) AllManifests() []Manifest {
-	allManifests := make([]Manifest, len(s.Manifests)+len(s.InitManifests))
+	allManifests := make([]Manifest, 0)
 	allManifests = append(allManifests, s.InitManifests...)
 	allManifests = append(allManifests, s.Manifests...)
 	return allManifests
@@ -258,8 +258,6 @@ func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 			if err != nil {
 				return errors.WithStack(err)
 			}
-
-			log.Logger.Debugf("Visiting: %s", path)
 
 			if info.IsDir() {
 				if utils.InStringArray(validNames, info.Name()) || info.Name() == filepath.Base(searchPath) {
