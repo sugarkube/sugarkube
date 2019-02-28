@@ -35,7 +35,7 @@ func RenderTemplate(inputTemplate string, vars map[string]interface{}) (string, 
 	buf := bytes.NewBuffer(nil)
 	err := tpl.Execute(buf, vars)
 	if err != nil {
-		return "", errors.Wrapf(err, "Error executing template: %s", inputTemplate)
+		return "", errors.Wrapf(err, "Error executing template %s with vars %s", inputTemplate, vars)
 	}
 
 	return buf.String(), nil
