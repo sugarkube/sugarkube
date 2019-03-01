@@ -69,8 +69,6 @@ func initViper(appName string) *viper.Viper {
 func Load(viperConfig *viper.Viper) error {
 	var newConf *Conf
 
-	// todo - find a nice way of printing an informative error message instead of printing a stack trace which
-	// is what will happen if no config file can be found
 	err := viperConfig.ReadInConfig()
 	if err != nil {
 		return errors.Wrapf(err, "Error loading configuration")

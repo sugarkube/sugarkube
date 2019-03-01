@@ -32,9 +32,8 @@ type Acquirer interface {
 }
 
 type Source struct {
-	Id  string
-	Uri string
-	// todo - implement
+	Id            string
+	Uri           string
 	Options       map[string]interface{}
 	IncludeValues bool // todo - see if we actually need this
 }
@@ -64,29 +63,6 @@ func newAcquirer(source Source) (Acquirer, error) {
 func Acquire(a Acquirer, dest string) error {
 	return a.acquire(dest)
 }
-
-// Parse acquirers from a values map
-//func ParseAcquirers(acquirerMaps []map[interface{}]interface{}) ([]Acquirer, error) {
-//	acquirers := make([]Acquirer, 0)
-//	// now we have a list of sources, get the acquirer for each one
-//	for _, acquirerMap := range acquirerMaps {
-//		acquirerStringMap, err := convert.MapInterfaceInterfaceToMapStringString(acquirerMap)
-//		if err != nil {
-//			return nil, errors.WithStack(err)
-//		}
-//
-//		acquirerImpl, err := NewAcquirer(acquirerStringMap)
-//		if err != nil {
-//			return nil, errors.WithStack(err)
-//		}
-//
-//		log.Logger.Debugf("Got acquirer %#v", acquirerImpl)
-//
-//		acquirers = append(acquirers, acquirerImpl)
-//	}
-//
-//	return acquirers, nil
-//}
 
 // Takes a list of Sources and returns a list of instantiated acquirers that represent them
 func GetAcquirersFromSources(sources []Source) ([]Acquirer, error) {

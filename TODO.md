@@ -24,7 +24,6 @@
   after adding additional variables dynamically.
 * Add '--jit-templating' (or make that the default?) so that kapps can have their templates written with dynamic content.
 
-* Don't bomb out if there's no config file
 * Don't always display usage if an error is thrown
 * Implement deletion to tear down a stack
 * Fix failing integration test

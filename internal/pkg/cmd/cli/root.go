@@ -17,7 +17,10 @@
 package cli
 
 import (
+	"fmt"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cache"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
@@ -127,7 +130,13 @@ func init() {
 	cobra.OnInitialize(func() {
 		err := config.Load(config.ViperConfig)
 		if err != nil {
-			log.Logger.Fatalf("Error loading config: %+v", err)
+			cause := errors.Cause(err)
+			if _, ok := cause.(viper.ConfigFileNotFoundError); ok {
+				fmt.Fprintf(os.Stderr, "%s\n", cause.Error())
+				log.Logger.Fatalf("No config file found. Aborting.")
+			} else {
+				log.Logger.Fatalf("Error loading config: %+v", err)
+			}
 		}
 
 		// reconfigure the logger based on CLI args
