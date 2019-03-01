@@ -89,13 +89,15 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 			}
 		}
 
-		tranche := Tranche{
-			manifest:     *manifest,
-			installables: installables,
-			destroyables: destroyables,
-		}
+		if len(installables) > 0 || len(destroyables) > 0 {
+			tranche := Tranche{
+				manifest:     *manifest,
+				installables: installables,
+				destroyables: destroyables,
+			}
 
-		tranches = append(tranches, tranche)
+			tranches = append(tranches, tranche)
+		}
 	}
 
 	plan := Plan{
