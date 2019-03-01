@@ -32,6 +32,8 @@ import (
 	"strings"
 )
 
+const WILDCARD_CHARACTER = "*"
+
 type templateConfig struct {
 	out         io.Writer
 	dryRun      bool
@@ -82,8 +84,12 @@ configured for the region the target cluster is in, generating Helm
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	f.StringArrayVarP(&c.includeKapps, "include", "i", []string{}, "only process specified kapps (can specify multiple, formatted manifest-id:kapp-id)")
-	f.StringArrayVarP(&c.excludeKapps, "exclude", "x", []string{}, "exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id)")
+	f.StringArrayVarP(&c.includeKapps, "include", "i", []string{},
+		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
+			WILDCARD_CHARACTER))
+	f.StringArrayVarP(&c.excludeKapps, "exclude", "x", []string{},
+		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
+			WILDCARD_CHARACTER))
 	// these are commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
 	//f.VarP(&c.kappVarsDirs, "dir", "f", "Paths to YAML directory to load kapp values from (can specify multiple)")
 	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple but will replace any configured in a stack)")
@@ -205,15 +211,16 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 }
 
 // Returns kapps from a stack config by fully-qualified ID, i.e. `manifest-id:kapp-id`
-func getKappsByFullyQualifiedId(kapps []string, stackConfig *kapp.StackConfig) (map[string]kapp.Kapp, error) {
+func getKappsByFullyQualifiedId(kappSelectors []string, stackConfig *kapp.StackConfig) (map[string]kapp.Kapp, error) {
 	results := map[string]kapp.Kapp{}
 
-	for _, fqKappId := range kapps {
-		splitKappId := strings.Split(fqKappId, ":")
+	for _, kappSelector := range kappSelectors {
+		splitKappId := strings.Split(kappSelector, ":")
 
 		if len(splitKappId) != 2 {
-			return nil, errors.New("Fully-qualified kapps must be given, i.e. " +
-				"formatted 'manifest-id:kapp-id'")
+			return nil, errors.New(fmt.Sprintf("Fully-qualified kapps must be given, i.e. "+
+				"formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all kapps in a manifest",
+				WILDCARD_CHARACTER))
 		}
 
 		manifestId := splitKappId[0]
@@ -225,8 +232,9 @@ func getKappsByFullyQualifiedId(kapps []string, stackConfig *kapp.StackConfig) (
 			}
 
 			for _, manifestKapp := range manifest.ParsedKapps() {
-				if manifestKapp.Id == kappId {
-					results[fqKappId] = manifestKapp
+				if kappId == WILDCARD_CHARACTER || manifestKapp.Id == kappId {
+					kappFqId := manifestKapp.FullyQualifiedId()
+					results[kappFqId] = manifestKapp
 				}
 			}
 		}

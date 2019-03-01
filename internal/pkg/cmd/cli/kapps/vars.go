@@ -56,8 +56,12 @@ specific kapp will be displayed. If not, all generally avaialble variables for t
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	f.StringArrayVarP(&c.includeKapps, "include", "i", []string{}, "only process specified kapps (can specify multiple, formatted manifest-id:kapp-id)")
-	f.StringArrayVarP(&c.excludeKapps, "exclude", "x", []string{}, "exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id)")
+	f.StringArrayVarP(&c.includeKapps, "include", "i", []string{},
+		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
+			WILDCARD_CHARACTER))
+	f.StringArrayVarP(&c.excludeKapps, "exclude", "x", []string{},
+		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
+			WILDCARD_CHARACTER))
 	// these are commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
 	//f.VarP(&c.kappVarsDirs, "dir", "f", "Paths to YAML directory to load kapp values from (can specify multiple)")
 	return cmd
