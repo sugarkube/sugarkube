@@ -141,7 +141,7 @@ func (c *varsConfig) run() error {
 
 		_, err = fmt.Fprintf(c.out, "\n***** Start variables for kapp '%s' *****\n"+
 			"%s***** End variables for kapp '%s' *****\n",
-			kappObj.Id, yamlData, kappObj.Id)
+			kappObj.FullyQualifiedId(), yamlData, kappObj.FullyQualifiedId())
 		if err != nil {
 			return errors.WithStack(err)
 		}

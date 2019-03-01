@@ -259,8 +259,8 @@ func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 			return nil, errors.WithStack(err)
 		}
 
-		log.Logger.Debugf("Searching for files/dirs under '%s' with basenames: %s",
-			searchPath, strings.Join(validNames, ", "))
+		log.Logger.Infof("Searching for files/dirs for kapp '%s' under '%s' with basenames: %s",
+			kappObj.FullyQualifiedId(), searchPath, strings.Join(validNames, ", "))
 
 		err = filepath.Walk(searchPath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
