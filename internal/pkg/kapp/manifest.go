@@ -25,6 +25,8 @@ import (
 	"strings"
 )
 
+const WILDCARD_CHARACTER = "*"
+
 type ManifestOptions struct {
 	Parallelisation uint16
 }
@@ -129,4 +131,37 @@ func ValidateManifest(manifest *Manifest) error {
 	}
 
 	return nil
+}
+
+// Returns kapps from a stack config by fully-qualified ID, i.e. `manifest-id:kapp-id`
+func GetKappsByFullyQualifiedId(kappSelectors []string, manifests []*Manifest) (map[string]Kapp, error) {
+	results := map[string]Kapp{}
+
+	for _, kappSelector := range kappSelectors {
+		splitKappId := strings.Split(kappSelector, ":")
+
+		if len(splitKappId) != 2 {
+			return nil, errors.New(fmt.Sprintf("Fully-qualified kapps must be given, i.e. "+
+				"formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all kapps in a manifest",
+				WILDCARD_CHARACTER))
+		}
+
+		manifestId := splitKappId[0]
+		kappId := splitKappId[1]
+
+		for _, manifest := range manifests {
+			if manifestId != manifest.Id() {
+				continue
+			}
+
+			for _, manifestKapp := range manifest.ParsedKapps() {
+				if kappId == WILDCARD_CHARACTER || manifestKapp.Id == kappId {
+					kappFqId := manifestKapp.FullyQualifiedId()
+					results[kappFqId] = manifestKapp
+				}
+			}
+		}
+	}
+
+	return results, nil
 }

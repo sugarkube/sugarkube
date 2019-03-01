@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
-	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
 	"io"
 )
@@ -58,12 +57,10 @@ specific kapp will be displayed. If not, all generally avaialble variables for t
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
 	f.StringArrayVarP(&c.includeKapps, "include", "i", []string{},
 		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			WILDCARD_CHARACTER))
+			kapp.WILDCARD_CHARACTER))
 	f.StringArrayVarP(&c.excludeKapps, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			WILDCARD_CHARACTER))
-	// these are commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
-	//f.VarP(&c.kappVarsDirs, "dir", "f", "Paths to YAML directory to load kapp values from (can specify multiple)")
+			kapp.WILDCARD_CHARACTER))
 	return cmd
 }
 
@@ -77,7 +74,6 @@ func (c *varsConfig) run() error {
 		Cluster:     c.cluster,
 		Region:      c.region,
 		Account:     c.account,
-		//KappVarsDirs: c.kappVarsDirs,
 	}
 
 	stackConfig, err := utils.BuildStackConfig(c.stackName, c.stackFile, cliStackConfig, c.out)
@@ -85,54 +81,17 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	candidateKapps := map[string]kapp.Kapp{}
-
-	if len(c.includeKapps) > 0 {
-		log.Logger.Debugf("Adding %d kapps to the candidate template set", len(c.includeKapps))
-		candidateKapps, err = getKappsByFullyQualifiedId(c.includeKapps, stackConfig)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-	} else {
-		log.Logger.Debugf("Adding all kapps to the candidate template set")
-
-		log.Logger.Debugf("Stack config has %d manifests", len(stackConfig.AllManifests()))
-
-		// select all kapps
-		for _, manifest := range stackConfig.AllManifests() {
-			log.Logger.Debugf("Manifest '%s' contains %d kapps", manifest.Id(), len(manifest.ParsedKapps()))
-
-			for _, manifestKapp := range manifest.ParsedKapps() {
-				candidateKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
-			}
-		}
-	}
-
-	log.Logger.Debugf("There are %d candidate kapps for templating (before applying exclusions)",
-		len(candidateKapps))
-
-	if len(c.excludeKapps) > 0 {
-		// delete kapps
-		excludedKapps, err := getKappsByFullyQualifiedId(c.excludeKapps, stackConfig)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		log.Logger.Debugf("Excluding %d kapps from the templating set", len(excludedKapps))
-
-		for k := range excludedKapps {
-			if _, ok := candidateKapps[k]; ok {
-				delete(candidateKapps, k)
-			}
-		}
-	}
-
-	_, err = fmt.Fprintf(c.out, "Displaying variables for %d kapps:\n", len(candidateKapps))
+	selectedKapps, err := utils.SelectKapps(stackConfig.AllManifests(), c.includeKapps, c.excludeKapps)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	for _, kappObj := range candidateKapps {
+	_, err = fmt.Fprintf(c.out, "Displaying variables for %d kapps:\n", len(selectedKapps))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	for _, kappObj := range selectedKapps {
 		mergedKappVars, err := kapp.MergeVarsForKapp(&kappObj, stackConfig, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)

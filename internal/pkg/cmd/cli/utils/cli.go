@@ -107,3 +107,51 @@ func LoadStackConfig(stackName string, stackFile string) (*kapp.StackConfig, err
 
 	return stackConfig, nil
 }
+
+// Return kapps selected by inclusion/exclusion selectors from the given manifests
+func SelectKapps(manifests []*kapp.Manifest, includeKapps []string, excludeKapps []string) (map[string]kapp.Kapp, error) {
+	selectedKapps := map[string]kapp.Kapp{}
+	var err error
+
+	if len(includeKapps) > 0 {
+		log.Logger.Debugf("Adding %d kapps to the candidate template set", len(includeKapps))
+		selectedKapps, err = kapp.GetKappsByFullyQualifiedId(includeKapps, manifests)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	} else {
+		log.Logger.Debugf("Adding all kapps to the candidate template set")
+
+		log.Logger.Debugf("Stack config has %d manifests", len(manifests))
+
+		// select all kapps
+		for _, manifest := range manifests {
+			log.Logger.Debugf("Manifest '%s' contains %d kapps", manifest.Id(), len(manifest.ParsedKapps()))
+
+			for _, manifestKapp := range manifest.ParsedKapps() {
+				selectedKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
+			}
+		}
+	}
+
+	log.Logger.Debugf("There are %d candidate kapps for templating (before applying exclusions)",
+		len(selectedKapps))
+
+	if len(excludeKapps) > 0 {
+		// delete kapps
+		excludedKapps, err := kapp.GetKappsByFullyQualifiedId(excludeKapps, manifests)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		log.Logger.Debugf("Excluding %d kapps from the templating set", len(excludedKapps))
+
+		for k := range excludedKapps {
+			if _, ok := selectedKapps[k]; ok {
+				delete(selectedKapps, k)
+			}
+		}
+	}
+
+	return selectedKapps, nil
+}

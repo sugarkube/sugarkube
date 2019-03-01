@@ -32,22 +32,18 @@ import (
 	"strings"
 )
 
-const WILDCARD_CHARACTER = "*"
-
 type templateConfig struct {
-	out         io.Writer
-	dryRun      bool
-	cacheDir    string
-	stackName   string
-	stackFile   string
-	provider    string
-	provisioner string
-	//kappVarsDirs cmd.Files
-	profile string
-	account string
-	cluster string
-	region  string
-	//manifests    cmd.Files
+	out          io.Writer
+	dryRun       bool
+	cacheDir     string
+	stackName    string
+	stackFile    string
+	provider     string
+	provisioner  string
+	profile      string
+	account      string
+	cluster      string
+	region       string
 	includeKapps []string
 	excludeKapps []string
 }
@@ -86,13 +82,10 @@ configured for the region the target cluster is in, generating Helm
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
 	f.StringArrayVarP(&c.includeKapps, "include", "i", []string{},
 		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			WILDCARD_CHARACTER))
+			kapp.WILDCARD_CHARACTER))
 	f.StringArrayVarP(&c.excludeKapps, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			WILDCARD_CHARACTER))
-	// these are commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
-	//f.VarP(&c.kappVarsDirs, "dir", "f", "Paths to YAML directory to load kapp values from (can specify multiple)")
-	//f.VarP(&c.manifests, "manifest", "m", "YAML manifest file to load (can specify multiple but will replace any configured in a stack)")
+			kapp.WILDCARD_CHARACTER))
 	return cmd
 }
 
@@ -106,8 +99,6 @@ func (c *templateConfig) run() error {
 		Cluster:     c.cluster,
 		Region:      c.region,
 		Account:     c.account,
-		//KappVarsDirs: c.kappVarsDirs,
-		//Manifests:    cliManifests,
 	}
 
 	stackConfig, err := utils.BuildStackConfig(c.stackName, c.stackFile, cliStackConfig, c.out)
@@ -115,54 +106,17 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	candidateKapps := map[string]kapp.Kapp{}
-
-	if len(c.includeKapps) > 0 {
-		log.Logger.Debugf("Adding %d kapps to the candidate template set", len(c.includeKapps))
-		candidateKapps, err = getKappsByFullyQualifiedId(c.includeKapps, stackConfig)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-	} else {
-		log.Logger.Debugf("Adding all kapps to the candidate template set")
-
-		log.Logger.Debugf("Stack config has %d manifests", len(stackConfig.AllManifests()))
-
-		// select all kapps
-		for _, manifest := range stackConfig.AllManifests() {
-			log.Logger.Debugf("Manifest '%s' contains %d kapps", manifest.Id(), len(manifest.ParsedKapps()))
-
-			for _, manifestKapp := range manifest.ParsedKapps() {
-				candidateKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
-			}
-		}
-	}
-
-	log.Logger.Debugf("There are %d candidate kapps for templating (before applying exclusions)",
-		len(candidateKapps))
-
-	if len(c.excludeKapps) > 0 {
-		// delete kapps
-		excludedKapps, err := getKappsByFullyQualifiedId(c.excludeKapps, stackConfig)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		log.Logger.Debugf("Excluding %d kapps from the templating set", len(excludedKapps))
-
-		for k := range excludedKapps {
-			if _, ok := candidateKapps[k]; ok {
-				delete(candidateKapps, k)
-			}
-		}
-	}
-
-	_, err = fmt.Fprintf(c.out, "Rendering templates for %d kapps\n", len(candidateKapps))
+	selectedKapps, err := utils.SelectKapps(stackConfig.AllManifests(), c.includeKapps, c.excludeKapps)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = RenderTemplates(candidateKapps, c.cacheDir, stackConfig, c.dryRun)
+	_, err = fmt.Fprintf(c.out, "Rendering templates for %d kapps\n", len(selectedKapps))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	err = RenderTemplates(selectedKapps, c.cacheDir, stackConfig, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -208,39 +162,6 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 	}
 
 	return nil
-}
-
-// Returns kapps from a stack config by fully-qualified ID, i.e. `manifest-id:kapp-id`
-func getKappsByFullyQualifiedId(kappSelectors []string, stackConfig *kapp.StackConfig) (map[string]kapp.Kapp, error) {
-	results := map[string]kapp.Kapp{}
-
-	for _, kappSelector := range kappSelectors {
-		splitKappId := strings.Split(kappSelector, ":")
-
-		if len(splitKappId) != 2 {
-			return nil, errors.New(fmt.Sprintf("Fully-qualified kapps must be given, i.e. "+
-				"formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all kapps in a manifest",
-				WILDCARD_CHARACTER))
-		}
-
-		manifestId := splitKappId[0]
-		kappId := splitKappId[1]
-
-		for _, manifest := range stackConfig.AllManifests() {
-			if manifestId != manifest.Id() {
-				continue
-			}
-
-			for _, manifestKapp := range manifest.ParsedKapps() {
-				if kappId == WILDCARD_CHARACTER || manifestKapp.Id == kappId {
-					kappFqId := manifestKapp.FullyQualifiedId()
-					results[kappFqId] = manifestKapp
-				}
-			}
-		}
-	}
-
-	return results, nil
 }
 
 // Render templates for an individual kapp
