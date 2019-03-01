@@ -20,15 +20,17 @@
   updating variables in various sources (e.g. 'Manifest.Overrides') should be enough to implement this behaviour. 
   We could have kapps declare the name of a JSON file in their sugarkube.yaml file that should be merged with 
   vars to allow them to dynamically update kapp vars. Or they could specify that stdout should be used, etc.
+* Add an action (defined in a kapp's sugarkube.yaml file) to indicate the cluster should be updated. This could run
+  after adding additional variables dynamically.
 * Add '--jit-templating' (or make that the default?) so that kapps can have their templates written with dynamic content.
 
-* Emit a warning for kapps without a branch specified, but ignore them and proceed anyway
-* Allow filtering kapps to apply/install
 * Don't bomb out if there's no config file
 * Don't always display usage if an error is thrown
 * Implement deletion to tear down a stack
-* Run automated scanning to check where errors aren't handled correctly
 * Fix failing integration test
+
+* Fork go-yaml, set a large value for `emitter.best_width` in emitterc.go to much larger than the default 80. 
+  Depend on it instead (see https://stackoverflow.com/questions/49475290/go-dep-and-forks-of-libraries)
 
 ## Other things to consider
 * Is being focussed on clusters a mistake? 

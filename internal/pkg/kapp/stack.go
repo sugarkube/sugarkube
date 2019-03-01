@@ -49,8 +49,8 @@ type StackConfig struct {
 	ProviderVarsDirs []string               `yaml:"providerVarsDirs"`
 	providerVars     map[string]interface{} // set after loading and merging all provider vars files
 	KappVarsDirs     []string               `yaml:"kappVarsDirs"`
-	InitManifests    []Manifest             `yaml:"initManifests"`
-	Manifests        []Manifest
+	InitManifests    []*Manifest            `yaml:"initManifests"`
+	Manifests        []*Manifest
 	TemplateDirs     []string `yaml:"templateDirs"`
 	Status           ClusterStatus
 	OnlineTimeout    uint32
@@ -71,15 +71,8 @@ func (s *StackConfig) GetProviderVars() map[string]interface{} {
 // manifests affect the underlying manifests/init manifests
 func (s *StackConfig) AllManifests() []*Manifest {
 	allManifests := make([]*Manifest, 0)
-
-	for i, _ := range s.InitManifests {
-		allManifests = append(allManifests, &s.InitManifests[i])
-	}
-
-	for i, _ := range s.Manifests {
-		allManifests = append(allManifests, &s.Manifests[i])
-	}
-
+	allManifests = append(allManifests, s.InitManifests...)
+	allManifests = append(allManifests, s.Manifests...)
 	return allManifests
 }
 
@@ -172,7 +165,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 		parsedInitManifest.ConfiguredId = initManifest.ConfiguredId
 		parsedInitManifest.Overrides = initManifest.Overrides
 
-		stack.InitManifests[i] = *parsedInitManifest
+		stack.InitManifests[i] = parsedInitManifest
 	}
 
 	log.Logger.Info("Parsing manifests...")
@@ -196,7 +189,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 		parsedManifest.ConfiguredId = manifest.ConfiguredId
 		parsedManifest.Overrides = manifest.Overrides
 
-		stack.Manifests[i] = *parsedManifest
+		stack.Manifests[i] = parsedManifest
 	}
 
 	return &stack, nil

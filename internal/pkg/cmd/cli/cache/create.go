@@ -62,7 +62,7 @@ templates defined by kapps.`,
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
+	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVar(&c.skipTemplating, "skip-templating", false, "don't render templates for kapps")
 
 	return cmd

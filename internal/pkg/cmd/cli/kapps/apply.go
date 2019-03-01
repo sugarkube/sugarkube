@@ -22,31 +22,30 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"io"
 )
 
 type applyCmd struct {
-	out           io.Writer
-	diffPath      string
-	cacheDir      string
-	dryRun        bool
-	approved      bool
-	oneShot       bool
-	force         bool
-	initManifests bool
-	stackName     string
-	stackFile     string
-	provider      string
-	provisioner   string
-	//kappVarsDirs cmd.Files
-	profile string
-	account string
-	cluster string
-	region  string
-	// todo - add options to :
-	// * filter the kapps to be processed (use strings like e.g. manifest:kapp-id to refer to kapps)
-	// * exclude manifests / kapps from being processed
+	out             io.Writer
+	diffPath        string
+	cacheDir        string
+	dryRun          bool
+	approved        bool
+	oneShot         bool
+	force           bool
+	initManifests   bool
+	stackName       string
+	stackFile       string
+	provider        string
+	provisioner     string
+	profile         string
+	account         string
+	cluster         string
+	region          string
+	includeSelector []string
+	excludeSelector []string
 }
 
 func newApplyCmd(out io.Writer) *cobra.Command {
@@ -72,7 +71,7 @@ func newApplyCmd(out io.Writer) *cobra.Command {
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
+	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVar(&c.approved, "approved", false, "actually apply a cluster diff to install/destroy kapps. If false, kapps "+
 		"will be expected to plan their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not "+
 		"apply it).")
@@ -80,7 +79,7 @@ func newApplyCmd(out io.Writer) *cobra.Command {
 		"'APPROVED=false' then 'APPROVED=true' to install/destroy kapps in a single invocation of sugarkube")
 	f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/destroy all the kapps "+
 		"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
-	f.BoolVarP(&c.initManifests, "init-manifests", "i", false, "only apply init manifests. If false (default) only apply normal manifests.")
+	f.BoolVar(&c.initManifests, "init", false, "only apply init manifests. If false (default) only apply normal manifests.")
 	f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to apply. If not given, a "+
 		"diff will be generated")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
@@ -89,8 +88,12 @@ func newApplyCmd(out io.Writer) *cobra.Command {
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	// these are commented for now to keep things simple, but ultimately we should probably support taking these as CLI args
-	//f.VarP(&c.kappVarsDirs, "dir", "f", "Paths to YAML directory to load kapp values from (can specify multiple)")
+	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
+		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
+			kapp.WILDCARD_CHARACTER))
+	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
+		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
+			kapp.WILDCARD_CHARACTER))
 	return cmd
 }
 
@@ -104,12 +107,21 @@ func (c *applyCmd) run() error {
 		Cluster:     c.cluster,
 		Region:      c.region,
 		Account:     c.account,
-		//KappVarsDirs: c.kappVarsDirs,
 	}
 
 	stackConfig, err := utils.BuildStackConfig(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
+	}
+
+	var manifests []*kapp.Manifest
+
+	if c.initManifests {
+		manifests = stackConfig.InitManifests
+		log.Logger.Debugf("Creating a plan just for init manifests")
+	} else {
+		manifests = stackConfig.Manifests
+		log.Logger.Debugf("Creating a plan just for normal manifests")
 	}
 
 	var actionPlan *plan.Plan
@@ -153,7 +165,7 @@ func (c *applyCmd) run() error {
 		}
 
 		// force mode, so no need to perform validation. Just create a plan
-		actionPlan, err = plan.Create(stackConfig, c.cacheDir, c.initManifests)
+		actionPlan, err = plan.Create(stackConfig, manifests, c.cacheDir, c.includeSelector, c.excludeSelector)
 		if err != nil {
 			return errors.WithStack(err)
 		}

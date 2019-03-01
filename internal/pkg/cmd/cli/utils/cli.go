@@ -109,16 +109,16 @@ func LoadStackConfig(stackName string, stackFile string) (*kapp.StackConfig, err
 }
 
 // Return kapps selected by inclusion/exclusion selectors from the given manifests
-func SelectKapps(manifests []*kapp.Manifest, includeKapps []string, excludeKapps []string) (map[string]kapp.Kapp, error) {
+func SelectKapps(manifests []*kapp.Manifest, includeSelector []string, excludeSelector []string) (map[string]kapp.Kapp, error) {
 	selectedKapps := map[string]kapp.Kapp{}
 	var err error
 
-	if len(includeKapps) > 0 {
-		log.Logger.Debugf("Adding %d kapps to the candidate template set", len(includeKapps))
-		selectedKapps, err = kapp.GetKappsByFullyQualifiedId(includeKapps, manifests)
+	if len(includeSelector) > 0 {
+		selectedKapps, err = kapp.GetKappsBySelector(includeSelector, manifests)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
+		log.Logger.Debugf("Adding %d kapps to the candidate template set", len(selectedKapps))
 	} else {
 		log.Logger.Debugf("Adding all kapps to the candidate template set")
 
@@ -134,12 +134,11 @@ func SelectKapps(manifests []*kapp.Manifest, includeKapps []string, excludeKapps
 		}
 	}
 
-	log.Logger.Debugf("There are %d candidate kapps for templating (before applying exclusions)",
-		len(selectedKapps))
+	log.Logger.Debugf("There are %d candidate kapps (before applying exclusions)", len(selectedKapps))
 
-	if len(excludeKapps) > 0 {
+	if len(excludeSelector) > 0 {
 		// delete kapps
-		excludedKapps, err := kapp.GetKappsByFullyQualifiedId(excludeKapps, manifests)
+		excludedKapps, err := kapp.GetKappsBySelector(excludeSelector, manifests)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -152,6 +151,8 @@ func SelectKapps(manifests []*kapp.Manifest, includeKapps []string, excludeKapps
 			}
 		}
 	}
+
+	log.Logger.Infof("%d kapps selected for processing in total", len(selectedKapps))
 
 	return selectedKapps, nil
 }

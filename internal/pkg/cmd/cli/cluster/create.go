@@ -79,7 +79,7 @@ Note: Not all providers require all arguments. See documentation for help.
 	}
 
 	f := command.Flags()
-	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
+	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")

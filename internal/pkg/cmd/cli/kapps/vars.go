@@ -18,12 +18,12 @@ type varsConfig struct {
 	provider    string
 	provisioner string
 	//kappVarsDirs cmd.Files
-	profile      string
-	account      string
-	cluster      string
-	region       string
-	includeKapps []string
-	excludeKapps []string
+	profile         string
+	account         string
+	cluster         string
+	region          string
+	includeSelector []string
+	excludeSelector []string
 }
 
 func newVarsCmd(out io.Writer) *cobra.Command {
@@ -55,10 +55,10 @@ specific kapp will be displayed. If not, all generally avaialble variables for t
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	f.StringArrayVarP(&c.includeKapps, "include", "i", []string{},
+	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
 		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
 			kapp.WILDCARD_CHARACTER))
-	f.StringArrayVarP(&c.excludeKapps, "exclude", "x", []string{},
+	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
 			kapp.WILDCARD_CHARACTER))
 	return cmd
@@ -81,7 +81,7 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := utils.SelectKapps(stackConfig.AllManifests(), c.includeKapps, c.excludeKapps)
+	selectedKapps, err := utils.SelectKapps(stackConfig.AllManifests(), c.includeSelector, c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}

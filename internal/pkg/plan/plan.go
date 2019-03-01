@@ -19,6 +19,7 @@ package plan
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -61,25 +62,23 @@ type job struct {
 // create a plan containing all kapps in the stackConfig, then filter out the
 // ones that don't need running based on the current state of the target cluster
 // as described by SOTs
-func Create(stackConfig *kapp.StackConfig, cacheDir string, initManifests bool) (*Plan, error) {
+func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir string, includeSelector []string,
+	excludeSelector []string) (*Plan, error) {
 
 	tranches := make([]Tranche, 0)
 
-	var manifests []kapp.Manifest
-
-	if initManifests {
-		manifests = stackConfig.InitManifests
-		log.Logger.Debugf("Creating a plan just for init manifests")
-	} else {
-		manifests = stackConfig.Manifests
-		log.Logger.Debugf("Creating a plan just for normal manifests")
-	}
-
+	// ordering is significant when creating a plan, so we need to iterate over each manifest, select the required
+	// kapps, then create a tranche
 	for _, manifest := range manifests {
 		installables := make([]kapp.Kapp, 0)
 		destroyables := make([]kapp.Kapp, 0)
 
-		for _, manifestKapp := range manifest.ParsedKapps() {
+		selectedKapps, err := utils.SelectKapps([]*kapp.Manifest{manifest}, includeSelector, excludeSelector)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		for _, manifestKapp := range selectedKapps {
 			if manifestKapp.State == kapp.PRESENT_KEY {
 				installables = append(installables, manifestKapp)
 			} else if manifestKapp.State == kapp.ABSENT_KEY {
@@ -92,7 +91,7 @@ func Create(stackConfig *kapp.StackConfig, cacheDir string, initManifests bool) 
 		}
 
 		tranche := Tranche{
-			manifest:     manifest,
+			manifest:     *manifest,
 			installables: installables,
 			destroyables: destroyables,
 		}

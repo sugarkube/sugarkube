@@ -50,7 +50,7 @@ func TestLoadStackConfigDir(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func GetTestManifests() (Manifest, Manifest) {
+func GetTestManifests() (*Manifest, *Manifest) {
 	manifest1 := Manifest{
 		ConfiguredId: "",
 		Uri:          "../../testdata/manifests/manifest1.yaml",
@@ -151,7 +151,7 @@ func GetTestManifests() (Manifest, Manifest) {
 
 	manifest2.UnparsedKapps = manifest2UnparsedKapps
 
-	return manifest1, manifest2
+	return &manifest1, &manifest2
 }
 
 func TestLoadStackConfig(t *testing.T) {
@@ -172,7 +172,7 @@ func TestLoadStackConfig(t *testing.T) {
 			"templates1/",
 			"templates2/",
 		},
-		Manifests: []Manifest{
+		Manifests: []*Manifest{
 			manifest1,
 			manifest2,
 		},
@@ -235,7 +235,7 @@ func TestFindKappVarsFiles(t *testing.T) {
 			"./sample-kapp-vars/kapp-vars/",
 			"./sample-kapp-vars/kapp-vars2/",
 		},
-		Manifests: []Manifest{
+		Manifests: []*Manifest{
 			manifest1,
 			manifest2,
 		},
@@ -276,7 +276,7 @@ func TestGetKappVarsFromFiles(t *testing.T) {
 			"./sample-kapp-vars/kapp-vars/",
 			"./sample-kapp-vars/kapp-vars2/",
 		},
-		Manifests: []Manifest{
+		Manifests: []*Manifest{
 			manifest1,
 			manifest2,
 		},
@@ -303,7 +303,7 @@ regionOverride: region-val-override
 
 func TestAllManifests(t *testing.T) {
 	stackConfig := StackConfig{
-		InitManifests: []Manifest{
+		InitManifests: []*Manifest{
 			{
 				UnparsedKapps: []Kapp{
 					{
@@ -312,7 +312,7 @@ func TestAllManifests(t *testing.T) {
 				},
 			},
 		},
-		Manifests: []Manifest{
+		Manifests: []*Manifest{
 			{
 				UnparsedKapps: []Kapp{
 					{

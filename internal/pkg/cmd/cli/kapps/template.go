@@ -33,19 +33,19 @@ import (
 )
 
 type templateConfig struct {
-	out          io.Writer
-	dryRun       bool
-	cacheDir     string
-	stackName    string
-	stackFile    string
-	provider     string
-	provisioner  string
-	profile      string
-	account      string
-	cluster      string
-	region       string
-	includeKapps []string
-	excludeKapps []string
+	out             io.Writer
+	dryRun          bool
+	cacheDir        string
+	stackName       string
+	stackFile       string
+	provider        string
+	provisioner     string
+	profile         string
+	account         string
+	cluster         string
+	region          string
+	includeSelector []string
+	excludeSelector []string
 }
 
 func newTemplateCmd(out io.Writer) *cobra.Command {
@@ -73,17 +73,17 @@ configured for the region the target cluster is in, generating Helm
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&c.dryRun, "dry-run", false, "show what would happen but don't create a cluster")
+	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	f.StringArrayVarP(&c.includeKapps, "include", "i", []string{},
+	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
 		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
 			kapp.WILDCARD_CHARACTER))
-	f.StringArrayVarP(&c.excludeKapps, "exclude", "x", []string{},
+	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
 			kapp.WILDCARD_CHARACTER))
 	return cmd
@@ -106,7 +106,7 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := utils.SelectKapps(stackConfig.AllManifests(), c.includeKapps, c.excludeKapps)
+	selectedKapps, err := utils.SelectKapps(stackConfig.AllManifests(), c.includeSelector, c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}

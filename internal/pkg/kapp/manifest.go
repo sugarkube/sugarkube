@@ -133,11 +133,14 @@ func ValidateManifest(manifest *Manifest) error {
 	return nil
 }
 
-// Returns kapps from a stack config by fully-qualified ID, i.e. `manifest-id:kapp-id`
-func GetKappsByFullyQualifiedId(kappSelectors []string, manifests []*Manifest) (map[string]Kapp, error) {
+// Returns kapps from a stack config by a selector - either a fully-qualified ID, i.e. `manifest-id:kapp-id`
+// or a manifest with a wildcard, e.g. `manifest-id:*`
+func GetKappsBySelector(kappSelectors []string, manifests []*Manifest) (map[string]Kapp, error) {
 	results := map[string]Kapp{}
 
 	for _, kappSelector := range kappSelectors {
+		log.Logger.Debugf("Selecting kapps with selector '%s'", kappSelector)
+
 		splitKappId := strings.Split(kappSelector, ":")
 
 		if len(splitKappId) != 2 {
