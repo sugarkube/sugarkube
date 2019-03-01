@@ -19,7 +19,6 @@ package plan
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -73,7 +72,7 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 		installables := make([]kapp.Kapp, 0)
 		destroyables := make([]kapp.Kapp, 0)
 
-		selectedKapps, err := utils.SelectKapps([]*kapp.Manifest{manifest}, includeSelector, excludeSelector)
+		selectedKapps, err := kapp.SelectKapps([]*kapp.Manifest{manifest}, includeSelector, excludeSelector)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

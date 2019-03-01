@@ -133,9 +133,58 @@ func ValidateManifest(manifest *Manifest) error {
 	return nil
 }
 
+// Return kapps selected by inclusion/exclusion selectors from the given manifests
+func SelectKapps(manifests []*Manifest, includeSelector []string, excludeSelector []string) (map[string]Kapp, error) {
+	selectedKapps := map[string]Kapp{}
+	var err error
+
+	if len(includeSelector) > 0 {
+		selectedKapps, err = getKappsBySelector(includeSelector, manifests)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		log.Logger.Debugf("Adding %d kapps to the candidate template set", len(selectedKapps))
+	} else {
+		log.Logger.Debugf("Adding all kapps to the candidate template set")
+
+		log.Logger.Debugf("Stack config has %d manifests", len(manifests))
+
+		// select all kapps
+		for _, manifest := range manifests {
+			log.Logger.Debugf("Manifest '%s' contains %d kapps", manifest.Id(), len(manifest.ParsedKapps()))
+
+			for _, manifestKapp := range manifest.ParsedKapps() {
+				selectedKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
+			}
+		}
+	}
+
+	log.Logger.Debugf("There are %d candidate kapps (before applying exclusions)", len(selectedKapps))
+
+	if len(excludeSelector) > 0 {
+		// delete kapps
+		excludedKapps, err := getKappsBySelector(excludeSelector, manifests)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		log.Logger.Debugf("Excluding %d kapps from the templating set", len(excludedKapps))
+
+		for k := range excludedKapps {
+			if _, ok := selectedKapps[k]; ok {
+				delete(selectedKapps, k)
+			}
+		}
+	}
+
+	log.Logger.Infof("%d kapps selected for processing in total", len(selectedKapps))
+
+	return selectedKapps, nil
+}
+
 // Returns kapps from a stack config by a selector - either a fully-qualified ID, i.e. `manifest-id:kapp-id`
 // or a manifest with a wildcard, e.g. `manifest-id:*`
-func GetKappsBySelector(kappSelectors []string, manifests []*Manifest) (map[string]Kapp, error) {
+func getKappsBySelector(kappSelectors []string, manifests []*Manifest) (map[string]Kapp, error) {
 	results := map[string]Kapp{}
 
 	for _, kappSelector := range kappSelectors {
