@@ -19,6 +19,7 @@ package kapp
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
 	"testing"
@@ -126,7 +127,7 @@ kapps:
 						},
 					},
 					PostActions: []string{
-						POST_ACTION_CLUSTER_UPDATE,
+						constants.TASK_ACTION_CLUSTER_UPDATE,
 					},
 				},
 			},

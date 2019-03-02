@@ -68,8 +68,6 @@ const VARS_KEY = "vars"
 // todo - allow templates to be overridden in manifest overides blocks
 //const TEMPLATES_KEY = "templates"
 
-const POST_ACTION_CLUSTER_UPDATE = "cluster_update"
-
 // Sets the root cache directory the kapp is checked out into
 func (k *Kapp) SetCacheDir(cacheDir string) {
 	log.Logger.Debugf("Setting cache dir on kapp '%s' to '%s'",
@@ -84,6 +82,11 @@ func (k Kapp) FullyQualifiedId() string {
 	} else {
 		return strings.Join([]string{k.manifest.Id(), k.Id}, NAMESPACE_SEPARATOR)
 	}
+}
+
+// Return the manifest the kapp is in
+func (k Kapp) GetManifest() *Manifest {
+	return k.manifest
 }
 
 // Updates the kapp's struct after merging any manifest overrides
