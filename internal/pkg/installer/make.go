@@ -38,7 +38,7 @@ const TARGET_DESTROY = "destroy"
 
 // Run the given make target
 func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, writeTemplates bool, dryRun bool) error {
+	approved bool, renderTemplates bool, dryRun bool) error {
 
 	// search for the Makefile
 	makefilePaths, err := utils.FindFilesByPattern(kappObj.CacheDir(), "Makefile",
@@ -63,7 +63,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 	mergedKappVars, err := kapp.MergeVarsForKapp(kappObj, stackConfig,
 		map[string]interface{}{"target": makeTarget, "approved": approved})
 
-	if writeTemplates {
+	if renderTemplates {
 		err = kappObj.RenderTemplates(mergedKappVars, stackConfig, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
@@ -136,12 +136,12 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 
 // Install a kapp
 func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, writeTemplates bool, dryRun bool) error {
-	return i.run(TARGET_INSTALL, kappObj, stackConfig, approved, writeTemplates, dryRun)
+	approved bool, renderTemplates bool, dryRun bool) error {
+	return i.run(TARGET_INSTALL, kappObj, stackConfig, approved, renderTemplates, dryRun)
 }
 
 // Destroy a kapp
 func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, writeTemplates bool, dryRun bool) error {
-	return i.run(TARGET_DESTROY, kappObj, stackConfig, approved, writeTemplates, dryRun)
+	approved bool, renderTemplates bool, dryRun bool) error {
+	return i.run(TARGET_DESTROY, kappObj, stackConfig, approved, renderTemplates, dryRun)
 }

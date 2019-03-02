@@ -25,9 +25,9 @@ import (
 )
 
 type Installer interface {
-	install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, approved bool, writeTemplates bool,
+	install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, approved bool, renderTemplates bool,
 		dryRun bool) error
-	destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, approved bool, writeTemplates bool,
+	destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig, approved bool, renderTemplates bool,
 		dryRun bool) error
 }
 
@@ -47,14 +47,14 @@ func NewInstaller(name string, providerImpl provider.Provider) (Installer, error
 
 // Installs a kapp by delegating to an Installer implementation
 func Install(i Installer, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, writeTemplates bool, dryRun bool) error {
+	approved bool, renderTemplates bool, dryRun bool) error {
 	log.Logger.Infof("Installing kapp '%s'...", kappObj.FullyQualifiedId())
-	return i.install(kappObj, stackConfig, approved, writeTemplates, dryRun)
+	return i.install(kappObj, stackConfig, approved, renderTemplates, dryRun)
 }
 
 // Destroys a kapp by delegating to an Installer implementation
 func Destroy(i Installer, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
-	approved bool, writeTemplates bool, dryRun bool) error {
+	approved bool, renderTemplates bool, dryRun bool) error {
 	log.Logger.Infof("Destroying kapp '%s'...", kappObj.FullyQualifiedId())
-	return i.destroy(kappObj, stackConfig, approved, writeTemplates, dryRun)
+	return i.destroy(kappObj, stackConfig, approved, renderTemplates, dryRun)
 }

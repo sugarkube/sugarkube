@@ -49,7 +49,7 @@ type Plan struct {
 	// been validated to match the stack config.
 	cacheDir string
 	// whether to write templates for a kapp immediately before applying the kapp
-	writeTemplates bool
+	renderTemplates bool
 }
 
 // A job to be run by a worker
@@ -57,7 +57,7 @@ type job struct {
 	kappObj          kapp.Kapp
 	stackConfig      *kapp.StackConfig
 	manifestCacheDir string
-	writeTemplates   bool
+	renderTemplates  bool
 	install          bool
 	approved         bool
 	dryRun           bool
@@ -68,7 +68,7 @@ type job struct {
 // as described by SOTs
 // todo - add a 'runDirection' parameter to determine if we're spinning up the cluster or tearing it down
 func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir string, includeSelector []string,
-	excludeSelector []string, writeTemplates bool) (*Plan, error) {
+	excludeSelector []string, renderTemplates bool) (*Plan, error) {
 
 	tranches := make([]Tranche, 0)
 
@@ -113,10 +113,10 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 	}
 
 	plan := Plan{
-		tranche:        tranches,
-		stackConfig:    stackConfig,
-		cacheDir:       cacheDir,
-		writeTemplates: writeTemplates,
+		tranche:         tranches,
+		stackConfig:     stackConfig,
+		cacheDir:        cacheDir,
+		renderTemplates: renderTemplates,
 	}
 
 	// todo - use Sources of Truth (SOTs) to discover the current set of kapps installed
@@ -161,12 +161,12 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 			trancheKapp.SetCacheDir(p.cacheDir)
 
 			job := job{
-				approved:       approved,
-				dryRun:         dryRun,
-				install:        install,
-				kappObj:        trancheKapp,
-				stackConfig:    p.stackConfig,
-				writeTemplates: p.writeTemplates,
+				approved:        approved,
+				dryRun:          dryRun,
+				install:         install,
+				kappObj:         trancheKapp,
+				stackConfig:     p.stackConfig,
+				renderTemplates: p.renderTemplates,
 			}
 
 			jobs <- job
@@ -177,12 +177,12 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 			trancheKapp.SetCacheDir(p.cacheDir)
 
 			job := job{
-				approved:       approved,
-				dryRun:         dryRun,
-				install:        install,
-				kappObj:        trancheKapp,
-				stackConfig:    p.stackConfig,
-				writeTemplates: p.writeTemplates,
+				approved:        approved,
+				dryRun:          dryRun,
+				install:         install,
+				kappObj:         trancheKapp,
+				stackConfig:     p.stackConfig,
+				renderTemplates: p.renderTemplates,
 			}
 
 			jobs <- job
@@ -220,7 +220,7 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 		stackConfig := job.stackConfig
 		approved := job.approved
 		dryRun := job.dryRun
-		writeTemplates := job.writeTemplates
+		renderTemplates := job.renderTemplates
 
 		kappRootDir := kappObj.CacheDir()
 		log.Logger.Infof("Processing kapp '%s' in %s", kappObj.FullyQualifiedId(),
@@ -249,12 +249,12 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 
 		// install the kapp
 		if job.install {
-			err := installer.Install(installerImpl, &kappObj, stackConfig, approved, writeTemplates, dryRun)
+			err := installer.Install(installerImpl, &kappObj, stackConfig, approved, renderTemplates, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", kappObj.Id)
 			}
 		} else { // destroy the kapp
-			err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved, writeTemplates, dryRun)
+			err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved, renderTemplates, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", kappObj.Id)
 			}
