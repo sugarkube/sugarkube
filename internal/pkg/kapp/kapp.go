@@ -45,14 +45,15 @@ type Config struct {
 }
 
 type Kapp struct {
-	Id        string
-	manifest  *Manifest
-	cacheDir  string
-	Config    Config
-	State     string
-	Vars      map[string]interface{}
-	Sources   []acquirer.Source
-	Templates []Template
+	Id          string
+	manifest    *Manifest
+	cacheDir    string
+	Config      Config
+	State       string
+	Vars        map[string]interface{}
+	PostActions []string `yaml:"post_actions"`
+	Sources     []acquirer.Source
+	Templates   []Template
 }
 
 const PRESENT_KEY = "present"
@@ -64,6 +65,8 @@ const VARS_KEY = "vars"
 
 // todo - allow templates to be overridden in manifest overides blocks
 //const TEMPLATES_KEY = "templates"
+
+const POST_ACTION_CLUSTER_UPDATE = "cluster_update"
 
 // Sets the root cache directory the kapp is checked out into
 func (k *Kapp) SetCacheDir(cacheDir string) {
@@ -236,8 +239,8 @@ func (k *Kapp) Acquirers() ([]acquirer.Acquirer, error) {
 	return acquirers, nil
 }
 
-// Render templates for an individual kapp
-func (k *Kapp) TemplateKapp(mergedKappVars map[string]interface{}, stackConfig *StackConfig, dryRun bool) error {
+// Render templates for the kapp
+func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfig *StackConfig, dryRun bool) error {
 
 	var err error
 

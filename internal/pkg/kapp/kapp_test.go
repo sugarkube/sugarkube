@@ -75,6 +75,8 @@ kapps:
     state: absent
     sources:
     - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+    post_actions:
+    - cluster_update
 `,
 			expectUnparsed: []Kapp{
 				{
@@ -122,6 +124,9 @@ kapps:
 						{
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
 						},
+					},
+					PostActions: []string{
+						POST_ACTION_CLUSTER_UPDATE,
 					},
 				},
 			},

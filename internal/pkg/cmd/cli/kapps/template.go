@@ -154,7 +154,7 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 
 		kappObj.SetCacheDir(cacheDir)
 
-		err = kappObj.TemplateKapp(mergedKappVars, stackConfig, dryRun)
+		err = kappObj.RenderTemplates(mergedKappVars, stackConfig, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

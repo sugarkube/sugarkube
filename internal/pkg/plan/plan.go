@@ -30,6 +30,8 @@ type Tranche struct {
 	// The manifest associated with this tranche
 	manifest kapp.Manifest
 	// Kapps to install into the target cluster
+	// todo - craete a generic task type that supports installing/destroying kapps, as well as applying
+	// cluster updates
 	installables []kapp.Kapp
 	// Kapps to destroy from the target cluster
 	destroyables []kapp.Kapp
@@ -64,6 +66,7 @@ type job struct {
 // create a plan containing all kapps in the stackConfig, then filter out the
 // ones that don't need running based on the current state of the target cluster
 // as described by SOTs
+// todo - add a 'runDirection' parameter to determine if we're spinning up the cluster or tearing it down
 func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir string, includeSelector []string,
 	excludeSelector []string, writeTemplates bool) (*Plan, error) {
 
@@ -77,12 +80,16 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 
 		log.Logger.Debugf("Selecting kapps from manifest '%s'", manifest.Id())
 
+		// todo - test whether this actually preserves ordering already. If so, move it outside this loop
 		selectedKapps, err := kapp.SelectKapps([]*kapp.Manifest{manifest}, includeSelector, excludeSelector)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
 		for _, manifestKapp := range selectedKapps {
+			// todo - parse a kapp's config. If it has a post_action to update the cluster, create a task
+			// for it (provided the run direction is 'forward')
+
 			if manifestKapp.State == kapp.PRESENT_KEY {
 				installables = append(installables, manifestKapp)
 			} else if manifestKapp.State == kapp.ABSENT_KEY {
@@ -141,13 +148,14 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 			numWorkers = uint16(len(tranche.installables) + len(tranche.destroyables))
 		}
 
-		jobs := make(chan job, 100)
+		jobs := make(chan job, 10000)
 
 		// create the worker pool
 		for w := uint16(0); w < numWorkers; w++ {
 			go processKapp(jobs, doneCh, errCh)
 		}
 
+		// todo - this doesn't preserve the order in manifests so needs changing
 		for _, trancheKapp := range tranche.installables {
 			install := true
 			trancheKapp.SetCacheDir(p.cacheDir)

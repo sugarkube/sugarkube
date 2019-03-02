@@ -64,7 +64,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 		map[string]interface{}{"target": makeTarget, "approved": approved})
 
 	if writeTemplates {
-		err = kappObj.TemplateKapp(mergedKappVars, stackConfig, dryRun)
+		err = kappObj.RenderTemplates(mergedKappVars, stackConfig, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
