@@ -126,7 +126,7 @@ func (c *templateConfig) run() error {
 }
 
 // Render templates for kapps defined in a stack config
-func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
+func RenderTemplates(kapps []kapp.Kapp, cacheDir string,
 	stackConfig *kapp.StackConfig, dryRun bool) error {
 
 	if len(kapps) == 0 {
@@ -140,8 +140,8 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 	}
 
 	candidateKappIds := make([]string, 0)
-	for k := range kapps {
-		candidateKappIds = append(candidateKappIds, k)
+	for _, k := range kapps {
+		candidateKappIds = append(candidateKappIds, k.FullyQualifiedId())
 	}
 
 	log.Logger.Debugf("Rendering templates for kapps: %s", strings.Join(candidateKappIds, ", "))

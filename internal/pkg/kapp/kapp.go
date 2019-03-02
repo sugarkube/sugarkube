@@ -56,6 +56,8 @@ type Kapp struct {
 	Templates   []Template
 }
 
+const NAMESPACE_SEPARATOR = ":"
+
 const PRESENT_KEY = "present"
 const ABSENT_KEY = "absent"
 
@@ -80,7 +82,7 @@ func (k Kapp) FullyQualifiedId() string {
 	if k.manifest == nil {
 		return k.Id
 	} else {
-		return strings.Join([]string{k.manifest.Id(), k.Id}, ":")
+		return strings.Join([]string{k.manifest.Id(), k.Id}, NAMESPACE_SEPARATOR)
 	}
 }
 
@@ -323,4 +325,35 @@ func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfi
 	}
 
 	return nil
+}
+
+// Returns a boolean indicating whether the kapp matches the given selector
+func (k Kapp) MatchesSelector(selector string) (bool, error) {
+
+	selectorParts := strings.Split(selector, NAMESPACE_SEPARATOR)
+	if len(selectorParts) != 2 {
+		return false, errors.New(fmt.Sprintf("Fully-qualified kapps must be given, i.e. "+
+			"formatted 'manifest-id%skapp-id' or 'manifest-id%s%s' for all kapps in a manifest",
+			NAMESPACE_SEPARATOR, NAMESPACE_SEPARATOR, WILDCARD_CHARACTER))
+	}
+
+	selectorManifestId := selectorParts[0]
+	selectorKappId := selectorParts[1]
+
+	kappIdParts := strings.Split(k.FullyQualifiedId(), NAMESPACE_SEPARATOR)
+	if len(kappIdParts) != 2 {
+		return false, errors.New(fmt.Sprintf("Fully-qualified kapp ID has an unexpected format: %s",
+			k.FullyQualifiedId()))
+	}
+
+	kappManifestId := kappIdParts[0]
+	kappId := kappIdParts[1]
+
+	if selectorManifestId == kappManifestId {
+		if selectorKappId == WILDCARD_CHARACTER || selectorKappId == kappId {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

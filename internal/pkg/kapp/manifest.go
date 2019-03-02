@@ -133,87 +133,64 @@ func ValidateManifest(manifest *Manifest) error {
 	return nil
 }
 
-// Return kapps selected by inclusion/exclusion selectors from the given manifests
-func SelectKapps(manifests []*Manifest, includeSelector []string, excludeSelector []string) (map[string]Kapp, error) {
-	selectedKapps := map[string]Kapp{}
+// Return kapps selected by inclusion/exclusion selectors from the given manifests. Kapps will be returned
+// in the order the appear in the manifests regardless of the orders of the selectors.
+func SelectKapps(manifests []*Manifest, includeSelector []string, excludeSelector []string) ([]Kapp, error) {
 	var err error
+	var match bool
 
-	if len(includeSelector) > 0 {
-		selectedKapps, err = getKappsBySelector(includeSelector, manifests)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-		log.Logger.Debugf("Adding %d kapps to the candidate template set", len(selectedKapps))
-	} else {
-		log.Logger.Debugf("Adding all kapps to the candidate template set")
+	selectedKapps := make([]Kapp, 0)
 
-		log.Logger.Debugf("Stack config has %d manifests", len(manifests))
+	for _, manifest := range manifests {
+		for _, kappObj := range manifest.ParsedKapps() {
+			match = false
+			// a kapp is selected either if it matches an include selector or there are no include selectors,
+			// and it doesn't match an exclude selector
+			for _, selector := range includeSelector {
+				match, err = kappObj.MatchesSelector(selector)
+				if err != nil {
+					return nil, errors.WithStack(err)
+				}
 
-		// select all kapps
-		for _, manifest := range manifests {
-			log.Logger.Debugf("Manifest '%s' contains %d kapps", manifest.Id(), len(manifest.ParsedKapps()))
-
-			for _, manifestKapp := range manifest.ParsedKapps() {
-				selectedKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
-			}
-		}
-	}
-
-	log.Logger.Debugf("There are %d candidate kapps (before applying exclusions)", len(selectedKapps))
-
-	if len(excludeSelector) > 0 {
-		// delete kapps
-		excludedKapps, err := getKappsBySelector(excludeSelector, manifests)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		log.Logger.Debugf("Excluding %d kapps from the templating set", len(excludedKapps))
-
-		for k := range excludedKapps {
-			if _, ok := selectedKapps[k]; ok {
-				delete(selectedKapps, k)
-			}
-		}
-	}
-
-	log.Logger.Infof("%d kapps selected for processing in total", len(selectedKapps))
-
-	return selectedKapps, nil
-}
-
-// Returns kapps from a stack config by a selector - either a fully-qualified ID, i.e. `manifest-id:kapp-id`
-// or a manifest with a wildcard, e.g. `manifest-id:*`
-func getKappsBySelector(kappSelectors []string, manifests []*Manifest) (map[string]Kapp, error) {
-	results := map[string]Kapp{}
-
-	for _, kappSelector := range kappSelectors {
-		log.Logger.Debugf("Selecting kapps with selector '%s'", kappSelector)
-
-		splitKappId := strings.Split(kappSelector, ":")
-
-		if len(splitKappId) != 2 {
-			return nil, errors.New(fmt.Sprintf("Fully-qualified kapps must be given, i.e. "+
-				"formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all kapps in a manifest",
-				WILDCARD_CHARACTER))
-		}
-
-		manifestId := splitKappId[0]
-		kappId := splitKappId[1]
-
-		for _, manifest := range manifests {
-			if manifestId != manifest.Id() {
-				continue
+				if match {
+					break
+				}
 			}
 
-			for _, manifestKapp := range manifest.ParsedKapps() {
-				if kappId == WILDCARD_CHARACTER || manifestKapp.Id == kappId {
-					kappFqId := manifestKapp.FullyQualifiedId()
-					results[kappFqId] = manifestKapp
+			// kapp is a possible candidate. Only add it to the result set if it doesn't match any exclude
+			// selectors
+			if len(includeSelector) == 0 || match {
+				log.Logger.Debugf("Kapp '%s' is a candidate... testing exclude selectors",
+					kappObj.FullyQualifiedId())
+
+				match = false
+
+				for _, selector := range excludeSelector {
+					match, err = kappObj.MatchesSelector(selector)
+					if err != nil {
+						return nil, errors.WithStack(err)
+					}
+
+					if match {
+						break
+					}
+				}
+
+				if !match {
+					log.Logger.Debugf("Kapp '%s' matches selectors and will be included in the results",
+						kappObj.FullyQualifiedId())
+					selectedKapps = append(selectedKapps, kappObj)
 				}
 			}
 		}
 	}
 
-	return results, nil
+	log.Logger.Debugf("Selected %d kapps", len(selectedKapps))
+	for _, selectedKapp := range selectedKapps {
+		log.Logger.Debugf("Selected: %s", selectedKapp.FullyQualifiedId())
+	}
+
+	log.Logger.Infof("%d kapps selected for processing in total", len(selectedKapps))
+
+	return selectedKapps, nil
 }

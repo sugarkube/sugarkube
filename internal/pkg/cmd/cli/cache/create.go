@@ -127,11 +127,11 @@ func (c *createCmd) run() error {
 		}
 
 		// template kapps
-		candidateKapps := map[string]kapp.Kapp{}
+		candidateKapps := make([]kapp.Kapp, 0)
 
 		for _, manifest := range stackConfig.AllManifests() {
 			for _, manifestKapp := range manifest.ParsedKapps() {
-				candidateKapps[manifestKapp.FullyQualifiedId()] = manifestKapp
+				candidateKapps = append(candidateKapps, manifestKapp)
 			}
 		}
 

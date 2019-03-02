@@ -80,3 +80,32 @@ func TestSetManifestDefaults(t *testing.T) {
 		assert.Equal(t, test.expected, test.input.Id())
 	}
 }
+
+func TestSelectKapps(t *testing.T) {
+
+	// testing the correctness of this stack is handled in stack_test.go
+	stackConfig, err := LoadStackConfig("kops", "../../testdata/stacks.yaml")
+	assert.Nil(t, err)
+	assert.NotNil(t, stackConfig)
+
+	includeSelector := []string{
+		"exampleManifest2:kappA",
+		"manifest1:kappA",
+		"exampleManifest2:kappB",
+	}
+
+	excludeSelector := []string{}
+
+	expectedKappIds := []string{
+		"manifest1:kappA",
+		"exampleManifest2:kappB",
+		"exampleManifest2:kappA",
+	}
+
+	selectedKapps, err := SelectKapps(stackConfig.AllManifests(), includeSelector, excludeSelector)
+	assert.Nil(t, err)
+
+	for i := 0; i < len(expectedKappIds); i++ {
+		assert.Equal(t, expectedKappIds[i], selectedKapps[i].FullyQualifiedId())
+	}
+}
