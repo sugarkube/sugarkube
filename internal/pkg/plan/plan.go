@@ -19,6 +19,7 @@ package plan
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
@@ -266,7 +267,10 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 			}
 			break
 		case constants.TASK_ACTION_CLUSTER_UPDATE:
-			// todo update the cluster
+			err := cluster.UpdateCluster(os.Stdout, stackConfig, dryRun)
+			if err != nil {
+				errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'", kappObj.Id)
+			}
 			break
 		}
 

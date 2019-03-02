@@ -112,7 +112,17 @@ func (c *updateCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "Checking whether the target cluster '%s' is already "+
+	err = UpdateCluster(c.out, stackConfig, c.dryRun)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+// Updates a cluster with a stack config
+func UpdateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) error {
+	_, err := fmt.Fprintf(out, "Checking whether the target cluster '%s' is already "+
 		"online...\n", stackConfig.Cluster)
 	if err != nil {
 		return errors.WithStack(err)
@@ -129,25 +139,25 @@ func (c *updateCmd) run() error {
 	}
 
 	if !online {
-		_, err = fmt.Fprintln(c.out, "Cluster is already online. Aborting.")
+		_, err = fmt.Fprintln(out, "Cluster is already online. Aborting.")
 		if err != nil {
 			return errors.WithStack(err)
 		}
 		return nil
 	}
 
-	_, err = fmt.Fprintln(c.out, "Cluster is online. Will update it now (this "+
+	_, err = fmt.Fprintln(out, "Cluster is online. Will update it now (this "+
 		"may take some time...)")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = provisioner.Update(provisionerImpl, stackConfig, c.dryRun)
+	err = provisioner.Update(provisionerImpl, stackConfig, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	if c.dryRun {
+	if dryRun {
 		log.Logger.Infof("Dry run. Skipping cluster readiness check.")
 	} else {
 		err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig)
@@ -155,7 +165,7 @@ func (c *updateCmd) run() error {
 			return errors.WithStack(err)
 		}
 
-		_, err = fmt.Fprintf(c.out, "Cluster '%s' successfully updated.\n", stackConfig.Cluster)
+		_, err = fmt.Fprintf(out, "Cluster '%s' successfully updated.\n", stackConfig.Cluster)
 		if err != nil {
 			return errors.WithStack(err)
 		}
