@@ -80,11 +80,10 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Loaded %d init manifest(s) and %d manifest(s)",
-		len(stackConfig.InitManifests), len(stackConfig.Manifests))
+	log.Logger.Debugf("Loaded %d manifest(s)", len(stackConfig.Manifests))
 
 	// todo - why is this here? why don't we always validate manifests?
-	for _, manifest := range stackConfig.AllManifests() {
+	for _, manifest := range stackConfig.Manifests {
 		err = kapp.ValidateManifest(manifest)
 		if err != nil {
 			return errors.WithStack(err)
@@ -106,7 +105,7 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	for _, manifest := range stackConfig.AllManifests() {
+	for _, manifest := range stackConfig.Manifests {
 		err := cacher.CacheManifest(*manifest, absCacheDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
@@ -129,7 +128,7 @@ func (c *createCmd) run() error {
 		// template kapps
 		candidateKapps := make([]kapp.Kapp, 0)
 
-		for _, manifest := range stackConfig.AllManifests() {
+		for _, manifest := range stackConfig.Manifests {
 			for _, manifestKapp := range manifest.ParsedKapps() {
 				candidateKapps = append(candidateKapps, manifestKapp)
 			}

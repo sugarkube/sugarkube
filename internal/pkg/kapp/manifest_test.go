@@ -102,7 +102,7 @@ func TestSelectKapps(t *testing.T) {
 		"exampleManifest2:kappA",
 	}
 
-	selectedKapps, err := SelectKapps(stackConfig.AllManifests(), includeSelector, excludeSelector)
+	selectedKapps, err := SelectKapps(stackConfig.Manifests, includeSelector, excludeSelector)
 	assert.Nil(t, err)
 
 	for i := 0; i < len(expectedKappIds); i++ {
@@ -133,7 +133,7 @@ func TestSelectKappsExclusions(t *testing.T) {
 		"exampleManifest2:kappD",
 	}
 
-	selectedKapps, err := SelectKapps(stackConfig.AllManifests(), includeSelector, excludeSelector)
+	selectedKapps, err := SelectKapps(stackConfig.Manifests, includeSelector, excludeSelector)
 	assert.Nil(t, err)
 
 	for i := 0; i < len(expectedKappIds); i++ {

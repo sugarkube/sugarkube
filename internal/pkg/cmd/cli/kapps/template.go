@@ -102,7 +102,7 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := kapp.SelectKapps(stackConfig.AllManifests(), c.includeSelector, c.excludeSelector)
+	selectedKapps, err := kapp.SelectKapps(stackConfig.Manifests, c.includeSelector, c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -303,15 +303,6 @@ regionOverride: region-val-override
 
 func TestAllManifests(t *testing.T) {
 	stackConfig := StackConfig{
-		InitManifests: []*Manifest{
-			{
-				UnparsedKapps: []Kapp{
-					{
-						Id: "kapp1",
-					},
-				},
-			},
-		},
 		Manifests: []*Manifest{
 			{
 				UnparsedKapps: []Kapp{
@@ -330,5 +321,5 @@ func TestAllManifests(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, 3, len(stackConfig.AllManifests()))
+	assert.Equal(t, 2, len(stackConfig.Manifests))
 }

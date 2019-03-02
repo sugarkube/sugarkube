@@ -20,8 +20,6 @@
   updating variables in various sources (e.g. 'Manifest.Overrides') should be enough to implement this behaviour. 
   We could have kapps declare the name of a JSON file in their sugarkube.yaml file that should be merged with 
   vars to allow them to dynamically update kapp vars. Or they could specify that stdout should be used, etc.
-* Add an action (defined in a kapp's sugarkube.yaml file) to indicate the cluster should be updated. This could run
-  after adding additional variables dynamically.
 
 * Remove init manifests - manifests should be idempotent. If one should only run while bootstrapping it should
   perform checks itself to avoid running multiple times

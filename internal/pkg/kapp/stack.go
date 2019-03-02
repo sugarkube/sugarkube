@@ -49,14 +49,11 @@ type StackConfig struct {
 	ProviderVarsDirs []string               `yaml:"providerVarsDirs"`
 	providerVars     map[string]interface{} // set after loading and merging all provider vars files
 	KappVarsDirs     []string               `yaml:"kappVarsDirs"`
-	// todo - we almost certainly don't want this. Make sure then remove. All manifests should be run and
-	// all should be idempotent
-	InitManifests []*Manifest `yaml:"initManifests"`
-	Manifests     []*Manifest
-	TemplateDirs  []string `yaml:"templateDirs"`
-	Status        ClusterStatus
-	OnlineTimeout uint32
-	ReadyTimeout  uint32
+	Manifests        []*Manifest
+	TemplateDirs     []string `yaml:"templateDirs"`
+	Status           ClusterStatus
+	OnlineTimeout    uint32
+	ReadyTimeout     uint32
 }
 
 // Sets provider vars
@@ -69,21 +66,12 @@ func (s *StackConfig) GetProviderVars() map[string]interface{} {
 	return s.providerVars
 }
 
-// Returns an array of pointers to all manifests in the stack. We need pointers so any modifications to the
-// manifests affect the underlying manifests/init manifests
-func (s *StackConfig) AllManifests() []*Manifest {
-	allManifests := make([]*Manifest, 0)
-	allManifests = append(allManifests, s.InitManifests...)
-	allManifests = append(allManifests, s.Manifests...)
-	return allManifests
-}
-
 // Validates that there aren't multiple manifests in the stack config with the
 // same ID, which would break creating caches
 func ValidateStackConfig(sc *StackConfig) error {
 	ids := map[string]bool{}
 
-	for _, manifest := range sc.AllManifests() {
+	for _, manifest := range sc.Manifests {
 		id := manifest.Id()
 
 		if _, ok := ids[id]; ok {
@@ -144,32 +132,7 @@ func LoadStackConfig(name string, path string) (*StackConfig, error) {
 
 	log.Logger.Debugf("Loaded stack config: %#v", stack)
 
-	// at this point stack.Manifest and stack.InitManifests only contain lists
-	// of URIs. We need to acquire and parse them.
-	log.Logger.Debugf("Parsing init manifests: %#v", stack.InitManifests)
-
-	for i, initManifest := range stack.InitManifests {
-		// todo - convert these to be managed by acquirers. The file acquirer
-		// needs to convert relative paths to absolute.
-		uri := initManifest.Uri
-		if !filepath.IsAbs(uri) {
-			uri = filepath.Join(stack.Dir(), uri)
-		}
-
-		// parse the manifests and add them back to the stack
-		parsedInitManifest, err := ParseManifestFile(uri)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		// todo - remove this. It should be handled by an acquirer
-		//SetManifestDefaults(&initManifest)
-		parsedInitManifest.ConfiguredId = initManifest.ConfiguredId
-		parsedInitManifest.Overrides = initManifest.Overrides
-
-		stack.InitManifests[i] = parsedInitManifest
-	}
-
+	// at this point stack.Manifest only contains a list of URIs. We need to acquire and parse them.
 	log.Logger.Info("Parsing manifests...")
 
 	for i, manifest := range stack.Manifests {
