@@ -22,7 +22,9 @@
   vars to allow them to dynamically update kapp vars. Or they could specify that stdout should be used, etc.
 * Add an action (defined in a kapp's sugarkube.yaml file) to indicate the cluster should be updated. This could run
   after adding additional variables dynamically.
-* Add '--jit-templating' (or make that the default?) so that kapps can have their templates written with dynamic content.
+
+* Remove init manifests - manifests should be idempotent. If one should only run while bootstrapping it should
+  perform checks itself to avoid running multiple times
 
 * Don't always display usage if an error is thrown
 * Implement deletion to tear down a stack

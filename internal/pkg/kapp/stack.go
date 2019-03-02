@@ -49,12 +49,14 @@ type StackConfig struct {
 	ProviderVarsDirs []string               `yaml:"providerVarsDirs"`
 	providerVars     map[string]interface{} // set after loading and merging all provider vars files
 	KappVarsDirs     []string               `yaml:"kappVarsDirs"`
-	InitManifests    []*Manifest            `yaml:"initManifests"`
-	Manifests        []*Manifest
-	TemplateDirs     []string `yaml:"templateDirs"`
-	Status           ClusterStatus
-	OnlineTimeout    uint32
-	ReadyTimeout     uint32
+	// todo - we almost certainly don't want this. Make sure then remove. All manifests should be run and
+	// all should be idempotent
+	InitManifests []*Manifest `yaml:"initManifests"`
+	Manifests     []*Manifest
+	TemplateDirs  []string `yaml:"templateDirs"`
+	Status        ClusterStatus
+	OnlineTimeout uint32
+	ReadyTimeout  uint32
 }
 
 // Sets provider vars

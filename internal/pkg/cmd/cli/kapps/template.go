@@ -17,18 +17,14 @@
 package kapps
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"io"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -155,100 +151,12 @@ func RenderTemplates(kapps map[string]kapp.Kapp, cacheDir string,
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		err = templateKapp(&kappObj, mergedKappVars, stackConfig, cacheDir, dryRun)
+
+		kappObj.SetCacheDir(cacheDir)
+
+		err = kappObj.TemplateKapp(mergedKappVars, stackConfig, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
-		}
-	}
-
-	return nil
-}
-
-// Render templates for an individual kapp
-func templateKapp(kappObj *kapp.Kapp, mergedKappVars map[string]interface{},
-	stackConfig *kapp.StackConfig, cacheDir string, dryRun bool) error {
-
-	var err error
-
-	if len(kappObj.Templates) == 0 {
-		log.Logger.Debugf("No templates to render for kapp '%s'",
-			kappObj.FullyQualifiedId())
-		return nil
-	}
-
-	kappObj.SetCacheDir(cacheDir)
-
-	log.Logger.Infof("Rendering templates for kapp '%s'",
-		kappObj.FullyQualifiedId())
-
-	for _, templateDefinition := range kappObj.Templates {
-		templateSource := templateDefinition.Source
-		if !filepath.IsAbs(templateSource) {
-			foundTemplate := false
-
-			// search each template directory defined in the stack config
-			for _, templateDir := range stackConfig.TemplateDirs {
-				possibleSource := filepath.Join(stackConfig.Dir(), templateDir, templateSource)
-				_, err := os.Stat(possibleSource)
-				if err == nil {
-					templateSource = possibleSource
-					foundTemplate = true
-					break
-				}
-			}
-
-			if !foundTemplate {
-				return errors.New(fmt.Sprintf("Failed to find template '%s' "+
-					"in any of the defined template directories: %s", templateSource,
-					strings.Join(stackConfig.TemplateDirs, ", ")))
-			}
-		}
-
-		if !filepath.IsAbs(templateSource) {
-			templateSource, err = filepath.Abs(templateSource)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-		}
-
-		log.Logger.Debugf("Templating file '%s' with vars: %#v", templateSource, mergedKappVars)
-
-		destPath := templateDefinition.Dest
-		if !filepath.IsAbs(destPath) {
-			destPath = filepath.Join(kappObj.CacheDir(), destPath)
-		}
-
-		// check whether the dest path exists
-		if _, err := os.Stat(destPath); err == nil {
-			log.Logger.Infof("Template destination path '%s' exists. "+
-				"File will be overwritten by rendered template '%s' for kapp '%s'",
-				destPath, templateSource, kappObj.Id)
-		}
-
-		// check whether the parent directory for dest path exists and return an error if not
-		destDir := filepath.Dir(destPath)
-		if _, err := os.Stat(destDir); os.IsNotExist(err) {
-			return errors.New(fmt.Sprintf("Can't write template to non-existent directory: %s", destDir))
-		}
-
-		var outBuf bytes.Buffer
-
-		err = templater.TemplateFile(templateSource, &outBuf, mergedKappVars)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		if dryRun {
-			log.Logger.Infof("Dry run. Template '%s' for kapp '%s' which "+
-				"would be written to '%s' rendered as:\n%s", templateSource,
-				kappObj.Id, destPath, outBuf.String())
-		} else {
-			log.Logger.Infof("Writing rendered template '%s' for kapp "+
-				"'%s' to '%s'", templateSource, kappObj.FullyQualifiedId(), destPath)
-			err := ioutil.WriteFile(destPath, outBuf.Bytes(), 0644)
-			if err != nil {
-				return errors.WithStack(err)
-			}
 		}
 	}
 

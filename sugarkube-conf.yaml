@@ -1,3 +1,2 @@
-# todo - don't bomb out if this file doesn't exist
 #log-level: none
 #json-logs: false

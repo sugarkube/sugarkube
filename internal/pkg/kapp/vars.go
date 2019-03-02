@@ -102,7 +102,9 @@ func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 }
 
 // Iterate over the input variables trying to replace data as if it was a template. Keep iterating up to a maximum
-// number of times, or until the size of the input and output remain the same
+// number of times, or until the size of the input and output remain the same. Doing this allows us to define
+// intermediate variables or aliases (e.g. set `cluster_name` = '{{ .stack.region }}-{{ .stack.account }}' then just
+// use '{{ .kapp.vars.cluster_name }}'. Templating this requires 2 iterations).
 func templateVars(vars map[string]interface{}) (map[string]interface{}, error) {
 
 	// maximum number of iterations whils templating variables

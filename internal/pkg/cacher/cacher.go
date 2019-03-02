@@ -111,6 +111,8 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 				return
 			}
 
+			// todo - the no-op file acquirer doesn't actually cache files, so we need some object whose job it is
+			// to create cache paths per-acquirer (or a method on each acquirer type)
 			sourceDest := filepath.Join(cacheDir, acquirerId)
 
 			if dryRun {

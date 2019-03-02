@@ -36,6 +36,7 @@ type applyCmd struct {
 	oneShot         bool
 	force           bool
 	initManifests   bool
+	skipTemplating  bool
 	stackName       string
 	stackFile       string
 	provider        string
@@ -80,6 +81,7 @@ func newApplyCmd(out io.Writer) *cobra.Command {
 	f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/destroy all the kapps "+
 		"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
 	f.BoolVar(&c.initManifests, "init", false, "only apply init manifests. If false (default) only apply normal manifests.")
+	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before applying them")
 	f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to apply. If not given, a "+
 		"diff will be generated")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
@@ -165,7 +167,8 @@ func (c *applyCmd) run() error {
 		}
 
 		// force mode, so no need to perform validation. Just create a plan
-		actionPlan, err = plan.Create(stackConfig, manifests, c.cacheDir, c.includeSelector, c.excludeSelector)
+		actionPlan, err = plan.Create(stackConfig, manifests, c.cacheDir, c.includeSelector, c.excludeSelector,
+			!c.skipTemplating)
 		if err != nil {
 			return errors.WithStack(err)
 		}
