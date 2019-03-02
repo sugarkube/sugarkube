@@ -27,22 +27,22 @@ import (
 	"os"
 )
 
-type Task struct {
+type task struct {
 	action string
 	kapp   kapp.Kapp
 }
 
-type Tranche struct {
+type tranche struct {
 	// The manifest associated with this tranche
 	manifest kapp.Manifest
 	// tasks to run for this tranche (by default they'll run in parallel)
-	tasks []Task
+	tasks []task
 }
 
 type Plan struct {
 	// installation/destruction phases. Tranches will be run sequentially, but
 	// each kapp in the tranche will be processed in parallel
-	tranche []Tranche
+	tranche []tranche
 	// contains details of the target cluster
 	stackConfig *kapp.StackConfig
 	// a cache dir to run the (make) installer over. It should already have
@@ -54,7 +54,7 @@ type Plan struct {
 
 // A job to be run by a worker
 type job struct {
-	task             Task
+	task             task
 	stackConfig      *kapp.StackConfig
 	manifestCacheDir string
 	renderTemplates  bool
@@ -76,20 +76,20 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 		return nil, errors.WithStack(err)
 	}
 
-	tranches := make([]Tranche, 0)
-	tasks := make([]Task, 0)
+	tranches := make([]tranche, 0)
+	tasks := make([]task, 0)
 	var previousManifest *kapp.Manifest
 
 	for _, kappObj := range selectedKapps {
-		var installDestroyTask *Task
+		var installDestroyTask *task
 
 		if kappObj.State == kapp.PRESENT_KEY {
-			installDestroyTask = &Task{
+			installDestroyTask = &task{
 				kapp:   kappObj,
 				action: constants.TASK_ACTION_INSTALL,
 			}
 		} else if kappObj.State == kapp.ABSENT_KEY {
-			installDestroyTask = &Task{
+			installDestroyTask = &task{
 				kapp:   kappObj,
 				action: constants.TASK_ACTION_DESTROY,
 			}
@@ -104,7 +104,7 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 		if len(kappObj.PostActions) > 0 {
 			for _, postAction := range kappObj.PostActions {
 				if postAction == constants.TASK_ACTION_CLUSTER_UPDATE {
-					actionTask := Task{
+					actionTask := task{
 						kapp:   kappObj,
 						action: constants.TASK_ACTION_CLUSTER_UPDATE,
 					}
@@ -117,20 +117,20 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 		}
 
 		if previousManifest != nil && previousManifest.Id() != kappObj.GetManifest().Id() {
-			tranche := Tranche{
+			tranche := tranche{
 				manifest: *kappObj.GetManifest(),
 				tasks:    tasks,
 			}
 
 			tranches = append(tranches, tranche)
-			tasks = make([]Task, 0)
+			tasks = make([]task, 0)
 		}
 
 		previousManifest = kappObj.GetManifest()
 	}
 
 	if len(tasks) > 0 {
-		tranche := Tranche{
+		tranche := tranche{
 			manifest: *previousManifest,
 			tasks:    tasks,
 		}
