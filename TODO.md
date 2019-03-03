@@ -21,15 +21,11 @@
   We could have kapps declare the name of a JSON file in their sugarkube.yaml file that should be merged with 
   vars to allow them to dynamically update kapp vars. Or they could specify that stdout should be used, etc.
 
-* Remove init manifests - manifests should be idempotent. If one should only run while bootstrapping it should
-  perform checks itself to avoid running multiple times
-
 * Don't always display usage if an error is thrown
 * Implement deletion to tear down a stack
 * Fix failing integration test
-
-* Fork go-yaml, set a large value for `emitter.best_width` in emitterc.go to much larger than the default 80. 
-  Depend on it instead (see https://stackoverflow.com/questions/49475290/go-dep-and-forks-of-libraries)
+* Wordpress site 2 isn't cached when running 'cache create' (probably due to it referring to a non-existent branch - 
+  we should throw an error and abort in that case)
 
 ## Other things to consider
 * Is being focussed on clusters a mistake? 
