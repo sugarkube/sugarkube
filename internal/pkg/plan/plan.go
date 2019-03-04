@@ -117,13 +117,36 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 					}
 				}
 
-				log.Logger.Debugf("Adding %s task for kapp '%s'", constants.TASK_ACTION_CLUSTER_UPDATE,
-					kappObj.FullyQualifiedId())
-				tasks = append(tasks, *actionTask)
+				// post action tasks are added to their own tranche to avoid race conditions
+				if actionTask != nil {
+					// add any previously queued tasks to a tranche
+					if len(tasks) > 0 {
+						tranche := tranche{
+							manifest: *kappObj.GetManifest(),
+							tasks:    tasks,
+						}
+
+						tranches = append(tranches, tranche)
+					}
+
+					// reset the tasks list for the next iteration
+					tasks = make([]task, 0)
+				}
+
+				log.Logger.Debugf("Adding %s task for kapp '%s'",
+					actionTask.action, kappObj.FullyQualifiedId())
+
+				tranche := tranche{
+					manifest: *kappObj.GetManifest(),
+					tasks:    []task{*actionTask},
+				}
+
+				tranches = append(tranches, tranche)
 			}
 		}
 
-		if previousManifest != nil && previousManifest.Id() != kappObj.GetManifest().Id() {
+		if len(tasks) > 0 && previousManifest != nil &&
+			previousManifest.Id() != kappObj.GetManifest().Id() {
 			tranche := tranche{
 				manifest: *kappObj.GetManifest(),
 				tasks:    tasks,
