@@ -19,6 +19,7 @@ package utils
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
@@ -68,24 +69,29 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 		cmd.Dir = dir
 	}
 
+	commandString := fmt.Sprintf("%s %s %s",
+		strings.TrimSpace(strings.Join(strEnvVars, " ")),
+		command, strings.Join(args, " "))
+
 	if dryRun {
-		log.Logger.Infof("Dry run. Would run: '%s %s' in '%s' with env vars %s", command,
-			strings.Join(args, " "), cmd.Dir, strings.TrimSpace(strings.Join(strEnvVars, " ")))
+		log.Logger.Infof("Dry run. Would run command in directory '%s':\n%s\n",
+			cmd.Dir, commandString)
 		return nil
 	} else {
-		log.Logger.Debugf("Executing command: '%s %s' in '%s' with env vars %s", command,
-			strings.Join(args, " "), cmd.Dir, strings.TrimSpace(strings.Join(strEnvVars, " ")))
+		log.Logger.Debugf("Executing command in directory '%s':\n%s\n",
+			cmd.Dir, commandString)
 	}
 
 	err := cmd.Run()
 	if timeoutSeconds > 0 && ctx.Err() == context.DeadlineExceeded {
-		return errors.Wrapf(ctx.Err(),
-			"Timed out executing command: '%s' with args: %s", command,
-			strings.Join(args, " "))
+		return errors.Wrapf(ctx.Err(), "Timed out executing command in "+
+			"directory '%s':\n%s\nStdout=%s\nStderr=%s", cmd.Dir, commandString,
+			stdoutBuf.String(), stderrBuf.String())
 	}
 	if err != nil {
-		return errors.Wrapf(err, "Failed to run command '%s' with args: %#v\n"+
-			"Stdout=%s\nStderr=%s", command, args, stdoutBuf.String(), stderrBuf.String())
+		return errors.Wrapf(err, "Failed to run command in directory '%s':\n%s\n"+
+			"Stdout=%s\nStderr=%s", cmd.Dir, commandString, stdoutBuf.String(),
+			stderrBuf.String())
 	}
 
 	return nil
