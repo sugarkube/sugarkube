@@ -78,7 +78,7 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 			cmd.Dir, commandString)
 		return nil
 	} else {
-		log.Logger.Debugf("Executing command in directory '%s':\n%s\n",
+		log.Logger.Infof("Executing command in directory '%s':\n%s\n",
 			cmd.Dir, commandString)
 	}
 

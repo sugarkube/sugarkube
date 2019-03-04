@@ -14,8 +14,7 @@
 * Rename the `name` key on sources to `id` for consistency with everywhere else
 * Allow only selected kapps to be installed
 * Templates for kapps are written immediately before applying kapps by default now
-* Kapps can now declare actions to be run after applying the kapp. Currently the only supported post action is to update
-  the cluster
+* Kapps can now declare actions to be run after applying the kapp. Currently the supported post actions are to create or update a cluster
 * Removed support for init manifests. All manifests should be run and they're expected to be idempotent.
 * Depend on forked version of go-yaml that doesn't split output wider than 80 characters
 

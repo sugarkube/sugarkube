@@ -112,7 +112,17 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "Checking whether the target cluster '%s' is already "+
+	err = CreateCluster(c.out, stackConfig, c.dryRun)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+// Creates a cluster with a stack config
+func CreateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) error {
+	_, err := fmt.Fprintf(out, "Checking whether the target cluster '%s' is already "+
 		"online...\n", stackConfig.Cluster)
 	if err != nil {
 		return errors.WithStack(err)
@@ -123,7 +133,7 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	if c.dryRun {
+	if dryRun {
 		log.Logger.Infof("Dry run. Won't check if the cluster is already online.")
 
 	} else {
@@ -133,7 +143,7 @@ func (c *createCmd) run() error {
 		}
 
 		if online {
-			_, err = fmt.Fprintln(c.out, "Cluster is already online. Aborting.")
+			_, err = fmt.Fprintln(out, "Cluster is already online. Aborting.")
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -142,18 +152,18 @@ func (c *createCmd) run() error {
 		}
 	}
 
-	_, err = fmt.Fprintln(c.out, "Cluster is not online. Will create it now (this "+
+	_, err = fmt.Fprintln(out, "Cluster is not online. Will create it now (this "+
 		"may take some time...)")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = provisioner.Create(provisionerImpl, stackConfig, c.dryRun)
+	err = provisioner.Create(provisionerImpl, stackConfig, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	if c.dryRun {
+	if dryRun {
 		log.Logger.Infof("Dry run. Skipping cluster readiness check.")
 	} else {
 		err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig)
@@ -161,7 +171,7 @@ func (c *createCmd) run() error {
 			return errors.WithStack(err)
 		}
 
-		_, err = fmt.Fprintf(c.out, "Cluster '%s' successfully created.\n", stackConfig.Cluster)
+		_, err = fmt.Fprintf(out, "Cluster '%s' successfully created.\n", stackConfig.Cluster)
 		if err != nil {
 			return errors.WithStack(err)
 		}

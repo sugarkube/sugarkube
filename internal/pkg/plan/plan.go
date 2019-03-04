@@ -104,18 +104,22 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 
 		if len(kappObj.PostActions) > 0 {
 			for _, postAction := range kappObj.PostActions {
-				if postAction == constants.TASK_ACTION_CLUSTER_UPDATE {
-					actionTask := task{
+				var actionTask *task
+				if postAction == constants.TASK_ACTION_CLUSTER_CREATE {
+					actionTask = &task{
+						kapp:   kappObj,
+						action: constants.TASK_ACTION_CLUSTER_CREATE,
+					}
+				} else if postAction == constants.TASK_ACTION_CLUSTER_UPDATE {
+					actionTask = &task{
 						kapp:   kappObj,
 						action: constants.TASK_ACTION_CLUSTER_UPDATE,
 					}
-
-					// todo - post actions should be added as their own tranche to avoid
-					// races between the actual task and the post action, etc
-					log.Logger.Debugf("Adding %s task for kapp '%s'", constants.TASK_ACTION_CLUSTER_UPDATE,
-						kappObj.FullyQualifiedId())
-					tasks = append(tasks, actionTask)
 				}
+
+				log.Logger.Debugf("Adding %s task for kapp '%s'", constants.TASK_ACTION_CLUSTER_UPDATE,
+					kappObj.FullyQualifiedId())
+				tasks = append(tasks, *actionTask)
 			}
 		}
 
@@ -266,6 +270,12 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 			err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved, renderTemplates, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", kappObj.Id)
+			}
+			break
+		case constants.TASK_ACTION_CLUSTER_CREATE:
+			err := cluster.CreateCluster(os.Stdout, stackConfig, dryRun)
+			if err != nil {
+				errCh <- errors.Wrapf(err, "Error creating cluster, triggered by kapp '%s'", kappObj.Id)
 			}
 			break
 		case constants.TASK_ACTION_CLUSTER_UPDATE:
