@@ -249,7 +249,7 @@ func TestFindKappVarsFiles(t *testing.T) {
 		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/test-region1/kappA.yaml"),
 	}
 
-	results, err := stackConfig.findKappVarsFiles(&stackConfig.Manifests[0].ParsedKapps()[0])
+	results, err := stackConfig.findVarsFiles(&stackConfig.Manifests[0].ParsedKapps()[0])
 	assert.Nil(t, err)
 
 	assert.Equal(t, expected, results)
@@ -292,7 +292,7 @@ region: test-region1-val
 regionOverride: region-val-override
 `
 
-	results, err := stackConfig.GetKappVarsFromFiles(&stackConfig.Manifests[0].ParsedKapps()[0])
+	results, err := stackConfig.GetVarsFromFiles(&stackConfig.Manifests[0].ParsedKapps()[0])
 	assert.Nil(t, err)
 
 	yamlResults, err := yaml.Marshal(results)

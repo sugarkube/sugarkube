@@ -177,9 +177,9 @@ func (s *StackConfig) Dir() string {
 }
 
 // This searches a directory tree from a given root path for files whose values
-// should be merged together for a kapp based on the values of the stack config
-// and the kapp itself.
-func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
+// should be merged together. If a kapp instance is supplied, additional files
+// will be searched for, in addition to stack-specific ones.
+func (s *StackConfig) findVarsFiles(kappObj *Kapp) ([]string, error) {
 	validNames := []string{
 		s.Name,
 		s.Provider,
@@ -188,25 +188,34 @@ func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 		s.Region,
 		s.Profile,
 		s.Cluster,
-		kappObj.Id,
 		constants.PROFILE_DIR,
 		constants.CLUSTER_DIR,
 	}
 
-	acquirers, err := kappObj.Acquirers()
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+	var kappId string
 
-	for _, acquirerObj := range acquirers {
-		validNames = append(validNames, acquirerObj.Id())
+	if kappObj != nil {
+		validNames = append(validNames, kappObj.Id)
 
-		id, err := acquirerObj.FullyQualifiedId()
+		acquirers, err := kappObj.Acquirers()
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
-		validNames = append(validNames, id)
+		for _, acquirerObj := range acquirers {
+			validNames = append(validNames, acquirerObj.Id())
+
+			id, err := acquirerObj.FullyQualifiedId()
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+
+			validNames = append(validNames, id)
+		}
+
+		kappId = kappObj.Id
+	} else {
+		kappId = "<no kapp>"
 	}
 
 	paths := make([]string, 0)
@@ -218,7 +227,7 @@ func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 		}
 
 		log.Logger.Infof("Searching for files/dirs for kapp '%s' under '%s' with basenames: %s",
-			kappObj.FullyQualifiedId(), searchPath, strings.Join(validNames, ", "))
+			kappId, searchPath, strings.Join(validNames, ", "))
 
 		err = filepath.Walk(searchPath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -259,15 +268,17 @@ func (s *StackConfig) findKappVarsFiles(kappObj *Kapp) ([]string, error) {
 		}
 	}
 
-	log.Logger.Debugf("Kapp var paths for kapp '%s' are: %s", kappObj.Id,
+	log.Logger.Debugf("Kapp var paths for kapp '%s' are: %s", kappId,
 		strings.Join(paths, ", "))
 
 	return paths, nil
 }
 
-// Merges YAML files that may contain values for the given kapp
-func (s *StackConfig) GetKappVarsFromFiles(kappObj *Kapp) (map[string]interface{}, error) {
-	dirs, err := s.findKappVarsFiles(kappObj)
+// Merges YAML files that may contain variables. If a a kapp instance is passed
+// as a parameter, variables specific to the kapp will also be returned, in addtion
+// to those relating to the stack as a whole.
+func (s *StackConfig) GetVarsFromFiles(kappObj *Kapp) (map[string]interface{}, error) {
+	dirs, err := s.findVarsFiles(kappObj)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

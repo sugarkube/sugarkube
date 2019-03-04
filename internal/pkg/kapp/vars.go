@@ -60,18 +60,22 @@ func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 		return nil, errors.WithStack(err)
 	}
 
-	kappVars, err := stackConfig.GetKappVarsFromFiles(kappObj)
+	kappVars, err := stackConfig.GetVarsFromFiles(kappObj)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	kappIntrinsicData := kappObj.GetIntrinsicData()
-	kappIntrinsicDataConverted := convert.MapStringStringToMapStringInterface(kappIntrinsicData)
+	kappIntrinsicDataConverted := map[string]interface{}{}
 
-	// merge kapp.Vars with the vars from files so kapp.Vars take precedence. Todo - document the order of precedence
-	err = mergo.Merge(&kappVars, kappObj.Vars, mergo.WithOverride)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	if kappObj != nil {
+		kappIntrinsicData := kappObj.GetIntrinsicData()
+		kappIntrinsicDataConverted = convert.MapStringStringToMapStringInterface(kappIntrinsicData)
+
+		// merge kapp.Vars with the vars from files so kapp.Vars take precedence. Todo - document the order of precedence
+		err = mergo.Merge(&kappVars, kappObj.Vars, mergo.WithOverride)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
 	}
 
 	// namespace kapp variables. This is safer than letting kapp variables overwrite arbitrary values (e.g.

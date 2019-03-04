@@ -37,13 +37,16 @@ const KUBE_CONTEXT_KEY = "kube_context"
 
 // Tests whether the cluster is online
 func (c KubeCtlClusterSot) isOnline(stackConfig *kapp.StackConfig) (bool, error) {
-	providerVars := stackConfig.GetProviderVars()
+	providerVars, err := kapp.MergeVarsForKapp(nil, stackConfig, map[string]interface{}{})
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
 	context := providerVars[KUBE_CONTEXT_KEY].(string)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	// poll `kubectl --context {{ kube_context }} get namespace`
-	err := utils.ExecCommand(KUBECTL_PATH, []string{"--context", context, "get", "namespace"},
+	err = utils.ExecCommand(KUBECTL_PATH, []string{"--context", context, "get", "namespace"},
 		map[string]string{}, &stdoutBuf, &stderrBuf, "", 30, false)
 	if err != nil {
 		if _, ok := errors.Cause(err).(*exec.ExitError); ok {

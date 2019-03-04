@@ -21,7 +21,7 @@ func TestMergeVarsForKapp(t *testing.T) {
 
 	kappObj := &stackConfig.Manifests[0].ParsedKapps()[0]
 
-	results, err := stackConfig.GetKappVarsFromFiles(kappObj)
+	results, err := stackConfig.GetVarsFromFiles(kappObj)
 	assert.Nil(t, err)
 
 	assert.Equal(t, expectedVarsFromFiles, results)
