@@ -37,11 +37,11 @@ const KUBE_CONTEXT_KEY = "kube_context"
 
 // Tests whether the cluster is online
 func (c KubeCtlClusterSot) isOnline(stackConfig *kapp.StackConfig) (bool, error) {
-	providerVars, err := kapp.MergeVarsForKapp(nil, stackConfig, map[string]interface{}{})
+	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
-	context := providerVars[KUBE_CONTEXT_KEY].(string)
+	context := templatedVars[KUBE_CONTEXT_KEY].(string)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 

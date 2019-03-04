@@ -65,8 +65,8 @@ func TestMergeVarsForKapp(t *testing.T) {
 		},
 	}
 
-	mergedKappVars, err := MergeVarsForKapp(kappObj, stackConfig,
+	templatedVars, err := stackConfig.TemplatedVars(kappObj,
 		map[string]interface{}{"target": "myTarget", "approved": true})
 
-	assert.Equal(t, expectedMergedVars, mergedKappVars)
+	assert.Equal(t, expectedMergedVars, templatedVars)
 }

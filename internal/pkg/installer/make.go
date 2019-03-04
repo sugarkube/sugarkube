@@ -60,11 +60,11 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 	}
 
 	// merge all the vars required to render the kapp's sugarkube.yaml file
-	mergedKappVars, err := kapp.MergeVarsForKapp(kappObj, stackConfig,
+	templatedVars, err := stackConfig.TemplatedVars(kappObj,
 		map[string]interface{}{"target": makeTarget, "approved": approved})
 
 	if renderTemplates {
-		err = kappObj.RenderTemplates(mergedKappVars, stackConfig, dryRun)
+		err = kappObj.RenderTemplates(templatedVars, stackConfig, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -73,7 +73,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 	}
 
 	// load the kapp's own config
-	err = kappObj.Load(mergedKappVars)
+	err = kappObj.Load(templatedVars)
 	if err != nil {
 		return errors.WithStack(err)
 	}

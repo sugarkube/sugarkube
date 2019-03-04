@@ -92,12 +92,12 @@ func (c *varsConfig) run() error {
 	}
 
 	for _, kappObj := range selectedKapps {
-		mergedKappVars, err := kapp.MergeVarsForKapp(&kappObj, stackConfig, map[string]interface{}{})
+		templatedVars, err := stackConfig.TemplatedVars(&kappObj, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		yamlData, err := yaml.Marshal(&mergedKappVars)
+		yamlData, err := yaml.Marshal(&templatedVars)
 		if err != nil {
 			return errors.WithStack(err)
 		}

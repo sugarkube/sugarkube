@@ -131,11 +131,11 @@ func (p MinikubeProvisioner) update(sc *kapp.StackConfig, dryRun bool) error {
 
 // Parses the provisioner config
 func parseMinikubeConfig(stackConfig *kapp.StackConfig) (*MinikubeConfig, error) {
-	providerVars, err := kapp.MergeVarsForKapp(nil, stackConfig, map[string]interface{}{})
+	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	provisionerValues, ok := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
+	provisionerValues, ok := templatedVars[PROVISIONER_KEY].(map[interface{}]interface{})
 	if !ok {
 		return nil, errors.New("No provisioner found in stack config. You must set the binary path.")
 	}

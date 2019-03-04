@@ -96,12 +96,12 @@ func (p KopsProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 // Returns a bool indicating whether the cluster configuration has already been created
 func (p KopsProvisioner) clusterConfigExists(stackConfig *kapp.StackConfig) (bool, error) {
 
-	providerVars, err := kapp.MergeVarsForKapp(nil, stackConfig, map[string]interface{}{})
+	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
 	log.Logger.Info("Checking if a Kops cluster config already exists...")
-	log.Logger.Debugf("Checking if a Kops cluster config exists for values: %#v", providerVars)
+	log.Logger.Debugf("Checking if a Kops cluster config exists for values: %#v", templatedVars)
 
 	args := []string{"get", "clusters"}
 	args = parameteriseValues(args, p.kopsConfig.Params.Global)
@@ -133,11 +133,11 @@ func (p KopsProvisioner) clusterConfigExists(stackConfig *kapp.StackConfig) (boo
 // that only happens when 'kops update' is run.
 func (p KopsProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) error {
 
-	providerVars, err := kapp.MergeVarsForKapp(nil, stackConfig, map[string]interface{}{})
+	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	log.Logger.Debugf("Provider vars: %#v", providerVars)
+	log.Logger.Debugf("Provider vars: %#v", templatedVars)
 
 	args := []string{"create", "cluster"}
 	args = parameteriseValues(args, p.kopsConfig.Params.Global)
@@ -274,11 +274,11 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 		return errors.Wrap(err, "Error parsing kops config")
 	}
 
-	providerVars, err := kapp.MergeVarsForKapp(nil, stackConfig, map[string]interface{}{})
+	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	provisionerValues := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
+	provisionerValues := templatedVars[PROVISIONER_KEY].(map[interface{}]interface{})
 
 	specs, err := convert.MapInterfaceInterfaceToMapStringInterface(
 		provisionerValues[KOPS_SPECS_KEY].(map[interface{}]interface{}))
@@ -482,11 +482,11 @@ func parameteriseValues(args []string, valueMap map[string]string) []string {
 
 // Parses the Kops provisioner config
 func parseKopsConfig(stackConfig *kapp.StackConfig) (*KopsConfig, error) {
-	providerVars, err := kapp.MergeVarsForKapp(nil, stackConfig, map[string]interface{}{})
+	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	provisionerValues, ok := providerVars[PROVISIONER_KEY].(map[interface{}]interface{})
+	provisionerValues, ok := templatedVars[PROVISIONER_KEY].(map[interface{}]interface{})
 	if !ok {
 		return nil, errors.New("No provisioner found in stack config. You must at least set the binary path.")
 	}

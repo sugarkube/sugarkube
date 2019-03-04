@@ -147,14 +147,14 @@ func RenderTemplates(kapps []kapp.Kapp, cacheDir string,
 	log.Logger.Debugf("Rendering templates for kapps: %s", strings.Join(candidateKappIds, ", "))
 
 	for _, kappObj := range kapps {
-		mergedKappVars, err := kapp.MergeVarsForKapp(&kappObj, stackConfig, map[string]interface{}{})
+		templatedVars, err := stackConfig.TemplatedVars(&kappObj, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
 		kappObj.SetCacheDir(cacheDir)
 
-		err = kappObj.RenderTemplates(mergedKappVars, stackConfig, dryRun)
+		err = kappObj.RenderTemplates(templatedVars, stackConfig, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
