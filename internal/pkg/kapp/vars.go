@@ -26,8 +26,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Merges all vars for a kapp from different sources. These can be used as template
-// values or as env vars/parameters to be passed to the kapp at runtime.
+// Merges and templates vars from all configured sources. If a kapp instance
+// is given, data specific to the kapp will be included in the returned map,
+// otherwise only stack-specific variables will be returned.
 func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 	installerVars map[string]interface{}) (map[string]interface{}, error) {
 
