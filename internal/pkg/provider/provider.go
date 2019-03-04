@@ -25,6 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Provider interface {
@@ -77,6 +78,9 @@ func LoadProviderVars(p Provider, stackConfig *kapp.StackConfig) (map[string]int
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	log.Logger.Debugf("Searching for provider vars files in %s",
+		strings.Join(varsDirs, ", "))
 
 	for _, varFile := range varsDirs {
 		valuePath := filepath.Join(varFile, constants.VALUES_FILE)

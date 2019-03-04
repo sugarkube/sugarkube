@@ -39,6 +39,7 @@ const KOPS_DEFAULT_BINARY = "kops"
 
 // number of seconds to timeout after while running kops commands (apart from updates)
 const KOPS_COMMAND_TIMEOUT_SECONDS = 30
+const KOPS_COMMAND_TIMEOUT_SECONDS_LONG = 300
 
 // number of seconds to sleep after the cluster has come online before checking whether
 // it's ready
@@ -147,7 +148,7 @@ func (p KopsProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) erro
 
 	log.Logger.Info("Creating Kops cluster config...")
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
+		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS_LONG, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
