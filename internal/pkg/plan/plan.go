@@ -110,6 +110,8 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 						action: constants.TASK_ACTION_CLUSTER_UPDATE,
 					}
 
+					// todo - post actions should be added as their own tranche to avoid
+					// races between the actual task and the post action, etc
 					log.Logger.Debugf("Adding %s task for kapp '%s'", constants.TASK_ACTION_CLUSTER_UPDATE,
 						kappObj.FullyQualifiedId())
 					tasks = append(tasks, actionTask)
