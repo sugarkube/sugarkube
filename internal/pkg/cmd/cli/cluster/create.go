@@ -55,7 +55,7 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	command := &cobra.Command{
 		Use:   "create [flags] [stack-file] [stack-name]",
 		Short: fmt.Sprintf("Create a cluster"),
-		Long: `Create a new cluster, either local or remote.
+		Long: `Create a new cluster, either local or remote without running any kapps.
 
 Create a configured cluster, e.g.:
 
@@ -63,6 +63,12 @@ Create a configured cluster, e.g.:
 
 Certain values can be provided to override values from the stack config file, e.g. to change the 
 region, etc. 
+
+If you need to bootstrap your environment before launching a cluster (e.g. to create
+DNS records, S3 buckets, etc.), create one or more kapps to create those resources.
+On the last kapp, add a 'post_action' of 'cluster_create'. The cluster will be created
+after running that kapp with 'sugarkube kapps apply' (assuming you've already created a
+cache with 'sugarkube cache create').
 
 Note: Not all providers require all arguments. See documentation for help.
 `,
