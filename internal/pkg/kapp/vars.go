@@ -61,7 +61,7 @@ func MergeVarsForKapp(kappObj *Kapp, stackConfig *StackConfig,
 		return nil, errors.WithStack(err)
 	}
 
-	kappVars, err := stackConfig.GetVarsFromFiles(kappObj)
+	kappVars, err := stackConfig.getVarsFromFiles(kappObj)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

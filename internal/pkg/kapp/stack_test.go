@@ -292,7 +292,7 @@ region: test-region1-val
 regionOverride: region-val-override
 `
 
-	results, err := stackConfig.GetVarsFromFiles(&stackConfig.Manifests[0].ParsedKapps()[0])
+	results, err := stackConfig.getVarsFromFiles(&stackConfig.Manifests[0].ParsedKapps()[0])
 	assert.Nil(t, err)
 
 	yamlResults, err := yaml.Marshal(results)

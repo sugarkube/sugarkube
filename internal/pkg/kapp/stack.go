@@ -277,7 +277,7 @@ func (s *StackConfig) findVarsFiles(kappObj *Kapp) ([]string, error) {
 // Merges YAML files that may contain variables. If a a kapp instance is passed
 // as a parameter, variables specific to the kapp will also be returned, in addtion
 // to those relating to the stack as a whole.
-func (s *StackConfig) GetVarsFromFiles(kappObj *Kapp) (map[string]interface{}, error) {
+func (s *StackConfig) getVarsFromFiles(kappObj *Kapp) (map[string]interface{}, error) {
 	dirs, err := s.findVarsFiles(kappObj)
 	if err != nil {
 		return nil, errors.WithStack(err)
