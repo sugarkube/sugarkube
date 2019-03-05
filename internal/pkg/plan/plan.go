@@ -105,12 +105,7 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 		if len(kappObj.PostActions) > 0 {
 			for _, postAction := range kappObj.PostActions {
 				var actionTask *task
-				if postAction == constants.TASK_ACTION_CLUSTER_CREATE {
-					actionTask = &task{
-						kapp:   kappObj,
-						action: constants.TASK_ACTION_CLUSTER_CREATE,
-					}
-				} else if postAction == constants.TASK_ACTION_CLUSTER_UPDATE {
+				if postAction == constants.TASK_ACTION_CLUSTER_UPDATE {
 					actionTask = &task{
 						kapp:   kappObj,
 						action: constants.TASK_ACTION_CLUSTER_UPDATE,
@@ -263,6 +258,8 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 		kappRootDir := kappObj.CacheDir()
 		log.Logger.Infof("Processing kapp '%s' in %s", kappObj.FullyQualifiedId(), kappRootDir)
 
+		// todo - print (to stdout) detais of the kapp being executed
+
 		_, err := os.Stat(kappRootDir)
 		if err != nil {
 			msg := fmt.Sprintf("Kapp '%s' doesn't exist in the cache at '%s'", kappObj.Id, kappRootDir)
@@ -295,16 +292,15 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", kappObj.Id)
 			}
 			break
-		case constants.TASK_ACTION_CLUSTER_CREATE:
-			err := cluster.CreateCluster(os.Stdout, stackConfig, dryRun)
-			if err != nil {
-				errCh <- errors.Wrapf(err, "Error creating cluster, triggered by kapp '%s'", kappObj.Id)
-			}
-			break
 		case constants.TASK_ACTION_CLUSTER_UPDATE:
-			err := cluster.UpdateCluster(os.Stdout, stackConfig, dryRun)
-			if err != nil {
-				errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'", kappObj.Id)
+			if approved {
+				log.Logger.Info("Running cluster update action")
+				err := cluster.UpdateCluster(os.Stdout, stackConfig, true, dryRun)
+				if err != nil {
+					errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'", kappObj.Id)
+				}
+			} else {
+				log.Logger.Info("Skipping cluster update action since the approved=false")
 			}
 			break
 		}

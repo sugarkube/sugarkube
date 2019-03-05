@@ -33,6 +33,7 @@ import (
 type updateCmd struct {
 	out              io.Writer
 	dryRun           bool
+	skipCreate       bool
 	stackName        string
 	stackFile        string
 	provider         string
@@ -80,6 +81,7 @@ Note: Not all providers require all arguments. See documentation for help.
 
 	f := command.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
+	f.BoolVar(&c.skipCreate, "no-create", false, "don't automatically create the target cluster if it's offline")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -112,7 +114,7 @@ func (c *updateCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = UpdateCluster(c.out, stackConfig, c.dryRun)
+	err = UpdateCluster(c.out, stackConfig, !c.skipCreate, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -121,9 +123,15 @@ func (c *updateCmd) run() error {
 }
 
 // Updates a cluster with a stack config
-func UpdateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) error {
-	_, err := fmt.Fprintf(out, "Checking whether the target cluster '%s' is already "+
-		"online...\n", stackConfig.Cluster)
+func UpdateCluster(out io.Writer, stackConfig *kapp.StackConfig, autoCreate bool,
+	dryRun bool) error {
+	dryRunPrefix := ""
+	if dryRun {
+		dryRunPrefix = "[Dry run] "
+	}
+
+	_, err := fmt.Fprintf(out, "%sChecking whether the target cluster '%s' is already "+
+		"online...\n", dryRunPrefix, stackConfig.Cluster)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -139,35 +147,49 @@ func UpdateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) er
 	}
 
 	if !online {
-		_, err = fmt.Fprintln(out, "Cluster is already online. Aborting.")
-		if err != nil {
-			return errors.WithStack(err)
+		if autoCreate {
+			_, err = fmt.Fprintf(out, "%sCluster isn't online. Will create it...\n", dryRunPrefix)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			err = CreateCluster(out, stackConfig, dryRun)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+		} else {
+			_, err = fmt.Fprintf(out, "%sCluster isn't online but we're not to create it. Aborting.\n", dryRunPrefix)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			return nil
 		}
-		return nil
-	}
-
-	_, err = fmt.Fprintln(out, "Cluster is online. Will update it now (this "+
-		"may take some time...)")
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	err = provisioner.Update(provisionerImpl, stackConfig, dryRun)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if dryRun {
-		log.Logger.Infof("Dry run. Skipping cluster readiness check.")
 	} else {
-		err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig)
+		_, err = fmt.Fprintf(out, "%sCluster is online. Will update it now (this "+
+			"may take some time...)\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		_, err = fmt.Fprintf(out, "Cluster '%s' successfully updated.\n", stackConfig.Cluster)
+		err = provisioner.Update(provisionerImpl, stackConfig, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
+		}
+
+		if dryRun {
+			log.Logger.Infof("%sSkipping cluster readiness check.", dryRunPrefix)
+		} else {
+			err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			_, err = fmt.Fprintf(out, "%sCluster '%s' successfully updated.\n",
+				dryRunPrefix, stackConfig.Cluster)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
 	}
 

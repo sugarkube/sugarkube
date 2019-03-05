@@ -138,7 +138,7 @@ func (p KopsProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) erro
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	log.Logger.Debugf("Provider vars: %#v", templatedVars)
+	log.Logger.Debugf("Templated stack config vars: %#v", templatedVars)
 
 	args := []string{"create", "cluster"}
 	args = parameteriseValues(args, p.kopsConfig.Params.Global)
@@ -354,7 +354,7 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 
 	for instanceGroupName, newSpec := range igSpecs {
 		specValues := map[string]interface{}{"spec": newSpec}
-		err = p.patchInstanceGroup(p.kopsConfig, instanceGroupName.(string), specValues)
+		err = p.patchInstanceGroup(p.kopsConfig, instanceGroupName.(string), specValues, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -381,7 +381,7 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 }
 
 func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroupName string,
-	newSpec map[string]interface{}) error {
+	newSpec map[string]interface{}, dryRun bool) error {
 	args := []string{
 		"get",
 		"instancegroups",
@@ -397,7 +397,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	err := utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS, false)
+		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -457,7 +457,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 	args = parameteriseValues(args, kopsConfig.Params.Replace)
 
 	err = utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
-		"", KOPS_COMMAND_TIMEOUT_SECONDS, false)
+		"", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -62,8 +62,11 @@ func (c KubeCtlClusterSot) isOnline(stackConfig *kapp.StackConfig) (bool, error)
 
 // Tests whether all pods are Ready
 func (c KubeCtlClusterSot) isReady(stackConfig *kapp.StackConfig) (bool, error) {
-	providerVars := stackConfig.GetProviderVars()
-	context := providerVars[KUBE_CONTEXT_KEY].(string)
+	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+	context := templatedVars[KUBE_CONTEXT_KEY].(string)
 
 	// todo - simplify this by using ExecCommand to get the data from kubectl with a timeout,
 	// then just feed that to grep on its stdin instead of piping directly.
@@ -79,7 +82,7 @@ func (c KubeCtlClusterSot) isReady(stackConfig *kapp.StackConfig) (bool, error) 
 		return false, errors.WithStack(err)
 	}
 
-	grepCmd := exec.Command("grep", "-v", "Running")
+	grepCmd := exec.Command("grep", "-v", "-e", "Running", "-e", "Succeeded")
 	grepCmd.Env = userEnv
 	grepCmd.Stdin = kubeCtlStdout
 	grepCmd.Stdout = &grepStdout

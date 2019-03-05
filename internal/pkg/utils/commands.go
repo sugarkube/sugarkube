@@ -24,6 +24,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 	"time"
 )
@@ -43,6 +44,9 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 	for k, v := range envVars {
 		strEnvVars = append(strEnvVars, strings.Join([]string{k, v}, "="))
 	}
+
+	// sort the env vars to simplify copying and pasting log output
+	sort.Strings(strEnvVars)
 
 	var cmd *exec.Cmd
 	var ctx context.Context
