@@ -47,9 +47,19 @@ func newLogger(logLevel string, jsonLogs bool) *logrus.Logger {
 	l := logrus.New()
 	l.AddHook(filename.NewHook())
 
+	// make the formatter include the current time
+	var formatter logrus.Formatter
 	if jsonLogs {
-		l.Formatter = new(logrus.JSONFormatter)
+		formatter = &logrus.JSONFormatter{
+			DisableTimestamp: false,
+		}
+	} else {
+		formatter = &logrus.TextFormatter{
+			FullTimestamp: true,
+		}
 	}
+
+	l.Formatter = formatter
 	l.Out = os.Stderr
 
 	setLevel(l, logLevel)
