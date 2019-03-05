@@ -22,7 +22,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
-	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"io"
 )
@@ -46,6 +45,8 @@ type applyCmd struct {
 	region          string
 	includeSelector []string
 	excludeSelector []string
+	onlineTimeout   uint32
+	readyTimeout    uint32
 }
 
 func newApplyCmd(out io.Writer) *cobra.Command {
@@ -94,6 +95,8 @@ func newApplyCmd(out io.Writer) *cobra.Command {
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
 			kapp.WILDCARD_CHARACTER))
+	f.Uint32Var(&c.onlineTimeout, "online-timeout", 600, "max number of seconds to wait for the cluster to come online")
+	f.Uint32Var(&c.readyTimeout, "ready-timeout", 600, "max number of seconds to wait for the cluster to become ready")
 	return cmd
 }
 
@@ -101,12 +104,14 @@ func (c *applyCmd) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &kapp.StackConfig{
-		Provider:    c.provider,
-		Provisioner: c.provisioner,
-		Profile:     c.profile,
-		Cluster:     c.cluster,
-		Region:      c.region,
-		Account:     c.account,
+		Provider:      c.provider,
+		Provisioner:   c.provisioner,
+		Profile:       c.profile,
+		Cluster:       c.cluster,
+		Region:        c.region,
+		Account:       c.account,
+		ReadyTimeout:  c.readyTimeout,
+		OnlineTimeout: c.onlineTimeout,
 	}
 
 	stackConfig, err := utils.BuildStackConfig(c.stackName, c.stackFile, cliStackConfig, c.out)
@@ -114,8 +119,10 @@ func (c *applyCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	manifests := stackConfig.Manifests
-	log.Logger.Debugf("Creating a plan just for normal manifests")
+	dryRunPrefix := ""
+	if c.dryRun {
+		dryRunPrefix = "[Dry run] "
+	}
 
 	var actionPlan *plan.Plan
 
@@ -152,21 +159,24 @@ func (c *applyCmd) run() error {
 		//actionPlan, err := plan.FromDiff(clusterDiff)
 
 	} else {
-		_, err = fmt.Fprintln(c.out, "Planning operations on kapps")
+		_, err = fmt.Fprintf(c.out, "%sPlanning operations on kapps\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
 		// force mode, so no need to perform validation. Just create a plan
-		actionPlan, err = plan.Create(stackConfig, manifests, c.cacheDir, c.includeSelector, c.excludeSelector,
-			!c.skipTemplating)
+		actionPlan, err = plan.Create(stackConfig, stackConfig.Manifests,
+			c.cacheDir, c.includeSelector, c.excludeSelector, !c.skipTemplating)
 		if err != nil {
 			return errors.WithStack(err)
 		}
+
+		// todo - print out the plan
 	}
 
 	if !c.oneShot {
-		_, err = fmt.Fprintf(c.out, "Applying the plan with APPROVED=%#v...\n", c.approved)
+		_, err = fmt.Fprintf(c.out, "%sApplying the plan with APPROVED=%#v...\n",
+			dryRunPrefix, c.approved)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -177,13 +187,13 @@ func (c *applyCmd) run() error {
 			return errors.WithStack(err)
 		}
 	} else {
-		_, err = fmt.Fprintln(c.out, "Applying the plan in a single pass")
+		_, err = fmt.Fprintf(c.out, "%sApplying the plan in a single pass\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		_, err = fmt.Fprintln(c.out, "First applying the plan with APPROVED=false for "+
-			"kapps to plan their changes...")
+		_, err = fmt.Fprint(c.out, "%sFirst applying the plan with APPROVED=false for "+
+			"kapps to plan their changes...\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -194,7 +204,8 @@ func (c *applyCmd) run() error {
 			return errors.WithStack(err)
 		}
 
-		_, err = fmt.Fprintln(c.out, "Now running with APPROVED=true to actually apply changes...")
+		_, err = fmt.Fprintf(c.out, "%sNow running with APPROVED=true to "+
+			"actually apply changes...\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -205,7 +216,7 @@ func (c *applyCmd) run() error {
 		}
 	}
 
-	_, err = fmt.Fprintln(c.out, "Kapp change plan successfully applied")
+	_, err = fmt.Fprintf(c.out, "%sKapp change plan successfully applied\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}

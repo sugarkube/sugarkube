@@ -128,8 +128,12 @@ func (c *createCmd) run() error {
 
 // Creates a cluster with a stack config
 func CreateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) error {
-	_, err := fmt.Fprintf(out, "Checking whether the target cluster '%s' is already "+
-		"online...\n", stackConfig.Cluster)
+	dryRunPrefix := ""
+	if dryRun {
+		dryRunPrefix = "[Dry run] "
+	}
+	_, err := fmt.Fprintf(out, "%sChecking whether the target cluster '%s' is already "+
+		"online...\n", dryRunPrefix, stackConfig.Cluster)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -140,7 +144,8 @@ func CreateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) er
 	}
 
 	if dryRun {
-		log.Logger.Infof("Dry run. Won't check if the cluster is already online.")
+		log.Logger.Infof("%sWon't check if the cluster is already online.",
+			dryRunPrefix)
 
 	} else {
 		online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig)
@@ -149,7 +154,8 @@ func CreateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) er
 		}
 
 		if online {
-			_, err = fmt.Fprintln(out, "Cluster is already online. Aborting.")
+			_, err = fmt.Fprintf(out, "%sCluster is already online. Aborting.\n",
+				dryRunPrefix)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -158,8 +164,8 @@ func CreateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) er
 		}
 	}
 
-	_, err = fmt.Fprintln(out, "Cluster is not online. Will create it now (this "+
-		"may take some time...)")
+	_, err = fmt.Fprintf(out, "%sCluster is not online. Will create it now (this "+
+		"may take some time...)\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -170,14 +176,15 @@ func CreateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) er
 	}
 
 	if dryRun {
-		log.Logger.Infof("Dry run. Skipping cluster readiness check.")
+		log.Logger.Infof("%sSkipping cluster readiness check.", dryRunPrefix)
 	} else {
 		err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		_, err = fmt.Fprintf(out, "Cluster '%s' successfully created.\n", stackConfig.Cluster)
+		_, err = fmt.Fprintf(out, "%sCluster '%s' successfully created.\n",
+			dryRunPrefix, stackConfig.Cluster)
 		if err != nil {
 			return errors.WithStack(err)
 		}
