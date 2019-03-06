@@ -46,13 +46,15 @@ const LOCAL = "local"
 const AWS = "aws"
 
 // Factory that creates providers
-func newProviderImpl(name string) (Provider, error) {
+func newProviderImpl(name string, stackConfig *kapp.StackConfig) (Provider, error) {
 	if name == LOCAL {
 		return &LocalProvider{}, nil
 	}
 
 	if name == AWS {
-		return &AwsProvider{}, nil
+		return &AwsProvider{
+			region: stackConfig.Region,
+		}, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("Provider '%s' doesn't exist", name))
@@ -61,7 +63,7 @@ func newProviderImpl(name string) (Provider, error) {
 // Instantiates a Provider and returns it along with the stack config vars it can
 // load, or an error.
 func NewProvider(stackConfig *kapp.StackConfig) (Provider, error) {
-	providerImpl, err := newProviderImpl(stackConfig.Provider)
+	providerImpl, err := newProviderImpl(stackConfig.Provider, stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

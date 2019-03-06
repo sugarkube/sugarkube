@@ -39,7 +39,7 @@ func TestStackConfigVars(t *testing.T) {
 		},
 	}
 
-	providerImpl, err := newProviderImpl(sc.Provider)
+	providerImpl, err := newProviderImpl(sc.Provider, sc)
 	assert.Nil(t, err)
 
 	actual, err := LoadProviderVars(providerImpl, sc)
@@ -48,25 +48,33 @@ func TestStackConfigVars(t *testing.T) {
 }
 
 func TestNewNonExistentProvider(t *testing.T) {
-	actual, err := newProviderImpl("bananas")
+	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
+	assert.Nil(t, err)
+	actual, err := newProviderImpl("bananas", sc)
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
 
 func TestNewProviderError(t *testing.T) {
-	actual, err := newProviderImpl("nonsense")
+	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
+	assert.Nil(t, err)
+	actual, err := newProviderImpl("nonsense", sc)
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
 
 func TestNewLocalProvider(t *testing.T) {
-	actual, err := newProviderImpl(LOCAL)
+	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
+	assert.Nil(t, err)
+	actual, err := newProviderImpl(LOCAL, sc)
 	assert.Nil(t, err)
 	assert.Equal(t, &LocalProvider{}, actual)
 }
 
 func TestNewAWSProvider(t *testing.T) {
-	actual, err := newProviderImpl(AWS)
+	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
+	assert.Nil(t, err)
+	actual, err := newProviderImpl(AWS, sc)
 	assert.Nil(t, err)
 	assert.Equal(t, &AwsProvider{}, actual)
 }
