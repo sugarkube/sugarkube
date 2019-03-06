@@ -19,6 +19,7 @@ package installer
 import (
 	"bytes"
 	"fmt"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -64,7 +65,23 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 		map[string]interface{}{"target": makeTarget, "approved": approved})
 
 	if renderTemplates {
-		err = kappObj.RenderTemplates(templatedVars, stackConfig, dryRun)
+		renderedTemplates, err := kappObj.RenderTemplates(templatedVars, stackConfig, dryRun)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		// merge renderedTemplates into the templatedVars under the "kapp.templates" key. This will
+		// allow us to support writing files to temporary (dynamic) locations later if we like
+		renderedTemplatesMap := map[string]interface{}{
+			"kapp": map[string]interface{}{
+				"templates": renderedTemplates,
+			},
+		}
+
+		log.Logger.Debugf("Merging rendered template paths into stack config: %#v",
+			renderedTemplates)
+
+		err = mergo.Merge(&templatedVars, renderedTemplatesMap, mergo.WithOverride)
 		if err != nil {
 			return errors.WithStack(err)
 		}

@@ -244,36 +244,57 @@ func (k *Kapp) Acquirers() ([]acquirer.Acquirer, error) {
 	return acquirers, nil
 }
 
-// Render templates for the kapp
-func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfig *StackConfig, dryRun bool) error {
+// Renders templates for the kapp and returns the paths they were written to
+func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfig *StackConfig,
+	dryRun bool) ([]string, error) {
 
-	var err error
+	renderedPaths := make([]string, 0)
 
 	if len(k.Templates) == 0 {
 		log.Logger.Infof("No templates to render for kapp '%s'", k.FullyQualifiedId())
-		return nil
+		return renderedPaths, nil
 	}
 
 	log.Logger.Infof("Rendering templates for kapp '%s'", k.FullyQualifiedId())
 
 	for _, templateDefinition := range k.Templates {
-		templateSource := templateDefinition.Source
+		rawTemplateSource := templateDefinition.Source
+
+		// run the source path through the templater in case it contains variables
+		templateSource, err := templater.RenderTemplate(rawTemplateSource, mergedKappVars)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
 		if !filepath.IsAbs(templateSource) {
 			foundTemplate := false
 
-			// search each template directory defined in the stack config
-			for _, templateDir := range stackConfig.TemplateDirs {
-				possibleSource := filepath.Join(stackConfig.Dir(), templateDir, templateSource)
-				_, err := os.Stat(possibleSource)
-				if err == nil {
-					templateSource = possibleSource
-					foundTemplate = true
-					break
+			// see whether the template is in the kapp itself
+			possibleSource := filepath.Join(k.CacheDir(), templateSource)
+			log.Logger.Debugf("Searching for kapp template in '%s'", possibleSource)
+			_, err := os.Stat(possibleSource)
+			if err == nil {
+				templateSource = possibleSource
+				foundTemplate = true
+				break
+			}
+
+			if !foundTemplate {
+				// search each template directory defined in the stack config
+				for _, templateDir := range stackConfig.TemplateDirs {
+					possibleSource := filepath.Join(stackConfig.Dir(), templateDir, templateSource)
+					log.Logger.Debugf("Searching for kapp template in '%s'", possibleSource)
+					_, err := os.Stat(possibleSource)
+					if err == nil {
+						templateSource = possibleSource
+						foundTemplate = true
+						break
+					}
 				}
 			}
 
 			if !foundTemplate {
-				return errors.New(fmt.Sprintf("Failed to find template '%s' "+
+				return renderedPaths, errors.New(fmt.Sprintf("Failed to find template '%s' "+
 					"in any of the defined template directories: %s", templateSource,
 					strings.Join(stackConfig.TemplateDirs, ", ")))
 			}
@@ -282,13 +303,19 @@ func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfi
 		if !filepath.IsAbs(templateSource) {
 			templateSource, err = filepath.Abs(templateSource)
 			if err != nil {
-				return errors.WithStack(err)
+				return renderedPaths, errors.WithStack(err)
 			}
 		}
 
 		log.Logger.Debugf("Templating file '%s' with vars: %#v", templateSource, mergedKappVars)
 
-		destPath := templateDefinition.Dest
+		rawDestPath := templateDefinition.Dest
+		// run the dest path through the templater in case it contains variables
+		destPath, err := templater.RenderTemplate(rawDestPath, mergedKappVars)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
 		if !filepath.IsAbs(destPath) {
 			destPath = filepath.Join(k.CacheDir(), destPath)
 		}
@@ -303,14 +330,14 @@ func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfi
 		// check whether the parent directory for dest path exists and return an error if not
 		destDir := filepath.Dir(destPath)
 		if _, err := os.Stat(destDir); os.IsNotExist(err) {
-			return errors.New(fmt.Sprintf("Can't write template to non-existent directory: %s", destDir))
+			return renderedPaths, errors.New(fmt.Sprintf("Can't write template to non-existent directory: %s", destDir))
 		}
 
 		var outBuf bytes.Buffer
 
 		err = templater.TemplateFile(templateSource, &outBuf, mergedKappVars)
 		if err != nil {
-			return errors.WithStack(err)
+			return renderedPaths, errors.WithStack(err)
 		}
 
 		if dryRun {
@@ -322,12 +349,14 @@ func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfi
 				"'%s' to '%s'", templateSource, k.FullyQualifiedId(), destPath)
 			err := ioutil.WriteFile(destPath, outBuf.Bytes(), 0644)
 			if err != nil {
-				return errors.WithStack(err)
+				return renderedPaths, errors.WithStack(err)
 			}
+
+			renderedPaths = append(renderedPaths, destPath)
 		}
 	}
 
-	return nil
+	return renderedPaths, nil
 }
 
 // Returns a boolean indicating whether the kapp matches the given selector
