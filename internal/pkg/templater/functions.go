@@ -42,11 +42,21 @@ func listString(elems ...string) []string {
 }
 
 // Runs sprintf over all elements of a list
-func mapPrintF(pattern string, items []string) []string {
-	output := make([]string, len(items))
+func mapPrintF(pattern string, genericItems interface{}) []string {
+	output := make([]string, 0)
 
-	for i, item := range items {
-		output[i] = fmt.Sprintf(pattern, item)
+	items, ok := genericItems.([]interface{})
+	if ok {
+		for _, item := range items {
+			output = append(output, fmt.Sprintf(pattern, item))
+		}
+	} else {
+		stringItems, ok := genericItems.([]string)
+		if ok {
+			for _, item := range stringItems {
+				output = append(output, fmt.Sprintf(pattern, item))
+			}
+		}
 	}
 
 	return output
