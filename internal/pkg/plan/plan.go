@@ -26,6 +26,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"os"
+	"sort"
 )
 
 type task struct {
@@ -43,7 +44,7 @@ type tranche struct {
 type Plan struct {
 	// installation/destruction phases. Tranches will be run sequentially, but
 	// each kapp in the tranche will be processed in parallel
-	tranche []tranche
+	tranches []tranche
 	// contains details of the target cluster
 	stackConfig *kapp.StackConfig
 	// a cache dir to run the (make) installer over. It should already have
@@ -65,10 +66,13 @@ type job struct {
 
 // create a plan containing all kapps in the stackConfig, then filter out the
 // ones that don't need running based on the current state of the target cluster
-// as described by SOTs
-// todo - add a 'runDirection' parameter to determine if we're spinning up the cluster or tearing it down
-func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir string, includeSelector []string,
-	excludeSelector []string, renderTemplates bool) (*Plan, error) {
+// as described by SOTs (todo).
+// If the `forward` parameter is true, the plan will be ordered so that kapps
+// are applied from first to last in the orders specified in the manifests which
+// will install kapps into a new cluster. If it's false, the order will be
+// reversed which will be useful when tearing down a cluster.
+func Create(forward bool, stackConfig *kapp.StackConfig, manifests []*kapp.Manifest,
+	cacheDir string, includeSelector []string, excludeSelector []string, renderTemplates bool) (*Plan, error) {
 
 	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
 	// in selectors
@@ -84,12 +88,27 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 	for _, kappObj := range selectedKapps {
 		var installDestroyTask *task
 
-		if kappObj.State == kapp.PRESENT_KEY {
+		// create a new tranche for each new manifest
+		if previousManifest != nil && previousManifest.Id() != kappObj.GetManifest().Id() &&
+			len(tasks) > 0 {
+			tranche := tranche{
+				manifest: *previousManifest,
+				tasks:    tasks,
+			}
+
+			tranches = append(tranches, tranche)
+			tasks = make([]task, 0)
+			previousManifest = kappObj.GetManifest()
+		}
+
+		// when creating a forward plan, we can install kapps...
+		if forward && kappObj.State == kapp.PRESENT_KEY {
 			installDestroyTask = &task{
 				kapp:   kappObj,
 				action: constants.TASK_ACTION_INSTALL,
 			}
-		} else if kappObj.State == kapp.ABSENT_KEY {
+			// but reverse plans must always destroy them
+		} else if !forward || kappObj.State == kapp.ABSENT_KEY {
 			installDestroyTask = &task{
 				kapp:   kappObj,
 				action: constants.TASK_ACTION_DESTROY,
@@ -110,10 +129,14 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 						kapp:   kappObj,
 						action: constants.TASK_ACTION_CLUSTER_UPDATE,
 					}
+				} else {
+					log.Logger.Errorf("Invalid post_action encountered: %s", postAction)
 				}
 
 				// post action tasks are added to their own tranche to avoid race conditions
 				if actionTask != nil {
+					log.Logger.Debugf("Kapp '%s' has a post action task to add: %#v",
+						kappObj.FullyQualifiedId(), actionTask)
 					// add any previously queued tasks to a tranche
 					if len(tasks) > 0 {
 						tranche := tranche{
@@ -122,28 +145,29 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 						}
 
 						tranches = append(tranches, tranche)
+
+						// reset the tasks list for the next iteration
+						tasks = make([]task, 0)
 					}
 
-					// reset the tasks list for the next iteration
-					tasks = make([]task, 0)
+					log.Logger.Debugf("Adding %s task for kapp '%s'",
+						actionTask.action, kappObj.FullyQualifiedId())
+
+					// create a tranche just for the post action
+					tranche := tranche{
+						manifest: *kappObj.GetManifest(),
+						tasks:    []task{*actionTask},
+					}
+
+					tranches = append(tranches, tranche)
 				}
-
-				log.Logger.Debugf("Adding %s task for kapp '%s'",
-					actionTask.action, kappObj.FullyQualifiedId())
-
-				tranche := tranche{
-					manifest: *kappObj.GetManifest(),
-					tasks:    []task{*actionTask},
-				}
-
-				tranches = append(tranches, tranche)
 			}
 		}
 
 		if len(tasks) > 0 && previousManifest != nil &&
 			previousManifest.Id() != kappObj.GetManifest().Id() {
 			tranche := tranche{
-				manifest: *kappObj.GetManifest(),
+				manifest: *previousManifest,
 				tasks:    tasks,
 			}
 
@@ -154,6 +178,7 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 		previousManifest = kappObj.GetManifest()
 	}
 
+	// add a tranche if there are any tasks for the final manifest
 	if len(tasks) > 0 {
 		tranche := tranche{
 			manifest: *previousManifest,
@@ -164,10 +189,15 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 	}
 
 	plan := Plan{
-		tranche:         tranches,
+		tranches:        tranches,
 		stackConfig:     stackConfig,
 		cacheDir:        cacheDir,
 		renderTemplates: renderTemplates,
+	}
+
+	if !forward {
+		log.Logger.Debugf("Reversing plan...")
+		reverse(&plan)
 	}
 
 	// todo - use Sources of Truth (SOTs) to discover the current set of kapps installed
@@ -177,12 +207,28 @@ func Create(stackConfig *kapp.StackConfig, manifests []*kapp.Manifest, cacheDir 
 	return &plan, nil
 }
 
+// Reverses the order of all tranches and all tasks within each tranche to reverse
+// the run order of the plan
+func reverse(plan *Plan) {
+	// reverse the tranches
+	sort.SliceStable(plan.tranches, func(i, j int) bool {
+		return true
+	})
+
+	// reverse the tasks within each tranche
+	for i, _ := range plan.tranches {
+		sort.SliceStable(plan.tranches[i].tasks, func(i, j int) bool {
+			return true
+		})
+	}
+}
+
 // Run a plan to make a target cluster have the necessary kapps installed/
 // destroyed to match the input manifests. Each tranche is run sequentially,
 // and each kapp in each tranche is processed in parallel.
 func (p *Plan) Run(approved bool, dryRun bool) error {
 
-	if p.tranche == nil {
+	if p.tranches == nil {
 		log.Logger.Info("No tranches in plan to process")
 		return nil
 	}
@@ -193,7 +239,7 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 	log.Logger.Info("Applying plan...")
 	log.Logger.Debugf("Applying plan: %#v", p)
 
-	for i, tranche := range p.tranche {
+	for i, tranche := range p.tranches {
 		numWorkers := tranche.manifest.Options.Parallelisation
 		if numWorkers == 0 {
 			numWorkers = uint16(len(tranche.tasks))
@@ -228,7 +274,7 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 		for success := 0; success < totalOperations; success++ {
 			select {
 			case err := <-errCh:
-				log.Logger.Fatalf("Error processing kapp in tranche %d of plan: %s", i+1, err)
+				log.Logger.Fatalf("Error processing kapp in tranche %d of plan: %+v", i+1, err)
 				close(doneCh)
 				return errors.Wrapf(err, "Error processing kapp goroutine "+
 					"in tranche %d of plan", i+1)

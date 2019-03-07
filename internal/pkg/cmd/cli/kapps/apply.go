@@ -56,7 +56,7 @@ func newApplyCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "apply [flags] [stack-file] [stack-name] [cache-dir]",
-		Short: fmt.Sprintf("Install/destroy kapps into a cluster"),
+		Short: fmt.Sprintf("Install kapps into a cluster"),
 		Long:  `Apply cached kapps to a target cluster according to manifests.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 3 {
@@ -165,7 +165,7 @@ func (c *applyCmd) run() error {
 		}
 
 		// force mode, so no need to perform validation. Just create a plan
-		actionPlan, err = plan.Create(stackConfig, stackConfig.Manifests,
+		actionPlan, err = plan.Create(true, stackConfig, stackConfig.Manifests,
 			c.cacheDir, c.includeSelector, c.excludeSelector, !c.skipTemplating)
 		if err != nil {
 			return errors.WithStack(err)

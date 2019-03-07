@@ -65,6 +65,8 @@ func TestFindFilesByPattern(t *testing.T) {
 			expectValues: []string{
 				filepath.Join(absTestDir, "manifests/manifest1.yaml"),
 				filepath.Join(absTestDir, "manifests/manifest2.yaml"),
+				filepath.Join(absTestDir, "manifests/manifest3.yaml"),
+				filepath.Join(absTestDir, "manifests/manifest4.yaml"),
 			},
 		},
 		{

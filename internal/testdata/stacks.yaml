@@ -5,6 +5,12 @@ standard:
   cluster: standard
   providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
   - ./stacks/
+  manifests:
+    - uri: manifests/manifest1.yaml
+    - uri: manifests/manifest2.yaml
+      id: exampleManifest2
+    - uri: manifests/manifest3.yaml
+    - uri: manifests/manifest4.yaml
 
 large:
   provider: local

@@ -276,7 +276,6 @@ func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfi
 			if err == nil {
 				templateSource = possibleSource
 				foundTemplate = true
-				break
 			}
 
 			if !foundTemplate {
@@ -293,7 +292,9 @@ func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfi
 				}
 			}
 
-			if !foundTemplate {
+			if foundTemplate {
+				log.Logger.Debugf("Found template at %s", templateSource)
+			} else {
 				return renderedPaths, errors.New(fmt.Sprintf("Failed to find template '%s' "+
 					"in any of the defined template directories: %s", templateSource,
 					strings.Join(stackConfig.TemplateDirs, ", ")))
