@@ -4,7 +4,11 @@
 * Code of conduct
 
 ## Code-related tasks
-* Support acquiring manifests with the acquirers - would this really help?
+* Support acquiring manifests with the acquirers - this will help multi-team setups, where the platform team can 
+  maintain the main stack config, pulling in manifests from repos the app teams have access to (so they don't need
+  access to the main config repo). Manifest variables will simplify passing env vars to all kapps in the manifest
+  (e.g. for the tiller-namespace, etc.)
+  
 * Print important info instead of logging it
 * Add support for verifying signed tags
 * More tests 
@@ -14,18 +18,37 @@
 * Need a way of dynamically adding variables to the databag. Perhaps if kapps write JSON to a file it could be 
   merged in? Then it'd be easy for users to control the frequency it runs. This is required to get the KMS key
   ARN which can then be templated into kapps. For now we can hardcode values because templating was expected
-  to happen when creating a cache, but it would be more flexible to allow kapps to be templated just-in-time
-  with values supplied dynamically. We could add a flag to kapps.install: '--jit-templating' and 
-  to enable this or keep the current behaviour. Variables are merged just before kapps are installed, so just 
-  updating variables in various sources (e.g. 'Manifest.Overrides') should be enough to implement this behaviour. 
+  to happen when creating a cache.
   We could have kapps declare the name of a JSON file in their sugarkube.yaml file that should be merged with 
   vars to allow them to dynamically update kapp vars. Or they could specify that stdout should be used, etc.
 
+* Print out the plan before executing it
+* Print details of kapps being executed
 * Don't always display usage if an error is thrown
 * Implement deletion to tear down a stack
 * Fix failing integration test
 * Wordpress site 2 isn't cached when running 'cache create' (probably due to it referring to a non-existent branch - 
   we should throw an error and abort in that case)
+
+* Support variables at the manifest level so we can set manifest-wide vars. Use them as defaults for kapp vars (or 
+  just namespace them under "manifest.vars" - decide which is better. The first would require we manually set a 
+  default to the manifest vars ). E.g. this could be helpful for setting manifest-wide tiller-namespaces, etc.
+* If the kops provisioner is using a private topology and a bastion, set up an SSH tunnel on a random port, and 
+  pass '-s localhost:<random_port>' to kubectl when polling it for readiness and when installing things (helm has
+  a similar setting I think). Perhaps set some additional extra args for kubectl/helm to pass them through to kapps.
+  * We'll need an initialisation step to try adding the SSH key to the agent, throwing an error if it's password
+  protected
+* The `requires` block in `sugarkube.yaml` is currenntly useless. We should do several things with it:
+  * Create a 'validate' command to verify that the necessary binary exists
+  * Allow each value to have a corresponding config in the sugarkube-conf.yaml file that determines:
+    * Default env vars (e.g. a kapp using helm should always take the TILLER_NAMESPACE env var from a certain
+      place, one using kubectl will always need a NAMESPACE from somewhere, etc.). This will obviate the need to keep
+      passing the same env vars to similar kapps
+      
+* Add support for config phases to provisioners. E.g. we might bring up a private kops cluster with a bastion, 
+  install some stuff into it, but then want to scale down the bastion IG. That'll require 2 different kops configs
+  so we should acknowledge they're for different phases of the lifecycle. Similarly to install new stuff into that 
+  cluster we may need to relaunch the bastion, install stuff then remove it again.
 
 ## Other things to consider
 * Is being focussed on clusters a mistake? 
