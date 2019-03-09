@@ -43,12 +43,14 @@ func TestPrecedenceWalk(t *testing.T) {
 		"test-profile",
 		"test-cluster",
 		"region1",
+		"accounts",
+		"profiles",
+		"clusters",
 	}
 
 	expected := []string{
 		"providers/values.yaml",
 		"providers/region1.yaml",
-		"providers/other.txt",
 		"providers/test-provider/accounts/test-account/values.yaml",
 		"providers/test-provider/accounts/test-account/region1.yaml",
 		"providers/test-provider/accounts/test-account/profiles/test-profile/clusters/test-cluster/values.yaml",

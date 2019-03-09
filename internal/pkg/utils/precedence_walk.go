@@ -27,11 +27,10 @@ import (
 
 // A reimplementation of golang's filepath.Walk that allows indicating an order
 // of preference for walking a directory tree. The `precedence` array is a list
-// of prefixes that will influence the order in which files and directories are
-// passed to `walkFn`. Files with prefixes earlier in the precedence array will
-// be passed before files and directories with prefixes later in the precdence
-// array. If a file name isn't in precedence array, it'll be passed in
-// alphabetical order.
+// of file base names (no extension) that controls the order in which files and
+// directories are passed to `walkFn`. Base names earlier in the precedence
+// array will be visited before those later in it. If a file name isn't in the
+// precedence array, it won't be visited.
 func PrecedenceWalk(root string, precedence []string, walkFn filepath.WalkFunc) error {
 	info, err := os.Lstat(root)
 	if err != nil {
@@ -85,9 +84,9 @@ func walk(path string, precedence []string, info os.FileInfo, walkFn filepath.Wa
 	return nil
 }
 
-// Returns a list of path names sorted by precedence. File names and exact
-// matches are ranked higher than directories or prefixes. Any names that don't
-// match a precedence string are appended to the result array.
+// Returns a list of path names sorted by precedence. Files are ranked higher
+// than directories. Any names that don't match a precedence string will be
+// omitted from the result array.
 func applyPrecdence(rootDir string, names []string, precedence []string) []string {
 
 	// create a map so we can group names that match precedence prefixes and
@@ -97,23 +96,22 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 	// build an array of all names in preferential order
 	var matches []string
 	var ok bool
-	for _, prefix := range precedence {
+	for _, rule := range precedence {
 		for _, name := range names {
-			// append the match to an array keyed by prefix
-			if strings.HasPrefix(name, prefix) {
-				matches, ok = matchMap[prefix]
+			// append the match to an array keyed by precedence rule
+			if rule == stripExtension(name) {
+				matches, ok = matchMap[rule]
 				if !ok {
 					matches = make([]string, 0)
 				}
 
 				matches = append(matches, name)
-				matchMap[prefix] = matches
+				matchMap[rule] = matches
 			}
 		}
 	}
 
-	// apply extra logic to each match - favour exact matches (by basename)
-	// over partial matches, and favour files over directories
+	// apply extra logic to each match - favour files over directories
 	for rule := range matchMap {
 		matches := matchMap[rule]
 		// the bool is true if i < j
@@ -124,8 +122,8 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 			leftExtension := filepath.Ext(left)
 			rightExtension := filepath.Ext(right)
 
-			leftBaseName := strings.TrimSuffix(left, leftExtension)
-			rightBaseName := strings.TrimSuffix(right, rightExtension)
+			leftBaseName := stripExtension(left)
+			rightBaseName := stripExtension(right)
 
 			absLeft := filepath.Join(rootDir, left)
 			absRight := filepath.Join(rootDir, right)
@@ -143,21 +141,9 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 					// the same, so return false to cover all branches
 					return false
 				}
-			} else if leftBaseName == rule || rightBaseName == rule {
+			} else {
 				// if one is an exact match, favour it
 				return leftBaseName == rule
-			} else {
-				// neither basenames are exact matches. Favour the one that matches
-				// most characters
-				leftStripped := strings.TrimPrefix(leftBaseName, rule)
-				rightStripped := strings.TrimPrefix(rightBaseName, rule)
-
-				if len(leftStripped) != len(rightStripped) {
-					return len(leftStripped) < len(rightStripped)
-				}
-
-				// if the basenames are the same length, return alphabetically
-				return strings.TrimPrefix(left, rule) < strings.Trim(right, rule)
 			}
 		})
 
@@ -172,13 +158,6 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 		matches, ok := matchMap[prefix]
 		if ok {
 			intermediateResults = append(intermediateResults, matches...)
-		}
-	}
-
-	// append any values for which no precedence was defined
-	for _, name := range names {
-		if !InStringArray(intermediateResults, name) {
-			defaultNames = append(defaultNames, name)
 		}
 	}
 
@@ -204,6 +183,12 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 		names, results, defaultNames)
 
 	return results
+}
+
+// Strips the extension from a file name
+func stripExtension(path string) string {
+	extension := filepath.Ext(path)
+	return strings.TrimSuffix(path, extension)
 }
 
 // Returns whether a path is a file. Panics on error
