@@ -130,3 +130,9 @@ func FindFilesByPattern(rootDir string, pattern string, recursive bool,
 
 	return results, nil
 }
+
+// Strips the extension from a file name
+func StripExtension(path string) string {
+	extension := filepath.Ext(path)
+	return strings.TrimSuffix(path, extension)
+}

@@ -17,12 +17,10 @@
 package utils
 
 import (
-	"fmt"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 )
 
 // A reimplementation of golang's filepath.Walk that allows indicating an order
@@ -99,7 +97,7 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 	for _, rule := range precedence {
 		for _, name := range names {
 			// append the match to an array keyed by precedence rule
-			if rule == stripExtension(name) {
+			if rule == StripExtension(name) {
 				matches, ok = matchMap[rule]
 				if !ok {
 					matches = make([]string, 0)
@@ -122,8 +120,8 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 			leftExtension := filepath.Ext(left)
 			rightExtension := filepath.Ext(right)
 
-			leftBaseName := stripExtension(left)
-			rightBaseName := stripExtension(right)
+			leftBaseName := StripExtension(left)
+			rightBaseName := StripExtension(right)
 
 			absLeft := filepath.Join(rootDir, left)
 			absRight := filepath.Join(rootDir, right)
@@ -151,7 +149,6 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 	}
 
 	intermediateResults := make([]string, 0)
-	defaultNames := make([]string, 0)
 
 	// populate the final results array
 	for _, prefix := range precedence {
@@ -160,8 +157,6 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 			intermediateResults = append(intermediateResults, matches...)
 		}
 	}
-
-	intermediateResults = append(intermediateResults, defaultNames...)
 
 	// now perform another pass hoisting files over directories so the traversal
 	// is breadth first
@@ -179,16 +174,10 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 
 	results := append(files, dirs...)
 
-	fmt.Printf("Sorted input names:\n%#v\nto preferred:\n%#v\ndefault names=%#v",
-		names, results, defaultNames)
+	log.Logger.Debugf("Sorted input names: %#v by precedence to: %#v",
+		names, results)
 
 	return results
-}
-
-// Strips the extension from a file name
-func stripExtension(path string) string {
-	extension := filepath.Ext(path)
-	return strings.TrimSuffix(path, extension)
 }
 
 // Returns whether a path is a file. Panics on error

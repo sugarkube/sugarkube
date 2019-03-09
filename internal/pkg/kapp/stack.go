@@ -276,6 +276,65 @@ func (s *StackConfig) findVarsFiles(kappObj *Kapp) ([]string, error) {
 	return paths, nil
 }
 
+// todo - integrate this. Update findVarsFiles to use the precedence walker too
+func (s *StackConfig) findProviderVarsFiles() ([]string, error) {
+	precedence := []string{
+		utils.StripExtension(constants.VALUES_FILE),
+		s.Provider,
+		s.Provisioner,
+		s.Account,
+		s.Profile,
+		s.Cluster,
+		s.Region,
+		"accounts", // todo - pull from the provider
+		constants.PROFILE_DIR,
+		constants.CLUSTER_DIR,
+	}
+
+	paths := make([]string, 0)
+
+	for _, searchDir := range s.ProviderVarsDirs {
+		searchPath, err := filepath.Abs(filepath.Join(s.Dir(), searchDir))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		log.Logger.Infof("Searching for files/dirs under '%s' with basenames: %s",
+			searchPath, strings.Join(precedence, ", "))
+
+		err = utils.PrecedenceWalk(searchPath, precedence, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			log.Logger.Debugf("Walked to path: %s", path)
+
+			if !info.IsDir() {
+				basename := filepath.Base(path)
+				ext := filepath.Ext(basename)
+
+				if strings.ToLower(ext) != ".yaml" {
+					log.Logger.Debugf("Ignoring non-yaml file: %s", path)
+					return nil
+				}
+
+				log.Logger.Debugf("Adding var file: %s", path)
+				paths = append(paths, path)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	log.Logger.Debugf("Provider var paths are: %s", strings.Join(paths, ", "))
+
+	return paths, nil
+}
+
 // Merges YAML files that may contain variables. If a a kapp instance is passed
 // as a parameter, variables specific to the kapp will also be returned, in addtion
 // to those relating to the stack as a whole.
