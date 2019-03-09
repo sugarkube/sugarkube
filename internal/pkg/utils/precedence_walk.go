@@ -91,10 +91,18 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 	// then apply extra logic
 	matchMap := make(map[string][]string, 0)
 
+	// dedupe the precedence list
+	dedupedPrecedence := make([]string, 0)
+	for _, rule := range precedence {
+		if !InStringArray(dedupedPrecedence, rule) {
+			dedupedPrecedence = append(dedupedPrecedence, rule)
+		}
+	}
+
 	// build an array of all names in preferential order
 	var matches []string
 	var ok bool
-	for _, rule := range precedence {
+	for _, rule := range dedupedPrecedence {
 		for _, name := range names {
 			// append the match to an array keyed by precedence rule
 			if rule == StripExtension(name) {
@@ -151,7 +159,7 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 	intermediateResults := make([]string, 0)
 
 	// populate the final results array
-	for _, prefix := range precedence {
+	for _, prefix := range dedupedPrecedence {
 		matches, ok := matchMap[prefix]
 		if ok {
 			intermediateResults = append(intermediateResults, matches...)

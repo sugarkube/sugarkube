@@ -32,7 +32,6 @@ func init() {
 }
 
 func TestPrecedenceWalk(t *testing.T) {
-
 	absTestDir, err := filepath.Abs(testDir)
 	assert.Nil(t, err)
 
@@ -43,6 +42,60 @@ func TestPrecedenceWalk(t *testing.T) {
 		"test-profile",
 		"test-cluster",
 		"region1",
+		"accounts",
+		"profiles",
+		"clusters",
+	}
+
+	expected := []string{
+		"providers/values.yaml",
+		"providers/region1.yaml",
+		"providers/aws/accounts/test-account/values.yaml",
+		"providers/aws/accounts/test-account/region1.yaml",
+		"providers/aws/accounts/test-account/profiles/test-profile/clusters/test-cluster/values.yaml",
+		"providers/aws/accounts/test-account/profiles/test-profile/clusters/test-cluster/region1/values.yaml",
+		"providers/test-account/region1.yaml",
+		"providers/test-account/test-cluster/values.yaml",
+		"providers/region1/values.yaml",
+		"providers/region1/test-cluster.yaml",
+	}
+
+	visited := make([]string, 0)
+
+	startDir := path.Join(absTestDir, "providers")
+
+	err = PrecedenceWalk(startDir, precedence, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		if !info.IsDir() {
+			path = strings.TrimPrefix(path, absTestDir)
+			path = strings.TrimPrefix(path, "/")
+			visited = append(visited, path)
+
+			log.Logger.Debugf("Walked to file: %s", path)
+		}
+		return nil
+	})
+
+	assert.Nil(t, err)
+	assert.Equal(t, expected, visited)
+}
+
+func TestPrecedenceWalkDedupe(t *testing.T) {
+	absTestDir, err := filepath.Abs(testDir)
+	assert.Nil(t, err)
+
+	precedence := []string{
+		"values",
+		"aws",
+		"test-account",
+		"test-profile",
+		"test-cluster",
+		"test-profile", // sometimes we have the same value for account/profile/cluster, etc.
+		"region1",
+		"test-profile",
 		"accounts",
 		"profiles",
 		"clusters",

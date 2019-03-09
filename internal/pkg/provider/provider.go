@@ -36,10 +36,6 @@ type Provider interface {
 	setVars(map[string]interface{})
 	// Returns variables installers should pass on to kapps
 	getInstallerVars() map[string]interface{}
-	// Method that returns all paths in a config directory relevant to the
-	// target profile/cluster/region, etc. that should be searched for values
-	// files to merge.
-	varsDirs(sc *kapp.StackConfig) ([]string, error)
 }
 
 // implemented providers
@@ -70,37 +66,6 @@ func NewProvider(stackConfig *kapp.StackConfig) (Provider, error) {
 	}
 
 	return providerImpl, nil
-}
-
-// Searches for values.yaml files in directories specific to a provider implementation and returns the
-// result of merging them.
-func LoadProviderVars(provider Provider, stackConfig *kapp.StackConfig) (map[string]interface{}, error) {
-	providerVars := map[string]interface{}{}
-
-	varsDirs, err := provider.varsDirs(stackConfig)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	log.Logger.Debugf("Searching for provider vars files in %s",
-		strings.Join(varsDirs, ", "))
-
-	for _, varFile := range varsDirs {
-		valuePath := filepath.Join(varFile, constants.VALUES_FILE)
-
-		_, err := os.Stat(valuePath)
-		if err != nil {
-			log.Logger.Debugf("Skipping merging non-existent path %s", valuePath)
-			continue
-		}
-
-		err = vars.Merge(&providerVars, valuePath)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-	}
-
-	return providerVars, nil
 }
 
 // Return vars loaded from configs that should be passed on to kapps by Installers

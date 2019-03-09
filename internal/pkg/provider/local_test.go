@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"path/filepath"
 	"testing"
 )
 
@@ -31,17 +32,15 @@ func TestLocalVarsDirs(t *testing.T) {
 	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
 	assert.Nil(t, err)
 
+	absTestDir, err := filepath.Abs("../../testdata")
+	assert.Nil(t, err)
+
 	expected := []string{
-		"../../testdata/stacks",
-		"../../testdata/stacks/local",
-		"../../testdata/stacks/local/profiles",
-		"../../testdata/stacks/local/profiles/local",
-		"../../testdata/stacks/local/profiles/local/clusters",
-		"../../testdata/stacks/local/profiles/local/clusters/large",
+		filepath.Join(absTestDir, "stacks/local/profiles/local/clusters/large/values.yaml"),
 	}
 
-	provider := LocalProvider{}
-	actual, err := provider.varsDirs(sc)
+	provider := &LocalProvider{}
+	actual, err := findVarsFiles(provider, sc)
 	assert.Nil(t, err)
 
 	assert.Equal(t, expected, actual, "Incorrect vars dirs returned")
