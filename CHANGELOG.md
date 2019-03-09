@@ -17,7 +17,10 @@
 * Kapps can now declare actions to be run after applying the kapp. Currently the only supported post action is to update a cluster (the cluster will be launched if it's offline)
 * Removed support for init manifests. All manifests should be run and they're expected to be idempotent.
 * Depend on forked version of go-yaml that doesn't split output wider than 80 characters
-* Kapp template source/dest paths can now contain variables 
+* Kapp template source/dest paths can now contain variables
+* Kapp vars are namespaced under the `.kapp.vars` key in the stack config map
+* Provider vars are not namespaced in the stack config map
+* Provider vars directories will be searched breadth-first in a similar way to how kapp vars dirs are searched to allow cross-cutting configuration (e.g. all AMI IDs for a region can be set once and will be merged into each region's config) 
 
 ## 0.5.0 (2/12/19)
 * Kapps need to declare what environment variables they want and what to map to them in a 'sugarkube.yaml' file
