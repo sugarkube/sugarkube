@@ -1,4 +1,20 @@
-package kapps
+/*
+ * Copyright 2019 The Sugarkube Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package cluster
 
 import (
 	"fmt"
@@ -17,13 +33,10 @@ type varsConfig struct {
 	stackFile   string
 	provider    string
 	provisioner string
-	//kappVarsDirs cmd.Files
-	profile         string
-	account         string
-	cluster         string
-	region          string
-	includeSelector []string
-	excludeSelector []string
+	profile     string
+	account     string
+	cluster     string
+	region      string
 }
 
 func newVarsCmd(out io.Writer) *cobra.Command {
@@ -33,9 +46,8 @@ func newVarsCmd(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "vars [flags] [stack-file] [stack-name]",
-		Short: fmt.Sprintf("Display all variables available for a kapp"),
-		Long: `Merges variables from all sources and displays them. If a kapp is given, variables available for that 
-specific kapp will be displayed. If not, all generally available variables for the stack will be shown.`,
+		Short: fmt.Sprintf("Display all variables available for a stack"),
+		Long:  `Merges variables from all sources and displays them.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return errors.New("the name of the stack to run, and the path to the stack file are required")
@@ -55,12 +67,6 @@ specific kapp will be displayed. If not, all generally available variables for t
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
-		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			kapp.WILDCARD_CHARACTER))
-	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
-		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			kapp.WILDCARD_CHARACTER))
 	return cmd
 }
 
@@ -81,33 +87,24 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := kapp.SelectKapps(stackConfig.Manifests, c.includeSelector, c.excludeSelector)
+	_, err = fmt.Fprintf(c.out, "Displaying variables for stack: %#v\n", stackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "Displaying variables for %d kapps:\n", len(selectedKapps))
+	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	for _, kappObj := range selectedKapps {
-		templatedVars, err := stackConfig.TemplatedVars(&kappObj, map[string]interface{}{})
-		if err != nil {
-			return errors.WithStack(err)
-		}
+	yamlData, err := yaml.Marshal(&templatedVars)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
-		yamlData, err := yaml.Marshal(&templatedVars)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		_, err = fmt.Fprintf(c.out, "\n***** Start variables for kapp '%s' *****\n"+
-			"%s***** End variables for kapp '%s' *****\n",
-			kappObj.FullyQualifiedId(), yamlData, kappObj.FullyQualifiedId())
-		if err != nil {
-			return errors.WithStack(err)
-		}
+	_, err = fmt.Fprint(c.out, string(yamlData))
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	return nil
