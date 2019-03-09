@@ -5,6 +5,7 @@
 * Variables can now be interpolated based on other variables
 * Kapp variables are now namespaced under a dedicated key ('kapp') to prevent them overwriting system variables
 * Added a command `kapps vars` for inspecting variables available to a kapp
+* Added a command `cluster vars` for inspecting variables available for a cluster/stack
 * Unified the URI format for kapp sources
 * Allow settings for kapps to be overridden from stack config files
 * Custom provisioner binaries can now be specified per stack to control which version of a provisioner is used in each stack
