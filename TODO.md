@@ -50,6 +50,11 @@
   so we should acknowledge they're for different phases of the lifecycle. Similarly to install new stuff into that 
   cluster we may need to relaunch the bastion, install stuff then remove it again.
 
+## Gaining access to private kops clusters
+If the provisioner is kops, the api_loadbalancer_type is internal and there's a bastion, gain access to it 
+by downloading the kubeconfig file, modifying it to use the .local hostname, then use SSH to port forward
+to the bastion. Pass the kubeconfig file to other commands and continue as usual
+
 ## Other things to consider
 * Is being focussed on clusters a mistake? 
     * We could help provision other hosted services, e.g. ElastiCache, BigQuery, etc. 

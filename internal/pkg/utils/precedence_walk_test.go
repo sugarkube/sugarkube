@@ -38,7 +38,7 @@ func TestPrecedenceWalk(t *testing.T) {
 
 	precedence := []string{
 		"values",
-		"test-provider",
+		"aws",
 		"test-account",
 		"test-profile",
 		"test-cluster",
@@ -51,10 +51,10 @@ func TestPrecedenceWalk(t *testing.T) {
 	expected := []string{
 		"providers/values.yaml",
 		"providers/region1.yaml",
-		"providers/test-provider/accounts/test-account/values.yaml",
-		"providers/test-provider/accounts/test-account/region1.yaml",
-		"providers/test-provider/accounts/test-account/profiles/test-profile/clusters/test-cluster/values.yaml",
-		"providers/test-provider/accounts/test-account/profiles/test-profile/clusters/test-cluster/region1/values.yaml",
+		"providers/aws/accounts/test-account/values.yaml",
+		"providers/aws/accounts/test-account/region1.yaml",
+		"providers/aws/accounts/test-account/profiles/test-profile/clusters/test-cluster/values.yaml",
+		"providers/aws/accounts/test-account/profiles/test-profile/clusters/test-cluster/region1/values.yaml",
 		"providers/test-account/region1.yaml",
 		"providers/test-account/test-cluster/values.yaml",
 		"providers/region1/values.yaml",

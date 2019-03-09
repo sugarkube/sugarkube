@@ -396,8 +396,8 @@ func (k Kapp) MatchesSelector(selector string) (bool, error) {
 
 // Finds all vars files for the given kapp and returns the result of merging
 // all the data.
-func (k *Kapp) getKappVarsFromFiles(stackConfig *StackConfig) (map[string]interface{}, error) {
-	dirs, err := k.findKappVarsFiles(stackConfig)
+func (k *Kapp) getVarsFromFiles(stackConfig *StackConfig) (map[string]interface{}, error) {
+	dirs, err := k.findVarsFiles(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -415,7 +415,7 @@ func (k *Kapp) getKappVarsFromFiles(stackConfig *StackConfig) (map[string]interf
 // This searches a directory tree from a given root path for files whose values
 // should be merged together for a kapp. If a kapp instance is supplied, additional files
 // will be searched for, in addition to stack-specific ones.
-func (k *Kapp) findKappVarsFiles(stackConfig *StackConfig) ([]string, error) {
+func (k *Kapp) findVarsFiles(stackConfig *StackConfig) ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.VALUES_FILE),
 		stackConfig.Name,

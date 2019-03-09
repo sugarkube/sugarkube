@@ -22,6 +22,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"os"
 	"path/filepath"
@@ -73,10 +74,10 @@ func NewProvider(stackConfig *kapp.StackConfig) (Provider, error) {
 
 // Searches for values.yaml files in directories specific to a provider implementation and returns the
 // result of merging them.
-func LoadProviderVars(p Provider, stackConfig *kapp.StackConfig) (map[string]interface{}, error) {
+func LoadProviderVars(provider Provider, stackConfig *kapp.StackConfig) (map[string]interface{}, error) {
 	providerVars := map[string]interface{}{}
 
-	varsDirs, err := p.varsDirs(stackConfig)
+	varsDirs, err := provider.varsDirs(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -103,11 +104,87 @@ func LoadProviderVars(p Provider, stackConfig *kapp.StackConfig) (map[string]int
 }
 
 // Return vars loaded from configs that should be passed on to kapps by Installers
-func GetInstallerVars(p Provider) map[string]interface{} {
-	return p.getInstallerVars()
+func GetInstallerVars(provider Provider) map[string]interface{} {
+	return provider.getInstallerVars()
 }
 
 // Returns the name of the provider
 func GetName(p Provider) string {
 	return p.getName()
+}
+
+// Finds all vars files for the given provider and returns the result of merging
+// all the data.
+func GetVarsFromFiles(provider Provider, stackConfig *kapp.StackConfig) (map[string]interface{}, error) {
+	dirs, err := findVarsFiles(provider, stackConfig)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	values := map[string]interface{}{}
+
+	err = vars.Merge(&values, dirs...)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return values, nil
+}
+
+// Search for paths to provider vars files
+func findVarsFiles(provider Provider, stackConfig *kapp.StackConfig) ([]string, error) {
+	precedence := []string{
+		utils.StripExtension(constants.VALUES_FILE),
+		stackConfig.Provider,
+		stackConfig.Provisioner,
+		stackConfig.Account,
+		stackConfig.Profile,
+		stackConfig.Cluster,
+		stackConfig.Region,
+		"accounts", // todo - pull from the provider
+		constants.PROFILE_DIR,
+		constants.CLUSTER_DIR,
+	}
+
+	paths := make([]string, 0)
+
+	for _, searchDir := range stackConfig.ProviderVarsDirs {
+		searchPath, err := filepath.Abs(filepath.Join(stackConfig.Dir(), searchDir))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		log.Logger.Infof("Searching for files/dirs under '%s' with basenames: %s",
+			searchPath, strings.Join(precedence, ", "))
+
+		err = utils.PrecedenceWalk(searchPath, precedence, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			log.Logger.Debugf("Walked to path: %s", path)
+
+			if !info.IsDir() {
+				ext := filepath.Ext(path)
+
+				if strings.ToLower(ext) != ".yaml" {
+					log.Logger.Debugf("Ignoring non-yaml file: %s", path)
+					return nil
+				}
+
+				log.Logger.Debugf("Adding var file: %s", path)
+				paths = append(paths, path)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	log.Logger.Debugf("Provider var paths are: %s", strings.Join(paths, ", "))
+
+	return paths, nil
 }

@@ -294,7 +294,7 @@ func TestFindKappVarsFiles(t *testing.T) {
 	}
 
 	kappObj := &stackConfig.Manifests[0].ParsedKapps()[0]
-	results, err := kappObj.findKappVarsFiles(&stackConfig)
+	results, err := kappObj.findVarsFiles(&stackConfig)
 	assert.Nil(t, err)
 
 	assert.Equal(t, expected, results)

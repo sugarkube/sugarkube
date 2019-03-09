@@ -20,15 +20,12 @@ import (
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // Hold information about the status of the cluster
@@ -178,64 +175,6 @@ func (s *StackConfig) Dir() string {
 	}
 }
 
-// Search for paths to provider vars files
-func (s *StackConfig) findProviderVarsFiles() ([]string, error) {
-	precedence := []string{
-		utils.StripExtension(constants.VALUES_FILE),
-		s.Provider,
-		s.Provisioner,
-		s.Account,
-		s.Profile,
-		s.Cluster,
-		s.Region,
-		"accounts", // todo - pull from the provider
-		constants.PROFILE_DIR,
-		constants.CLUSTER_DIR,
-	}
-
-	paths := make([]string, 0)
-
-	for _, searchDir := range s.ProviderVarsDirs {
-		searchPath, err := filepath.Abs(filepath.Join(s.Dir(), searchDir))
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		log.Logger.Infof("Searching for files/dirs under '%s' with basenames: %s",
-			searchPath, strings.Join(precedence, ", "))
-
-		err = utils.PrecedenceWalk(searchPath, precedence, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			log.Logger.Debugf("Walked to path: %s", path)
-
-			if !info.IsDir() {
-				ext := filepath.Ext(path)
-
-				if strings.ToLower(ext) != ".yaml" {
-					log.Logger.Debugf("Ignoring non-yaml file: %s", path)
-					return nil
-				}
-
-				log.Logger.Debugf("Adding var file: %s", path)
-				paths = append(paths, path)
-			}
-
-			return nil
-		})
-
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-	}
-
-	log.Logger.Debugf("Provider var paths are: %s", strings.Join(paths, ", "))
-
-	return paths, nil
-}
-
 // Returns certain stack data that should be exposed as variables when running kapps
 func (s *StackConfig) GetIntrinsicData() map[string]string {
 	return map[string]string{
@@ -286,7 +225,7 @@ func (s *StackConfig) TemplatedVars(kappObj *Kapp,
 	}
 
 	if kappObj != nil {
-		kappVars, err := kappObj.getKappVarsFromFiles(s)
+		kappVars, err := kappObj.getVarsFromFiles(s)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

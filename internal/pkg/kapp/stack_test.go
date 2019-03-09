@@ -20,7 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"gopkg.in/yaml.v2"
-	"path/filepath"
 	"testing"
 )
 
@@ -212,50 +211,6 @@ func TestDirBlank(t *testing.T) {
 	assert.NotEmpty(t, actual, "Unexpected config dir")
 }
 
-func TestFindProviderVarsFiles(t *testing.T) {
-
-	absTestDir, err := filepath.Abs(testDir)
-	assert.Nil(t, err)
-
-	manifest1, manifest2 := GetTestManifests()
-
-	stackConfig := StackConfig{
-		Name:        "large",
-		FilePath:    "../../testdata/stacks.yaml",
-		Provider:    "test-provider",
-		Provisioner: "test-provisioner",
-		Profile:     "test-profile",
-		Cluster:     "test-cluster",
-		Account:     "test-account",
-		Region:      "region1",
-		ProviderVarsDirs: []string{
-			"./providers/",
-		},
-		Manifests: []*Manifest{
-			manifest1,
-			manifest2,
-		},
-	}
-
-	expected := []string{
-		filepath.Join(absTestDir, "providers/values.yaml"),
-		filepath.Join(absTestDir, "providers/region1.yaml"),
-		filepath.Join(absTestDir, "providers/test-provider/accounts/test-account/values.yaml"),
-		filepath.Join(absTestDir, "providers/test-provider/accounts/test-account/region1.yaml"),
-		filepath.Join(absTestDir, "providers/test-provider/accounts/test-account/profiles/test-profile/clusters/test-cluster/values.yaml"),
-		filepath.Join(absTestDir, "providers/test-provider/accounts/test-account/profiles/test-profile/clusters/test-cluster/region1/values.yaml"),
-		filepath.Join(absTestDir, "providers/test-account/region1.yaml"),
-		filepath.Join(absTestDir, "providers/test-account/test-cluster/values.yaml"),
-		filepath.Join(absTestDir, "providers/region1/values.yaml"),
-		filepath.Join(absTestDir, "providers/region1/test-cluster.yaml"),
-	}
-
-	results, err := stackConfig.findProviderVarsFiles()
-	assert.Nil(t, err)
-
-	assert.Equal(t, expected, results)
-}
-
 func TestGetKappVarsFromFiles(t *testing.T) {
 
 	manifest1, manifest2 := GetTestManifests()
@@ -294,7 +249,7 @@ regionOverride: region-val-override
 `
 
 	kappObj := &stackConfig.Manifests[0].ParsedKapps()[0]
-	results, err := kappObj.getKappVarsFromFiles(&stackConfig)
+	results, err := kappObj.getVarsFromFiles(&stackConfig)
 	assert.Nil(t, err)
 
 	yamlResults, err := yaml.Marshal(results)

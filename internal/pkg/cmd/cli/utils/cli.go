@@ -52,7 +52,7 @@ func BuildStackConfig(stackName string, stackFile string, cliStackConfig *kapp.S
 		return nil, errors.WithStack(err)
 	}
 
-	providerVars, err := provider.LoadProviderVars(providerImpl, stackConfig)
+	providerVars, err := provider.GetVarsFromFiles(providerImpl, stackConfig)
 	if err != nil {
 		log.Logger.Warn("Error loading provider variables")
 		return nil, errors.WithStack(err)
