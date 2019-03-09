@@ -18,12 +18,15 @@ package cluster
 
 import (
 	"fmt"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
 	"io"
+	"strings"
 )
 
 type varsConfig struct {
@@ -37,6 +40,7 @@ type varsConfig struct {
 	account     string
 	cluster     string
 	region      string
+	exclusions  []string
 }
 
 func newVarsCmd(out io.Writer) *cobra.Command {
@@ -67,6 +71,8 @@ func newVarsCmd(out io.Writer) *cobra.Command {
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
+	f.StringArrayVarP(&c.exclusions, "exclude", "x", []string{},
+		"paths to variables to exclude from the output to simplify it (e.g. 'provision.specs')")
 	return cmd
 }
 
@@ -97,6 +103,18 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
+	if len(c.exclusions) > 0 {
+		for _, exclusion := range c.exclusions {
+			blanked := blankNestedMap(map[string]interface{}{}, strings.Split(exclusion, "."))
+			log.Logger.Debugf("blanked=%#v", blanked)
+
+			err = mergo.Merge(&templatedVars, blanked, mergo.WithOverride)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+	}
+
 	yamlData, err := yaml.Marshal(&templatedVars)
 	if err != nil {
 		return errors.WithStack(err)
@@ -108,4 +126,15 @@ func (c *varsConfig) run() error {
 	}
 
 	return nil
+}
+
+// Create a nested map with the final element an empty string
+func blankNestedMap(accumulator map[string]interface{}, elements []string) map[string]interface{} {
+	if len(elements) == 1 {
+		accumulator[elements[0]] = ""
+		return accumulator
+	} else {
+		accumulator[elements[0]] = blankNestedMap(map[string]interface{}{}, elements[1:])
+		return accumulator
+	}
 }
