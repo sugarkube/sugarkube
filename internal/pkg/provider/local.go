@@ -16,6 +16,8 @@
 
 package provider
 
+import "github.com/sugarkube/sugarkube/internal/pkg/constants"
+
 type LocalProvider struct {
 	stackConfigVars map[string]interface{}
 }
@@ -36,4 +38,12 @@ func (p *LocalProvider) getInstallerVars() map[string]interface{} {
 // Returns the name of this provider
 func (p *LocalProvider) getName() string {
 	return LOCAL_PROVIDER_NAME
+}
+
+// Return static vars dirs names we should search for this provider
+func (p *LocalProvider) customVarsDirs() []string {
+	return []string{
+		constants.PROFILE_DIR,
+		constants.CLUSTER_DIR,
+	}
 }

@@ -36,6 +36,7 @@ type Provider interface {
 	setVars(map[string]interface{})
 	// Returns variables installers should pass on to kapps
 	getInstallerVars() map[string]interface{}
+	customVarsDirs() []string
 }
 
 // implemented providers
@@ -106,10 +107,10 @@ func findVarsFiles(provider Provider, stackConfig *kapp.StackConfig) ([]string, 
 		stackConfig.Profile,
 		stackConfig.Cluster,
 		stackConfig.Region,
-		"accounts", // todo - pull from the provider
-		constants.PROFILE_DIR,
-		constants.CLUSTER_DIR,
 	}
+
+	// append the provider-specific static directory names to search
+	precedence = append(precedence, provider.customVarsDirs()...)
 
 	paths := make([]string, 0)
 

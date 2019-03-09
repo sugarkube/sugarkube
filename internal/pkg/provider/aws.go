@@ -16,6 +16,8 @@
 
 package provider
 
+import "github.com/sugarkube/sugarkube/internal/pkg/constants"
+
 type AwsProvider struct {
 	stackConfigVars map[string]interface{}
 	region          string
@@ -40,4 +42,13 @@ func (p *AwsProvider) getInstallerVars() map[string]interface{} {
 // Returns the name of this provider
 func (p *AwsProvider) getName() string {
 	return AWS_PROVIDER_NAME
+}
+
+// Return static vars dirs names we should search for this provider
+func (p *AwsProvider) customVarsDirs() []string {
+	return []string{
+		AWS_ACCOUNT_DIR,
+		constants.PROFILE_DIR,
+		constants.CLUSTER_DIR,
+	}
 }
