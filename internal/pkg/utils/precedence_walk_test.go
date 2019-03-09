@@ -23,6 +23,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -45,16 +46,17 @@ func TestPrecedenceWalk(t *testing.T) {
 	}
 
 	expected := []string{
-		filepath.Join(absTestDir, "providers/values.yaml"),
-		filepath.Join(absTestDir, "providers/region1.yaml"),
-		filepath.Join(absTestDir, "providers/test-provider/accounts/test-account/values.yaml"),
-		filepath.Join(absTestDir, "providers/test-provider/accounts/test-account/region1.yaml"),
-		filepath.Join(absTestDir, "providers/test-provider/accounts/test-account/profiles/test-profile/clusters/test-cluster/values.yaml"),
-		filepath.Join(absTestDir, "providers/test-provider/accounts/test-account/profiles/test-profile/clusters/test-cluster/region1/values.yaml"),
-		filepath.Join(absTestDir, "providers/test-account/region1.yaml"),
-		filepath.Join(absTestDir, "providers/test-account/test-cluster/values.yaml"),
-		filepath.Join(absTestDir, "providers/test-account/region1/values.yaml"),
-		filepath.Join(absTestDir, "providers/test-account/region1/test-cluster.yaml"),
+		"providers/values.yaml",
+		"providers/region1.yaml",
+		"providers/other.txt",
+		"providers/test-provider/accounts/test-account/values.yaml",
+		"providers/test-provider/accounts/test-account/region1.yaml",
+		"providers/test-provider/accounts/test-account/profiles/test-profile/clusters/test-cluster/values.yaml",
+		"providers/test-provider/accounts/test-account/profiles/test-profile/clusters/test-cluster/region1/values.yaml",
+		"providers/test-account/region1.yaml",
+		"providers/test-account/test-cluster/values.yaml",
+		"providers/region1/values.yaml",
+		"providers/region1/test-cluster.yaml",
 	}
 
 	visited := make([]string, 0)
@@ -66,10 +68,12 @@ func TestPrecedenceWalk(t *testing.T) {
 			return errors.WithStack(err)
 		}
 
-		log.Logger.Debugf("Walked to path: %s", path)
-
 		if !info.IsDir() {
+			path = strings.TrimPrefix(path, absTestDir)
+			path = strings.TrimPrefix(path, "/")
 			visited = append(visited, path)
+
+			log.Logger.Debugf("Walked to file: %s", path)
 		}
 		return nil
 	})

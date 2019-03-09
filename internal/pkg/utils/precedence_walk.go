@@ -17,6 +17,7 @@
 package utils
 
 import (
+	"fmt"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"path/filepath"
@@ -129,9 +130,6 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 			absLeft := filepath.Join(rootDir, left)
 			absRight := filepath.Join(rootDir, right)
 
-			log.Logger.Debugf("Sorting left '%s' vs right '%s'", left, right)
-			log.Logger.Debugf("leftBasename=%s, rightBaseName=%s", leftBaseName, rightBaseName)
-
 			// if both basenames match exactly, favour a file over a directory.
 			// if both are files, or both are directories, sort by extension
 			if leftBaseName == rule && rightBaseName == rule {
@@ -166,27 +164,43 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 		matchMap[rule] = matches
 	}
 
-	results := make([]string, 0)
+	intermediateResults := make([]string, 0)
 	defaultNames := make([]string, 0)
 
 	// populate the final results array
 	for _, prefix := range precedence {
 		matches, ok := matchMap[prefix]
 		if ok {
-			results = append(results, matches...)
+			intermediateResults = append(intermediateResults, matches...)
 		}
 	}
 
 	// append any values for which no precedence was defined
 	for _, name := range names {
-		if !InStringArray(results, name) {
+		if !InStringArray(intermediateResults, name) {
 			defaultNames = append(defaultNames, name)
 		}
 	}
 
-	results = append(results, defaultNames...)
+	intermediateResults = append(intermediateResults, defaultNames...)
 
-	log.Logger.Debugf("Sorted input names:\n%#v\nto preferred:\n%#v\ndefault names=%#v",
+	// now perform another pass hoisting files over directories so the traversal
+	// is breadth first
+	files := make([]string, 0)
+	dirs := make([]string, 0)
+
+	for _, path := range intermediateResults {
+		absPath := filepath.Join(rootDir, path)
+		if isFile(absPath) {
+			files = append(files, path)
+		} else {
+			dirs = append(dirs, path)
+		}
+	}
+
+	results := append(files, dirs...)
+
+	fmt.Printf("Sorted input names:\n%#v\nto preferred:\n%#v\ndefault names=%#v",
 		names, results, defaultNames)
 
 	return results
