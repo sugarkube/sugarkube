@@ -286,11 +286,11 @@ func TestFindKappVarsFiles(t *testing.T) {
 	}
 
 	expected := []string{
-		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars2/kappA.yaml"),
 		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-profile.yaml"),
 		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/values.yaml"),
-		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/test-region1/values.yaml"),
 		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/test-region1/kappA.yaml"),
+		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/test-region1/values.yaml"),
+		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars2/kappA.yaml"),
 	}
 
 	results, err := stackConfig.findVarsFiles(&stackConfig.Manifests[0].ParsedKapps()[0])

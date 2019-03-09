@@ -182,7 +182,8 @@ func (s *StackConfig) Dir() string {
 // should be merged together. If a kapp instance is supplied, additional files
 // will be searched for, in addition to stack-specific ones.
 func (s *StackConfig) findVarsFiles(kappObj *Kapp) ([]string, error) {
-	validNames := []string{
+	precedence := []string{
+		utils.StripExtension(constants.VALUES_FILE),
 		s.Name,
 		s.Provider,
 		s.Provisioner,
@@ -197,7 +198,8 @@ func (s *StackConfig) findVarsFiles(kappObj *Kapp) ([]string, error) {
 	var kappId string
 
 	if kappObj != nil {
-		validNames = append(validNames, kappObj.Id)
+		// prepend the kapp ID to the precedence array
+		precedence = append([]string{kappObj.Id}, precedence...)
 
 		acquirers, err := kappObj.Acquirers()
 		if err != nil {
@@ -205,14 +207,14 @@ func (s *StackConfig) findVarsFiles(kappObj *Kapp) ([]string, error) {
 		}
 
 		for _, acquirerObj := range acquirers {
-			validNames = append(validNames, acquirerObj.Id())
+			precedence = append(precedence, acquirerObj.Id())
 
 			id, err := acquirerObj.FullyQualifiedId()
 			if err != nil {
 				return nil, errors.WithStack(err)
 			}
 
-			validNames = append(validNames, id)
+			precedence = append(precedence, id)
 		}
 
 		kappId = kappObj.Id
@@ -229,37 +231,23 @@ func (s *StackConfig) findVarsFiles(kappObj *Kapp) ([]string, error) {
 		}
 
 		log.Logger.Infof("Searching for files/dirs for kapp '%s' under '%s' with basenames: %s",
-			kappId, searchPath, strings.Join(validNames, ", "))
+			kappId, searchPath, strings.Join(precedence, ", "))
 
-		err = filepath.Walk(searchPath, func(path string, info os.FileInfo, err error) error {
+		err = utils.PrecedenceWalk(searchPath, precedence, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return errors.WithStack(err)
 			}
 
-			if info.IsDir() {
-				if utils.InStringArray(validNames, info.Name()) || info.Name() == filepath.Base(searchPath) {
-					log.Logger.Debugf("Will search kapp var path: %s", path)
-					return nil
-				} else {
-					log.Logger.Debugf("Skipping kapp var dir: %s", path)
-					return filepath.SkipDir
-				}
-			} else {
-				basename := filepath.Base(path)
-				ext := filepath.Ext(basename)
+			if !info.IsDir() {
+				ext := filepath.Ext(path)
 
 				if strings.ToLower(ext) != ".yaml" {
 					log.Logger.Debugf("Ignoring non-yaml file: %s", path)
 					return nil
 				}
 
-				nakedBasename := strings.Replace(basename, ext, "", 1)
-
-				if basename == constants.VALUES_FILE || utils.InStringArray(validNames, nakedBasename) {
-					log.Logger.Debugf("Adding kapp var file: %s", path)
-					// prepend the value to the array to maintain ordering
-					paths = append([]string{path}, paths...)
-				}
+				log.Logger.Debugf("Adding kapp var file: %s", path)
+				paths = append(paths, path)
 			}
 
 			return nil
@@ -310,8 +298,7 @@ func (s *StackConfig) findProviderVarsFiles() ([]string, error) {
 			log.Logger.Debugf("Walked to path: %s", path)
 
 			if !info.IsDir() {
-				basename := filepath.Base(path)
-				ext := filepath.Ext(basename)
+				ext := filepath.Ext(path)
 
 				if strings.ToLower(ext) != ".yaml" {
 					log.Logger.Debugf("Ignoring non-yaml file: %s", path)
