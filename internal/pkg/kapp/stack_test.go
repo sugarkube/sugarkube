@@ -256,49 +256,6 @@ func TestFindProviderVarsFiles(t *testing.T) {
 	assert.Equal(t, expected, results)
 }
 
-func TestFindKappVarsFiles(t *testing.T) {
-
-	absTestDir, err := filepath.Abs(testDir)
-	assert.Nil(t, err)
-
-	manifest1, manifest2 := GetTestManifests()
-
-	stackConfig := StackConfig{
-		Name:        "large",
-		FilePath:    "../../testdata/stacks.yaml",
-		Provider:    "test-provider",
-		Provisioner: "test-provisioner",
-		Profile:     "test-profile",
-		Cluster:     "test-cluster",
-		Account:     "test-account",
-		Region:      "test-region1",
-		ProviderVarsDirs: []string{
-			"./stacks/",
-		},
-		KappVarsDirs: []string{
-			"./sample-kapp-vars/kapp-vars/",
-			"./sample-kapp-vars/kapp-vars2/",
-		},
-		Manifests: []*Manifest{
-			manifest1,
-			manifest2,
-		},
-	}
-
-	expected := []string{
-		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-profile.yaml"),
-		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/values.yaml"),
-		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/test-region1/kappA.yaml"),
-		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/test-region1/values.yaml"),
-		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars2/kappA.yaml"),
-	}
-
-	results, err := stackConfig.findVarsFiles(&stackConfig.Manifests[0].ParsedKapps()[0])
-	assert.Nil(t, err)
-
-	assert.Equal(t, expected, results)
-}
-
 func TestGetKappVarsFromFiles(t *testing.T) {
 
 	manifest1, manifest2 := GetTestManifests()
@@ -336,7 +293,8 @@ region: test-region1-val
 regionOverride: region-val-override
 `
 
-	results, err := stackConfig.getVarsFromFiles(&stackConfig.Manifests[0].ParsedKapps()[0])
+	kappObj := &stackConfig.Manifests[0].ParsedKapps()[0]
+	results, err := kappObj.getKappVarsFromFiles(&stackConfig)
 	assert.Nil(t, err)
 
 	yamlResults, err := yaml.Marshal(results)

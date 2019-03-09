@@ -22,9 +22,12 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
+	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -389,4 +392,104 @@ func (k Kapp) MatchesSelector(selector string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// Finds all vars files for the given kapp and returns the result of merging
+// all the data.
+func (k *Kapp) getKappVarsFromFiles(stackConfig *StackConfig) (map[string]interface{}, error) {
+	dirs, err := k.findKappVarsFiles(stackConfig)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	values := map[string]interface{}{}
+
+	err = vars.Merge(&values, dirs...)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return values, nil
+}
+
+// This searches a directory tree from a given root path for files whose values
+// should be merged together for a kapp. If a kapp instance is supplied, additional files
+// will be searched for, in addition to stack-specific ones.
+func (k *Kapp) findKappVarsFiles(stackConfig *StackConfig) ([]string, error) {
+	precedence := []string{
+		utils.StripExtension(constants.VALUES_FILE),
+		stackConfig.Name,
+		stackConfig.Provider,
+		stackConfig.Provisioner,
+		stackConfig.Account,
+		stackConfig.Region,
+		stackConfig.Profile,
+		stackConfig.Cluster,
+		constants.PROFILE_DIR,
+		constants.CLUSTER_DIR,
+	}
+
+	var kappId string
+
+	// prepend the kapp ID to the precedence array
+	precedence = append([]string{k.Id}, precedence...)
+
+	acquirers, err := k.Acquirers()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	for _, acquirerObj := range acquirers {
+		precedence = append(precedence, acquirerObj.Id())
+
+		id, err := acquirerObj.FullyQualifiedId()
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		precedence = append(precedence, id)
+	}
+
+	kappId = k.Id
+
+	paths := make([]string, 0)
+
+	for _, searchDir := range stackConfig.KappVarsDirs {
+		searchPath, err := filepath.Abs(filepath.Join(stackConfig.Dir(), searchDir))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		log.Logger.Infof("Searching for files/dirs for kapp '%s' under '%s' with basenames: %s",
+			kappId, searchPath, strings.Join(precedence, ", "))
+
+		err = utils.PrecedenceWalk(searchPath, precedence, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			if !info.IsDir() {
+				ext := filepath.Ext(path)
+
+				if strings.ToLower(ext) != ".yaml" {
+					log.Logger.Debugf("Ignoring non-yaml file: %s", path)
+					return nil
+				}
+
+				log.Logger.Debugf("Adding kapp var file: %s", path)
+				paths = append(paths, path)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	log.Logger.Debugf("Kapp var paths for kapp '%s' are: %s", kappId,
+		strings.Join(paths, ", "))
+
+	return paths, nil
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
+	"path/filepath"
 	"testing"
 )
 
@@ -253,4 +254,48 @@ func TestApplyingManifestOverrides(t *testing.T) {
 	acquirers, err := kappObj.Acquirers()
 	assert.Nil(t, err)
 	assert.Equal(t, "git@github.com:sugarkube/kapps-A.git//some/pathA#stable", acquirers[0].Uri())
+}
+
+func TestFindKappVarsFiles(t *testing.T) {
+
+	absTestDir, err := filepath.Abs(testDir)
+	assert.Nil(t, err)
+
+	manifest1, manifest2 := GetTestManifests()
+
+	stackConfig := StackConfig{
+		Name:        "large",
+		FilePath:    "../../testdata/stacks.yaml",
+		Provider:    "test-provider",
+		Provisioner: "test-provisioner",
+		Profile:     "test-profile",
+		Cluster:     "test-cluster",
+		Account:     "test-account",
+		Region:      "test-region1",
+		ProviderVarsDirs: []string{
+			"./stacks/",
+		},
+		KappVarsDirs: []string{
+			"./sample-kapp-vars/kapp-vars/",
+			"./sample-kapp-vars/kapp-vars2/",
+		},
+		Manifests: []*Manifest{
+			manifest1,
+			manifest2,
+		},
+	}
+
+	expected := []string{
+		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-profile.yaml"),
+		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/values.yaml"),
+		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/test-region1/kappA.yaml"),
+		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars/test-provider/test-provisioner/test-account/test-region1/values.yaml"),
+		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars2/kappA.yaml"),
+	}
+
+	kappObj := &stackConfig.Manifests[0].ParsedKapps()[0]
+	results, err := kappObj.findKappVarsFiles(&stackConfig)
+	assert.Nil(t, err)
+
+	assert.Equal(t, expected, results)
 }

@@ -178,93 +178,7 @@ func (s *StackConfig) Dir() string {
 	}
 }
 
-// This searches a directory tree from a given root path for files whose values
-// should be merged together. If a kapp instance is supplied, additional files
-// will be searched for, in addition to stack-specific ones.
-func (s *StackConfig) findVarsFiles(kappObj *Kapp) ([]string, error) {
-	precedence := []string{
-		utils.StripExtension(constants.VALUES_FILE),
-		s.Name,
-		s.Provider,
-		s.Provisioner,
-		s.Account,
-		s.Region,
-		s.Profile,
-		s.Cluster,
-		constants.PROFILE_DIR,
-		constants.CLUSTER_DIR,
-	}
-
-	var kappId string
-
-	if kappObj != nil {
-		// prepend the kapp ID to the precedence array
-		precedence = append([]string{kappObj.Id}, precedence...)
-
-		acquirers, err := kappObj.Acquirers()
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		for _, acquirerObj := range acquirers {
-			precedence = append(precedence, acquirerObj.Id())
-
-			id, err := acquirerObj.FullyQualifiedId()
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
-
-			precedence = append(precedence, id)
-		}
-
-		kappId = kappObj.Id
-	} else {
-		kappId = "<no kapp>"
-	}
-
-	paths := make([]string, 0)
-
-	for _, searchDir := range s.KappVarsDirs {
-		searchPath, err := filepath.Abs(filepath.Join(s.Dir(), searchDir))
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		log.Logger.Infof("Searching for files/dirs for kapp '%s' under '%s' with basenames: %s",
-			kappId, searchPath, strings.Join(precedence, ", "))
-
-		err = utils.PrecedenceWalk(searchPath, precedence, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			if !info.IsDir() {
-				ext := filepath.Ext(path)
-
-				if strings.ToLower(ext) != ".yaml" {
-					log.Logger.Debugf("Ignoring non-yaml file: %s", path)
-					return nil
-				}
-
-				log.Logger.Debugf("Adding kapp var file: %s", path)
-				paths = append(paths, path)
-			}
-
-			return nil
-		})
-
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-	}
-
-	log.Logger.Debugf("Kapp var paths for kapp '%s' are: %s", kappId,
-		strings.Join(paths, ", "))
-
-	return paths, nil
-}
-
-// todo - integrate this. Update findVarsFiles to use the precedence walker too
+// Search for paths to provider vars files
 func (s *StackConfig) findProviderVarsFiles() ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.VALUES_FILE),
@@ -322,25 +236,6 @@ func (s *StackConfig) findProviderVarsFiles() ([]string, error) {
 	return paths, nil
 }
 
-// Merges YAML files that may contain variables. If a a kapp instance is passed
-// as a parameter, variables specific to the kapp will also be returned, in addtion
-// to those relating to the stack as a whole.
-func (s *StackConfig) getVarsFromFiles(kappObj *Kapp) (map[string]interface{}, error) {
-	dirs, err := s.findVarsFiles(kappObj)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	values := map[string]interface{}{}
-
-	err = vars.Merge(&values, dirs...)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return values, nil
-}
-
 // Returns certain stack data that should be exposed as variables when running kapps
 func (s *StackConfig) GetIntrinsicData() map[string]string {
 	return map[string]string{
@@ -390,14 +285,14 @@ func (s *StackConfig) TemplatedVars(kappObj *Kapp,
 		return nil, errors.WithStack(err)
 	}
 
-	kappVars, err := s.getVarsFromFiles(kappObj)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	kappIntrinsicDataConverted := map[string]interface{}{}
-
 	if kappObj != nil {
+		kappVars, err := kappObj.getKappVarsFromFiles(s)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		kappIntrinsicDataConverted := map[string]interface{}{}
+
 		kappIntrinsicData := kappObj.GetIntrinsicData()
 		kappIntrinsicDataConverted = convert.MapStringStringToMapStringInterface(kappIntrinsicData)
 
@@ -406,19 +301,19 @@ func (s *StackConfig) TemplatedVars(kappObj *Kapp,
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-	}
 
-	// namespace kapp variables. This is safer than letting kapp variables overwrite arbitrary values (e.g.
-	// so they can't change the target stack, whether the kapp's approved, etc.), but may be too restrictive
-	// in certain situations. We'll have to see
-	kappIntrinsicDataConverted["vars"] = kappVars
+		// namespace kapp variables. This is safer than letting kapp variables overwrite arbitrary values (e.g.
+		// so they can't change the target stack, whether the kapp's approved, etc.), but may be too restrictive
+		// in certain situations. We'll have to see
+		kappIntrinsicDataConverted["vars"] = kappVars
 
-	namespacedKappMap := map[string]interface{}{
-		"kapp": kappIntrinsicDataConverted,
-	}
-	err = mergo.Merge(&mergedVars, namespacedKappMap, mergo.WithOverride)
-	if err != nil {
-		return nil, errors.WithStack(err)
+		namespacedKappMap := map[string]interface{}{
+			"kapp": kappIntrinsicDataConverted,
+		}
+		err = mergo.Merge(&mergedVars, namespacedKappMap, mergo.WithOverride)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
 	}
 
 	templatedVars, err := templateVars(mergedVars)
