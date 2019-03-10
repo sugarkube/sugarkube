@@ -137,7 +137,7 @@ func UpdateCluster(out io.Writer, stackObj *structs.Stack, autoCreate bool,
 		return errors.WithStack(err)
 	}
 
-	online, err := provisioner.IsAlreadyOnline(stackObj.Provisioner, stackObj.Config)
+	online, err := provisioner.IsAlreadyOnline(stackObj.Provisioner)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -168,7 +168,7 @@ func UpdateCluster(out io.Writer, stackObj *structs.Stack, autoCreate bool,
 			return errors.WithStack(err)
 		}
 
-		err = provisioner.Update(stackObj.Provisioner, stackObj.Config, dryRun)
+		err = provisioner.Update(stackObj.Provisioner, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -176,7 +176,7 @@ func UpdateCluster(out io.Writer, stackObj *structs.Stack, autoCreate bool,
 		if dryRun {
 			log.Logger.Infof("%sSkipping cluster readiness check.", dryRunPrefix)
 		} else {
-			err = provisioner.WaitForClusterReadiness(stackObj.Provisioner, stackObj.Config)
+			err = provisioner.WaitForClusterReadiness(stackObj.Provisioner)
 			if err != nil {
 				return errors.WithStack(err)
 			}

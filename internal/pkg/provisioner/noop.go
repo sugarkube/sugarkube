@@ -18,7 +18,7 @@ package provisioner
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 )
 
@@ -28,6 +28,7 @@ const NoopProvisionerName = "none"
 // if you just want to create raw resources without a K8s cluster, e.g. to
 // create a transit VPC, launch some EC2s with CloudFormation, etc.
 type NoOpProvisioner struct {
+	stack interfaces.IStack
 }
 
 type NoopConfig struct {
@@ -37,15 +38,19 @@ func (p NoOpProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 	return nil, nil
 }
 
+func (p NoOpProvisioner) iStack() interfaces.IStack {
+	return p.stack
+}
+
 // Creates a new noop cluster
-func (p NoOpProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) error {
+func (p NoOpProvisioner) create(dryRun bool) error {
 
 	log.Logger.Infof("Noop provisioner - no cluster will be created")
 	return nil
 }
 
 // Returns whether a noop cluster is already online
-func (p NoOpProvisioner) isAlreadyOnline(stackConfig *kapp.StackConfig) (bool, error) {
+func (p NoOpProvisioner) isAlreadyOnline() (bool, error) {
 
 	log.Logger.Infof("Noop provisioner - pretending a cluster is online")
 	// return that the cluster is online
@@ -53,7 +58,7 @@ func (p NoOpProvisioner) isAlreadyOnline(stackConfig *kapp.StackConfig) (bool, e
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p NoOpProvisioner) update(stackConfig *kapp.StackConfig, dryRun bool) error {
+func (p NoOpProvisioner) update(dryRun bool) error {
 
 	log.Logger.Infof("Noop provisioner - no cluster will be updated")
 	return nil

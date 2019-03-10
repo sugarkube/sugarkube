@@ -16,6 +16,8 @@
 package structs
 
 import (
+	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
@@ -28,4 +30,37 @@ type Stack struct {
 	Config      *kapp.StackConfig
 	Provider    provider.Provider
 	Provisioner provisioner.Provisioner
+	Status      *ClusterStatus
+}
+
+func NewStack(config *kapp.StackConfig, provider provider.Provider) (*Stack, error) {
+
+	stack := Stack{
+		Config:      config,
+		Provider:    provider,
+		Provisioner: nil,
+		Status: &ClusterStatus{
+			isOnline:              false,
+			isReady:               false,
+			sleepBeforeReadyCheck: 0,
+			startedThisRun:        false,
+		},
+	}
+
+	provisionerImpl, err := provisioner.NewProvisioner(stack.Config.Provisioner, stack)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	stack.Provisioner = provisionerImpl
+
+	return &stack, nil
+}
+
+func (s Stack) GetConfig() *kapp.StackConfig {
+	return s.Config
+}
+
+func (s Stack) GetStatus() interfaces.IClusterStatus {
+	return s.Status
 }

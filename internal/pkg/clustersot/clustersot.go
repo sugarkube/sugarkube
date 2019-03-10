@@ -19,22 +19,23 @@ package clustersot
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 )
 
 type ClusterSot interface {
-	isOnline(stackConfig *kapp.StackConfig) (bool, error)
-	isReady(stackConfig *kapp.StackConfig) (bool, error)
+	isOnline() (bool, error)
+	isReady() (bool, error)
+	iStack() interfaces.IStack
 }
 
 // Implemented ClusterSot names
 const KUBECTL = "kubectl"
 
 // Factory that creates ClusterSots
-func NewClusterSot(name string) (ClusterSot, error) {
+func NewClusterSot(name string, stack interfaces.IStack) (ClusterSot, error) {
 	if name == KUBECTL {
-		return KubeCtlClusterSot{}, nil
+		return KubeCtlClusterSot{stack: stack}, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("ClusterSot '%s' doesn't exist", name))
@@ -42,38 +43,38 @@ func NewClusterSot(name string) (ClusterSot, error) {
 
 // Uses an implementation to determine whether the cluster is reachable/online, but it
 // may not be ready to install Kapps into yet.
-func IsOnline(c ClusterSot, stackConfig *kapp.StackConfig) (bool, error) {
-	if stackConfig.Status.IsOnline {
+func IsOnline(c ClusterSot) (bool, error) {
+	if c.iStack().GetStatus().IsOnline() {
 		return true, nil
 	}
 
-	online, err := c.isOnline(stackConfig)
+	online, err := c.isOnline()
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
 
 	if online {
 		log.Logger.Info("Cluster is online. Updating cluster status.")
-		stackConfig.Status.IsOnline = true
+		c.iStack().GetStatus().SetIsOnline(true)
 	}
 
 	return online, nil
 }
 
 // Uses an implementation to determine whether the cluster is ready to install kapps into
-func IsReady(c ClusterSot, stackConfig *kapp.StackConfig) (bool, error) {
-	if stackConfig.Status.IsReady {
+func IsReady(c ClusterSot) (bool, error) {
+	if c.iStack().GetStatus().IsReady() {
 		return true, nil
 	}
 
-	ready, err := c.isReady(stackConfig)
+	ready, err := c.isReady()
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
 
 	if ready {
 		log.Logger.Info("Cluster is ready. Updating cluster status.")
-		stackConfig.Status.IsReady = true
+		c.iStack().GetStatus().SetIsReady(true)
 	}
 
 	return ready, nil

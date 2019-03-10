@@ -20,7 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os"
@@ -29,6 +29,7 @@ import (
 
 type KubeCtlClusterSot struct {
 	ClusterSot
+	stack interfaces.IStack
 }
 
 // todo - make configurable
@@ -36,8 +37,8 @@ const KubectlPath = "kubectl"
 const KubeContextKey = "kube_context"
 
 // Tests whether the cluster is online
-func (c KubeCtlClusterSot) isOnline(stackConfig *kapp.StackConfig) (bool, error) {
-	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
+func (c KubeCtlClusterSot) isOnline() (bool, error) {
+	templatedVars, err := c.stack.GetConfig().TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -61,8 +62,8 @@ func (c KubeCtlClusterSot) isOnline(stackConfig *kapp.StackConfig) (bool, error)
 }
 
 // Tests whether all pods are Ready
-func (c KubeCtlClusterSot) isReady(stackConfig *kapp.StackConfig) (bool, error) {
-	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
+func (c KubeCtlClusterSot) isReady() (bool, error) {
+	templatedVars, err := c.stack.GetConfig().TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}

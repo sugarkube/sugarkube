@@ -20,7 +20,7 @@ import (
 	"bytes"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
@@ -32,7 +32,7 @@ const MinikubeDefaultBinary = "minikube"
 
 type MinikubeProvisioner struct {
 	clusterSot     clustersot.ClusterSot
-	stackConfig    *kapp.StackConfig
+	stack          interfaces.IStack
 	minikubeConfig MinikubeConfig
 }
 
@@ -51,21 +51,25 @@ type MinikubeConfig struct {
 const MinikubeSleepSecondsBeforeReadyCheck = 30
 
 // Instantiates a new instance
-func newMinikubeProvisioner(stackConfig *kapp.StackConfig) (*MinikubeProvisioner, error) {
-	config, err := parseMinikubeConfig(stackConfig)
+func newMinikubeProvisioner(iStack interfaces.IStack) (*MinikubeProvisioner, error) {
+	config, err := parseMinikubeConfig(iStack)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	return &MinikubeProvisioner{
-		stackConfig:    stackConfig,
+		stack:          iStack,
 		minikubeConfig: *config,
 	}, nil
 }
 
+func (p MinikubeProvisioner) iStack() interfaces.IStack {
+	return p.stack
+}
+
 func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 	if p.clusterSot == nil {
-		clusterSot, err := clustersot.NewClusterSot(clustersot.KUBECTL)
+		clusterSot, err := clustersot.NewClusterSot(clustersot.KUBECTL, p.stack)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -77,7 +81,7 @@ func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 }
 
 // Creates a new minikube cluster
-func (p MinikubeProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) error {
+func (p MinikubeProvisioner) create(dryRun bool) error {
 
 	args := []string{"start"}
 	args = parameteriseValues(args, p.minikubeConfig.Params.Global)
@@ -96,15 +100,15 @@ func (p MinikubeProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) 
 		log.Logger.Infof("Minikube cluster successfully started")
 	}
 
-	stackConfig.Status.StartedThisRun = true
+	p.stack.GetStatus().SetStartedThisRun(true)
 	// only sleep before checking the cluster fo readiness if we started it
-	stackConfig.Status.SleepBeforeReadyCheck = MinikubeSleepSecondsBeforeReadyCheck
+	p.stack.GetStatus().SetSleepBeforeReadyCheck(MinikubeSleepSecondsBeforeReadyCheck)
 
 	return nil
 }
 
 // Returns whether a minikube cluster is already online
-func (p MinikubeProvisioner) isAlreadyOnline(stackConfig *kapp.StackConfig) (bool, error) {
+func (p MinikubeProvisioner) isAlreadyOnline() (bool, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	err := utils.ExecCommand(p.minikubeConfig.Binary, []string{"status"}, map[string]string{},
@@ -124,14 +128,14 @@ func (p MinikubeProvisioner) isAlreadyOnline(stackConfig *kapp.StackConfig) (boo
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p MinikubeProvisioner) update(stackConfig *kapp.StackConfig, dryRun bool) error {
+func (p MinikubeProvisioner) update(dryRun bool) error {
 	log.Logger.Warn("Updating minikube clusters has no effect. Ignoring.")
 	return nil
 }
 
 // Parses the provisioner config
-func parseMinikubeConfig(stackConfig *kapp.StackConfig) (*MinikubeConfig, error) {
-	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
+func parseMinikubeConfig(stackConfig interfaces.IStack) (*MinikubeConfig, error) {
+	templatedVars, err := stackConfig.GetConfig().TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
