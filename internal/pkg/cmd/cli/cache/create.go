@@ -22,9 +22,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"io"
 	"path/filepath"
 )
@@ -75,15 +75,15 @@ func (c *createCmd) run() error {
 	// CLI args override configured args, so merge them in
 	cliStackConfig := &kapp.StackConfig{}
 
-	stackConfig, err := utils.BuildStackConfig(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Loaded %d manifest(s)", len(stackConfig.Manifests))
+	log.Logger.Debugf("Loaded %d manifest(s)", len(stackObj.Config.Manifests))
 
 	// todo - why is this here? why don't we always validate manifests?
-	for _, manifest := range stackConfig.Manifests {
+	for _, manifest := range stackObj.Config.Manifests {
 		err = kapp.ValidateManifest(manifest)
 		if err != nil {
 			return errors.WithStack(err)
@@ -105,7 +105,7 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	for _, manifest := range stackConfig.Manifests {
+	for _, manifest := range stackObj.Config.Manifests {
 		err := cacher.CacheManifest(*manifest, absCacheDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
@@ -128,13 +128,13 @@ func (c *createCmd) run() error {
 		// template kapps
 		candidateKapps := make([]kapp.Kapp, 0)
 
-		for _, manifest := range stackConfig.Manifests {
+		for _, manifest := range stackObj.Config.Manifests {
 			for _, manifestKapp := range manifest.ParsedKapps() {
 				candidateKapps = append(candidateKapps, manifestKapp)
 			}
 		}
 
-		err = kapps.RenderTemplates(candidateKapps, absCacheDir, stackConfig, c.dryRun)
+		err = kapps.RenderTemplates(candidateKapps, absCacheDir, stackObj.Config, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

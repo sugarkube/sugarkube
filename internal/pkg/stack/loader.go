@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Sugarkube Authors
+ * Copyright 2019 The Sugarkube Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package utils
+package stack
 
 import (
 	"fmt"
@@ -23,6 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 	"strings"
 )
@@ -31,13 +32,23 @@ import (
 // variables are loaded and set as a property on the stackConfig. So after this step, stackConfig contains
 // all config values for the entire stack (although it won't have been templated yet so any '{{var_name}}'
 // type strings won't have been interpolated yet.
-func BuildStackConfig(stackName string, stackFile string, cliStackConfig *kapp.StackConfig,
-	out io.Writer) (*kapp.StackConfig, error) {
+func BuildStack(stackName string, stackFile string, cliStackConfig *kapp.StackConfig,
+	out io.Writer) (*structs.Stack, error) {
 
-	stackConfig, err := LoadStackConfig(stackName, stackFile)
+	if strings.TrimSpace(stackName) == "" {
+		return nil, errors.New("The stack name is required")
+	}
+
+	if strings.TrimSpace(stackFile) == "" {
+		return nil, errors.New("A stack config file path is required")
+	}
+
+	stackConfig, err := kapp.LoadStackConfig(stackName, stackFile)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	log.Logger.Debugf("Parsed stack CLI args to stack config: %#v", stackConfig)
 
 	err = mergo.Merge(stackConfig, cliStackConfig, mergo.WithOverride)
 	if err != nil {
@@ -83,26 +94,7 @@ func BuildStackConfig(stackName string, stackFile string, cliStackConfig *kapp.S
 		return nil, errors.WithStack(err)
 	}
 
-	return stackConfig, nil
-}
+	stackObj := structs.NewStack(stackConfig, &providerImpl)
 
-// Loads a named stack from a stack config file or returns an error
-func LoadStackConfig(stackName string, stackFile string) (*kapp.StackConfig, error) {
-
-	if strings.TrimSpace(stackName) == "" {
-		return nil, errors.New("The stack name is required")
-	}
-
-	if strings.TrimSpace(stackFile) == "" {
-		return nil, errors.New("A stack config file path is required")
-	}
-
-	stackConfig, err := kapp.LoadStackConfig(stackName, stackFile)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	log.Logger.Debugf("Parsed stack CLI args to stack config: %#v", stackConfig)
-
-	return stackConfig, nil
+	return stackObj, nil
 }

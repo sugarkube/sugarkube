@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"io"
 )
 
@@ -110,7 +110,7 @@ func (c *destroyCmd) run() error {
 		Account:     c.account,
 	}
 
-	stackConfig, err := utils.BuildStackConfig(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -132,7 +132,7 @@ func (c *destroyCmd) run() error {
 
 			// in future we may want to be able to work entirely from a cluster
 			// diff, in which case it'd really be a plan for us
-			if len(stackConfig.Manifests) > 0 {
+			if len(stackObj.Config.Manifests) > 0 {
 				// todo - validate that the cluster diff matches the manifests, e.g. that
 				// the versions of kapps in the manifests match the versions in the cluster
 				// diff
@@ -161,8 +161,8 @@ func (c *destroyCmd) run() error {
 		}
 
 		// force mode, so no need to perform validation. Just create a reverse plan
-		actionPlan, err = plan.Create(false, stackConfig, stackConfig.Manifests,
-			c.cacheDir, c.includeSelector, c.excludeSelector, !c.skipTemplating)
+		actionPlan, err = plan.Create(false, stackObj.Config,
+			stackObj.Config.Manifests, c.cacheDir, c.includeSelector, c.excludeSelector, !c.skipTemplating)
 		if err != nil {
 			return errors.WithStack(err)
 		}

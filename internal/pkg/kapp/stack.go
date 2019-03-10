@@ -67,10 +67,10 @@ func (s *StackConfig) GetProviderVars() map[string]interface{} {
 
 // Validates that there aren't multiple manifests in the stack config with the
 // same ID, which would break creating caches
-func ValidateStackConfig(sc *StackConfig) error {
+func ValidateStackConfig(stackConfig *StackConfig) error {
 	ids := map[string]bool{}
 
-	for _, manifest := range sc.Manifests {
+	for _, manifest := range stackConfig.Manifests {
 		id := manifest.Id()
 
 		if _, ok := ids[id]; ok {

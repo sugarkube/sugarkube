@@ -21,9 +21,9 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	datautils "github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -89,17 +89,18 @@ func (c *varsConfig) run() error {
 		Account:     c.account,
 	}
 
-	stackConfig, err := utils.BuildStackConfig(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "Displaying variables for stack '%s':\n\n", stackConfig.Name)
+	_, err = fmt.Fprintf(c.out, "Displaying variables for stack '%s':\n\n",
+		stackObj.Config.Name)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := stackObj.Config.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return errors.WithStack(err)
 	}

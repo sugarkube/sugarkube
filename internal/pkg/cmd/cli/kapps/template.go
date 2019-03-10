@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"io"
 	"os"
 	"strings"
@@ -97,12 +97,12 @@ func (c *templateConfig) run() error {
 		Account:     c.account,
 	}
 
-	stackConfig, err := utils.BuildStackConfig(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := kapp.SelectKapps(stackConfig.Manifests, c.includeSelector, c.excludeSelector)
+	selectedKapps, err := kapp.SelectKapps(stackObj.Config.Manifests, c.includeSelector, c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -112,7 +112,7 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = RenderTemplates(selectedKapps, c.cacheDir, stackConfig, c.dryRun)
+	err = RenderTemplates(selectedKapps, c.cacheDir, stackObj.Config, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

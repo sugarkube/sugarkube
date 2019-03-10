@@ -21,10 +21,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"io"
 )
 
@@ -113,12 +113,12 @@ func (c *createCmd) run() error {
 		OnlineTimeout:    c.onlineTimeout,
 	}
 
-	stackConfig, err := utils.BuildStackConfig(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = CreateCluster(c.out, stackConfig, c.dryRun)
+	err = CreateCluster(c.out, stackObj.Config, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
