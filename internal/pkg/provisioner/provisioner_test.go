@@ -40,7 +40,7 @@ func TestNewMinikubeProvisioner(t *testing.T) {
 		&kapp.StackConfig{}, os.Stdout)
 	assert.Nil(t, err)
 
-	actual, err := NewProvisioner(MINIKUBE_PROVISIONER_NAME, stackConfig)
+	actual, err := NewProvisioner(MinikubeProvisionerName, stackConfig)
 	assert.Nil(t, err)
 	assert.Equal(t, MinikubeProvisioner{
 		stackConfig: stackConfig,
@@ -67,7 +67,7 @@ func TestNewKopsProvisioner(t *testing.T) {
 		&kapp.StackConfig{}, os.Stdout)
 	assert.Nil(t, err)
 
-	actual, err := NewProvisioner(KOPS_PROVISIONER_NAME, stackConfig)
+	actual, err := NewProvisioner(KopsProvisionerName, stackConfig)
 	assert.Nil(t, err)
 	assert.Equal(t, KopsProvisioner{
 		stackConfig: stackConfig,
@@ -78,7 +78,7 @@ func TestNewKopsProvisioner(t *testing.T) {
 }
 
 func TestNewNoOpProvisioner(t *testing.T) {
-	actual, err := NewProvisioner(NOOP_PROVISIONER_NAME, &kapp.StackConfig{})
+	actual, err := NewProvisioner(NoopProvisionerName, &kapp.StackConfig{})
 	assert.Nil(t, err)
 	assert.Equal(t, NoOpProvisioner{}, actual)
 }

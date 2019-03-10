@@ -128,7 +128,7 @@ kapps:
 						},
 					},
 					PostActions: []string{
-						constants.TASK_ACTION_CLUSTER_UPDATE,
+						constants.TaskActionClusterUpdate,
 					},
 				},
 			},
@@ -242,7 +242,7 @@ func TestApplyingManifestOverrides(t *testing.T) {
 
 	// in the actual manifest, the state is set to present but it's overridden
 	kappObj := stackConfig.Manifests[0].ParsedKapps()[0]
-	assert.Equal(t, ABSENT_KEY, kappObj.State)
+	assert.Equal(t, AbsentKey, kappObj.State)
 	assert.Equal(t, map[string]interface{}{
 		"sizeVar":  "mediumOverridden",
 		"stackVar": "setInOverrides",

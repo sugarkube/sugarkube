@@ -90,7 +90,6 @@ var rootCmd = &cobra.Command{
 }
 
 var logLevel string
-var jsonLogs bool
 
 func NewCommand(name string) *cobra.Command {
 

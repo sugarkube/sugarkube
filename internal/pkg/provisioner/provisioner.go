@@ -37,11 +37,11 @@ type Provisioner interface {
 }
 
 // key in Values that relates to this provisioner
-const PROVISIONER_KEY = "provisioner"
+const ProvisionerKey = "provisioner"
 
 // Factory that creates providers
 func NewProvisioner(name string, stackConfig *kapp.StackConfig) (Provisioner, error) {
-	if name == MINIKUBE_PROVISIONER_NAME {
+	if name == MinikubeProvisionerName {
 		minikubeProvisioner, err := newMinikubeProvisioner(stackConfig)
 		if err != nil {
 			return nil, errors.WithStack(err)
@@ -50,7 +50,7 @@ func NewProvisioner(name string, stackConfig *kapp.StackConfig) (Provisioner, er
 		return *minikubeProvisioner, nil
 	}
 
-	if name == KOPS_PROVISIONER_NAME {
+	if name == KopsProvisionerName {
 		kopsProvisioner, err := newKopsProvisioner(stackConfig)
 		if err != nil {
 			return nil, errors.WithStack(err)
@@ -59,7 +59,7 @@ func NewProvisioner(name string, stackConfig *kapp.StackConfig) (Provisioner, er
 		return *kopsProvisioner, nil
 	}
 
-	if name == NOOP_PROVISIONER_NAME {
+	if name == NoopProvisionerName {
 		return NoOpProvisioner{}, nil
 	}
 

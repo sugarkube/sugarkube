@@ -25,7 +25,7 @@ import (
 	"strings"
 )
 
-const WILDCARD_CHARACTER = "*"
+const WildcardCharacter = "*"
 
 type ManifestOptions struct {
 	Parallelisation uint16

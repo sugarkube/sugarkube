@@ -22,7 +22,7 @@ import (
 	"testing"
 )
 
-const GOOD_GIT_URI = "git@github.com:sugarkube/kapps.git//incubator/tiller/#master"
+const GoodGitUri = "git@github.com:sugarkube/kapps.git//incubator/tiller/#master"
 
 func init() {
 	log.ConfigureLogger("debug", false)
@@ -57,7 +57,7 @@ func TestNewAcquirerGit(t *testing.T) {
 
 	actual, err := newAcquirer(Source{
 		Id:            "",
-		Uri:           GOOD_GIT_URI,
+		Uri:           GoodGitUri,
 		IncludeValues: true,
 	})
 	assert.Nil(t, err)
@@ -87,7 +87,7 @@ func TestNewAcquirerGitWithOptions(t *testing.T) {
 
 	actual, err := newAcquirer(Source{
 		Id:  "",
-		Uri: GOOD_GIT_URI,
+		Uri: GoodGitUri,
 		Options: map[string]interface{}{
 			"branch": "my-branch",
 		},
@@ -130,7 +130,7 @@ func TestNewAcquirerGitExplicitId(t *testing.T) {
 		includeValues: false,
 	}
 
-	actual, err := newAcquirer(Source{Id: "banana", Uri: GOOD_GIT_URI})
+	actual, err := newAcquirer(Source{Id: "banana", Uri: GoodGitUri})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Git acquirer with explicitly set ID incorrectly created")

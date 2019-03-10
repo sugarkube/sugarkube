@@ -22,7 +22,7 @@ type LocalProvider struct {
 	stackConfigVars map[string]interface{}
 }
 
-const LOCAL_PROVIDER_NAME = "local"
+const LocalProviderName = "local"
 
 // Associate provider variables with the provider
 func (p *LocalProvider) setVars(values map[string]interface{}) {
@@ -37,13 +37,13 @@ func (p *LocalProvider) getInstallerVars() map[string]interface{} {
 
 // Returns the name of this provider
 func (p *LocalProvider) getName() string {
-	return LOCAL_PROVIDER_NAME
+	return LocalProviderName
 }
 
 // Return static vars dirs names we should search for this provider
 func (p *LocalProvider) customVarsDirs() []string {
 	return []string{
-		constants.PROFILE_DIR,
-		constants.CLUSTER_DIR,
+		constants.ProfileDir,
+		constants.ClusterDir,
 	}
 }

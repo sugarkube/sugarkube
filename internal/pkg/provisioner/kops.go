@@ -34,20 +34,20 @@ import (
 	"strings"
 )
 
-const KOPS_PROVISIONER_NAME = "kops"
-const KOPS_DEFAULT_BINARY = "kops"
+const KopsProvisionerName = "kops"
+const KopsDefaultBinary = "kops"
 
 // number of seconds to timeout after while running kops commands (apart from updates)
-const KOPS_COMMAND_TIMEOUT_SECONDS = 30
-const KOPS_COMMAND_TIMEOUT_SECONDS_LONG = 300
+const KopsCommandTimeoutSeconds = 30
+const KopsCommandTimeoutSecondsLong = 300
 
 // number of seconds to sleep after the cluster has come online before checking whether
 // it's ready
-const KOPS_SLEEP_SECONDS_BEFORE_READY_CHECK = 60
+const KopsSleepSecondsBeforeReadyCheck = 60
 
-const KOPS_SPECS_KEY = "specs"
-const KOPS_CLUSTER_KEY = "cluster"
-const KOPS_INSTANCE_GROUPS_KEY = "instanceGroups"
+const KopsSpecsKey = "specs"
+const KopsClusterKey = "cluster"
+const KopsInstanceGroupsKey = "instanceGroups"
 
 type KopsProvisioner struct {
 	clusterSot  clustersot.ClusterSot
@@ -111,7 +111,7 @@ func (p KopsProvisioner) clusterConfigExists(stackConfig *kapp.StackConfig) (boo
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS, false)
+		&stderrBuf, "", KopsCommandTimeoutSeconds, false)
 	if err != nil {
 		if errors.Cause(err) == context.DeadlineExceeded {
 			return false, errors.Wrap(err,
@@ -148,7 +148,7 @@ func (p KopsProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) erro
 
 	log.Logger.Info("Creating Kops cluster config...")
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS_LONG, dryRun)
+		&stderrBuf, "", KopsCommandTimeoutSecondsLong, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -165,7 +165,7 @@ func (p KopsProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) erro
 
 	stackConfig.Status.StartedThisRun = true
 	// only sleep before checking the cluster fo readiness if we started it
-	stackConfig.Status.SleepBeforeReadyCheck = KOPS_SLEEP_SECONDS_BEFORE_READY_CHECK
+	stackConfig.Status.SleepBeforeReadyCheck = KopsSleepSecondsBeforeReadyCheck
 
 	return nil
 }
@@ -260,7 +260,7 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 	log.Logger.Info("Downloading config for kops cluster...")
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
-		"", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
+		"", KopsCommandTimeoutSeconds, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -279,15 +279,15 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	provisionerValues := templatedVars[PROVISIONER_KEY].(map[interface{}]interface{})
+	provisionerValues := templatedVars[ProvisionerKey].(map[interface{}]interface{})
 
 	specs, err := convert.MapInterfaceInterfaceToMapStringInterface(
-		provisionerValues[KOPS_SPECS_KEY].(map[interface{}]interface{}))
+		provisionerValues[KopsSpecsKey].(map[interface{}]interface{}))
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	clusterSpecs := specs[KOPS_CLUSTER_KEY]
+	clusterSpecs := specs[KopsClusterKey]
 
 	specValues := map[string]interface{}{"spec": clusterSpecs}
 
@@ -339,7 +339,7 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 	args = parameteriseValues(args, p.kopsConfig.Params.Replace)
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
-		"", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
+		"", KopsCommandTimeoutSeconds, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -350,7 +350,7 @@ func (p KopsProvisioner) patch(stackConfig *kapp.StackConfig, dryRun bool) error
 
 	log.Logger.Info("Patching instance group configs...")
 
-	igSpecs := specs[KOPS_INSTANCE_GROUPS_KEY].(map[interface{}]interface{})
+	igSpecs := specs[KopsInstanceGroupsKey].(map[interface{}]interface{})
 
 	for instanceGroupName, newSpec := range igSpecs {
 		specValues := map[string]interface{}{"spec": newSpec}
@@ -397,7 +397,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	err := utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
+		&stderrBuf, "", KopsCommandTimeoutSeconds, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -457,7 +457,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 	args = parameteriseValues(args, kopsConfig.Params.Replace)
 
 	err = utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
-		"", KOPS_COMMAND_TIMEOUT_SECONDS, dryRun)
+		"", KopsCommandTimeoutSeconds, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -487,7 +487,7 @@ func parseKopsConfig(stackConfig *kapp.StackConfig) (*KopsConfig, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	provisionerValues, ok := templatedVars[PROVISIONER_KEY].(map[interface{}]interface{})
+	provisionerValues, ok := templatedVars[ProvisionerKey].(map[interface{}]interface{})
 	if !ok {
 		return nil, errors.New("No provisioner found in stack config. You must at least set the binary path.")
 	}
@@ -508,10 +508,10 @@ func parseKopsConfig(stackConfig *kapp.StackConfig) (*KopsConfig, error) {
 	}
 
 	if kopsConfig.Binary == "" {
-		kopsConfig.Binary = KOPS_DEFAULT_BINARY
+		kopsConfig.Binary = KopsDefaultBinary
 		log.Logger.Warnf("Using default %s binary '%s'. It's safer to explicitly set the path to a versioned "+
-			"binary (e.g. %s-1.2.3) in the provisioner configuration", KOPS_PROVISIONER_NAME, KOPS_DEFAULT_BINARY,
-			KOPS_DEFAULT_BINARY)
+			"binary (e.g. %s-1.2.3) in the provisioner configuration", KopsProvisionerName, KopsDefaultBinary,
+			KopsDefaultBinary)
 	}
 
 	return &kopsConfig, nil

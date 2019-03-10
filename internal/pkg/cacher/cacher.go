@@ -26,7 +26,7 @@ import (
 	"strings"
 )
 
-const CACHE_DIR = ".sugarkube"
+const CacheDir = ".sugarkube"
 
 // Returns the cache dir for a manifest
 func GetManifestCachePath(cacheDir string, manifest kapp.Manifest) string {
@@ -36,7 +36,7 @@ func GetManifestCachePath(cacheDir string, manifest kapp.Manifest) string {
 // Returns the path of a kapp's cache dir where the different sources are
 // checked out to
 func getKappCachePath(kappRootPath string) string {
-	return filepath.Join(kappRootPath, CACHE_DIR)
+	return filepath.Join(kappRootPath, CacheDir)
 }
 
 // Build a cache for a manifest into a directory

@@ -27,8 +27,8 @@ import (
 	"os/exec"
 )
 
-const MINIKUBE_PROVISIONER_NAME = "minikube"
-const MINIKUBE_DEFAULT_BINARY = "minikube"
+const MinikubeProvisionerName = "minikube"
+const MinikubeDefaultBinary = "minikube"
 
 type MinikubeProvisioner struct {
 	clusterSot     clustersot.ClusterSot
@@ -48,7 +48,7 @@ type MinikubeConfig struct {
 
 // Seconds to sleep after the cluster is online but before checking whether it's ready.
 // This gives pods a chance to be launched. If we check immediately there are no pods.
-const MINIKUBE_SLEEP_SECONDS_BEFORE_READY_CHECK = 30
+const MinikubeSleepSecondsBeforeReadyCheck = 30
 
 // Instantiates a new instance
 func newMinikubeProvisioner(stackConfig *kapp.StackConfig) (*MinikubeProvisioner, error) {
@@ -98,7 +98,7 @@ func (p MinikubeProvisioner) create(stackConfig *kapp.StackConfig, dryRun bool) 
 
 	stackConfig.Status.StartedThisRun = true
 	// only sleep before checking the cluster fo readiness if we started it
-	stackConfig.Status.SleepBeforeReadyCheck = MINIKUBE_SLEEP_SECONDS_BEFORE_READY_CHECK
+	stackConfig.Status.SleepBeforeReadyCheck = MinikubeSleepSecondsBeforeReadyCheck
 
 	return nil
 }
@@ -135,7 +135,7 @@ func parseMinikubeConfig(stackConfig *kapp.StackConfig) (*MinikubeConfig, error)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	provisionerValues, ok := templatedVars[PROVISIONER_KEY].(map[interface{}]interface{})
+	provisionerValues, ok := templatedVars[ProvisionerKey].(map[interface{}]interface{})
 	if !ok {
 		return nil, errors.New("No provisioner found in stack config. You must set the binary path.")
 	}
@@ -157,10 +157,10 @@ func parseMinikubeConfig(stackConfig *kapp.StackConfig) (*MinikubeConfig, error)
 	}
 
 	if minikubeConfig.Binary == "" {
-		minikubeConfig.Binary = MINIKUBE_DEFAULT_BINARY
+		minikubeConfig.Binary = MinikubeDefaultBinary
 		log.Logger.Warnf("Using default %s binary '%s'. It's safer to explicitly set the path to a versioned "+
-			"binary (e.g. %s-1.2.3) in the provisioner configuration", MINIKUBE_PROVISIONER_NAME, MINIKUBE_DEFAULT_BINARY,
-			MINIKUBE_DEFAULT_BINARY)
+			"binary (e.g. %s-1.2.3) in the provisioner configuration", MinikubeProvisionerName, MinikubeDefaultBinary,
+			MinikubeDefaultBinary)
 	}
 
 	return &minikubeConfig, nil

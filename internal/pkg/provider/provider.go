@@ -100,7 +100,7 @@ func GetVarsFromFiles(provider Provider, stackConfig *kapp.StackConfig) (map[str
 // Search for paths to provider vars files
 func findVarsFiles(provider Provider, stackConfig *kapp.StackConfig) ([]string, error) {
 	precedence := []string{
-		utils.StripExtension(constants.VALUES_FILE),
+		utils.StripExtension(constants.ValuesFile),
 		stackConfig.Provider,
 		stackConfig.Provisioner,
 		stackConfig.Account,

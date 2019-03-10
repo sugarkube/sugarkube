@@ -36,7 +36,7 @@ type HelmOutput struct {
 	Releases []HelmRelease
 }
 
-const HELM_PATH = "helm"
+const HelmPath = "helm"
 
 // struct returned by `helm list --output yaml`
 type HelmRelease struct {
@@ -54,7 +54,7 @@ func (s HelmKappSot) refresh() error {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	// todo - add the --kube-context
-	err := utils.ExecCommand(HELM_PATH, []string{"list", "--all", "--output", "yaml"},
+	err := utils.ExecCommand(HelmPath, []string{"list", "--all", "--output", "yaml"},
 		map[string]string{}, &stdoutBuf, &stderrBuf, "", 30, false)
 	if err != nil {
 		return errors.WithStack(err)

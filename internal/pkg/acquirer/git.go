@@ -36,12 +36,12 @@ type GitAcquirer struct {
 }
 
 // todo - make configurable, or use go-git
-const GIT_PATH = "git"
+const GitPath = "git"
 
-const PATH_SEPARATOR = "//"
-const BRANCH_SEPARATOR = "#"
+const PathSeparator = "//"
+const BranchSeparator = "#"
 
-const BRANCH_KEY = "branch"
+const BranchKey = "branch"
 
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
@@ -51,21 +51,21 @@ func NewGitAcquirer(source Source) (*GitAcquirer, error) {
 	branchFromOptions := ""
 
 	if len(source.Options) > 0 {
-		_, ok := source.Options[BRANCH_KEY]
+		_, ok := source.Options[BranchKey]
 		if ok {
-			branchFromOptions = source.Options[BRANCH_KEY].(string)
+			branchFromOptions = source.Options[BranchKey].(string)
 		}
 	}
 
-	uriPathBranch := strings.Split(source.Uri, PATH_SEPARATOR)
+	uriPathBranch := strings.Split(source.Uri, PathSeparator)
 	if len(uriPathBranch) != 2 {
-		return nil, errors.New(fmt.Sprintf("No path separator ('%s') found in git URI '%s'", PATH_SEPARATOR,
+		return nil, errors.New(fmt.Sprintf("No path separator ('%s') found in git URI '%s'", PathSeparator,
 			source.Uri))
 	}
 
-	pathBranch := strings.Split(uriPathBranch[1], BRANCH_SEPARATOR)
+	pathBranch := strings.Split(uriPathBranch[1], BranchSeparator)
 	if len(pathBranch) != 2 && !(len(pathBranch) == 1 && branchFromOptions != "") {
-		return nil, errors.New(fmt.Sprintf("No branch separator ('%s') found in git URI '%s'", BRANCH_SEPARATOR,
+		return nil, errors.New(fmt.Sprintf("No branch separator ('%s') found in git URI '%s'", BranchSeparator,
 			source.Uri))
 	}
 
@@ -131,7 +131,7 @@ func (a GitAcquirer) Path() string {
 
 // return the uri
 func (a GitAcquirer) Uri() string {
-	return strings.Join([]string{a.uri, PATH_SEPARATOR, a.path, BRANCH_SEPARATOR, a.branch}, "")
+	return strings.Join([]string{a.uri, PathSeparator, a.path, BranchSeparator, a.branch}, "")
 }
 
 // return whether this source should be searched for values files
@@ -177,28 +177,28 @@ func (a GitAcquirer) clone(dest string) error {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	// git init
-	err = utils.ExecCommand(GIT_PATH, []string{"init"}, map[string]string{},
+	err = utils.ExecCommand(GitPath, []string{"init"}, map[string]string{},
 		&stdoutBuf, &stderrBuf, dest, 5, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// add origin
-	err = utils.ExecCommand(GIT_PATH, []string{"remote", "add", "origin", a.uri},
+	err = utils.ExecCommand(GitPath, []string{"remote", "add", "origin", a.uri},
 		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 5, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// fetch
-	err = utils.ExecCommand(GIT_PATH, []string{"fetch"}, map[string]string{},
+	err = utils.ExecCommand(GitPath, []string{"fetch"}, map[string]string{},
 		&stdoutBuf, &stderrBuf, dest, 60, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// git configure sparse checkout
-	err = utils.ExecCommand(GIT_PATH, []string{"config", "core.sparsecheckout", "true"},
+	err = utils.ExecCommand(GitPath, []string{"config", "core.sparsecheckout", "true"},
 		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
 	if err != nil {
 		return errors.WithStack(err)
@@ -211,7 +211,7 @@ func (a GitAcquirer) clone(dest string) error {
 	}
 
 	// git checkout
-	err = utils.ExecCommand(GIT_PATH, []string{"checkout", a.branch},
+	err = utils.ExecCommand(GitPath, []string{"checkout", a.branch},
 		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
 	if err != nil {
 		return errors.WithStack(err)
@@ -230,7 +230,7 @@ func (a GitAcquirer) update(dest string) error {
 	var err error
 
 	// find out which branch is currently checked out
-	err = utils.ExecCommand(GIT_PATH, []string{"branch", "--format", "%(refname:short)"},
+	err = utils.ExecCommand(GitPath, []string{"branch", "--format", "%(refname:short)"},
 		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 2, false)
 
 	log.Logger.Debugf("Stdout=%s", stdoutBuf.String())
@@ -255,7 +255,7 @@ func (a GitAcquirer) update(dest string) error {
 			dest, localBranch, a.branch))
 	}
 
-	err = utils.ExecCommand(GIT_PATH, []string{"pull", "origin", a.branch},
+	err = utils.ExecCommand(GitPath, []string{"pull", "origin", a.branch},
 		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
 
 	log.Logger.Debugf("Stdout=%s", stdoutBuf.String())

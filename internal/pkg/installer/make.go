@@ -34,8 +34,8 @@ type MakeInstaller struct {
 	provider provider.Provider
 }
 
-const TARGET_INSTALL = "install"
-const TARGET_DESTROY = "destroy"
+const TargetInstall = "install"
+const TargetDestroy = "destroy"
 
 // Run the given make target
 func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
@@ -154,11 +154,11 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 // Install a kapp
 func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	approved bool, renderTemplates bool, dryRun bool) error {
-	return i.run(TARGET_INSTALL, kappObj, stackConfig, approved, renderTemplates, dryRun)
+	return i.run(TargetInstall, kappObj, stackConfig, approved, renderTemplates, dryRun)
 }
 
 // Destroy a kapp
 func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
 	approved bool, renderTemplates bool, dryRun bool) error {
-	return i.run(TARGET_DESTROY, kappObj, stackConfig, approved, renderTemplates, dryRun)
+	return i.run(TargetDestroy, kappObj, stackConfig, approved, renderTemplates, dryRun)
 }

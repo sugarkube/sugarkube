@@ -47,7 +47,7 @@ func newAcquirer(source Source) (Acquirer, error) {
 			return nil, errors.WithStack(err)
 		}
 		return acquirerObj, nil
-	} else if strings.HasPrefix(source.Uri, FILE_PROTOCOL) {
+	} else if strings.HasPrefix(source.Uri, FileProtocol) {
 
 		acquirerObj, err := newFileAcquirer(source)
 		if err != nil {

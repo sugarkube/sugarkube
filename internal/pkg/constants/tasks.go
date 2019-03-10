@@ -1,5 +1,5 @@
 package constants
 
-const TASK_ACTION_INSTALL = "install"
-const TASK_ACTION_DESTROY = "destroy"
-const TASK_ACTION_CLUSTER_UPDATE = "cluster_update"
+const TaskActionInstall = "install"
+const TaskActionDestroy = "destroy"
+const TaskActionClusterUpdate = "cluster_update"

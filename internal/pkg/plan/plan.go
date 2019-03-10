@@ -102,16 +102,16 @@ func Create(forward bool, stackConfig *kapp.StackConfig, manifests []*kapp.Manif
 		}
 
 		// when creating a forward plan, we can install kapps...
-		if forward && kappObj.State == kapp.PRESENT_KEY {
+		if forward && kappObj.State == kapp.PresentKey {
 			installDestroyTask = &task{
 				kapp:   kappObj,
-				action: constants.TASK_ACTION_INSTALL,
+				action: constants.TaskActionInstall,
 			}
 			// but reverse plans must always destroy them
-		} else if !forward || kappObj.State == kapp.ABSENT_KEY {
+		} else if !forward || kappObj.State == kapp.AbsentKey {
 			installDestroyTask = &task{
 				kapp:   kappObj,
-				action: constants.TASK_ACTION_DESTROY,
+				action: constants.TaskActionDestroy,
 			}
 		}
 
@@ -124,10 +124,10 @@ func Create(forward bool, stackConfig *kapp.StackConfig, manifests []*kapp.Manif
 		if len(kappObj.PostActions) > 0 {
 			for _, postAction := range kappObj.PostActions {
 				var actionTask *task
-				if postAction == constants.TASK_ACTION_CLUSTER_UPDATE {
+				if postAction == constants.TaskActionClusterUpdate {
 					actionTask = &task{
 						kapp:   kappObj,
-						action: constants.TASK_ACTION_CLUSTER_UPDATE,
+						action: constants.TaskActionClusterUpdate,
 					}
 				} else {
 					log.Logger.Errorf("Invalid post_action encountered: %s", postAction)
@@ -216,7 +216,7 @@ func reverse(plan *Plan) {
 	})
 
 	// reverse the tasks within each tranche
-	for i, _ := range plan.tranches {
+	for i := range plan.tranches {
 		sort.SliceStable(plan.tranches[i].tasks, func(i, j int) bool {
 			return true
 		})
@@ -326,19 +326,19 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 		}
 
 		switch task.action {
-		case constants.TASK_ACTION_INSTALL:
+		case constants.TaskActionInstall:
 			err := installer.Install(installerImpl, &kappObj, stackConfig, approved, renderTemplates, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", kappObj.Id)
 			}
 			break
-		case constants.TASK_ACTION_DESTROY:
+		case constants.TaskActionDestroy:
 			err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved, renderTemplates, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", kappObj.Id)
 			}
 			break
-		case constants.TASK_ACTION_CLUSTER_UPDATE:
+		case constants.TaskActionClusterUpdate:
 			if approved {
 				log.Logger.Info("Running cluster update action")
 				err := cluster.UpdateCluster(os.Stdout, stackConfig, true, dryRun)

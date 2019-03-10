@@ -32,8 +32,8 @@ type KubeCtlClusterSot struct {
 }
 
 // todo - make configurable
-const KUBECTL_PATH = "kubectl"
-const KUBE_CONTEXT_KEY = "kube_context"
+const KubectlPath = "kubectl"
+const KubeContextKey = "kube_context"
 
 // Tests whether the cluster is online
 func (c KubeCtlClusterSot) isOnline(stackConfig *kapp.StackConfig) (bool, error) {
@@ -41,12 +41,12 @@ func (c KubeCtlClusterSot) isOnline(stackConfig *kapp.StackConfig) (bool, error)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
-	context := templatedVars[KUBE_CONTEXT_KEY].(string)
+	context := templatedVars[KubeContextKey].(string)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	// poll `kubectl --context {{ kube_context }} get namespace`
-	err = utils.ExecCommand(KUBECTL_PATH, []string{"--context", context, "get", "namespace"},
+	err = utils.ExecCommand(KubectlPath, []string{"--context", context, "get", "namespace"},
 		map[string]string{}, &stdoutBuf, &stderrBuf, "", 30, false)
 	if err != nil {
 		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
@@ -66,14 +66,14 @@ func (c KubeCtlClusterSot) isReady(stackConfig *kapp.StackConfig) (bool, error) 
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
-	context := templatedVars[KUBE_CONTEXT_KEY].(string)
+	context := templatedVars[KubeContextKey].(string)
 
 	// todo - simplify this by using ExecCommand to get the data from kubectl with a timeout,
 	// then just feed that to grep on its stdin instead of piping directly.
 	userEnv := os.Environ()
 	var kubeCtlStderr, grepStdout bytes.Buffer
 
-	kubeCtlCmd := exec.Command(KUBECTL_PATH, "--context", context, "-n", "kube-system",
+	kubeCtlCmd := exec.Command(KubectlPath, "--context", context, "-n", "kube-system",
 		"get", "pod", "-o", "go-template=\"{{ range .items }}{{ printf \"%%s\\n\" .status.phase }}{{ end }}\"")
 	kubeCtlCmd.Env = userEnv
 	kubeCtlCmd.Stderr = &kubeCtlStderr

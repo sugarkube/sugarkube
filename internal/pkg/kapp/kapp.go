@@ -59,14 +59,14 @@ type Kapp struct {
 	Templates   []Template
 }
 
-const NAMESPACE_SEPARATOR = ":"
+const NamespaceSeparator = ":"
 
-const PRESENT_KEY = "present"
-const ABSENT_KEY = "absent"
+const PresentKey = "present"
+const AbsentKey = "absent"
 
-const STATE_KEY = "state"
-const SOURCES_KEY = "sources"
-const VARS_KEY = "vars"
+const StateKey = "state"
+const SourcesKey = "sources"
+const VarsKey = "vars"
 
 // todo - allow templates to be overridden in manifest overides blocks
 //const TEMPLATES_KEY = "templates"
@@ -83,7 +83,7 @@ func (k Kapp) FullyQualifiedId() string {
 	if k.manifest == nil {
 		return k.Id
 	} else {
-		return strings.Join([]string{k.manifest.Id(), k.Id}, NAMESPACE_SEPARATOR)
+		return strings.Join([]string{k.manifest.Id(), k.Id}, NamespaceSeparator)
 	}
 }
 
@@ -102,13 +102,13 @@ func (k *Kapp) refresh() error {
 	if manifestOverrides != nil {
 		// we can't just unmarshal it to YAML, merge the overrides and marshal it again because overrides
 		// use keys whose values are IDs of e.g. sources instead of referring to sources by index.
-		overriddenState, ok := manifestOverrides[STATE_KEY]
+		overriddenState, ok := manifestOverrides[StateKey]
 		if ok {
 			k.State = overriddenState.(string)
 		}
 
 		// update any overridden variables
-		overriddenVars, ok := manifestOverrides[VARS_KEY]
+		overriddenVars, ok := manifestOverrides[VarsKey]
 		if ok {
 			overriddenVarsConverted, err := convert.MapInterfaceInterfaceToMapStringInterface(
 				overriddenVars.(map[interface{}]interface{}))
@@ -123,7 +123,7 @@ func (k *Kapp) refresh() error {
 		}
 
 		// update sources
-		overriddenSources, ok := manifestOverrides[SOURCES_KEY]
+		overriddenSources, ok := manifestOverrides[SourcesKey]
 		if ok {
 			overriddenSourcesConverted, err := convert.MapInterfaceInterfaceToMapStringInterface(
 				overriddenSources.(map[interface{}]interface{}))
@@ -366,17 +366,17 @@ func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfi
 // Returns a boolean indicating whether the kapp matches the given selector
 func (k Kapp) MatchesSelector(selector string) (bool, error) {
 
-	selectorParts := strings.Split(selector, NAMESPACE_SEPARATOR)
+	selectorParts := strings.Split(selector, NamespaceSeparator)
 	if len(selectorParts) != 2 {
 		return false, errors.New(fmt.Sprintf("Fully-qualified kapps must be given, i.e. "+
 			"formatted 'manifest-id%skapp-id' or 'manifest-id%s%s' for all kapps in a manifest",
-			NAMESPACE_SEPARATOR, NAMESPACE_SEPARATOR, WILDCARD_CHARACTER))
+			NamespaceSeparator, NamespaceSeparator, WildcardCharacter))
 	}
 
 	selectorManifestId := selectorParts[0]
 	selectorKappId := selectorParts[1]
 
-	kappIdParts := strings.Split(k.FullyQualifiedId(), NAMESPACE_SEPARATOR)
+	kappIdParts := strings.Split(k.FullyQualifiedId(), NamespaceSeparator)
 	if len(kappIdParts) != 2 {
 		return false, errors.New(fmt.Sprintf("Fully-qualified kapp ID has an unexpected format: %s",
 			k.FullyQualifiedId()))
@@ -386,7 +386,7 @@ func (k Kapp) MatchesSelector(selector string) (bool, error) {
 	kappId := kappIdParts[1]
 
 	if selectorManifestId == kappManifestId {
-		if selectorKappId == WILDCARD_CHARACTER || selectorKappId == kappId {
+		if selectorKappId == WildcardCharacter || selectorKappId == kappId {
 			return true, nil
 		}
 	}
@@ -417,7 +417,7 @@ func (k *Kapp) getVarsFromFiles(stackConfig *StackConfig) (map[string]interface{
 // will be searched for, in addition to stack-specific ones.
 func (k *Kapp) findVarsFiles(stackConfig *StackConfig) ([]string, error) {
 	precedence := []string{
-		utils.StripExtension(constants.VALUES_FILE),
+		utils.StripExtension(constants.ValuesFile),
 		stackConfig.Name,
 		stackConfig.Provider,
 		stackConfig.Provisioner,
@@ -425,8 +425,8 @@ func (k *Kapp) findVarsFiles(stackConfig *StackConfig) ([]string, error) {
 		stackConfig.Region,
 		stackConfig.Profile,
 		stackConfig.Cluster,
-		constants.PROFILE_DIR,
-		constants.CLUSTER_DIR,
+		constants.ProfileDir,
+		constants.ClusterDir,
 	}
 
 	var kappId string

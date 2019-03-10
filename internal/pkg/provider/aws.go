@@ -23,8 +23,8 @@ type AwsProvider struct {
 	region          string
 }
 
-const AWS_PROVIDER_NAME = "aws"
-const AWS_ACCOUNT_DIR = "accounts"
+const AwsProviderName = "aws"
+const AwsAccountDir = "accounts"
 
 // Associate provider variables with the provider
 func (p *AwsProvider) setVars(values map[string]interface{}) {
@@ -41,14 +41,14 @@ func (p *AwsProvider) getInstallerVars() map[string]interface{} {
 
 // Returns the name of this provider
 func (p *AwsProvider) getName() string {
-	return AWS_PROVIDER_NAME
+	return AwsProviderName
 }
 
 // Return static vars dirs names we should search for this provider
 func (p *AwsProvider) customVarsDirs() []string {
 	return []string{
-		AWS_ACCOUNT_DIR,
-		constants.PROFILE_DIR,
-		constants.CLUSTER_DIR,
+		AwsAccountDir,
+		constants.ProfileDir,
+		constants.ClusterDir,
 	}
 }

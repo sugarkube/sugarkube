@@ -43,7 +43,7 @@ func TestCreateForward(t *testing.T) {
 				manifest: *stackConfig.Manifests[0],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_INSTALL,
+						action: constants.TaskActionInstall,
 						kapp:   stackConfig.Manifests[0].ParsedKapps()[0],
 					},
 				},
@@ -52,19 +52,19 @@ func TestCreateForward(t *testing.T) {
 				manifest: *stackConfig.Manifests[1],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_INSTALL,
+						action: constants.TaskActionInstall,
 						kapp:   stackConfig.Manifests[1].ParsedKapps()[0],
 					},
 					{
-						action: constants.TASK_ACTION_INSTALL,
+						action: constants.TaskActionInstall,
 						kapp:   stackConfig.Manifests[1].ParsedKapps()[1],
 					},
 					{
-						action: constants.TASK_ACTION_INSTALL,
+						action: constants.TaskActionInstall,
 						kapp:   stackConfig.Manifests[1].ParsedKapps()[2],
 					},
 					{
-						action: constants.TASK_ACTION_INSTALL,
+						action: constants.TaskActionInstall,
 						kapp:   stackConfig.Manifests[1].ParsedKapps()[3],
 					},
 				},
@@ -73,7 +73,7 @@ func TestCreateForward(t *testing.T) {
 				manifest: *stackConfig.Manifests[2],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_INSTALL,
+						action: constants.TaskActionInstall,
 						kapp:   stackConfig.Manifests[2].ParsedKapps()[0],
 					},
 				},
@@ -82,7 +82,7 @@ func TestCreateForward(t *testing.T) {
 				manifest: *stackConfig.Manifests[2],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_CLUSTER_UPDATE,
+						action: constants.TaskActionClusterUpdate,
 						kapp:   stackConfig.Manifests[2].ParsedKapps()[0],
 					},
 				},
@@ -91,7 +91,7 @@ func TestCreateForward(t *testing.T) {
 				manifest: *stackConfig.Manifests[2],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_INSTALL,
+						action: constants.TaskActionInstall,
 						kapp:   stackConfig.Manifests[2].ParsedKapps()[1],
 					},
 				},
@@ -100,11 +100,11 @@ func TestCreateForward(t *testing.T) {
 				manifest: *stackConfig.Manifests[3],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_DESTROY,
+						action: constants.TaskActionDestroy,
 						kapp:   stackConfig.Manifests[3].ParsedKapps()[0],
 					},
 					{
-						action: constants.TASK_ACTION_INSTALL,
+						action: constants.TaskActionInstall,
 						kapp:   stackConfig.Manifests[3].ParsedKapps()[1],
 					},
 				},
@@ -144,11 +144,11 @@ func TestCreateReverse(t *testing.T) {
 				manifest: *stackConfig.Manifests[3],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_DESTROY,
+						action: constants.TaskActionDestroy,
 						kapp:   stackConfig.Manifests[3].ParsedKapps()[1],
 					},
 					{
-						action: constants.TASK_ACTION_DESTROY,
+						action: constants.TaskActionDestroy,
 						kapp:   stackConfig.Manifests[3].ParsedKapps()[0],
 					},
 				},
@@ -157,7 +157,7 @@ func TestCreateReverse(t *testing.T) {
 				manifest: *stackConfig.Manifests[2],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_DESTROY,
+						action: constants.TaskActionDestroy,
 						kapp:   stackConfig.Manifests[2].ParsedKapps()[1],
 					},
 				},
@@ -166,7 +166,7 @@ func TestCreateReverse(t *testing.T) {
 				manifest: *stackConfig.Manifests[2],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_CLUSTER_UPDATE,
+						action: constants.TaskActionClusterUpdate,
 						kapp:   stackConfig.Manifests[2].ParsedKapps()[0],
 					},
 				},
@@ -175,7 +175,7 @@ func TestCreateReverse(t *testing.T) {
 				manifest: *stackConfig.Manifests[2],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_DESTROY,
+						action: constants.TaskActionDestroy,
 						kapp:   stackConfig.Manifests[2].ParsedKapps()[0],
 					},
 				},
@@ -184,19 +184,19 @@ func TestCreateReverse(t *testing.T) {
 				manifest: *stackConfig.Manifests[1],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_DESTROY,
+						action: constants.TaskActionDestroy,
 						kapp:   stackConfig.Manifests[1].ParsedKapps()[3],
 					},
 					{
-						action: constants.TASK_ACTION_DESTROY,
+						action: constants.TaskActionDestroy,
 						kapp:   stackConfig.Manifests[1].ParsedKapps()[2],
 					},
 					{
-						action: constants.TASK_ACTION_DESTROY,
+						action: constants.TaskActionDestroy,
 						kapp:   stackConfig.Manifests[1].ParsedKapps()[1],
 					},
 					{
-						action: constants.TASK_ACTION_DESTROY,
+						action: constants.TaskActionDestroy,
 						kapp:   stackConfig.Manifests[1].ParsedKapps()[0],
 					},
 				},
@@ -205,7 +205,7 @@ func TestCreateReverse(t *testing.T) {
 				manifest: *stackConfig.Manifests[0],
 				tasks: []task{
 					{
-						action: constants.TASK_ACTION_DESTROY,
+						action: constants.TaskActionDestroy,
 						kapp:   stackConfig.Manifests[0].ParsedKapps()[0],
 					},
 				},

@@ -89,10 +89,10 @@ func newDestroyCmd(out io.Writer) *cobra.Command {
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
 	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
 		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			kapp.WILDCARD_CHARACTER))
+			kapp.WildcardCharacter))
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			kapp.WILDCARD_CHARACTER))
+			kapp.WildcardCharacter))
 	return cmd
 }
 

@@ -16,6 +16,6 @@
 
 package constants
 
-const VALUES_FILE = "values.yaml"
-const PROFILE_DIR = "profiles"
-const CLUSTER_DIR = "clusters"
+const ValuesFile = "values.yaml"
+const ProfileDir = "profiles"
+const ClusterDir = "clusters"

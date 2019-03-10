@@ -25,7 +25,7 @@ import (
 	"strings"
 )
 
-const FILE_PROTOCOL = "file://"
+const FileProtocol = "file://"
 
 // An acquirer for files already on the local filesystem. This is analogous to a no-op acquirer and allows us
 // to use a common interface for acquisition operations
@@ -44,7 +44,7 @@ func newFileAcquirer(source Source) (*FileAcquirer, error) {
 		return nil, errors.New("Missing URI for file acquirer")
 	}
 
-	if !strings.HasPrefix(uri, FILE_PROTOCOL) {
+	if !strings.HasPrefix(uri, FileProtocol) {
 		return nil, errors.New(
 			fmt.Sprintf("Unexpected file URI. Expected a single ':' "+
 				"character in URI %s", uri))
@@ -74,7 +74,7 @@ func (a FileAcquirer) Id() string {
 
 // return the path (i.e. the URI with the file:// prefix removed)
 func (a FileAcquirer) Path() string {
-	return strings.TrimPrefix(a.uri, FILE_PROTOCOL)
+	return strings.TrimPrefix(a.uri, FileProtocol)
 }
 
 // return the path (i.e. the URI with the file:// prefix removed)

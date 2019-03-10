@@ -94,7 +94,7 @@ func TestSelectKapps(t *testing.T) {
 		"exampleManifest2:kappB",
 	}
 
-	excludeSelector := []string{}
+	var excludeSelector []string
 
 	expectedKappIds := []string{
 		"manifest1:kappA",
