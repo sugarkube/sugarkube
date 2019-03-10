@@ -43,6 +43,10 @@ const ProvisionerKey = "provisioner"
 
 // Factory that creates providers
 func NewProvisioner(name string, stack interfaces.IStack) (Provisioner, error) {
+	if stack == nil {
+		return nil, errors.New("Stack parameter can't be nil")
+	}
+
 	if name == MinikubeProvisionerName {
 		minikubeProvisioner, err := newMinikubeProvisioner(stack)
 		if err != nil {

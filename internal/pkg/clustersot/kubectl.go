@@ -28,7 +28,6 @@ import (
 )
 
 type KubeCtlClusterSot struct {
-	ClusterSot
 	stack interfaces.IStack
 }
 
@@ -122,4 +121,8 @@ func (c KubeCtlClusterSot) isReady() (bool, error) {
 	// no output, the length of its stdout buffer isn't 0, but this is
 	// good enough...
 	return grepStdout.Len() < 5, nil
+}
+
+func (c KubeCtlClusterSot) iStack() interfaces.IStack {
+	return c.stack
 }

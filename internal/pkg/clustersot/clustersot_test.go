@@ -18,6 +18,8 @@ package clustersot
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
+	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"testing"
 )
@@ -26,8 +28,23 @@ func init() {
 	log.ConfigureLogger("debug", false)
 }
 
+type MockStack struct {
+	stackConfig *kapp.StackConfig
+	status      interfaces.IClusterStatus
+}
+
+func (m MockStack) GetConfig() *kapp.StackConfig {
+	return m.stackConfig
+}
+
+func (m MockStack) GetStatus() interfaces.IClusterStatus {
+	return m.status
+}
+
 func TestNewClusterSot(t *testing.T) {
-	actual, err := NewClusterSot(KUBECTL, nil)
+	istack := MockStack{}
+
+	actual, err := NewClusterSot(KUBECTL, istack)
 	assert.Nil(t, err)
-	assert.Equal(t, KubeCtlClusterSot{}, actual)
+	assert.Equal(t, KubeCtlClusterSot{stack: istack}, actual)
 }

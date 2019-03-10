@@ -34,6 +34,10 @@ const KUBECTL = "kubectl"
 
 // Factory that creates ClusterSots
 func NewClusterSot(name string, stack interfaces.IStack) (ClusterSot, error) {
+	if stack == nil {
+		return nil, errors.New("Stack parameter can't be nil")
+	}
+
 	if name == KUBECTL {
 		return KubeCtlClusterSot{stack: stack}, nil
 	}
