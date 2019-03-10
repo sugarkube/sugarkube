@@ -23,10 +23,14 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 	"strings"
 )
+
+// This is in a different package to the Stack struct to avoid circular dependencies
+// in packages that use it.
 
 // Loads a stack config from a file. Values are merged with CLI args (which take precedence), and provider
 // variables are loaded and set as a property on the stackConfig. So after this step, stackConfig contains
@@ -78,6 +82,17 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *kapp.StackCo
 
 	stackConfig.SetProviderVars(providerVars)
 
+	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner, stackConfig)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	stackObj := &structs.Stack{
+		stackConfig,
+		providerImpl,
+		provisionerImpl,
+	}
+
 	err = kapp.ValidateStackConfig(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -93,8 +108,6 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *kapp.StackCo
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-
-	stackObj := structs.NewStack(stackConfig, &providerImpl)
 
 	return stackObj, nil
 }

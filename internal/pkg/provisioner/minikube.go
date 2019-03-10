@@ -124,7 +124,7 @@ func (p MinikubeProvisioner) isAlreadyOnline(stackConfig *kapp.StackConfig) (boo
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p MinikubeProvisioner) update(sc *kapp.StackConfig, dryRun bool) error {
+func (p MinikubeProvisioner) update(stackConfig *kapp.StackConfig, dryRun bool) error {
 	log.Logger.Warn("Updating minikube clusters has no effect. Ignoring.")
 	return nil
 }

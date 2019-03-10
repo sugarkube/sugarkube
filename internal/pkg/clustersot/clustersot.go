@@ -24,8 +24,8 @@ import (
 )
 
 type ClusterSot interface {
-	isOnline(sc *kapp.StackConfig) (bool, error)
-	isReady(sc *kapp.StackConfig) (bool, error)
+	isOnline(stackConfig *kapp.StackConfig) (bool, error)
+	isReady(stackConfig *kapp.StackConfig) (bool, error)
 }
 
 // Implemented ClusterSot names

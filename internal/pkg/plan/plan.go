@@ -24,7 +24,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"os"
 	"sort"
 )
@@ -46,7 +46,7 @@ type Plan struct {
 	// each kapp in the tranche will be processed in parallel
 	tranches []tranche
 	// contains details of the target cluster
-	stackConfig *kapp.StackConfig
+	stack *structs.Stack
 	// a cache dir to run the (make) installer over. It should already have
 	// been validated to match the stack config.
 	cacheDir string
@@ -57,21 +57,21 @@ type Plan struct {
 // A job to be run by a worker
 type job struct {
 	task             task
-	stackConfig      *kapp.StackConfig
+	stack            *structs.Stack
 	manifestCacheDir string
 	renderTemplates  bool
 	approved         bool
 	dryRun           bool
 }
 
-// create a plan containing all kapps in the stackConfig, then filter out the
+// create a plan containing all kapps in the stack, then filter out the
 // ones that don't need running based on the current state of the target cluster
 // as described by SOTs (todo).
 // If the `forward` parameter is true, the plan will be ordered so that kapps
 // are applied from first to last in the orders specified in the manifests which
 // will install kapps into a new cluster. If it's false, the order will be
 // reversed which will be useful when tearing down a cluster.
-func Create(forward bool, stackConfig *kapp.StackConfig, manifests []*kapp.Manifest,
+func Create(forward bool, stackObj *structs.Stack, manifests []*kapp.Manifest,
 	cacheDir string, includeSelector []string, excludeSelector []string, renderTemplates bool) (*Plan, error) {
 
 	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
@@ -190,7 +190,7 @@ func Create(forward bool, stackConfig *kapp.StackConfig, manifests []*kapp.Manif
 
 	plan := Plan{
 		tranches:        tranches,
-		stackConfig:     stackConfig,
+		stack:           stackObj,
 		cacheDir:        cacheDir,
 		renderTemplates: renderTemplates,
 	}
@@ -259,7 +259,7 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 				approved:        approved,
 				dryRun:          dryRun,
 				task:            task,
-				stackConfig:     p.stackConfig,
+				stack:           p.stack,
 				renderTemplates: p.renderTemplates,
 			}
 
@@ -296,7 +296,7 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 	for job := range jobs {
 		task := job.task
 		kappObj := task.kapp
-		stackConfig := job.stackConfig
+		stackObj := job.stack
 		approved := job.approved
 		dryRun := job.dryRun
 		renderTemplates := job.renderTemplates
@@ -313,13 +313,8 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 			errCh <- errors.Wrap(err, msg)
 		}
 
-		providerImpl, err := provider.NewProvider(stackConfig)
-		if err != nil {
-			errCh <- errors.WithStack(err)
-		}
-
 		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a Make installer)
-		installerImpl, err := installer.NewInstaller(installer.MAKE, providerImpl)
+		installerImpl, err := installer.NewInstaller(installer.MAKE, stackObj.Provider)
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
 				"kapp '%s'", kappObj.Id)
@@ -327,13 +322,13 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 
 		switch task.action {
 		case constants.TaskActionInstall:
-			err := installer.Install(installerImpl, &kappObj, stackConfig, approved, renderTemplates, dryRun)
+			err := installer.Install(installerImpl, &kappObj, stackObj.Config, approved, renderTemplates, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", kappObj.Id)
 			}
 			break
 		case constants.TaskActionDestroy:
-			err := installer.Destroy(installerImpl, &kappObj, stackConfig, approved, renderTemplates, dryRun)
+			err := installer.Destroy(installerImpl, &kappObj, stackObj.Config, approved, renderTemplates, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", kappObj.Id)
 			}
@@ -341,7 +336,7 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 		case constants.TaskActionClusterUpdate:
 			if approved {
 				log.Logger.Info("Running cluster update action")
-				err := cluster.UpdateCluster(os.Stdout, stackConfig, true, dryRun)
+				err := cluster.UpdateCluster(os.Stdout, stackObj, true, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'", kappObj.Id)
 				}

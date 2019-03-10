@@ -21,16 +21,11 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 )
 
+// Top-level struct that holds references to instantiations of other objects
+// we need to pass around. This is in its own package to avoid circular
+// dependencies.
 type Stack struct {
 	Config      *kapp.StackConfig
-	provisioner *provisioner.Provisioner
-	provider    *provider.Provider
-}
-
-// Creates a new Stack object
-func NewStack(stackConfig *kapp.StackConfig, provider *provider.Provider) *Stack {
-	return &Stack{
-		Config:   stackConfig,
-		provider: provider,
-	}
+	Provider    provider.Provider
+	Provisioner provisioner.Provisioner
 }

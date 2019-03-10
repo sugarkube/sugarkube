@@ -21,6 +21,8 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"os"
 	"strings"
 	"testing"
 )
@@ -31,8 +33,11 @@ func init() {
 
 func TestCreateForward(t *testing.T) {
 	// testing the correctness of stacks is handled in stack_test.go
-	stackConfig, err := kapp.LoadStackConfig("standard", "../../testdata/stacks.yaml")
+	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
+		&kapp.StackConfig{}, os.Stdout)
 	assert.Nil(t, err)
+
+	stackConfig := stackObj.Config
 	assert.NotNil(t, stackConfig)
 
 	fakeCacheDir := "/fake/cache/dir"
@@ -110,12 +115,12 @@ func TestCreateForward(t *testing.T) {
 				},
 			},
 		},
-		stackConfig:     stackConfig,
+		stack:           stackObj,
 		cacheDir:        fakeCacheDir,
 		renderTemplates: true,
 	}
 
-	actionPlan, err := Create(true, stackConfig, stackConfig.Manifests,
+	actionPlan, err := Create(true, stackObj, stackConfig.Manifests,
 		fakeCacheDir, []string{}, []string{}, true)
 	assert.Nil(t, err)
 
@@ -132,8 +137,11 @@ func TestCreateForward(t *testing.T) {
 
 func TestCreateReverse(t *testing.T) {
 	// testing the correctness of stacks is handled in stack_test.go
-	stackConfig, err := kapp.LoadStackConfig("standard", "../../testdata/stacks.yaml")
+	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
+		&kapp.StackConfig{}, os.Stdout)
 	assert.Nil(t, err)
+
+	stackConfig := stackObj.Config
 	assert.NotNil(t, stackConfig)
 
 	fakeCacheDir := "/fake/cache/dir"
@@ -211,12 +219,12 @@ func TestCreateReverse(t *testing.T) {
 				},
 			},
 		},
-		stackConfig:     stackConfig,
+		stack:           stackObj,
 		cacheDir:        fakeCacheDir,
 		renderTemplates: true,
 	}
 
-	actionPlan, err := Create(false, stackConfig, stackConfig.Manifests,
+	actionPlan, err := Create(false, stackObj, stackConfig.Manifests,
 		fakeCacheDir, []string{}, []string{}, true)
 	assert.Nil(t, err)
 

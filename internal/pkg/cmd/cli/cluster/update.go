@@ -25,6 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 )
 
@@ -114,7 +115,7 @@ func (c *updateCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = UpdateCluster(c.out, stackObj.Config, !c.skipCreate, c.dryRun)
+	err = UpdateCluster(c.out, stackObj, !c.skipCreate, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -123,7 +124,7 @@ func (c *updateCmd) run() error {
 }
 
 // Updates a cluster with a stack config
-func UpdateCluster(out io.Writer, stackConfig *kapp.StackConfig, autoCreate bool,
+func UpdateCluster(out io.Writer, stackObj *structs.Stack, autoCreate bool,
 	dryRun bool) error {
 	dryRunPrefix := ""
 	if dryRun {
@@ -131,17 +132,12 @@ func UpdateCluster(out io.Writer, stackConfig *kapp.StackConfig, autoCreate bool
 	}
 
 	_, err := fmt.Fprintf(out, "%sChecking whether the target cluster '%s' is already "+
-		"online...\n", dryRunPrefix, stackConfig.Cluster)
+		"online...\n", dryRunPrefix, stackObj.Config.Cluster)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner, stackConfig)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig)
+	online, err := provisioner.IsAlreadyOnline(stackObj.Provisioner, stackObj.Config)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -153,7 +149,7 @@ func UpdateCluster(out io.Writer, stackConfig *kapp.StackConfig, autoCreate bool
 				return errors.WithStack(err)
 			}
 
-			err = CreateCluster(out, stackConfig, dryRun)
+			err = CreateCluster(out, stackObj, dryRun)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -172,7 +168,7 @@ func UpdateCluster(out io.Writer, stackConfig *kapp.StackConfig, autoCreate bool
 			return errors.WithStack(err)
 		}
 
-		err = provisioner.Update(provisionerImpl, stackConfig, dryRun)
+		err = provisioner.Update(stackObj.Provisioner, stackObj.Config, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -180,13 +176,13 @@ func UpdateCluster(out io.Writer, stackConfig *kapp.StackConfig, autoCreate bool
 		if dryRun {
 			log.Logger.Infof("%sSkipping cluster readiness check.", dryRunPrefix)
 		} else {
-			err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig)
+			err = provisioner.WaitForClusterReadiness(stackObj.Provisioner, stackObj.Config)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 
 			_, err = fmt.Fprintf(out, "%sCluster '%s' successfully updated.\n",
-				dryRunPrefix, stackConfig.Cluster)
+				dryRunPrefix, stackObj.Config.Cluster)
 			if err != nil {
 				return errors.WithStack(err)
 			}

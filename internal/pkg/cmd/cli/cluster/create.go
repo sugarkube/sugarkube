@@ -25,6 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 )
 
@@ -118,7 +119,7 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = CreateCluster(c.out, stackObj.Config, c.dryRun)
+	err = CreateCluster(c.out, stackObj, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -127,18 +128,13 @@ func (c *createCmd) run() error {
 }
 
 // Creates a cluster with a stack config
-func CreateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) error {
+func CreateCluster(out io.Writer, stackObj *structs.Stack, dryRun bool) error {
 	dryRunPrefix := ""
 	if dryRun {
 		dryRunPrefix = "[Dry run] "
 	}
 	_, err := fmt.Fprintf(out, "%sChecking whether the target cluster '%s' is already "+
-		"online...\n", dryRunPrefix, stackConfig.Cluster)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	provisionerImpl, err := provisioner.NewProvisioner(stackConfig.Provisioner, stackConfig)
+		"online...\n", dryRunPrefix, stackObj.Config.Cluster)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -148,7 +144,7 @@ func CreateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) er
 			dryRunPrefix)
 
 	} else {
-		online, err := provisioner.IsAlreadyOnline(provisionerImpl, stackConfig)
+		online, err := provisioner.IsAlreadyOnline(stackObj.Provisioner, stackObj.Config)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -170,7 +166,7 @@ func CreateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) er
 		return errors.WithStack(err)
 	}
 
-	err = provisioner.Create(provisionerImpl, stackConfig, dryRun)
+	err = provisioner.Create(stackObj.Provisioner, stackObj.Config, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -178,13 +174,13 @@ func CreateCluster(out io.Writer, stackConfig *kapp.StackConfig, dryRun bool) er
 	if dryRun {
 		log.Logger.Infof("%sSkipping cluster readiness check.", dryRunPrefix)
 	} else {
-		err = provisioner.WaitForClusterReadiness(provisionerImpl, stackConfig)
+		err = provisioner.WaitForClusterReadiness(stackObj.Provisioner, stackObj.Config)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
 		_, err = fmt.Fprintf(out, "%sCluster '%s' successfully created.\n",
-			dryRunPrefix, stackConfig.Cluster)
+			dryRunPrefix, stackObj.Config.Cluster)
 		if err != nil {
 			return errors.WithStack(err)
 		}

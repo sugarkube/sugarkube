@@ -161,7 +161,7 @@ func (c *destroyCmd) run() error {
 		}
 
 		// force mode, so no need to perform validation. Just create a reverse plan
-		actionPlan, err = plan.Create(false, stackObj.Config,
+		actionPlan, err = plan.Create(false, stackObj,
 			stackObj.Config.Manifests, c.cacheDir, c.includeSelector, c.excludeSelector, !c.skipTemplating)
 		if err != nil {
 			return errors.WithStack(err)

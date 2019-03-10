@@ -165,7 +165,7 @@ func (c *applyCmd) run() error {
 		}
 
 		// force mode, so no need to perform validation. Just create a plan
-		actionPlan, err = plan.Create(true, stackObj.Config, stackObj.Config.Manifests,
+		actionPlan, err = plan.Create(true, stackObj, stackObj.Config.Manifests,
 			c.cacheDir, c.includeSelector, c.excludeSelector, !c.skipTemplating)
 		if err != nil {
 			return errors.WithStack(err)
