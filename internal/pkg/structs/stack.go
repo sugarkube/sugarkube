@@ -33,6 +33,7 @@ type Stack struct {
 	Status      *ClusterStatus
 }
 
+// Creates a new Stack
 func NewStack(config *kapp.StackConfig, provider provider.Provider) (*Stack, error) {
 
 	stack := Stack{

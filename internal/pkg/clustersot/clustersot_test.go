@@ -17,136 +17,17 @@
 package clustersot
 
 import (
+	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"testing"
 )
 
 func init() {
 	log.ConfigureLogger("debug", false)
 }
 
-// todo - fix tests
-//func TestNewClusterSot(t *testing.T) {
-//	actual, err := NewClusterSot(KUBECTL, nil)
-//	assert.Nil(t, err)
-//	assert.Equal(t, KubeCtlClusterSot{}, actual)
-//}
-//
-//type MockClusterSot struct {
-//	mock.Mock
-//}
-//
-//func (m MockClusterSot) isOnline(stackConfig *kapp.StackConfig) (bool, error) {
-//	args := m.Called(stackConfig.Cluster)
-//	return args.Bool(0), args.Error(1)
-//}
-//
-//func (m MockClusterSot) isReady(stackConfig *kapp.StackConfig) (bool, error) {
-//	args := m.Called(stackConfig.Cluster)
-//	return args.Bool(0), args.Error(1)
-//}
-//
-//func TestIsOnlineTrue(t *testing.T) {
-//	clusterName := "myCluster"
-//
-//	// create an instance of our test object
-//	testObj := MockClusterSot{}
-//
-//	// setup expectations
-//	testObj.On("isOnline", clusterName).Return(true, nil)
-//
-//	sc := kapp.StackConfig{
-//		Cluster: clusterName,
-//	}
-//
-//	assert.False(t, sc.Status.IsOnline)
-//
-//	// call the code we are testing
-//	_, err := IsOnline(testObj, &sc)
-//	assert.Nil(t, err)
-//
-//	// assert that the expectations were met
-//	testObj.AssertExpectations(t)
-//
-//	assert.True(t, sc.Status.IsOnline)
-//}
-//
-//func TestIsOnlineFalse(t *testing.T) {
-//	clusterName := "myCluster"
-//
-//	// create an instance of our test object
-//	testObj := MockClusterSot{}
-//
-//	// setup expectations
-//	testObj.On("isOnline", clusterName).Return(false, nil)
-//
-//	status := kapp.ClusterStatus{IsOnline: false}
-//	stackConfig := kapp.StackConfig{
-//		Cluster: clusterName,
-//		Status:  status,
-//	}
-//
-//	assert.False(t, stackConfig.Status.IsOnline)
-//
-//	// call the code we are testing
-//	_, err := IsOnline(testObj, &stackConfig)
-//	assert.Nil(t, err)
-//
-//	// assert that the expectations were met
-//	testObj.AssertExpectations(t)
-//
-//	assert.False(t, stackConfig.Status.IsOnline)
-//}
-//
-//func TestIsReadyTrue(t *testing.T) {
-//	clusterName := "myCluster"
-//
-//	// create an instance of our test object
-//	testObj := MockClusterSot{}
-//
-//	// setup expectations
-//	testObj.On("isReady", clusterName).Return(true, nil)
-//
-//	status := kapp.ClusterStatus{IsReady: false}
-//	stackConfig := kapp.StackConfig{
-//		Cluster: clusterName,
-//		Status:  status,
-//	}
-//
-//	assert.False(t, stackConfig.Status.IsReady)
-//
-//	// call the code we are testing
-//	_, err := IsReady(testObj, &stackConfig)
-//	assert.Nil(t, err)
-//
-//	// assert that the expectations were met
-//	testObj.AssertExpectations(t)
-//
-//	assert.True(t, stackConfig.Status.IsReady)
-//}
-//
-//func TestIsReadyFalse(t *testing.T) {
-//	clusterName := "myCluster"
-//
-//	// create an instance of our test object
-//	testObj := MockClusterSot{}
-//
-//	// setup expectations
-//	testObj.On("isReady", clusterName).Return(false, nil)
-//
-//	status := kapp.ClusterStatus{IsReady: false}
-//	stackConfig := kapp.StackConfig{
-//		Cluster: clusterName,
-//		Status:  status,
-//	}
-//
-//	assert.False(t, stackConfig.Status.IsReady)
-//
-//	// call the code we are testing
-//	_, err := IsReady(testObj, &stackConfig)
-//	assert.Nil(t, err)
-//
-//	// assert that the expectations were met
-//	testObj.AssertExpectations(t)
-//
-//	assert.False(t, stackConfig.Status.IsReady)
-//}
+func TestNewClusterSot(t *testing.T) {
+	actual, err := NewClusterSot(KUBECTL, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, KubeCtlClusterSot{}, actual)
+}
