@@ -34,6 +34,7 @@ type Provisioner interface {
 	isAlreadyOnline() (bool, error)
 	// Update the cluster config if supported by the provisioner
 	update(dryRun bool) error
+	// We need to use an interface to work with Stack objects to avoid circular dependencies
 	iStack() interfaces.IStack
 }
 
