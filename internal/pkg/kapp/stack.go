@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"gopkg.in/yaml.v2"
 	"os"
@@ -255,7 +256,7 @@ func (s *StackConfig) TemplatedVars(kappObj *Kapp,
 		}
 	}
 
-	templatedVars, err := templateVars(mergedVars)
+	templatedVars, err := templater.IterativelyTemplate(mergedVars)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

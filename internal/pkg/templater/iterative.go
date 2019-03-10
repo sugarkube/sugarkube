@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Sugarkube Authors
+ * Copyright 2019 The Sugarkube Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package kapp
+package templater
 
 import (
 	"bytes"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"gopkg.in/yaml.v2"
 )
 
@@ -28,7 +27,7 @@ import (
 // number of times, or until the size of the input and output remain the same. Doing this allows us to define
 // intermediate variables or aliases (e.g. set `cluster_name` = '{{ .stack.region }}-{{ .stack.account }}' then just
 // use '{{ .kapp.vars.cluster_name }}'. Templating this requires 2 iterations).
-func templateVars(vars map[string]interface{}) (map[string]interface{}, error) {
+func IterativelyTemplate(vars map[string]interface{}) (map[string]interface{}, error) {
 
 	// maximum number of iterations whils templating variables
 	maxIterations := 20
@@ -47,7 +46,7 @@ func templateVars(vars map[string]interface{}) (map[string]interface{}, error) {
 		//log.Logger.Debugf("Vars to template (raw): %s", vars)
 		//log.Logger.Debugf("Vars to template as YAML:\n%s", yamlData)
 
-		renderedYaml, err = templater.RenderTemplate(string(yamlData[:]), vars)
+		renderedYaml, err = RenderTemplate(string(yamlData[:]), vars)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
