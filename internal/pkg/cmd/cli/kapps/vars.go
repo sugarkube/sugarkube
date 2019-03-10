@@ -2,28 +2,32 @@ package kapps
 
 import (
 	"fmt"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	datautils "github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"io"
+	"strings"
 )
 
 type varsConfig struct {
-	out         io.Writer
-	cacheDir    string
-	stackName   string
-	stackFile   string
-	provider    string
-	provisioner string
-	//kappVarsDirs cmd.Files
+	out             io.Writer
+	cacheDir        string
+	stackName       string
+	stackFile       string
+	provider        string
+	provisioner     string
 	profile         string
 	account         string
 	cluster         string
 	region          string
 	includeSelector []string
 	excludeSelector []string
+	suppress        []string
 }
 
 func newVarsCmd(out io.Writer) *cobra.Command {
@@ -61,6 +65,8 @@ specific kapp will be displayed. If not, all generally available variables for t
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
 			kapp.WILDCARD_CHARACTER))
+	f.StringArrayVarP(&c.suppress, "suppress", "s", []string{},
+		"paths to variables to suppress from the output to simplify it (e.g. 'provision.specs')")
 	return cmd
 }
 
@@ -95,6 +101,20 @@ func (c *varsConfig) run() error {
 		templatedVars, err := stackConfig.TemplatedVars(&kappObj, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)
+		}
+
+		if len(c.suppress) > 0 {
+			for _, exclusion := range c.suppress {
+				// trim any leading zeroes for compatibility with how variables are referred to in templates
+				exclusion = strings.TrimPrefix(exclusion, ".")
+				blanked := datautils.BlankNestedMap(map[string]interface{}{}, strings.Split(exclusion, "."))
+				log.Logger.Debugf("blanked=%#v", blanked)
+
+				err = mergo.Merge(&templatedVars, blanked, mergo.WithOverride)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+			}
 		}
 
 		yamlData, err := yaml.Marshal(&templatedVars)
