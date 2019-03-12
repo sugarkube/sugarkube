@@ -19,6 +19,7 @@ package plan
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
@@ -274,7 +275,12 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 		for success := 0; success < totalOperations; success++ {
 			select {
 			case err := <-errCh:
-				log.Logger.Fatalf("Error processing kapp in tranche %d of plan: %+v", i+1, err)
+				if log.Logger.Level == logrus.DebugLevel {
+					log.Logger.Fatalf("Error processing kapp in tranche %d of plan: %+v", i+1, err)
+				} else {
+					log.Logger.Fatalf("Error processing kapp in tranche %d of plan: %v\n"+
+						"Run with `-l debug` for a full stacktrace.", i+1, err)
+				}
 				close(doneCh)
 				return errors.Wrapf(err, "Error processing kapp goroutine "+
 					"in tranche %d of plan", i+1)

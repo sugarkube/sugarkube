@@ -19,6 +19,7 @@ package cli
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cache"
@@ -134,7 +135,12 @@ func init() {
 				fmt.Fprintf(os.Stderr, "%s\n", cause.Error())
 				log.Logger.Fatalf("No config file found. Aborting.")
 			} else {
-				log.Logger.Fatalf("Error loading config: %+v", err)
+				if log.Logger.Level == logrus.DebugLevel {
+					log.Logger.Fatalf("Error loading config: %+v", err)
+				} else {
+					log.Logger.Fatalf("Error loading config: %v\n"+
+						"Run with `-l debug` for a full stacktrace.", err)
+				}
 			}
 		}
 
@@ -157,7 +163,12 @@ func init() {
 	for viperKey, pFlagName := range bindings {
 		err := viperConfig.BindPFlag(viperKey, rootCmd.PersistentFlags().Lookup(pFlagName))
 		if err != nil {
-			log.Logger.Fatalf("Error binding to CLI args: %+v", err)
+			if log.Logger.Level == logrus.DebugLevel {
+				log.Logger.Fatalf("Error binding to CLI args: %+v", err)
+			} else {
+				log.Logger.Fatalf("Error binding to CLI args: %v\n"+
+					"Run with `-l debug` for a full stacktrace.", err)
+			}
 		}
 	}
 }
