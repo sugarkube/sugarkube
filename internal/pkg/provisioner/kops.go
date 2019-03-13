@@ -34,20 +34,20 @@ import (
 	"strings"
 )
 
-const KopsProvisionerName = "kops"
-const KopsDefaultBinary = "kops"
+const kopsProvisionerName = "kops"
+const kopsDefaultBinary = "kops"
 
 // number of seconds to timeout after while running kops commands (apart from updates)
-const KopsCommandTimeoutSeconds = 30
-const KopsCommandTimeoutSecondsLong = 300
+const kopsCommandTimeoutSeconds = 30
+const kopsCommandTimeoutSecondsLong = 300
 
 // number of seconds to sleep after the cluster has come online before checking whether
 // it's ready
-const KopsSleepSecondsBeforeReadyCheck = 60
+const kopsSleepSecondsBeforeReadyCheck = 60
 
-const KopsSpecsKey = "specs"
-const KopsClusterKey = "cluster"
-const KopsInstanceGroupsKey = "instanceGroups"
+const configKeyKopsSpecs = "specs"
+const configKeyKopsCluster = "cluster"
+const configKeyKopsInstanceGroups = "instanceGroups"
 
 type KopsProvisioner struct {
 	clusterSot clustersot.ClusterSot
@@ -56,8 +56,10 @@ type KopsProvisioner struct {
 }
 
 type KopsConfig struct {
-	Binary string // path to the kops binary
-	Params struct {
+	Binary        string // path to the kops binary
+	SshPrivateKey string `yaml:"ssh_private_key"`
+	BastionUser   string `yaml:"bastion_user"`
+	Params        struct {
 		Global            map[string]string
 		CreateCluster     map[string]string `yaml:"create_cluster"`
 		UpdateCluster     map[string]string `yaml:"update_cluster"`
@@ -117,7 +119,7 @@ func (p KopsProvisioner) clusterConfigExists() (bool, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", KopsCommandTimeoutSeconds, false)
+		&stderrBuf, "", kopsCommandTimeoutSeconds, false)
 	if err != nil {
 		if errors.Cause(err) == context.DeadlineExceeded {
 			return false, errors.Wrap(err,
@@ -154,7 +156,7 @@ func (p KopsProvisioner) create(dryRun bool) error {
 
 	log.Logger.Info("Creating Kops cluster config...")
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", KopsCommandTimeoutSecondsLong, dryRun)
+		&stderrBuf, "", kopsCommandTimeoutSecondsLong, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -171,7 +173,7 @@ func (p KopsProvisioner) create(dryRun bool) error {
 
 	p.stack.GetStatus().SetStartedThisRun(true)
 	// only sleep before checking the cluster fo readiness if we started it
-	p.stack.GetStatus().SetSleepBeforeReadyCheck(KopsSleepSecondsBeforeReadyCheck)
+	p.stack.GetStatus().SetSleepBeforeReadyCheck(kopsSleepSecondsBeforeReadyCheck)
 
 	return nil
 }
@@ -266,7 +268,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 	log.Logger.Info("Downloading config for kops cluster...")
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
-		"", KopsCommandTimeoutSeconds, dryRun)
+		"", kopsCommandTimeoutSeconds, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -288,12 +290,12 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 	provisionerValues := templatedVars[ProvisionerKey].(map[interface{}]interface{})
 
 	specs, err := convert.MapInterfaceInterfaceToMapStringInterface(
-		provisionerValues[KopsSpecsKey].(map[interface{}]interface{}))
+		provisionerValues[configKeyKopsSpecs].(map[interface{}]interface{}))
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	clusterSpecs := specs[KopsClusterKey]
+	clusterSpecs := specs[configKeyKopsCluster]
 
 	specValues := map[string]interface{}{"spec": clusterSpecs}
 
@@ -345,7 +347,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 	args = parameteriseValues(args, p.kopsConfig.Params.Replace)
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
-		"", KopsCommandTimeoutSeconds, dryRun)
+		"", kopsCommandTimeoutSeconds, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -356,7 +358,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 
 	log.Logger.Info("Patching instance group configs...")
 
-	igSpecs := specs[KopsInstanceGroupsKey].(map[interface{}]interface{})
+	igSpecs := specs[configKeyKopsInstanceGroups].(map[interface{}]interface{})
 
 	for instanceGroupName, newSpec := range igSpecs {
 		specValues := map[string]interface{}{"spec": newSpec}
@@ -403,7 +405,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	err := utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", KopsCommandTimeoutSeconds, dryRun)
+		&stderrBuf, "", kopsCommandTimeoutSeconds, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -463,7 +465,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 	args = parameteriseValues(args, kopsConfig.Params.Replace)
 
 	err = utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
-		"", KopsCommandTimeoutSeconds, dryRun)
+		"", kopsCommandTimeoutSeconds, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -514,11 +516,16 @@ func parseKopsConfig(stackConfig interfaces.IStack) (*KopsConfig, error) {
 	}
 
 	if kopsConfig.Binary == "" {
-		kopsConfig.Binary = KopsDefaultBinary
+		kopsConfig.Binary = kopsDefaultBinary
 		log.Logger.Warnf("Using default %s binary '%s'. It's safer to explicitly set the path to a versioned "+
-			"binary (e.g. %s-1.2.3) in the provisioner configuration", KopsProvisionerName, KopsDefaultBinary,
-			KopsDefaultBinary)
+			"binary (e.g. %s-1.2.3) in the provisioner configuration", kopsProvisionerName, kopsDefaultBinary,
+			kopsDefaultBinary)
 	}
 
 	return &kopsConfig, nil
+}
+
+// If the API server is internal and there's a bastion, set up SSH port forwarding
+func (p KopsProvisioner) ensureClusterConnectivity() error {
+	return nil
 }

@@ -36,6 +36,8 @@ type Provisioner interface {
 	update(dryRun bool) error
 	// We need to use an interface to work with Stack objects to avoid circular dependencies
 	iStack() interfaces.IStack
+	// if the API server is internal we need to set up connectivity to it
+	ensureClusterConnectivity() error
 }
 
 // key in Values that relates to this provisioner
@@ -56,7 +58,7 @@ func NewProvisioner(name string, stack interfaces.IStack) (Provisioner, error) {
 		return *minikubeProvisioner, nil
 	}
 
-	if name == KopsProvisionerName {
+	if name == kopsProvisionerName {
 		kopsProvisioner, err := newKopsProvisioner(stack)
 		if err != nil {
 			return nil, errors.WithStack(err)

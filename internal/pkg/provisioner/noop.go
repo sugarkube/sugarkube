@@ -63,3 +63,8 @@ func (p NoOpProvisioner) update(dryRun bool) error {
 	log.Logger.Infof("Noop provisioner - no cluster will be updated")
 	return nil
 }
+
+// No special connectivity is required for this provisioner
+func (p NoOpProvisioner) ensureClusterConnectivity() error {
+	return nil
+}
