@@ -25,12 +25,15 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
+	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -48,11 +51,22 @@ const kopsSleepSecondsBeforeReadyCheck = 60
 const configKeyKopsSpecs = "specs"
 const configKeyKopsCluster = "cluster"
 const configKeyKopsInstanceGroups = "instanceGroups"
+const configKeyApiLoadBalancerType = "api_loadbalancer_type"
+const configKeyCreateCluster = "create_cluster"
+const configKeyBastion = "bastion"
+
+const awsCliPath = "aws"
+const sshPath = "ssh"
+
+const localhost = "127.0.0.1"
+const etcHostsPath = "/etc/hosts"
+const kubernetesLocalHostname = "kubernetes.default.svc.cluster.local"
 
 type KopsProvisioner struct {
-	clusterSot clustersot.ClusterSot
-	stack      interfaces.IStack
-	kopsConfig KopsConfig
+	clusterSot           clustersot.ClusterSot
+	stack                interfaces.IStack
+	kopsConfig           KopsConfig
+	portForwardingActive bool
 }
 
 type KopsConfig struct {
@@ -525,7 +539,155 @@ func parseKopsConfig(stackConfig interfaces.IStack) (*KopsConfig, error) {
 	return &kopsConfig, nil
 }
 
+// Return a boolean indicating whether we need to set up port forwarding to the
+// API server via the bastion
+func (p KopsProvisioner) needApiAccessViaBastion() bool {
+
+	// if the API load balancer type is internal and there's a bastion, we need
+	// to set up port forwarding
+	apiLoadBalancerType, ok := p.kopsConfig.Params.CreateCluster[configKeyApiLoadBalancerType]
+	if !ok {
+		log.Logger.Infof("No `%s` key under the kops `%s` key. Assuming we "+
+			"don't need to set up SSH port forwarding to access the API server",
+			configKeyApiLoadBalancerType, configKeyCreateCluster)
+		return false
+	}
+
+	apiLoadBalancerType = strings.ToLower(apiLoadBalancerType)
+
+	bastionValue, ok := p.kopsConfig.Params.CreateCluster[configKeyBastion]
+	if !ok {
+		log.Logger.Infof("No `%s` key under the kops `%s` key. Won't set up "+
+			"SSH port forwarding to access the API server", configKeyBastion,
+			configKeyCreateCluster)
+	}
+
+	bastionValue = strings.ToLower(bastionValue)
+
+	return apiLoadBalancerType == "internal" && bastionValue == "" || bastionValue == "true"
+}
+
 // If the API server is internal and there's a bastion, set up SSH port forwarding
 func (p KopsProvisioner) ensureClusterConnectivity() error {
+
+	if !p.needApiAccessViaBastion() || p.portForwardingActive {
+		log.Logger.Infof("No need to set up SSH port forwarding to access " +
+			"the API server (or it's already set up)")
+		return nil
+	}
+
+	log.Logger.Infof("Setting up SSH port forwarding via the bastion to " +
+		"the internal API server...")
+
+	config := p.stack.GetConfig()
+
+	bastionHostname, err := getBastionHostname(config)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	err = assertInHostsFile(localhost, kubernetesLocalHostname)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	kubeConfigPath, err := p.downloadKubeConfigFile()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// todo - store the kubeconfig path in the registry
+
+	go func() {
+		apiDomain := fmt.Sprintf("api.%s", config.ClusterName)
+		localPort := 8443
+		err = setupPortForwarding(p.kopsConfig.SshPrivateKey, p.kopsConfig.BastionUser,
+			bastionHostname, localPort, apiDomain, 443)
+		if err != nil {
+			log.Logger.Fatalf("An error occurred with SSH port forwarding: %v", err)
+		}
+	}()
+
+	return nil
+}
+
+// Downloads the KUBECONFIG file for the cluster
+func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
+
+}
+
+// Sets up SSH port forwarding
+func setupPortForwarding(privateKey string, sshUser string, sshHost string,
+	localPort int, remoteAddress string, remotePort int) error {
+
+	connectionString := strings.Join([]string{localhost,
+		strconv.Itoa(localPort), remoteAddress,
+		strconv.Itoa(remotePort)}, ":")
+
+	userHost := strings.Join([]string{sshUser, sshHost}, "@")
+
+	log.Logger.Infof("Setting up SSH port forwarding for '%s' to '%s'",
+		connectionString, userHost)
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+	sshCmd := exec.Command(sshPath, "-i", privateKey, "-v", "-NL",
+		connectionString, userHost)
+	sshCmd.Stdout = &stdoutBuf
+	sshCmd.Stderr = &stderrBuf
+
+	err := sshCmd.Start()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+// Returns the hostname of the bastion
+func getBastionHostname(config *kapp.StackConfig) (string, error) {
+	var stdoutBuf, stderrBuf bytes.Buffer
+
+	query := fmt.Sprintf("LoadBalancerDescrxiptions["+
+		"?starts_with(DNSName, `bastion-%s-`) == `true`].DNSName | [0]", config.Cluster)
+
+	// get the bastion ELB's hostname
+	err := utils.ExecCommand(awsCliPath, []string{
+		"--region", config.Region,
+		"elb", "describe-load-balancers",
+		"--query", query,
+		"--output", "text",
+	}, map[string]string{}, &stdoutBuf, &stderrBuf, "",
+		kopsCommandTimeoutSeconds, false)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	bastionHostname := strings.TrimSpace(stdoutBuf.String())
+
+	log.Logger.Infof("The bastion hostname is '%s'", bastionHostname)
+	return bastionHostname, nil
+}
+
+// Throws an error if an IP and domain aren't in /etc/hosts
+func assertInHostsFile(ip string, domain string) error {
+
+	contents, err := ioutil.ReadFile(etcHostsPath)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	contentsString := string(contents)
+
+	match, err := regexp.MatchString(fmt.Sprintf("%s.*%s", ip, domain),
+		contentsString)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if !match {
+		return errors.New(fmt.Sprintf("No entry for '%s %s' in %s",
+			ip, domain, etcHostsPath))
+	}
+
 	return nil
 }
