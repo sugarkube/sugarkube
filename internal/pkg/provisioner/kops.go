@@ -596,11 +596,20 @@ func (p KopsProvisioner) ensureClusterConnectivity() error {
 		return errors.WithStack(err)
 	}
 
+	localPort := 8443	// todo - pull from config
+	clusterName := ???	 // todo - get this
+	apiDomain := fmt.Sprintf("api.%s", config.ClusterName)
+
+	// modify the host name in the file to point to the local k8s server domain
+	err = replaceInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),
+		kubeConfigPath)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	// todo - store the kubeconfig path in the registry
 
 	go func() {
-		apiDomain := fmt.Sprintf("api.%s", config.ClusterName)
-		localPort := 8443
 		err = setupPortForwarding(p.kopsConfig.SshPrivateKey, p.kopsConfig.BastionUser,
 			bastionHostname, localPort, apiDomain, 443)
 		if err != nil {
@@ -614,6 +623,42 @@ func (p KopsProvisioner) ensureClusterConnectivity() error {
 // Downloads the KUBECONFIG file for the cluster
 func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
 
+	tmpfile, err := ioutil.TempFile("", "kubeconfig-*")
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	tempPath := tmpfile.Name()
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+	args := []string{"export", "kubecfg"}
+	args = parameteriseValues(args, p.kopsConfig.Params.Global)
+
+	err = utils.ExecCommand(p.kopsConfig.Binary, args,
+		map[string]string{"KUBECONFIG": tempPath}, &stdoutBuf, &stderrBuf,
+		"", kopsSleepSecondsBeforeReadyCheck, false)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	return tempPath, nil
+}
+
+// Replace a string in a file
+func replaceInFile(search string, replacement string, path string) error {
+	contents, err := ioutil.ReadFile(path)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	updated := strings.Replace(string(contents), search, replacement, -1)
+
+	err = ioutil.WriteFile(path, []byte(updated), 0)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 }
 
 // Sets up SSH port forwarding
