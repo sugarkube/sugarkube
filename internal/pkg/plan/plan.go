@@ -72,8 +72,11 @@ type job struct {
 // are applied from first to last in the orders specified in the manifests which
 // will install kapps into a new cluster. If it's false, the order will be
 // reversed which will be useful when tearing down a cluster.
+// If the `runPostActions` parameter is false, no post actions will be executed.
+// This can be useful to quickly tear down a cluster.
 func Create(forward bool, stackObj *structs.Stack, manifests []*kapp.Manifest,
-	cacheDir string, includeSelector []string, excludeSelector []string, renderTemplates bool) (*Plan, error) {
+	cacheDir string, includeSelector []string, excludeSelector []string,
+	renderTemplates bool, runPostActions bool) (*Plan, error) {
 
 	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
 	// in selectors
@@ -122,7 +125,8 @@ func Create(forward bool, stackObj *structs.Stack, manifests []*kapp.Manifest,
 			tasks = append(tasks, *installDestroyTask)
 		}
 
-		if len(kappObj.PostActions) > 0 {
+		// when tearing down a cluster users may not want to execute any post-actions
+		if len(kappObj.PostActions) > 0 && runPostActions {
 			for _, postAction := range kappObj.PostActions {
 				var actionTask *task
 				if postAction == constants.TaskActionClusterUpdate {

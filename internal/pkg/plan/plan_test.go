@@ -121,7 +121,7 @@ func TestCreateForward(t *testing.T) {
 	}
 
 	actionPlan, err := Create(true, stackObj, stackConfig.Manifests,
-		fakeCacheDir, []string{}, []string{}, true)
+		fakeCacheDir, []string{}, []string{}, true, true)
 	assert.Nil(t, err)
 
 	// assert that manifests are in the correct order in stack configs
@@ -225,7 +225,97 @@ func TestCreateReverse(t *testing.T) {
 	}
 
 	actionPlan, err := Create(false, stackObj, stackConfig.Manifests,
-		fakeCacheDir, []string{}, []string{}, true)
+		fakeCacheDir, []string{}, []string{}, true, true)
+	assert.Nil(t, err)
+
+	// assert that manifests are in the correct order in stack configs
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests[0].Uri, "manifest1.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests[1].Uri, "manifest2.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests[2].Uri, "manifest3.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests[3].Uri, "manifest4.yaml"))
+
+	assert.Equal(t, expectedPlan.tranches[0].manifest.Uri, actionPlan.tranches[0].manifest.Uri)
+
+	assert.Equal(t, expectedPlan, *actionPlan)
+}
+
+func TestCreateReverseNoPostActions(t *testing.T) {
+	// testing the correctness of stacks is handled in stack_test.go
+	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
+		&kapp.StackConfig{}, os.Stdout)
+	assert.Nil(t, err)
+
+	stackConfig := stackObj.Config
+	assert.NotNil(t, stackConfig)
+
+	fakeCacheDir := "/fake/cache/dir"
+
+	expectedPlan := Plan{
+		tranches: []tranche{
+			{
+				manifest: *stackConfig.Manifests[3],
+				tasks: []task{
+					{
+						action: constants.TaskActionDestroy,
+						kapp:   stackConfig.Manifests[3].ParsedKapps()[1],
+					},
+					{
+						action: constants.TaskActionDestroy,
+						kapp:   stackConfig.Manifests[3].ParsedKapps()[0],
+					},
+				},
+			},
+			{ // manifest3.yaml
+				manifest: *stackConfig.Manifests[2],
+				tasks: []task{
+					{
+						action: constants.TaskActionDestroy,
+						kapp:   stackConfig.Manifests[2].ParsedKapps()[1],
+					},
+					{
+						action: constants.TaskActionDestroy,
+						kapp:   stackConfig.Manifests[2].ParsedKapps()[0],
+					},
+				},
+			},
+			{
+				manifest: *stackConfig.Manifests[1],
+				tasks: []task{
+					{
+						action: constants.TaskActionDestroy,
+						kapp:   stackConfig.Manifests[1].ParsedKapps()[3],
+					},
+					{
+						action: constants.TaskActionDestroy,
+						kapp:   stackConfig.Manifests[1].ParsedKapps()[2],
+					},
+					{
+						action: constants.TaskActionDestroy,
+						kapp:   stackConfig.Manifests[1].ParsedKapps()[1],
+					},
+					{
+						action: constants.TaskActionDestroy,
+						kapp:   stackConfig.Manifests[1].ParsedKapps()[0],
+					},
+				},
+			},
+			{
+				manifest: *stackConfig.Manifests[0],
+				tasks: []task{
+					{
+						action: constants.TaskActionDestroy,
+						kapp:   stackConfig.Manifests[0].ParsedKapps()[0],
+					},
+				},
+			},
+		},
+		stack:           stackObj,
+		cacheDir:        fakeCacheDir,
+		renderTemplates: true,
+	}
+
+	actionPlan, err := Create(false, stackObj, stackConfig.Manifests,
+		fakeCacheDir, []string{}, []string{}, true, false)
 	assert.Nil(t, err)
 
 	// assert that manifests are in the correct order in stack configs

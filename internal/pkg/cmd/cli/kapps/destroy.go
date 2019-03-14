@@ -35,6 +35,7 @@ type destroyCmd struct {
 	oneShot         bool
 	force           bool
 	skipTemplating  bool
+	skipPostActions bool
 	stackName       string
 	stackFile       string
 	provider        string
@@ -79,6 +80,7 @@ func newDestroyCmd(out io.Writer) *cobra.Command {
 	f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/destroy all the kapps "+
 		"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before destroying them")
+	f.BoolVar(&c.skipPostActions, "no-post-actions", false, "skip running post actions in kapps - useful to quickly tear down a cluster")
 	f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to destroy. If not given, a "+
 		"diff will be generated")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
@@ -162,7 +164,8 @@ func (c *destroyCmd) run() error {
 
 		// force mode, so no need to perform validation. Just create a reverse plan
 		actionPlan, err = plan.Create(false, stackObj,
-			stackObj.Config.Manifests, c.cacheDir, c.includeSelector, c.excludeSelector, !c.skipTemplating)
+			stackObj.Config.Manifests, c.cacheDir, c.includeSelector, c.excludeSelector,
+			!c.skipTemplating, !c.skipPostActions)
 		if err != nil {
 			return errors.WithStack(err)
 		}
