@@ -54,10 +54,12 @@ const configKeyKopsInstanceGroups = "instanceGroups"
 const configKeyApiLoadBalancerType = "api_loadbalancer_type"
 const configKeyCreateCluster = "create_cluster"
 const configKeyBastion = "bastion"
+const configKeyClusterName = "name"
 
 const awsCliPath = "aws"
 const sshPath = "ssh"
 
+const defaultLocalPortForwardingPort = 8443
 const localhost = "127.0.0.1"
 const etcHostsPath = "/etc/hosts"
 const kubernetesLocalHostname = "kubernetes.default.svc.cluster.local"
@@ -70,10 +72,12 @@ type KopsProvisioner struct {
 }
 
 type KopsConfig struct {
-	Binary        string // path to the kops binary
-	SshPrivateKey string `yaml:"ssh_private_key"`
-	BastionUser   string `yaml:"bastion_user"`
-	Params        struct {
+	clusterName             string // set after parsing the kops YAML
+	Binary                  string // path to the kops binary
+	SshPrivateKey           string `yaml:"ssh_private_key"`
+	BastionUser             string `yaml:"bastion_user"`
+	LocalPortForwardingPort int    `yaml:"local_port_forwarding_port"`
+	Params                  struct {
 		Global            map[string]string
 		CreateCluster     map[string]string `yaml:"create_cluster"`
 		UpdateCluster     map[string]string `yaml:"update_cluster"`
@@ -536,6 +540,13 @@ func parseKopsConfig(stackConfig interfaces.IStack) (*KopsConfig, error) {
 			kopsDefaultBinary)
 	}
 
+	kopsConfig.clusterName = kopsConfig.Params.Global[configKeyClusterName]
+
+	if kopsConfig.LocalPortForwardingPort == 0 {
+		// set a default value if it's not set
+		kopsConfig.LocalPortForwardingPort = defaultLocalPortForwardingPort
+	}
+
 	return &kopsConfig, nil
 }
 
@@ -596,12 +607,11 @@ func (p KopsProvisioner) ensureClusterConnectivity() error {
 		return errors.WithStack(err)
 	}
 
-	localPort := 8443	// todo - pull from config
-	clusterName := ???	 // todo - get this
-	apiDomain := fmt.Sprintf("api.%s", config.ClusterName)
+	localPort := p.kopsConfig.LocalPortForwardingPort
+	apiDomain := fmt.Sprintf("api.%s", p.kopsConfig.clusterName)
 
 	// modify the host name in the file to point to the local k8s server domain
-	err = replaceInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),
+	err = replaceAllInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),
 		kubeConfigPath)
 	if err != nil {
 		return errors.WithStack(err)
@@ -609,6 +619,7 @@ func (p KopsProvisioner) ensureClusterConnectivity() error {
 
 	// todo - store the kubeconfig path in the registry
 
+	// todo - improve error handling
 	go func() {
 		err = setupPortForwarding(p.kopsConfig.SshPrivateKey, p.kopsConfig.BastionUser,
 			bastionHostname, localPort, apiDomain, 443)
@@ -620,7 +631,8 @@ func (p KopsProvisioner) ensureClusterConnectivity() error {
 	return nil
 }
 
-// Downloads the KUBECONFIG file for the cluster
+// Downloads the KUBECONFIG file for the cluster to a temporary location and
+// returns the path to it
 func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
 
 	tmpfile, err := ioutil.TempFile("", "kubeconfig-*")
@@ -644,8 +656,8 @@ func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
 	return tempPath, nil
 }
 
-// Replace a string in a file
-func replaceInFile(search string, replacement string, path string) error {
+// Replace all occurrences of a string in a file
+func replaceAllInFile(search string, replacement string, path string) error {
 	contents, err := ioutil.ReadFile(path)
 	if err != nil {
 		return errors.WithStack(err)
