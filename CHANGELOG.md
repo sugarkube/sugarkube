@@ -21,7 +21,8 @@
 * Kapp template source/dest paths can now contain variables
 * Kapp vars are namespaced under the `.kapp.vars` key in the stack config map
 * Provider vars are not namespaced in the stack config map
-* Provider vars directories will be searched breadth-first in a similar way to how kapp vars dirs are searched to allow cross-cutting configuration (e.g. all AMI IDs for a region can be set once and will be merged into each region's config) 
+* Provider vars directories will be searched breadth-first in a similar way to how kapp vars dirs are searched to allow cross-cutting configuration (e.g. all AMI IDs for a region can be set once and will be merged into each region's config)
+* Add a way of connecting to K8s API servers that were created with internal load balancers by kops (provided there's a bastion) 
 
 ## 0.5.0 (2/12/19)
 * Kapps need to declare what environment variables they want and what to map to them in a 'sugarkube.yaml' file
