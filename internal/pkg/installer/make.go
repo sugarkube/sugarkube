@@ -119,8 +119,8 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 	cliArgs := []string{makeTarget}
 
 	targetArgs := kappObj.Config.TargetArgs[makeTarget]["args"]
-	log.Logger.Debugf("Kapp '%s' has args for target '%s': %#v",
-		kappObj.FullyQualifiedId(), makeTarget, targetArgs)
+	log.Logger.Debugf("Kapp '%s' has args for target '%s' (approved=%v): %#v",
+		kappObj.FullyQualifiedId(), makeTarget, approved, targetArgs)
 
 	for _, targetArg := range targetArgs {
 		cliArgs = append(cliArgs, strings.Join([]string{
@@ -132,7 +132,11 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Infof("Installing kapp '%s'...", kappObj.FullyQualifiedId())
+	if approved {
+		log.Logger.Infof("Installing kapp '%s'...", kappObj.FullyQualifiedId())
+	} else {
+		log.Logger.Infof("Planning kapp '%s'...", kappObj.FullyQualifiedId())
+	}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	err = utils.ExecCommand("make", cliArgs, envVars, &stdoutBuf,
