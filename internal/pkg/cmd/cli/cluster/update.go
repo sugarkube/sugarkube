@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
@@ -32,20 +31,19 @@ import (
 // Update a cluster if supported by the provisioner
 
 type updateCmd struct {
-	out              io.Writer
-	dryRun           bool
-	skipCreate       bool
-	stackName        string
-	stackFile        string
-	provider         string
-	provisioner      string
-	providerVarsDirs cmd.Files
-	profile          string
-	account          string
-	cluster          string
-	region           string
-	onlineTimeout    uint32
-	readyTimeout     uint32
+	out           io.Writer
+	dryRun        bool
+	skipCreate    bool
+	stackName     string
+	stackFile     string
+	provider      string
+	provisioner   string
+	profile       string
+	account       string
+	cluster       string
+	region        string
+	onlineTimeout uint32
+	readyTimeout  uint32
 }
 
 func newUpdateCmd(out io.Writer) *cobra.Command {
@@ -89,7 +87,6 @@ Note: Not all providers require all arguments. See documentation for help.
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	f.VarP(&c.providerVarsDirs, "dir", "f", "Paths to YAML directory to load provider configs from (can specify multiple)")
 	f.Uint32Var(&c.onlineTimeout, "online-timeout", 600, "max number of seconds to wait for the cluster to come online")
 	f.Uint32Var(&c.readyTimeout, "ready-timeout", 600, "max number of seconds to wait for the cluster to become ready")
 	return command
@@ -99,15 +96,14 @@ func (c *updateCmd) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &kapp.StackConfig{
-		Provider:         c.provider,
-		Provisioner:      c.provisioner,
-		Profile:          c.profile,
-		Cluster:          c.cluster,
-		Region:           c.region,
-		Account:          c.account,
-		ProviderVarsDirs: c.providerVarsDirs,
-		ReadyTimeout:     c.readyTimeout,
-		OnlineTimeout:    c.onlineTimeout,
+		Provider:      c.provider,
+		Provisioner:   c.provisioner,
+		Profile:       c.profile,
+		Cluster:       c.cluster,
+		Region:        c.region,
+		Account:       c.account,
+		ReadyTimeout:  c.readyTimeout,
+		OnlineTimeout: c.onlineTimeout,
 	}
 
 	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)

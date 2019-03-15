@@ -36,6 +36,7 @@ func NewClusterCmds(out io.Writer) *cobra.Command {
 		newDiffCmd(out),
 		newDeleteCmd(out),
 		newVarsCmd(out),
+		newConnectCmd(out),
 	)
 
 	return cmd
