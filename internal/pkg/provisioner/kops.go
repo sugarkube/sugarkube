@@ -743,6 +743,8 @@ func (p KopsProvisioner) setupPortForwarding(privateKey string, sshUser string, 
 		connectionString, userHost)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
+	// todo - make this configurable. Ideally users should push a known host key
+	// onto the bastion via metadata
 	sshCmd := exec.Command(sshPath, "-o", "StrictHostKeyChecking no",
 		"-i", privateKey, "-v", "-NL", connectionString, userHost)
 	sshCmd.Stdout = &stdoutBuf
