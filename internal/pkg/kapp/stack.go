@@ -245,11 +245,11 @@ func (s *StackConfig) TemplatedVars(kappObj *Kapp,
 		return nil, errors.WithStack(err)
 	}
 
-	yamlData, err := yaml.Marshal(&templatedVars)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	log.Logger.Debugf("Vars after merging and templating:\n%s", yamlData)
+	//yamlData, err := yaml.Marshal(&templatedVars)
+	//if err != nil {
+	//	return nil, errors.WithStack(err)
+	//}
+	//log.Logger.Debugf("Vars after merging and templating:\n%s", yamlData)
 
 	return templatedVars, nil
 }
