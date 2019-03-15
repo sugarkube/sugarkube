@@ -715,7 +715,7 @@ func setupPortForwarding(privateKey string, sshUser string, sshHost string,
 func getBastionHostname(config *kapp.StackConfig) (string, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	query := fmt.Sprintf("LoadBalancerDescrxiptions["+
+	query := fmt.Sprintf("LoadBalancerDescriptions["+
 		"?starts_with(DNSName, `bastion-%s-`) == `true`].DNSName | [0]", config.Cluster)
 
 	// get the bastion ELB's hostname
