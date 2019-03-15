@@ -171,6 +171,6 @@ func parseMinikubeConfig(stackConfig interfaces.IStack) (*MinikubeConfig, error)
 }
 
 // No special connectivity is required for this provisioner
-func (p MinikubeProvisioner) ensureClusterConnectivity() error {
-	return nil
+func (p MinikubeProvisioner) ensureClusterConnectivity() (bool, error) {
+	return true, nil
 }

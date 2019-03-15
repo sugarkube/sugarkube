@@ -65,6 +65,6 @@ func (p NoOpProvisioner) update(dryRun bool) error {
 }
 
 // No special connectivity is required for this provisioner
-func (p NoOpProvisioner) ensureClusterConnectivity() error {
-	return nil
+func (p NoOpProvisioner) ensureClusterConnectivity() (bool, error) {
+	return true, nil
 }

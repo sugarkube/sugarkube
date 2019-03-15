@@ -36,8 +36,10 @@ type Provisioner interface {
 	update(dryRun bool) error
 	// We need to use an interface to work with Stack objects to avoid circular dependencies
 	iStack() interfaces.IStack
-	// if the API server is internal we need to set up connectivity to it
-	ensureClusterConnectivity() error
+	// if the API server is internal we need to set up connectivity to it. Returns a boolean
+	// indicating whether connectivity exists (not necessarily if it's been set up, i.e. it
+	// might not be necessary to do anything, or it may have already been set up)
+	ensureClusterConnectivity() (bool, error)
 }
 
 // key in Values that relates to this provisioner
@@ -64,7 +66,7 @@ func NewProvisioner(name string, stack interfaces.IStack) (Provisioner, error) {
 			return nil, errors.WithStack(err)
 		}
 
-		return *kopsProvisioner, nil
+		return kopsProvisioner, nil
 	}
 
 	if name == NoopProvisionerName {

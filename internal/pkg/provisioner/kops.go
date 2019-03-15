@@ -35,6 +35,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const kopsProvisionerName = "kops"
@@ -47,6 +48,7 @@ const kopsCommandTimeoutSecondsLong = 300
 // number of seconds to sleep after the cluster has come online before checking whether
 // it's ready
 const kopsSleepSecondsBeforeReadyCheck = 60
+const sshPortForwardingDelaySeconds = 5
 
 const configKeyKopsSpecs = "specs"
 const configKeyKopsCluster = "cluster"
@@ -69,6 +71,7 @@ type KopsProvisioner struct {
 	stack                interfaces.IStack
 	kopsConfig           KopsConfig
 	portForwardingActive bool
+	localKubeConfigPath  string
 }
 
 type KopsConfig struct {
@@ -590,12 +593,28 @@ func (p KopsProvisioner) needApiAccessViaBastion() bool {
 }
 
 // If the API server is internal and there's a bastion, set up SSH port forwarding
-func (p KopsProvisioner) ensureClusterConnectivity() error {
+func (p *KopsProvisioner) ensureClusterConnectivity() (bool, error) {
 
 	if !p.needApiAccessViaBastion() || p.portForwardingActive {
 		log.Logger.Infof("No need to set up SSH port forwarding to access " +
 			"the API server (or it's already set up)")
-		return nil
+		// no need to do anything
+		return true, nil
+	}
+
+	if p.portForwardingActive {
+		log.Logger.Debug("Port forwarding already set up")
+		return true, nil
+	}
+
+	configExists, err := p.clusterConfigExists()
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	if !configExists {
+		log.Logger.Debug("Can't establish connectivity for non-existent kops cluster")
+		return false, nil
 	}
 
 	log.Logger.Infof("Setting up SSH port forwarding via the bastion to " +
@@ -605,66 +624,92 @@ func (p KopsProvisioner) ensureClusterConnectivity() error {
 
 	bastionHostname, err := getBastionHostname(config)
 	if err != nil {
-		return errors.WithStack(err)
+		return false, errors.WithStack(err)
+	}
+
+	if bastionHostname == "" {
+		log.Logger.Info("Won't set up port forwarding - no bastion found")
+		return false, nil
 	}
 
 	err = assertInHostsFile(localhost, kubernetesLocalHostname)
 	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	kubeConfigPath, err := p.downloadKubeConfigFile()
-	if err != nil {
-		return errors.WithStack(err)
+		return false, errors.WithStack(err)
 	}
 
 	localPort := p.kopsConfig.LocalPortForwardingPort
 	apiDomain := fmt.Sprintf("api.%s", p.kopsConfig.clusterName)
 
-	// modify the host name in the file to point to the local k8s server domain
-	err = replaceAllInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),
-		kubeConfigPath)
-	if err != nil {
-		return errors.WithStack(err)
+	kubeConfigPath := p.localKubeConfigPath
+
+	if kubeConfigPath != "" {
+		log.Logger.Debugf("Kubeconfig file already downloaded to '%s'", kubeConfigPath)
+	} else {
+		kubeConfigPath, err = p.downloadKubeConfigFile()
+		if err != nil {
+			return false, errors.WithStack(err)
+		}
+
+		p.localKubeConfigPath = kubeConfigPath
+
+		// modify the host name in the file to point to the local k8s server domain
+		err = replaceAllInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),
+			kubeConfigPath)
+		if err != nil {
+			return false, errors.WithStack(err)
+		}
 	}
 
 	// todo - store the kubeconfig path in the registry
 
 	// todo - improve error handling
 	go func() {
-		err = setupPortForwarding(p.kopsConfig.SshPrivateKey, p.kopsConfig.BastionUser,
+		err = p.setupPortForwarding(p.kopsConfig.SshPrivateKey, p.kopsConfig.BastionUser,
 			bastionHostname, localPort, apiDomain, 443)
 		if err != nil {
 			log.Logger.Fatalf("An error occurred with SSH port forwarding: %v", err)
 		}
+
+		p.portForwardingActive = true
 	}()
 
-	return nil
+	log.Logger.Infof("Sleeping for %ds while setting up SSH port forwarding",
+		sshPortForwardingDelaySeconds)
+	time.Sleep(sshPortForwardingDelaySeconds * time.Second)
+
+	return true, nil
 }
 
 // Downloads the KUBECONFIG file for the cluster to a temporary location and
 // returns the path to it
 func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
 
-	tmpfile, err := ioutil.TempFile("", "kubeconfig-*")
+	log.Logger.Debugf("Downloading kubeconfig file for '%s'...",
+		p.kopsConfig.clusterName)
+
+	pattern := fmt.Sprintf("kubeconfig-%s-*", p.iStack().GetConfig().Cluster)
+
+	tmpfile, err := ioutil.TempFile("", pattern)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
 
-	tempPath := tmpfile.Name()
+	kubeConfigPath := tmpfile.Name()
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	args := []string{"export", "kubecfg"}
 	args = parameteriseValues(args, p.kopsConfig.Params.Global)
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args,
-		map[string]string{"KUBECONFIG": tempPath}, &stdoutBuf, &stderrBuf,
+		map[string]string{"KUBECONFIG": kubeConfigPath}, &stdoutBuf, &stderrBuf,
 		"", kopsSleepSecondsBeforeReadyCheck, false)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
 
-	return tempPath, nil
+	log.Logger.Infof("Kubeconfig file donwloaded to '%s'", kubeConfigPath)
+
+	return kubeConfigPath, nil
 }
 
 // Replace all occurrences of a string in a file
@@ -685,7 +730,7 @@ func replaceAllInFile(search string, replacement string, path string) error {
 }
 
 // Sets up SSH port forwarding
-func setupPortForwarding(privateKey string, sshUser string, sshHost string,
+func (p KopsProvisioner) setupPortForwarding(privateKey string, sshUser string, sshHost string,
 	localPort int, remoteAddress string, remotePort int) error {
 
 	connectionString := strings.Join([]string{localhost,
@@ -698,8 +743,8 @@ func setupPortForwarding(privateKey string, sshUser string, sshHost string,
 		connectionString, userHost)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
-	sshCmd := exec.Command(sshPath, "-i", privateKey, "-v", "-NL",
-		connectionString, userHost)
+	sshCmd := exec.Command(sshPath, "-o", "StrictHostKeyChecking no",
+		"-i", privateKey, "-v", "-NL", connectionString, userHost)
 	sshCmd.Stdout = &stdoutBuf
 	sshCmd.Stderr = &stderrBuf
 
@@ -711,7 +756,7 @@ func setupPortForwarding(privateKey string, sshUser string, sshHost string,
 	return nil
 }
 
-// Returns the hostname of the bastion
+// Returns the hostname of the bastion or an empty string if it can't be found
 func getBastionHostname(config *kapp.StackConfig) (string, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
@@ -732,7 +777,15 @@ func getBastionHostname(config *kapp.StackConfig) (string, error) {
 
 	bastionHostname := strings.TrimSpace(stdoutBuf.String())
 
-	log.Logger.Infof("The bastion hostname is '%s'", bastionHostname)
+	if strings.ToLower(bastionHostname) == "none" {
+		bastionHostname = ""
+	}
+
+	if bastionHostname == "" {
+		log.Logger.Infof("No bastion found for cluster '%s'", config.Cluster)
+	} else {
+		log.Logger.Infof("The bastion hostname is '%s'", bastionHostname)
+	}
 	return bastionHostname, nil
 }
 
