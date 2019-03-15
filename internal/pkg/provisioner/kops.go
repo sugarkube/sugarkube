@@ -160,6 +160,17 @@ func (p KopsProvisioner) clusterConfigExists() (bool, error) {
 // that only happens when 'kops update' is run.
 func (p KopsProvisioner) create(dryRun bool) error {
 
+	configExists, err := p.clusterConfigExists()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if configExists {
+		log.Logger.Debugf("Kops config already exists for '%s'. Won't recreate it...",
+			p.iStack().GetConfig().Cluster)
+		return nil
+	}
+
 	templatedVars, err := p.stack.GetConfig().TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return errors.WithStack(err)
