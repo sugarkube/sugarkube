@@ -39,6 +39,17 @@ func TestLoad(t *testing.T) {
 		"REGION":       stackRegion,
 	}
 
+	expectedArgs := map[string]map[string][]map[string]string{
+		"targets": {
+			"install": {
+				{
+					"name":  "helm-opts",
+					"value": "yes",
+				},
+			},
+		},
+	}
+
 	templateVars := map[string]interface{}{
 		"kube_context": testContext,
 		"kapp": map[string]interface{}{
@@ -60,4 +71,6 @@ func TestLoad(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, expectedEnvVars, testKapp.Config.EnvVars)
+	assert.Equal(t, []string{"helm"}, testKapp.Config.Requires)
+	assert.Equal(t, expectedArgs, testKapp.Config.Args)
 }
