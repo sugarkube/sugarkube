@@ -43,8 +43,8 @@ type Template struct {
 
 // Populated from the kapp's sugarkube.yaml file
 type Config struct {
-	program.Config
-	Requires []string `yaml:"requires"`
+	program.Config `yaml:",inline"`
+	Requires       []string `yaml:"requires"`
 }
 
 type Kapp struct {

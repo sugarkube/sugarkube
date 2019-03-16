@@ -1,0 +1,14 @@
+envVars:
+  STATIC: someValue
+  KUBE_CONTEXT: "{{.kube_context}}"
+  NAMESPACE: "{{.kapp.id}}"
+  REGION: "{{.stack.region}}"
+
+args:
+  targets:
+    install:
+      - name: helm-opts
+        value: {{ .blank | default "yes" }}
+
+requires:
+  - helm
