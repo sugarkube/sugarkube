@@ -18,6 +18,8 @@ package registry
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"strings"
 )
 
 // A registry so that different parts of the program can set and access values
@@ -31,8 +33,16 @@ func NewRegistry() Registry {
 	}
 }
 
-// Add a string to the registry
+// Add a string to the registry.
+// *Note* For now there's a limitation where string keys mustn't contain dot
+// characters because they won't be merged with stack config vars correctly
+// (e.g. as a map). So for now to avoid unpredictable behaviour we don't permit
+// keys with dots at all.
 func (r *Registry) SetString(key string, value string) {
+	if strings.Contains(key, ".") {
+		log.Logger.Fatalf("Keys with dots ('.') are not currently merged " +
+			"as a map, Only top-level values can be stored in the registry")
+	}
 	r.mapStringString[key] = value
 }
 

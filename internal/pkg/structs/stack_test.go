@@ -33,7 +33,7 @@ func TestTemplatedVarsWithRegistry(t *testing.T) {
 
 	expectedVarsBlankRegistry := map[string]interface{}{
 		"sugarkube": map[interface{}]interface{}{
-			"defaultVars": []interface{}{"", "", "", "", "testRegion"}},
+			"defaultVars": []interface{}{"", "testAccount", "", "", "testRegion"}},
 		"someKey1": "valueA",
 		"someKey2": "valueB",
 		"someKey3": "valueC",
@@ -44,14 +44,14 @@ func TestTemplatedVarsWithRegistry(t *testing.T) {
 			"provider":    "",
 			"provisioner": "",
 			"region":      "testRegion",
-			"account":     "",
+			"account":     "testAccount",
 			"cluster":     "",
 		},
 	}
 
 	expectedVarsUpdatedRegistry := map[string]interface{}{
 		"sugarkube": map[interface{}]interface{}{
-			"defaultVars": []interface{}{"", "", "", "", "testRegion"}},
+			"defaultVars": []interface{}{"", "testAccount", "", "", "testRegion"}},
 		"someKey1": "valueA",
 		"someKey2": "updatedValue",
 		"someKey3": "valueC",
@@ -62,7 +62,7 @@ func TestTemplatedVarsWithRegistry(t *testing.T) {
 			"provider":    "",
 			"provisioner": "",
 			"region":      "testRegion",
-			"account":     "",
+			"account":     "testAccount",
 			"cluster":     "",
 		},
 	}
@@ -70,7 +70,8 @@ func TestTemplatedVarsWithRegistry(t *testing.T) {
 	registryObj := registry.NewRegistry()
 
 	stackConfig := &kapp.StackConfig{
-		Region: "testRegion",
+		Region:  "testRegion",
+		Account: "testAccount",
 	}
 
 	stackConfig.SetProviderVars(map[string]interface{}{
