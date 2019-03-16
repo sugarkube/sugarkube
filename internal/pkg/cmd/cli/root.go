@@ -91,6 +91,7 @@ var rootCmd = &cobra.Command{
 }
 
 var logLevel string
+var configFile string
 
 func NewCommand(name string) *cobra.Command {
 
@@ -128,6 +129,10 @@ func init() {
 	log.ConfigureLogger(defaultLogLevel, jsonLogs)
 
 	cobra.OnInitialize(func() {
+		if configFile != "" {
+			log.Logger.Infof("Loading custom config file '%s'", configFile)
+			config.ViperConfig.SetConfigFile(configFile)
+		}
 		err := config.Load(config.ViperConfig)
 		if err != nil {
 			cause := errors.Cause(err)
@@ -150,6 +155,9 @@ func init() {
 	})
 
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|debug|info|warn|error|fatal")
+	rootCmd.PersistentFlags().StringVar(&configFile, "config", "",
+		fmt.Sprintf("path to a config file. If not given, default paths "+
+			"will be searched for a file called '%s.(yaml|json)'", config.ConfigFileName))
 	rootCmd.PersistentFlags().BoolVarP(&jsonLogs, "json-logs", "j", false, "whether to emit JSON-formatted logs")
 
 	// bind viper to CLI args

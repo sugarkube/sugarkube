@@ -25,6 +25,8 @@ import (
 	"strings"
 )
 
+const ConfigFileName = "sugarkube-conf"
+
 var Config *Conf
 var ViperConfig *viper.Viper
 
@@ -42,7 +44,7 @@ func initViper(appName string) *viper.Viper {
 	v.SetDefault("json-logs", false)
 	v.SetDefault("log-level", "info")
 
-	v.SetConfigName("sugarkube-conf")
+	v.SetConfigName(ConfigFileName)
 
 	// add look-up paths (from highest priority to lowest)
 	// current working directory
