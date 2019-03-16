@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package structs
+package program
 
 // A fragment of configuration for a program or kapp. It can be loaded either
 // from a kapp's sugarkube.yaml file or the global sugarkube config file

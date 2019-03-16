@@ -16,12 +16,10 @@
 
 package program
 
-import "github.com/sugarkube/sugarkube/internal/pkg/structs"
-
 // Encapsulates a program so we can configure default env vars for it. Values
 // can be pulled from the registry.
 type Programs struct {
 	// keys are names of runtime configs for programs (they aren't binary paths
 	// or have any bearing on the actual binary that's executed)
-	nameConfigs map[string]structs.RuntimeConfig
+	nameConfigs map[string]RuntimeConfig
 }

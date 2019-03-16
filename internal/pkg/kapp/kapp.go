@@ -25,7 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"github.com/sugarkube/sugarkube/internal/pkg/program"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
@@ -43,7 +43,7 @@ type Template struct {
 
 // Populated from the kapp's sugarkube.yaml file
 type Config struct {
-	structs.RuntimeConfig
+	program.RuntimeConfig
 	Requires []string `yaml:"requires"`
 }
 
