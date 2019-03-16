@@ -25,6 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
@@ -42,9 +43,8 @@ type Template struct {
 
 // Populated from the kapp's sugarkube.yaml file
 type Config struct {
-	EnvVars    map[string]interface{} `yaml:"envVars"`
-	Version    string
-	TargetArgs map[string]map[string][]map[string]string `yaml:"targets"`
+	structs.RuntimeConfig
+	Requires []string `yaml:"requires"`
 }
 
 type Kapp struct {
@@ -68,7 +68,7 @@ const StateKey = "state"
 const SourcesKey = "sources"
 const VarsKey = "vars"
 
-// todo - allow templates to be overridden in manifest overides blocks
+// todo - allow templates to be overridden in manifest overrides blocks
 //const TEMPLATES_KEY = "templates"
 
 // Sets the root cache directory the kapp is checked out into

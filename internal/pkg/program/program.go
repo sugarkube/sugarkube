@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package interfaces
+package program
 
-import (
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
-	"github.com/sugarkube/sugarkube/internal/pkg/registry"
-)
+import "github.com/sugarkube/sugarkube/internal/pkg/structs"
 
-// We need to code against interfaces in certain places to avoid cyclic dependencies
-type IStack interface {
-	GetConfig() *kapp.StackConfig
-	GetStatus() IClusterStatus
-	GetRegistry() *registry.Registry
+// Encapsulates a program so we can configure default env vars for it. Values
+// can be pulled from the registry.
+type Programs struct {
+	// keys are names of runtime configs for programs (they aren't binary paths
+	// or have any bearing on the actual binary that's executed)
+	nameConfigs map[string]structs.RuntimeConfig
 }

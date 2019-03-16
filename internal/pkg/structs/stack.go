@@ -21,6 +21,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
+	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 )
 
 // Top-level struct that holds references to instantiations of other objects
@@ -31,10 +32,12 @@ type Stack struct {
 	Provider    provider.Provider
 	Provisioner provisioner.Provisioner
 	Status      *ClusterStatus
+	registry    *registry.Registry
 }
 
 // Creates a new Stack
-func NewStack(config *kapp.StackConfig, provider provider.Provider) (*Stack, error) {
+func NewStack(config *kapp.StackConfig, provider provider.Provider,
+	registry *registry.Registry) (*Stack, error) {
 
 	stack := Stack{
 		Config:      config,
@@ -46,6 +49,7 @@ func NewStack(config *kapp.StackConfig, provider provider.Provider) (*Stack, err
 			sleepBeforeReadyCheck: 0,
 			startedThisRun:        false,
 		},
+		registry: registry,
 	}
 
 	provisionerImpl, err := provisioner.NewProvisioner(stack.Config.Provisioner, stack)
@@ -64,4 +68,8 @@ func (s Stack) GetConfig() *kapp.StackConfig {
 
 func (s Stack) GetStatus() interfaces.IClusterStatus {
 	return s.Status
+}
+
+func (s Stack) GetRegistry() *registry.Registry {
+	return s.registry
 }

@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 
-package interfaces
+package registry
 
-import (
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
-	"github.com/sugarkube/sugarkube/internal/pkg/registry"
-)
+// A registry so that different parts of the program can set and access values
+type Registry struct {
+	mapStringString map[string]string
+}
 
-// We need to code against interfaces in certain places to avoid cyclic dependencies
-type IStack interface {
-	GetConfig() *kapp.StackConfig
-	GetStatus() IClusterStatus
-	GetRegistry() *registry.Registry
+// Add a string to the registry
+func (r *Registry) SetString(key string, value string) {
+	r.mapStringString[key] = value
+}
+
+// Get a string from the registry
+func (r *Registry) GetString(key string) (string, bool) {
+	val, ok := r.mapStringString[key]
+	if !ok {
+		return "", false
+	}
+
+	return val, true
 }

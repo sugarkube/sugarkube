@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package interfaces
+package structs
 
-import (
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
-	"github.com/sugarkube/sugarkube/internal/pkg/registry"
-)
-
-// We need to code against interfaces in certain places to avoid cyclic dependencies
-type IStack interface {
-	GetConfig() *kapp.StackConfig
-	GetStatus() IClusterStatus
-	GetRegistry() *registry.Registry
+// A fragment of configuration for a program or kapp. It can be loaded either
+// from a kapp's sugarkube.yaml file or the global sugarkube config file
+type RuntimeConfig struct {
+	EnvVars map[string]interface{}                    `yaml:"envVars"`
+	Version string                                    `yaml:"version"`
+	Args    map[string]map[string][]map[string]string `yaml:"args"`
 }

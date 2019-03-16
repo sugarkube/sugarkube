@@ -23,6 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 	"strings"
@@ -81,7 +82,9 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *kapp.StackCo
 
 	stackConfig.SetProviderVars(providerVars)
 
-	stackObj, err := structs.NewStack(stackConfig, providerImpl)
+	registryImpl := registry.Registry{}
+
+	stackObj, err := structs.NewStack(stackConfig, providerImpl, &registryImpl)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

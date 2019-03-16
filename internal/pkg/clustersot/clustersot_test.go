@@ -21,6 +21,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"testing"
 )
 
@@ -31,6 +32,7 @@ func init() {
 type MockStack struct {
 	stackConfig *kapp.StackConfig
 	status      interfaces.IClusterStatus
+	registry    *registry.Registry
 }
 
 func (m MockStack) GetConfig() *kapp.StackConfig {
@@ -39,6 +41,10 @@ func (m MockStack) GetConfig() *kapp.StackConfig {
 
 func (m MockStack) GetStatus() interfaces.IClusterStatus {
 	return m.status
+}
+
+func (m MockStack) GetRegistry() *registry.Registry {
+	return m.registry
 }
 
 func TestNewClusterSot(t *testing.T) {

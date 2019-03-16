@@ -58,6 +58,8 @@ const configKeyCreateCluster = "create_cluster"
 const configKeyBastion = "bastion"
 const configKeyClusterName = "name"
 
+const registryKeyKubeConfig = "kube_config"
+
 const awsCliPath = "aws"
 const sshPath = "ssh"
 
@@ -71,7 +73,6 @@ type KopsProvisioner struct {
 	stack                interfaces.IStack
 	kopsConfig           KopsConfig
 	portForwardingActive bool
-	localKubeConfigPath  string
 }
 
 type KopsConfig struct {
@@ -640,7 +641,7 @@ func (p *KopsProvisioner) ensureClusterConnectivity() (bool, error) {
 	localPort := p.kopsConfig.LocalPortForwardingPort
 	apiDomain := fmt.Sprintf("api.%s", p.kopsConfig.clusterName)
 
-	kubeConfigPath := p.localKubeConfigPath
+	kubeConfigPath, _ := p.stack.GetRegistry().GetString(registryKeyKubeConfig)
 
 	if kubeConfigPath != "" {
 		log.Logger.Debugf("Kubeconfig file already downloaded to '%s'", kubeConfigPath)
@@ -650,7 +651,7 @@ func (p *KopsProvisioner) ensureClusterConnectivity() (bool, error) {
 			return false, errors.WithStack(err)
 		}
 
-		p.localKubeConfigPath = kubeConfigPath
+		p.stack.GetRegistry().SetString(registryKeyKubeConfig, kubeConfigPath)
 
 		// modify the host name in the file to point to the local k8s server domain
 		err = replaceAllInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),

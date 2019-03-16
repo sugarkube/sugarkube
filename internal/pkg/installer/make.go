@@ -64,6 +64,8 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 	templatedVars, err := stackConfig.TemplatedVars(kappObj,
 		map[string]interface{}{"target": makeTarget, "approved": approved})
 
+	// todo - merge in values from the registry
+
 	if renderTemplates {
 		renderedTemplates, err := kappObj.RenderTemplates(templatedVars, stackConfig, dryRun)
 		if err != nil {
@@ -118,7 +120,9 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 
 	cliArgs := []string{makeTarget}
 
-	targetArgs := kappObj.Config.TargetArgs[makeTarget]["args"]
+	// todo - move this to a method. Make it more defensive and pull values from
+	// the overall config depending on the programs the kapp uses
+	targetArgs := kappObj.Config.Args["targets"][makeTarget]
 	log.Logger.Debugf("Kapp '%s' has args for target '%s' (approved=%v): %#v",
 		kappObj.FullyQualifiedId(), makeTarget, approved, targetArgs)
 
