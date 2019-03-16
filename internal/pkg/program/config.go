@@ -17,8 +17,9 @@
 package program
 
 // A fragment of configuration for a program or kapp. It can be loaded either
-// from a kapp's sugarkube.yaml file or the global sugarkube config file
-type RuntimeConfig struct {
+// from a kapp's sugarkube.yaml file or the global sugarkube config file. It
+// allows default env vars and arguments to be configured in one place and reused.
+type Config struct {
 	EnvVars map[string]interface{}                    `yaml:"envVars"`
 	Version string                                    `yaml:"version"`
 	Args    map[string]map[string][]map[string]string `yaml:"args"`
