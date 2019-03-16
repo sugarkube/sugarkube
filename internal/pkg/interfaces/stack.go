@@ -26,4 +26,6 @@ type IStack interface {
 	GetConfig() *kapp.StackConfig
 	GetStatus() IClusterStatus
 	GetRegistry() *registry.Registry
+	TemplatedVars(kappObj *kapp.Kapp,
+		installerVars map[string]interface{}) (map[string]interface{}, error)
 }

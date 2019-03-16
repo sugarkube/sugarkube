@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
@@ -38,7 +39,7 @@ const TargetInstall = "install"
 const TargetDestroy = "destroy"
 
 // Run the given make target
-func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
+func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
 
 	// search for the Makefile
@@ -61,13 +62,11 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 	}
 
 	// merge all the vars required to render the kapp's sugarkube.yaml file
-	templatedVars, err := stackConfig.TemplatedVars(kappObj,
+	templatedVars, err := stack.TemplatedVars(kappObj,
 		map[string]interface{}{"target": makeTarget, "approved": approved})
 
-	// todo - merge in values from the registry
-
 	if renderTemplates {
-		renderedTemplates, err := kappObj.RenderTemplates(templatedVars, stackConfig, dryRun)
+		renderedTemplates, err := kappObj.RenderTemplates(templatedVars, stack.GetConfig(), dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -96,6 +95,8 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	stackConfig := stack.GetConfig()
 
 	// populate env vars that are always supplied
 	envVars := map[string]string{
@@ -160,13 +161,13 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stackConfig *k
 }
 
 // Install a kapp
-func (i MakeInstaller) install(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
+func (i MakeInstaller) install(kappObj *kapp.Kapp, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
-	return i.run(TargetInstall, kappObj, stackConfig, approved, renderTemplates, dryRun)
+	return i.run(TargetInstall, kappObj, stack, approved, renderTemplates, dryRun)
 }
 
 // Destroy a kapp
-func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stackConfig *kapp.StackConfig,
+func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
-	return i.run(TargetDestroy, kappObj, stackConfig, approved, renderTemplates, dryRun)
+	return i.run(TargetDestroy, kappObj, stack, approved, renderTemplates, dryRun)
 }

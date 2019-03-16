@@ -82,7 +82,7 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *kapp.StackCo
 
 	stackConfig.SetProviderVars(providerVars)
 
-	registryImpl := registry.Registry{}
+	registryImpl := registry.NewRegistry()
 
 	stackObj, err := structs.NewStack(stackConfig, providerImpl, &registryImpl)
 	if err != nil {

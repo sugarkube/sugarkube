@@ -396,7 +396,7 @@ func (k Kapp) MatchesSelector(selector string) (bool, error) {
 
 // Finds all vars files for the given kapp and returns the result of merging
 // all the data.
-func (k *Kapp) getVarsFromFiles(stackConfig *StackConfig) (map[string]interface{}, error) {
+func (k *Kapp) GetVarsFromFiles(stackConfig *StackConfig) (map[string]interface{}, error) {
 	dirs, err := k.findVarsFiles(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)

@@ -47,6 +47,11 @@ func (m MockStack) GetRegistry() *registry.Registry {
 	return m.registry
 }
 
+func (m MockStack) TemplatedVars(kappObj *kapp.Kapp,
+	installerVars map[string]interface{}) (map[string]interface{}, error) {
+	return nil, nil
+}
+
 func TestNewClusterSot(t *testing.T) {
 	istack := MockStack{}
 

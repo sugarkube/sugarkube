@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
@@ -112,7 +113,7 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = RenderTemplates(selectedKapps, c.cacheDir, stackObj.Config, c.dryRun)
+	err = RenderTemplates(selectedKapps, c.cacheDir, stackObj, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -126,8 +127,8 @@ func (c *templateConfig) run() error {
 }
 
 // Render templates for kapps defined in a stack config
-func RenderTemplates(kapps []kapp.Kapp, cacheDir string,
-	stackConfig *kapp.StackConfig, dryRun bool) error {
+func RenderTemplates(kapps []kapp.Kapp, cacheDir string, stack interfaces.IStack,
+	dryRun bool) error {
 
 	if len(kapps) == 0 {
 		return errors.New("No kapps supplied to template function")
@@ -147,14 +148,14 @@ func RenderTemplates(kapps []kapp.Kapp, cacheDir string,
 	log.Logger.Debugf("Rendering templates for kapps: %s", strings.Join(candidateKappIds, ", "))
 
 	for _, kappObj := range kapps {
-		templatedVars, err := stackConfig.TemplatedVars(&kappObj, map[string]interface{}{})
+		templatedVars, err := stack.TemplatedVars(&kappObj, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
 		kappObj.SetCacheDir(cacheDir)
 
-		_, err = kappObj.RenderTemplates(templatedVars, stackConfig, dryRun)
+		_, err = kappObj.RenderTemplates(templatedVars, stack.GetConfig(), dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

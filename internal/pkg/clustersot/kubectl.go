@@ -37,7 +37,7 @@ const KubeContextKey = "kube_context"
 
 // Tests whether the cluster is online
 func (c KubeCtlClusterSot) isOnline() (bool, error) {
-	templatedVars, err := c.stack.GetConfig().TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := c.stack.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -62,7 +62,7 @@ func (c KubeCtlClusterSot) isOnline() (bool, error) {
 
 // Tests whether all pods are Ready
 func (c KubeCtlClusterSot) isReady() (bool, error) {
-	templatedVars, err := c.stack.GetConfig().TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := c.stack.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}

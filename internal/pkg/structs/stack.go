@@ -16,12 +16,16 @@
 package structs
 
 import (
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
+	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 )
 
 // Top-level struct that holds references to instantiations of other objects
@@ -39,7 +43,7 @@ type Stack struct {
 func NewStack(config *kapp.StackConfig, provider provider.Provider,
 	registry *registry.Registry) (*Stack, error) {
 
-	stack := Stack{
+	stack := &Stack{
 		Config:      config,
 		Provider:    provider,
 		Provisioner: nil,
@@ -59,7 +63,7 @@ func NewStack(config *kapp.StackConfig, provider provider.Provider,
 
 	stack.Provisioner = provisionerImpl
 
-	return &stack, nil
+	return stack, nil
 }
 
 func (s Stack) GetConfig() *kapp.StackConfig {
@@ -72,4 +76,94 @@ func (s Stack) GetStatus() interfaces.IClusterStatus {
 
 func (s Stack) GetRegistry() *registry.Registry {
 	return s.registry
+}
+
+// Merges and templates vars from all configured sources. If a kapp instance
+// is given, data specific to the kapp will be included in the returned map,
+// otherwise only stack-specific variables will be returned.
+func (s *Stack) TemplatedVars(kappObj *kapp.Kapp,
+	installerVars map[string]interface{}) (map[string]interface{}, error) {
+
+	stackConfig := s.Config
+
+	stackIntrinsicData := stackConfig.GetIntrinsicData()
+	// convert the map to the appropriate type and namespace it
+	stackConfigMap := map[string]interface{}{
+		"stack": convert.MapStringStringToMapStringInterface(stackIntrinsicData),
+	}
+
+	mergedVars := map[string]interface{}{}
+	err := mergo.Merge(&mergedVars, stackConfigMap, mergo.WithOverride)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	defaultVars := []string{
+		stackConfig.Provider,
+		stackConfig.Account, // may be blank depending on the provider
+		stackConfig.Profile,
+		stackConfig.Cluster,
+		stackConfig.Region, // may be blank depending on the provider
+	}
+
+	// store additional runtime values under the "sugarkube" key
+	installerVars["defaultVars"] = defaultVars
+	mergedVars["sugarkube"] = installerVars
+
+	err = mergo.Merge(&mergedVars, stackConfig.GetProviderVars(), mergo.WithOverride)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	log.Logger.Debugf("Merging stack vars with registry: %v", s.registry)
+
+	// merge in values from the registry
+	err = mergo.Merge(&mergedVars, s.registry.AsMap(), mergo.WithOverride)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if kappObj != nil {
+		kappVars, err := kappObj.GetVarsFromFiles(s.Config)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		kappIntrinsicDataConverted := map[string]interface{}{}
+
+		kappIntrinsicData := kappObj.GetIntrinsicData()
+		kappIntrinsicDataConverted = convert.MapStringStringToMapStringInterface(kappIntrinsicData)
+
+		// merge kapp.Vars with the vars from files so kapp.Vars take precedence. Todo - document the order of precedence
+		err = mergo.Merge(&kappVars, kappObj.Vars, mergo.WithOverride)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		// namespace kapp variables. This is safer than letting kapp variables overwrite arbitrary values (e.g.
+		// so they can't change the target stack, whether the kapp's approved, etc.), but may be too restrictive
+		// in certain situations. We'll have to see
+		kappIntrinsicDataConverted["vars"] = kappVars
+
+		namespacedKappMap := map[string]interface{}{
+			"kapp": kappIntrinsicDataConverted,
+		}
+		err = mergo.Merge(&mergedVars, namespacedKappMap, mergo.WithOverride)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	templatedVars, err := templater.IterativelyTemplate(mergedVars)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	//yamlData, err := yaml.Marshal(&templatedVars)
+	//if err != nil {
+	//	return nil, errors.WithStack(err)
+	//}
+	//log.Logger.Debugf("Vars after merging and templating:\n%s", yamlData)
+
+	return templatedVars, nil
 }

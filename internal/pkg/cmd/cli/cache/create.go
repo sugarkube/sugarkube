@@ -134,7 +134,7 @@ func (c *createCmd) run() error {
 			}
 		}
 
-		err = kapps.RenderTemplates(candidateKapps, absCacheDir, stackObj.Config, c.dryRun)
+		err = kapps.RenderTemplates(candidateKapps, absCacheDir, stackObj, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

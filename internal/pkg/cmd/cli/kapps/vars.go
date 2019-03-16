@@ -104,7 +104,7 @@ func (c *varsConfig) run() error {
 			kappObj.SetCacheDir(c.cacheDir)
 		}
 
-		templatedVars, err := stackObj.Config.TemplatedVars(&kappObj, map[string]interface{}{})
+		templatedVars, err := stackObj.TemplatedVars(&kappObj, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)
 		}

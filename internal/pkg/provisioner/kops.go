@@ -125,9 +125,7 @@ func (p KopsProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
 // Returns a bool indicating whether the cluster configuration has already been created
 func (p KopsProvisioner) clusterConfigExists() (bool, error) {
 
-	stackConfig := p.stack.GetConfig()
-
-	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := p.stack.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -175,7 +173,7 @@ func (p KopsProvisioner) create(dryRun bool) error {
 		return nil
 	}
 
-	templatedVars, err := p.stack.GetConfig().TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := p.stack.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -316,7 +314,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 		return errors.Wrap(err, "Error parsing kops config")
 	}
 
-	templatedVars, err := p.stack.GetConfig().TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := p.stack.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -524,7 +522,7 @@ func parameteriseValues(args []string, valueMap map[string]string) []string {
 
 // Parses the Kops provisioner config
 func parseKopsConfig(stackConfig interfaces.IStack) (*KopsConfig, error) {
-	templatedVars, err := stackConfig.GetConfig().TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

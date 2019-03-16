@@ -16,9 +16,19 @@
 
 package registry
 
+import (
+	"github.com/sugarkube/sugarkube/internal/pkg/convert"
+)
+
 // A registry so that different parts of the program can set and access values
 type Registry struct {
 	mapStringString map[string]string
+}
+
+func NewRegistry() Registry {
+	return Registry{
+		mapStringString: map[string]string{},
+	}
 }
 
 // Add a string to the registry
@@ -34,4 +44,8 @@ func (r *Registry) GetString(key string) (string, bool) {
 	}
 
 	return val, true
+}
+
+func (r Registry) AsMap() map[string]interface{} {
+	return convert.MapStringStringToMapStringInterface(r.mapStringString)
 }

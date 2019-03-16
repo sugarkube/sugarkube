@@ -249,7 +249,7 @@ regionOverride: region-val-override
 `
 
 	kappObj := &stackConfig.Manifests[0].ParsedKapps()[0]
-	results, err := kappObj.getVarsFromFiles(&stackConfig)
+	results, err := kappObj.GetVarsFromFiles(&stackConfig)
 	assert.Nil(t, err)
 
 	yamlResults, err := yaml.Marshal(results)
