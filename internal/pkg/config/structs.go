@@ -18,7 +18,7 @@ package config
 
 import "github.com/sugarkube/sugarkube/internal/pkg/program"
 
-type Conf struct {
+type config struct {
 	JsonLogs bool                      `mapstructure:"json-logs"`
 	LogLevel string                    `mapstructure:"log-level"`
 	Programs map[string]program.Config `mapstructure:"programs"`

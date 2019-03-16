@@ -1,5 +1,5 @@
-#log-level: none
-#json-logs: false
+log-level: warn
+json-logs: false
 
 programs:
   helm:
@@ -26,17 +26,10 @@ programs:
           # all files that exists and prepends '-f' to them so they'll be passed as options to helm.
           #
           - name: helm-opts
-            value: -f {{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | uniq | join " " }} {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " }}
+            value: customValue
 
-  kubectl:
+  prog2:
     envVars:
       KUBECONFIG: "{{ .kube_config }}"
       KUBE_CONTEXT: "{{ .kube_context }}"
-
-  aws:
-    envVars:
-      REGION: "{{ .stack.region }}"
-
-  terraform:
-    envVars:
       REGION: "{{ .stack.region }}"
