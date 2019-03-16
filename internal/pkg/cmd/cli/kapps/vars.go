@@ -38,8 +38,9 @@ func newVarsCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "vars [flags] [stack-file] [stack-name]",
 		Short: fmt.Sprintf("Display all variables available for a kapp"),
-		Long: `Merges variables from all sources and displays them. If a kapp is given, variables available for that 
-specific kapp will be displayed. If not, all generally available variables for the stack will be shown.`,
+		Long: `Merges variables from all sources and displays them. If the path 
+to a cache directory is given (with the '--cache-dir' flag) each kapp's sugarkube.yaml 
+file will be displayed templated.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return errors.New("the name of the stack to run, and the path to the stack file are required")
@@ -59,6 +60,7 @@ specific kapp will be displayed. If not, all generally available variables for t
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
+	f.StringVar(&c.cacheDir, "cache-dir", "", "path to cache dir (if given, each kapp's sugarkube.yaml config file will be displayed)")
 	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
 		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
 			kapp.WildcardCharacter))
@@ -98,6 +100,10 @@ func (c *varsConfig) run() error {
 	}
 
 	for _, kappObj := range selectedKapps {
+		if c.cacheDir != "" {
+			kappObj.SetCacheDir(c.cacheDir)
+		}
+
 		templatedVars, err := stackObj.Config.TemplatedVars(&kappObj, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)
@@ -127,6 +133,26 @@ func (c *varsConfig) run() error {
 			kappObj.FullyQualifiedId(), yamlData, kappObj.FullyQualifiedId())
 		if err != nil {
 			return errors.WithStack(err)
+		}
+
+		if c.cacheDir == "" {
+			_, err = fmt.Fprintf(c.out, "Won't display the %s file for "+
+				"'%s'. Provide the path to the cache dir with the --cache-dir "+
+				"option to display it.\n", kappObj.FullyQualifiedId(), kapp.ConfigFile)
+		} else {
+			err = kappObj.Load(templatedVars)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			kappConfig, err := yaml.Marshal(&kappObj.Config)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			_, err = fmt.Fprintf(c.out, "\n***** Start config for kapp '%s' *****\n"+
+				"%s***** End config for kapp '%s' *****\n",
+				kappObj.FullyQualifiedId(), kappConfig, kappObj.FullyQualifiedId())
 		}
 	}
 
