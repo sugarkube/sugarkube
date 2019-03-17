@@ -40,6 +40,12 @@ func initViper(appName string) *viper.Viper {
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
+	// Viper currently lowercases all keys in config files it loads. This breaks
+	// defining env vars in our config file, so storing program configs in
+	// our config file is on hold until this or similar are merged:
+	// https://github.com/spf13/viper/pull/635
+	//v.SetKeyCaseSensitivity(true)
+
 	// global defaults
 	v.SetDefault("json-logs", false)
 	v.SetDefault("log-level", "info")

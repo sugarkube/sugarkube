@@ -19,10 +19,8 @@ package kapp
 import (
 	"bytes"
 	"fmt"
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/program"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
@@ -76,49 +74,56 @@ func (k *Kapp) Load(mergedKappVars map[string]interface{}) error {
 
 // Templates global program configs for programs used by the kapp and merges
 // them wtih the kapps own config declared in its sugarkube.yaml file
-func (k Kapp) MergeProgramConfigs(programConfigs map[string]program.Config,
-	mergedKappVars map[string]interface{}) (*program.Config, error) {
-	var err error
-	mergedConfig := &program.Config{}
-
-	// merge the defaults together for the programs used in the kapp
-	for _, programName := range k.Config.Requires {
-		defaultConfig, ok := programConfigs[programName]
-		if !ok {
-			log.Logger.Debugf("No global program config for program '%s'",
-				programName)
-			continue
-		}
-
-		yamlDefault, err := defaultConfig.AsYaml()
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		// template the default config
-		templatedConfigStr, err := templater.RenderTemplate(yamlDefault, mergedKappVars)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		// convert it back to a program config
-		templatedConfig := program.Config{}
-		err = yaml.Unmarshal([]byte(templatedConfigStr), &templatedConfig)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		err = mergo.Merge(mergedConfig, templatedConfig, mergo.WithOverride)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-	}
-
-	// finally merge the kapp's own config over the top
-	err = mergo.Merge(mergedConfig, k.Config.Config, mergo.WithOverride)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return mergedConfig, nil
-}
+// todo - uncomment and test once viper supports not lowercasing all keys
+// in config files on loading. See https://github.com/spf13/viper/pull/635
+//func (k Kapp) MergeProgramConfigs(programConfigs map[string]program.Config,
+//	mergedKappVars map[string]interface{}) (*Config, error) {
+//	var err error
+//	mergedConfig := &program.Config{}
+//
+//	// merge the defaults together for the programs used in the kapp
+//	for _, programName := range k.Config.Requires {
+//		defaultConfig, ok := programConfigs[programName]
+//		if !ok {
+//			log.Logger.Debugf("No global program config for program '%s'",
+//				programName)
+//			continue
+//		}
+//
+//		yamlDefault, err := defaultConfig.AsYaml()
+//		if err != nil {
+//			return nil, errors.WithStack(err)
+//		}
+//
+//		// template the default config
+//		templatedConfigStr, err := templater.RenderTemplate(yamlDefault, mergedKappVars)
+//		if err != nil {
+//			return nil, errors.WithStack(err)
+//		}
+//
+//		// convert it back to a program config
+//		templatedConfig := program.Config{}
+//		err = yaml.Unmarshal([]byte(templatedConfigStr), &templatedConfig)
+//		if err != nil {
+//			return nil, errors.WithStack(err)
+//		}
+//
+//		err = mergo.Merge(mergedConfig, templatedConfig, mergo.WithOverride)
+//		if err != nil {
+//			return nil, errors.WithStack(err)
+//		}
+//	}
+//
+//	// finally merge the kapp's own config over the top
+//	err = mergo.Merge(mergedConfig, k.Config.Config, mergo.WithOverride)
+//	if err != nil {
+//		return nil, errors.WithStack(err)
+//	}
+//
+//	finalConfig := Config{
+//		Requires: k.Config.Requires,
+//		Config:   *mergedConfig,
+//	}
+//
+//	return &finalConfig, nil
+//}
