@@ -16,6 +16,11 @@
 
 package program
 
+import (
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
+)
+
 // A fragment of configuration for a program or kapp. It can be loaded either
 // from a kapp's sugarkube.yaml file or the global sugarkube config file. It
 // allows default env vars and arguments to be configured in one place and reused.
@@ -23,4 +28,14 @@ type Config struct {
 	EnvVars map[string]interface{}                    `yaml:"envVars"`
 	Version string                                    `yaml:"version"`
 	Args    map[string]map[string][]map[string]string `yaml:"args"`
+}
+
+// Returns a YAML representation of the config
+func (c Config) AsYaml() (string, error) {
+	yamlData, err := yaml.Marshal(c)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	return string(yamlData[:]), nil
 }

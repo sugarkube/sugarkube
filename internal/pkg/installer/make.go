@@ -121,6 +121,9 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfac
 
 	cliArgs := []string{makeTarget}
 
+	// todo - merge in values from the global config for each program declared in
+	// the kapp's sugarkube.yaml file. Make sure to respect the registry...
+
 	// todo - move this to a method. Make it more defensive and pull values from
 	// the overall config depending on the programs the kapp uses
 	targetArgs := kappObj.Config.Args["targets"][makeTarget]

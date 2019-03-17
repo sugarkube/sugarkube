@@ -74,3 +74,58 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, []string{"helm"}, testKapp.Config.Requires)
 	assert.Equal(t, expectedArgs, testKapp.Config.Args)
 }
+
+//func TestMergeProgramConfigs(t *testing.T) {
+//	kappId := "sample-kapp"
+//	stackRegion := "testRegion"
+//	testContext := "test-context"
+//
+//	templateVars := map[string]interface{}{
+//		"kube_context": testContext,
+//		"kapp": map[string]interface{}{
+//			"id": kappId,
+//		},
+//		"stack": map[string]interface{}{
+//			"region": stackRegion,
+//		},
+//	}
+//
+//	testKapp := Kapp{Id: "sample-kapp",
+//		manifest: &Manifest{
+//			ConfiguredId: "sample-manifest",
+//		},
+//	}
+//	testKapp.SetCacheDir(path.Join(testDir, "sample-cache"))
+//
+//	// load the kapp
+//	err := testKapp.Load(templateVars)
+//	assert.Nil(t, err)
+//
+//	// load the test config file - it's tested elsewhere
+//	configFile := path.Join(testDir, "test-sugarkube-conf.yaml")
+//	config.ViperConfig.SetConfigFile(configFile)
+//	err = config.Load(config.ViperConfig)
+//	assert.Nil(t, err)
+//
+//	// load the test stack config
+//	stackConfig, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
+//	assert.Nil(t, err)
+//
+//	// create a stack
+//	stackObj := &structs.Stack{
+//		Config:      stackConfig,
+//		Provider:    nil,
+//		Provisioner: nil,
+//		Status: nil,
+//	}
+//
+//	mergedVars, err := stackObj.TemplatedVars(nil, map[string]interface{}{})
+//	assert.Nil(t, err)
+//
+//	// get the merged config for the kapp
+//	mergedConfig, err := testKapp.MergeProgramConfigs(config.CurrentConfig.Programs,
+//		mergedVars)
+//	assert.Nil(t, err)
+//
+//	log.Logger.Fatalf("mergedconfig=%#v", mergedConfig)
+//}
