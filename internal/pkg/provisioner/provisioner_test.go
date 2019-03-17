@@ -27,7 +27,7 @@ func init() {
 }
 
 func TestNewNonExistentProvisioner(t *testing.T) {
-	actual, err := NewProvisioner("bananas", nil)
+	actual, err := NewProvisioner("bananas", nil, nil)
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }

@@ -51,7 +51,8 @@ type MinikubeConfig struct {
 const MinikubeSleepSecondsBeforeReadyCheck = 30
 
 // Instantiates a new instance
-func newMinikubeProvisioner(iStack interfaces.IStack) (*MinikubeProvisioner, error) {
+func newMinikubeProvisioner(iStack interfaces.IStack,
+	clusterSot clustersot.ClusterSot) (*MinikubeProvisioner, error) {
 	config, err := parseMinikubeConfig(iStack)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -60,6 +61,7 @@ func newMinikubeProvisioner(iStack interfaces.IStack) (*MinikubeProvisioner, err
 	return &MinikubeProvisioner{
 		stack:          iStack,
 		minikubeConfig: *config,
+		clusterSot:     clusterSot,
 	}, nil
 }
 
@@ -67,17 +69,8 @@ func (p MinikubeProvisioner) iStack() interfaces.IStack {
 	return p.stack
 }
 
-func (p MinikubeProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
-	if p.clusterSot == nil {
-		clusterSot, err := clustersot.NewClusterSot(clustersot.KUBECTL, p.stack)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		p.clusterSot = clusterSot
-	}
-
-	return p.clusterSot, nil
+func (p MinikubeProvisioner) ClusterSot() clustersot.ClusterSot {
+	return p.clusterSot
 }
 
 // Creates a new minikube cluster

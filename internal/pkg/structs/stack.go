@@ -18,6 +18,7 @@ package structs
 import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
@@ -59,7 +60,13 @@ func NewStack(globalConfig *config.Config, config *kapp.StackConfig,
 		registry: registry,
 	}
 
-	provisionerImpl, err := provisioner.NewProvisioner(stack.Config.Provisioner, stack)
+	clusterSot, err := clustersot.NewClusterSot(clustersot.KUBECTL, stack)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	provisionerImpl, err := provisioner.NewProvisioner(stack.Config.Provisioner,
+		stack, clusterSot)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

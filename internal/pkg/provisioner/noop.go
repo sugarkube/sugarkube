@@ -34,8 +34,8 @@ type NoOpProvisioner struct {
 type NoopConfig struct {
 }
 
-func (p NoOpProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
-	return nil, nil
+func (p NoOpProvisioner) ClusterSot() clustersot.ClusterSot {
+	return nil
 }
 
 func (p NoOpProvisioner) iStack() interfaces.IStack {

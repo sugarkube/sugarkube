@@ -93,7 +93,8 @@ type KopsConfig struct {
 }
 
 // Instantiates a new instance
-func newKopsProvisioner(stackConfig interfaces.IStack) (*KopsProvisioner, error) {
+func newKopsProvisioner(stackConfig interfaces.IStack,
+	clusterSot clustersot.ClusterSot) (*KopsProvisioner, error) {
 	kopsConfig, err := parseKopsConfig(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -102,6 +103,7 @@ func newKopsProvisioner(stackConfig interfaces.IStack) (*KopsProvisioner, error)
 	return &KopsProvisioner{
 		stack:      stackConfig,
 		kopsConfig: *kopsConfig,
+		clusterSot: clusterSot,
 	}, nil
 }
 
@@ -109,17 +111,8 @@ func (p KopsProvisioner) iStack() interfaces.IStack {
 	return p.stack
 }
 
-func (p KopsProvisioner) ClusterSot() (clustersot.ClusterSot, error) {
-	if p.clusterSot == nil {
-		clusterSot, err := clustersot.NewClusterSot(clustersot.KUBECTL, p.stack)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		p.clusterSot = clusterSot
-	}
-
-	return p.clusterSot, nil
+func (p KopsProvisioner) ClusterSot() clustersot.ClusterSot {
+	return p.clusterSot
 }
 
 // Returns a bool indicating whether the cluster configuration has already been created
@@ -220,11 +213,7 @@ func (p KopsProvisioner) isAlreadyOnline() (bool, error) {
 		return false, nil
 	}
 
-	clusterSot, err := p.ClusterSot()
-	if err != nil {
-		return false, errors.WithStack(err)
-	}
-
+	clusterSot := p.ClusterSot()
 	online, err := clustersot.IsOnline(clusterSot)
 	if err != nil {
 		return false, errors.WithStack(err)

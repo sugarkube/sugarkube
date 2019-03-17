@@ -27,7 +27,7 @@ import (
 
 type Provisioner interface {
 	// Returns the ClusterSot for this provisioner
-	ClusterSot() (clustersot.ClusterSot, error)
+	ClusterSot() clustersot.ClusterSot
 	// Creates a cluster
 	create(dryRun bool) error
 	// Returns whether the cluster is already running
@@ -46,13 +46,14 @@ type Provisioner interface {
 const ProvisionerKey = "provisioner"
 
 // Factory that creates providers
-func NewProvisioner(name string, stack interfaces.IStack) (Provisioner, error) {
+func NewProvisioner(name string, stack interfaces.IStack,
+	clusterSot clustersot.ClusterSot) (Provisioner, error) {
 	if stack == nil {
 		return nil, errors.New("Stack parameter can't be nil")
 	}
 
 	if name == MinikubeProvisionerName {
-		minikubeProvisioner, err := newMinikubeProvisioner(stack)
+		minikubeProvisioner, err := newMinikubeProvisioner(stack, clusterSot)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -61,7 +62,7 @@ func NewProvisioner(name string, stack interfaces.IStack) (Provisioner, error) {
 	}
 
 	if name == kopsProvisionerName {
-		kopsProvisioner, err := newKopsProvisioner(stack)
+		kopsProvisioner, err := newKopsProvisioner(stack, clusterSot)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -113,10 +114,7 @@ func IsAlreadyOnline(p Provisioner) (bool, error) {
 
 // Wait for a cluster to come online, then to become ready.
 func WaitForClusterReadiness(p Provisioner) error {
-	clusterSot, err := p.ClusterSot()
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	clusterSot := p.ClusterSot()
 
 	onlineTimeout := p.iStack().GetConfig().OnlineTimeout
 
