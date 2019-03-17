@@ -18,6 +18,7 @@ package plan
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -34,7 +35,7 @@ func init() {
 func TestCreateForward(t *testing.T) {
 	// testing the correctness of stacks is handled in stack_test.go
 	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
-		&kapp.StackConfig{}, os.Stdout)
+		&kapp.StackConfig{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 
 	stackConfig := stackObj.Config
@@ -138,7 +139,7 @@ func TestCreateForward(t *testing.T) {
 func TestCreateReverse(t *testing.T) {
 	// testing the correctness of stacks is handled in stack_test.go
 	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
-		&kapp.StackConfig{}, os.Stdout)
+		&kapp.StackConfig{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 
 	stackConfig := stackObj.Config
@@ -242,7 +243,7 @@ func TestCreateReverse(t *testing.T) {
 func TestCreateReverseNoPostActions(t *testing.T) {
 	// testing the correctness of stacks is handled in stack_test.go
 	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
-		&kapp.StackConfig{}, os.Stdout)
+		&kapp.StackConfig{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 
 	stackConfig := stackObj.Config

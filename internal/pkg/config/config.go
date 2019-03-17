@@ -27,7 +27,7 @@ import (
 
 const ConfigFileName = "sugarkube-conf"
 
-var Config *config
+var CurrentConfig *Config
 var ViperConfig *viper.Viper
 
 func init() {
@@ -69,7 +69,7 @@ func initViper(appName string) *viper.Viper {
 
 // Load/Reload the configuration
 func Load(viperConfig *viper.Viper) error {
-	var newConfig *config
+	var newConfig *Config
 
 	err := viperConfig.ReadInConfig()
 	if err != nil {
@@ -81,7 +81,7 @@ func Load(viperConfig *viper.Viper) error {
 		return errors.Wrapf(err, "Error unmarshalling config")
 	}
 
-	Config = newConfig
+	CurrentConfig = newConfig
 
 	return nil
 }

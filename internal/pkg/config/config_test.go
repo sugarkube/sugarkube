@@ -32,7 +32,7 @@ func init() {
 
 // Test that registry values override values when returning templated vars
 func TestTemplatedVarsWithRegistry(t *testing.T) {
-	expectedConfig := &config{
+	expectedConfig := &Config{
 		JsonLogs: false,
 		LogLevel: "warn",
 		Programs: map[string]program.Config{
@@ -69,5 +69,5 @@ func TestTemplatedVarsWithRegistry(t *testing.T) {
 
 	err := Load(ViperConfig)
 	assert.Nil(t, err)
-	assert.Equal(t, expectedConfig, Config)
+	assert.Equal(t, expectedConfig, CurrentConfig)
 }

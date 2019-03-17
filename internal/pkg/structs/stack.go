@@ -18,6 +18,7 @@ package structs
 import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
@@ -32,21 +33,23 @@ import (
 // we need to pass around. This is in its own package to avoid circular
 // dependencies.
 type Stack struct {
-	Config      *kapp.StackConfig
-	Provider    provider.Provider
-	Provisioner provisioner.Provisioner
-	Status      *ClusterStatus
-	registry    *registry.Registry
+	GlobalConfig *config.Config // config loaded for the program from the 'sugarkube-conf.yaml' file
+	Config       *kapp.StackConfig
+	Provider     provider.Provider
+	Provisioner  provisioner.Provisioner
+	Status       *ClusterStatus
+	registry     *registry.Registry
 }
 
 // Creates a new Stack
-func NewStack(config *kapp.StackConfig, provider provider.Provider,
-	registry *registry.Registry) (*Stack, error) {
+func NewStack(globalConfig *config.Config, config *kapp.StackConfig,
+	provider provider.Provider, registry *registry.Registry) (*Stack, error) {
 
 	stack := &Stack{
-		Config:      config,
-		Provider:    provider,
-		Provisioner: nil,
+		GlobalConfig: globalConfig,
+		Config:       config,
+		Provider:     provider,
+		Provisioner:  nil,
 		Status: &ClusterStatus{
 			isOnline:              false,
 			isReady:               false,
@@ -68,6 +71,10 @@ func NewStack(config *kapp.StackConfig, provider provider.Provider,
 
 func (s Stack) GetConfig() *kapp.StackConfig {
 	return s.Config
+}
+
+func (s Stack) GetGlobalConfig() *config.Config {
+	return s.GlobalConfig
 }
 
 func (s Stack) GetStatus() interfaces.IClusterStatus {

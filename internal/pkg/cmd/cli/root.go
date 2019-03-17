@@ -150,8 +150,8 @@ func init() {
 		}
 
 		// reconfigure the logger based on CLI args
-		log.ConfigureLogger(config.Config.LogLevel,
-			config.Config.JsonLogs)
+		log.ConfigureLogger(config.CurrentConfig.LogLevel,
+			config.CurrentConfig.JsonLogs)
 	})
 
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|debug|info|warn|error|fatal")
