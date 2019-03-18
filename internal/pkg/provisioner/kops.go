@@ -23,6 +23,7 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
@@ -57,8 +58,6 @@ const configKeyApiLoadBalancerType = "api_loadbalancer_type"
 const configKeyCreateCluster = "create_cluster"
 const configKeyBastion = "bastion"
 const configKeyClusterName = "name"
-
-const registryKeyKubeConfig = "kube_config"
 
 const awsCliPath = "aws"
 const sshPath = "ssh"
@@ -242,10 +241,15 @@ func (p KopsProvisioner) update(dryRun bool) error {
 	args = parameteriseValues(args, p.kopsConfig.Params.Global)
 	args = parameteriseValues(args, p.kopsConfig.Params.RollingUpdate)
 
+	kubeConfig, _ := p.stack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
+	envVars := map[string]string{
+		"KUBECONFIG": kubeConfig,
+	}
+
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	log.Logger.Info("Running Kops rolling update...")
-	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
+	err = utils.ExecCommand(p.kopsConfig.Binary, args, envVars, &stdoutBuf, &stderrBuf,
 		"", 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
@@ -628,7 +632,7 @@ func (p *KopsProvisioner) ensureClusterConnectivity() (bool, error) {
 	localPort := p.kopsConfig.LocalPortForwardingPort
 	apiDomain := fmt.Sprintf("api.%s", p.kopsConfig.clusterName)
 
-	kubeConfigPath, _ := p.stack.GetRegistry().GetString(registryKeyKubeConfig)
+	kubeConfigPath, _ := p.stack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
 
 	if kubeConfigPath != "" {
 		log.Logger.Debugf("Kubeconfig file already downloaded to '%s'", kubeConfigPath)
@@ -638,7 +642,7 @@ func (p *KopsProvisioner) ensureClusterConnectivity() (bool, error) {
 			return false, errors.WithStack(err)
 		}
 
-		p.stack.GetRegistry().SetString(registryKeyKubeConfig, kubeConfigPath)
+		p.stack.GetRegistry().SetString(constants.RegistryKeyKubeConfig, kubeConfigPath)
 
 		// modify the host name in the file to point to the local k8s server domain
 		err = replaceAllInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),
