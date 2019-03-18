@@ -108,7 +108,7 @@ func (c *createCmd) run() error {
 	}
 
 	for _, manifest := range stackObj.Config.Manifests {
-		err := cacher.CacheManifest(*manifest, absCacheDir, c.dryRun)
+		err := cacher.CacheManifest(manifest, absCacheDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

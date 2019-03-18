@@ -28,9 +28,18 @@ import (
 
 const CacheDir = ".sugarkube"
 
-// Returns the cache dir for a manifest
-func GetManifestCachePath(cacheDir string, manifest kapp.Manifest) string {
-	return filepath.Join(cacheDir, manifest.Id())
+type Ider interface {
+	Id() string
+}
+
+type CacheGrouper interface {
+	Ider
+	ParsedKapps() []kapp.Kapp
+}
+
+// Returns the path that the group of cacheable objects should be stored under
+func getCacheGroupPath(cacheDir string, cacheGroup Ider) string {
+	return filepath.Join(cacheDir, cacheGroup.Id())
 }
 
 // Returns the path of a kapp's cache dir where the different sources are
@@ -39,45 +48,31 @@ func getKappCachePath(kappRootPath string) string {
 	return filepath.Join(kappRootPath, CacheDir)
 }
 
-// Build a cache for a manifest into a directory
-func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
+// Cache a group of cacheable objects under a root directory
+func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) error {
 
-	// create a directory to cache all kapps in this manifest in
-	manifestCacheDir := GetManifestCachePath(cacheDir, manifest)
+	// create a directory to cache all kapps in this cacheGroup in
+	groupCacheDir := getCacheGroupPath(rootCacheDir, cacheGroup)
 
-	if _, err := os.Stat(manifestCacheDir); err != nil {
-		if os.IsNotExist(err) {
-			log.Logger.Infof("Creating manifest cache dir '%s'", manifestCacheDir)
-			err := os.MkdirAll(manifestCacheDir, 0755)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-		} else {
-			return errors.Wrapf(err, "Error creating manifest dir '%s'", manifestCacheDir)
-		}
+	err := createDirectoryIfMissing(groupCacheDir)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	// acquire each kapp and cache it
-	for _, kappObj := range manifest.ParsedKapps() {
-		// build a directory path for the kapp in the manifest cache directory
-		kappObj.SetCacheDir(cacheDir)
+	for _, kappObj := range cacheGroup.ParsedKapps() {
+		// build a directory path for the kapp in the cacheGroup cache directory
+		kappObj.SetCacheDir(rootCacheDir)
 
 		log.Logger.Infof("Caching kapp '%s'", kappObj.FullyQualifiedId())
 		log.Logger.Debugf("Kapp to cache: %#v", kappObj)
 
 		// build a directory path for the kapp's .sugarkube cache directory
-		sugarkubeCacheDir := getKappCachePath(kappObj.CacheDir())
+		kappHiddenCacheDir := getKappCachePath(kappObj.CacheDir())
 
-		if _, err := os.Stat(sugarkubeCacheDir); err != nil {
-			if os.IsNotExist(err) {
-				log.Logger.Debugf("Creating kapp cache dir '%s'", sugarkubeCacheDir)
-				err := os.MkdirAll(sugarkubeCacheDir, 0755)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-			} else {
-				return errors.Wrapf(err, "Error creating cache dir '%s'", sugarkubeCacheDir)
-			}
+		err := createDirectoryIfMissing(kappHiddenCacheDir)
+		if err != nil {
+			return errors.WithStack(err)
 		}
 
 		acquirers, err := kappObj.Acquirers()
@@ -85,7 +80,8 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 			return errors.WithStack(err)
 		}
 
-		err = acquireSource(manifest, acquirers, kappObj.CacheDir(), sugarkubeCacheDir, dryRun)
+		err = acquireSource(cacheGroup, acquirers, kappObj.CacheDir(),
+			kappHiddenCacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -96,8 +92,9 @@ func CacheManifest(manifest kapp.Manifest, cacheDir string, dryRun bool) error {
 
 // Acquires each source and symlinks it to the target path in the cache directory.
 // Runs all acquirers in parallel.
-func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDir string,
+func acquireSource(manifest Ider, acquirers []acquirer.Acquirer, rootDir string,
 	cacheDir string, dryRun bool) error {
+
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 
@@ -180,6 +177,23 @@ func acquireSource(manifest kapp.Manifest, acquirers []acquirer.Acquirer, rootDi
 	}
 
 	log.Logger.Infof("Finished acquiring sources for manifest '%s'", manifest.Id())
+
+	return nil
+}
+
+// Creates a directory if it doesn't exist
+func createDirectoryIfMissing(path string) error {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			log.Logger.Debugf("Creating dir '%s'", path)
+			err := os.MkdirAll(path, 0755)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		} else {
+			return errors.Wrapf(err, "Error creating dir '%s'", path)
+		}
+	}
 
 	return nil
 }
