@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
@@ -45,9 +46,14 @@ func (c KubeCtlClusterSot) isOnline() (bool, error) {
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
+	kubeConfig, _ := c.stack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
+	envVars := map[string]string{
+		"KUBECONFIG": kubeConfig,
+	}
+
 	// poll `kubectl --context {{ kube_context }} get namespace`
 	err = utils.ExecCommand(KubectlPath, []string{"--context", context, "get", "namespace"},
-		map[string]string{}, &stdoutBuf, &stderrBuf, "", 30, false)
+		envVars, &stdoutBuf, &stderrBuf, "", 30, false)
 	if err != nil {
 		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
 			log.Logger.Info("Cluster isn't online yet - kubectl not getting results")
@@ -72,6 +78,9 @@ func (c KubeCtlClusterSot) isReady() (bool, error) {
 	// then just feed that to grep on its stdin instead of piping directly.
 	userEnv := os.Environ()
 	var kubeCtlStderr, grepStdout bytes.Buffer
+
+	kubeConfig, _ := c.stack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
+	userEnv = append(userEnv, fmt.Sprintf("KUBECONFIG=%s", kubeConfig))
 
 	kubeCtlCmd := exec.Command(KubectlPath, "--context", context, "-n", "kube-system",
 		"get", "pod", "-o", "go-template=\"{{ range .items }}{{ printf \"%%s\\n\" .status.phase }}{{ end }}\"")
