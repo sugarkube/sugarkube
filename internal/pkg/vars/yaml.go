@@ -52,3 +52,13 @@ func LoadYamlFile(path string, out interface{}) error {
 
 	return nil
 }
+
+// Returns a YAML representation of an object
+func AsYaml(in interface{}) (string, error) {
+	yamlData, err := yaml.Marshal(in)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	return string(yamlData[:]), nil
+}

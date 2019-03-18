@@ -90,7 +90,7 @@ func (k *Kapp) Load(mergedKappVars map[string]interface{}) error {
 //			continue
 //		}
 //
-//		yamlDefault, err := defaultConfig.AsYaml()
+//		yamlDefault, err := AsYaml(defaultConfig)
 //		if err != nil {
 //			return nil, errors.WithStack(err)
 //		}
