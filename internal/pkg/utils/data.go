@@ -16,7 +16,7 @@
 
 package utils
 
-// Create a nested map with the final element an empty string
+// Creates a nested map with the final element an empty string
 func BlankNestedMap(accumulator map[string]interface{}, elements []string) map[string]interface{} {
 	if len(elements) == 1 {
 		accumulator[elements[0]] = ""

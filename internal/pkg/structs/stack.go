@@ -159,6 +159,15 @@ func (s *Stack) TemplatedVars(kappObj *kapp.Kapp,
 		// in certain situations. We'll have to see
 		kappIntrinsicDataConverted["vars"] = kappVars
 
+		// add placeholders templated paths so kapps that use them work when running
+		// `kapp vars`, etc.
+		templatePlaceholders := make([]string, 0)
+
+		for i, _ := range kappObj.Templates {
+			templatePlaceholders[i] = "<generated>"
+		}
+		kappIntrinsicDataConverted["templates"] = templatePlaceholders
+
 		namespacedKappMap := map[string]interface{}{
 			"kapp": kappIntrinsicDataConverted,
 		}
