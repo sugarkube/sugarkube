@@ -25,6 +25,8 @@ import (
 	"time"
 )
 
+const shortSleepTime = 5
+
 type Provisioner interface {
 	// Returns the ClusterSot for this provisioner
 	ClusterSot() clustersot.ClusterSot
@@ -97,6 +99,16 @@ func IsAlreadyOnline(p Provisioner) (bool, error) {
 	log.Logger.Infof("Checking whether cluster '%s' is already online...",
 		clusterName)
 
+	connected, err := p.ensureClusterConnectivity()
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
+
+	if !connected {
+		log.Logger.Infof("Couldn't establish a connection to cluster '%s'", clusterName)
+		return false, nil
+	}
+
 	online, err := p.isAlreadyOnline()
 	if err != nil {
 		return false, errors.WithStack(err)
@@ -126,6 +138,18 @@ func WaitForClusterReadiness(p Provisioner) error {
 
 	timeoutTime := time.Now().Add(time.Second * time.Duration(onlineTimeout))
 	for time.Now().Before(timeoutTime) {
+		connected, err := p.ensureClusterConnectivity()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		if !connected {
+			log.Logger.Infof("Couldn't establish a connection to the " +
+				"cluster. Sleeping before retrying...")
+			time.Sleep(shortSleepTime * time.Second)
+			continue
+		}
+
 		online, err := clustersot.IsOnline(clusterSot)
 		if err != nil {
 			return errors.WithStack(err)
@@ -145,7 +169,7 @@ func WaitForClusterReadiness(p Provisioner) error {
 			}
 
 			log.Logger.Debug("Cluster isn't online. Sleeping...")
-			time.Sleep(time.Duration(5) * time.Second)
+			time.Sleep(shortSleepTime * time.Second)
 		}
 	}
 
@@ -174,7 +198,7 @@ func WaitForClusterReadiness(p Provisioner) error {
 			break
 		} else {
 			log.Logger.Info("Cluster isn't ready. Sleeping...")
-			time.Sleep(time.Duration(5) * time.Second)
+			time.Sleep(shortSleepTime * time.Second)
 		}
 	}
 
