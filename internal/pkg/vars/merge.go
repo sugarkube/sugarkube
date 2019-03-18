@@ -24,27 +24,28 @@ import (
 	"io/ioutil"
 )
 
+// Merges YAML files from multiple paths, with data from files loaded later
+// overriding values loaded earlier.
 func Merge(result *map[string]interface{}, paths ...string) error {
 
 	for _, path := range paths {
-
 		log.Logger.Debug("Loading path ", path)
 
-		yamlFile, err := ioutil.ReadFile(path)
+		contents, err := ioutil.ReadFile(path)
 		if err != nil {
-			return errors.Wrapf(err, "Error reading YAML file %s", path)
+			return errors.Wrapf(err, "Error reading file %s", path)
 		}
 
-		var loaded = map[string]interface{}{}
+		var yamlData = map[string]interface{}{}
 
-		err = yaml.Unmarshal(yamlFile, loaded)
+		err = yaml.Unmarshal(contents, yamlData)
 		if err != nil {
-			return errors.Wrapf(err, "Error loading YAML file: %s", path)
+			return errors.Wrapf(err, "Error parsing YAML: %s", path)
 		}
 
-		log.Logger.Debugf("Merging %v with %v", result, loaded)
+		log.Logger.Debugf("Merging %v with %v", result, yamlData)
 
-		err = mergo.Merge(result, loaded, mergo.WithOverride)
+		err = mergo.Merge(result, yamlData, mergo.WithOverride)
 		if err != nil {
 			return errors.WithStack(err)
 		}
