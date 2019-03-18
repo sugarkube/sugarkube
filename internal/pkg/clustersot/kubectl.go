@@ -18,14 +18,13 @@ package clustersot
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
-	"os"
 	"os/exec"
+	"strings"
 )
 
 type KubeCtlClusterSot struct {
@@ -33,8 +32,10 @@ type KubeCtlClusterSot struct {
 }
 
 // todo - make configurable
-const KubectlPath = "kubectl"
-const KubeContextKey = "kube_context"
+const kubectlPath = "kubectl"
+const kubeContextKey = "kube_context"
+
+const timeoutSeconds = 30
 
 // Tests whether the cluster is online
 func (c KubeCtlClusterSot) isOnline() (bool, error) {
@@ -42,7 +43,7 @@ func (c KubeCtlClusterSot) isOnline() (bool, error) {
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
-	context := templatedVars[KubeContextKey].(string)
+	context := templatedVars[kubeContextKey].(string)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
@@ -52,8 +53,8 @@ func (c KubeCtlClusterSot) isOnline() (bool, error) {
 	}
 
 	// poll `kubectl --context {{ kube_context }} get namespace`
-	err = utils.ExecCommand(KubectlPath, []string{"--context", context, "get", "namespace"},
-		envVars, &stdoutBuf, &stderrBuf, "", 30, false)
+	err = utils.ExecCommand(kubectlPath, []string{"--context", context, "get", "namespace"},
+		envVars, &stdoutBuf, &stderrBuf, "", timeoutSeconds, false)
 	if err != nil {
 		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
 			log.Logger.Info("Cluster isn't online yet - kubectl not getting results")
@@ -66,70 +67,45 @@ func (c KubeCtlClusterSot) isOnline() (bool, error) {
 	return true, nil
 }
 
-// Tests whether all pods are Ready
+// Tests whether all pods are Ready (or rather whether any pods have a status
+// apart from "Running" or "Succeeded")
 func (c KubeCtlClusterSot) isReady() (bool, error) {
 	templatedVars, err := c.stack.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
-	context := templatedVars[KubeContextKey].(string)
 
-	// todo - simplify this by using ExecCommand to get the data from kubectl with a timeout,
-	// then just feed that to grep on its stdin instead of piping directly.
-	userEnv := os.Environ()
-	var kubeCtlStderr, grepStdout bytes.Buffer
+	context := templatedVars[kubeContextKey].(string)
+
+	var stdoutBuf, stderrBuf bytes.Buffer
 
 	kubeConfig, _ := c.stack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
-	userEnv = append(userEnv, fmt.Sprintf("KUBECONFIG=%s", kubeConfig))
 
-	kubeCtlCmd := exec.Command(KubectlPath, "--context", context, "-n", "kube-system",
-		"get", "pod", "-o", "go-template=\"{{ range .items }}{{ printf \"%%s\\n\" .status.phase }}{{ end }}\"")
-	kubeCtlCmd.Env = userEnv
-	kubeCtlCmd.Stderr = &kubeCtlStderr
-	kubeCtlStdout, err := kubeCtlCmd.StdoutPipe()
+	args := []string{
+		"--context", context,
+		"-n",
+		"kube-system",
+		"get", "pod",
+		"-o", "go-template=\"{{ range .items }}{{ printf \"%%s\\n\" .status.phase }}{{ end }}\"",
+	}
+
+	envVars := map[string]string{
+		"KUBECONFIG": kubeConfig,
+	}
+
+	err = utils.ExecCommand(kubectlPath, args, envVars, &stdoutBuf, &stderrBuf,
+		"", timeoutSeconds, false)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
 
-	grepCmd := exec.Command("grep", "-v", "-e", "Running", "-e", "Succeeded")
-	grepCmd.Env = userEnv
-	grepCmd.Stdin = kubeCtlStdout
-	grepCmd.Stdout = &grepStdout
+	kubeCtlOutput := stdoutBuf.String()
 
-	err = grepCmd.Start()
-	if err != nil {
-		return false, errors.Wrap(err, "Failed to run grep")
-	}
+	// see whether any statuses apart from "Running" or "Succeeded" were returned
+	kubeCtlOutput = strings.Replace(kubeCtlOutput, "Running", "", -1)
+	kubeCtlOutput = strings.Replace(kubeCtlOutput, "Succeeded", "", -1)
 
-	err = kubeCtlCmd.Start()
-	if err != nil {
-		return false, errors.Wrap(err, "Failed to run kubectl")
-	}
-
-	err = kubeCtlCmd.Wait()
-	if err != nil {
-		if _, ok := err.(*exec.ExitError); ok {
-			if kubeCtlStderr.String() != "" {
-				errMsg := fmt.Sprintf("kubectl exited with %s", kubeCtlStderr.String())
-				log.Logger.Fatalf(errMsg)
-				return false, errors.Wrap(err, errMsg)
-			} else {
-				return false, nil
-			}
-		}
-
-		return false, errors.Wrap(err, "kubectl terminated badly")
-	}
-
-	err = grepCmd.Wait()
-	if err != nil {
-		return false, errors.Wrap(err, "grep terminated badly")
-	}
-
-	// some funkiness probably with new lines means that even if grep return
-	// no output, the length of its stdout buffer isn't 0, but this is
-	// good enough...
-	return grepStdout.Len() < 5, nil
+	return strings.TrimSpace(kubeConfig) == "", nil
 }
 
 func (c KubeCtlClusterSot) iStack() interfaces.IStack {
