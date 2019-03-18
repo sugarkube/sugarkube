@@ -80,7 +80,7 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 			return errors.WithStack(err)
 		}
 
-		err = acquireSource(cacheGroup, acquirers, kappObj.CacheDir(),
+		err = acquireSources(cacheGroup.Id(), acquirers, kappObj.CacheDir(),
 			kappHiddenCacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
@@ -92,13 +92,13 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 
 // Acquires each source and symlinks it to the target path in the cache directory.
 // Runs all acquirers in parallel.
-func acquireSource(manifest Ider, acquirers []acquirer.Acquirer, rootDir string,
-	cacheDir string, dryRun bool) error {
+func acquireSources(manifestId string, acquirers []acquirer.Acquirer, rootDir string,
+	kappHiddenCacheDir string, dryRun bool) error {
 
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 
-	log.Logger.Infof("Acquiring sources for manifest '%s'", manifest.Id())
+	log.Logger.Infof("Acquiring sources for manifest '%s'", manifestId)
 
 	for _, acquirerImpl := range acquirers {
 		go func(a acquirer.Acquirer) {
@@ -110,7 +110,7 @@ func acquireSource(manifest Ider, acquirers []acquirer.Acquirer, rootDir string,
 
 			// todo - the no-op file acquirer doesn't actually cache files, so we need some object whose job it is
 			// to create cache paths per-acquirer (or a method on each acquirer type)
-			sourceDest := filepath.Join(cacheDir, acquirerId)
+			sourceDest := filepath.Join(kappHiddenCacheDir, acquirerId)
 
 			if dryRun {
 				log.Logger.Debugf("Dry run: Would acquire source into '%s'", sourceDest)
@@ -169,14 +169,14 @@ func acquireSource(manifest Ider, acquirers []acquirer.Acquirer, rootDir string,
 			close(doneCh)
 			log.Logger.Warnf("Error in acquirer goroutines: %s", err)
 			return errors.Wrapf(err, "Error running acquirer in goroutine "+
-				"for manifest '%s'", manifest.Id())
+				"for manifest '%s'", manifestId)
 		case <-doneCh:
 			log.Logger.Infof("%d acquirer(s) successfully completed for manifest '%s'",
-				success+1, manifest.Id())
+				success+1, manifestId)
 		}
 	}
 
-	log.Logger.Infof("Finished acquiring sources for manifest '%s'", manifest.Id())
+	log.Logger.Infof("Finished acquiring sources for manifest '%s'", manifestId)
 
 	return nil
 }
