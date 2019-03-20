@@ -18,6 +18,7 @@ package structs
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
@@ -34,9 +35,10 @@ func TestTemplatedVarsWithRegistry(t *testing.T) {
 	expectedVarsBlankRegistry := map[string]interface{}{
 		"sugarkube": map[interface{}]interface{}{
 			"defaultVars": []interface{}{"", "testAccount", "", "", "testRegion"}},
-		"someKey1": "valueA",
-		"someKey2": "valueB",
-		"someKey3": "valueC",
+		"someKey1":                      "valueA",
+		"someKey2":                      "valueB",
+		"someKey3":                      "valueC",
+		constants.RegistryKeyKubeConfig: "",
 		"stack": map[interface{}]interface{}{
 			"filePath":    "",
 			"name":        "",
@@ -52,9 +54,10 @@ func TestTemplatedVarsWithRegistry(t *testing.T) {
 	expectedVarsUpdatedRegistry := map[string]interface{}{
 		"sugarkube": map[interface{}]interface{}{
 			"defaultVars": []interface{}{"", "testAccount", "", "", "testRegion"}},
-		"someKey1": "valueA",
-		"someKey2": "updatedValue",
-		"someKey3": "valueC",
+		"someKey1":                      "valueA",
+		"someKey2":                      "updatedValue",
+		"someKey3":                      "valueC",
+		constants.RegistryKeyKubeConfig: "",
 		"stack": map[interface{}]interface{}{
 			"filePath":    "",
 			"name":        "",

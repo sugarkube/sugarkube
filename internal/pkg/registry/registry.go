@@ -17,6 +17,7 @@
 package registry
 
 import (
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"strings"
@@ -29,7 +30,11 @@ type Registry struct {
 
 func NewRegistry() Registry {
 	return Registry{
-		mapStringString: map[string]string{},
+		mapStringString: map[string]string{
+			// todo - find a better way of initialising this. We need to do this
+			//  so `kapp vars` doesn't output '<no value>' which might be confusing
+			constants.RegistryKeyKubeConfig: "",
+		},
 	}
 }
 

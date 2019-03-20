@@ -31,7 +31,7 @@ func init() {
 }
 
 // Test that registry values override values when returning templated vars
-func TestTemplatedVarsWithRegistry(t *testing.T) {
+func TestLoadConfig(t *testing.T) {
 	expectedConfig := &Config{
 		JsonLogs: false,
 		LogLevel: "warn",
