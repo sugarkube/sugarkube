@@ -161,7 +161,7 @@ func (s *Stack) TemplatedVars(kappObj *kapp.Kapp,
 
 		// add placeholders templated paths so kapps that use them work when running
 		// `kapp vars`, etc.
-		templatePlaceholders := make([]string, 0)
+		templatePlaceholders := make([]string, len(kappObj.Templates))
 
 		for i, _ := range kappObj.Templates {
 			templatePlaceholders[i] = "<generated>"
