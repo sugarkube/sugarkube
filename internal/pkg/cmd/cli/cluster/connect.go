@@ -99,7 +99,7 @@ func (c *connectCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = provisioner.IsAlreadyOnline(stackObj.Provisioner)
+	_, err = provisioner.IsAlreadyOnline(stackObj.Provisioner, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

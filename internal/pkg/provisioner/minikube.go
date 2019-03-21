@@ -101,7 +101,7 @@ func (p MinikubeProvisioner) create(dryRun bool) error {
 }
 
 // Returns whether a minikube cluster is already online
-func (p MinikubeProvisioner) isAlreadyOnline() (bool, error) {
+func (p MinikubeProvisioner) isAlreadyOnline(dryRun bool) (bool, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	err := utils.ExecCommand(p.minikubeConfig.Binary, []string{"status"}, map[string]string{},

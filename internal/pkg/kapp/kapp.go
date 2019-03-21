@@ -355,9 +355,9 @@ func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfi
 			if err != nil {
 				return renderedPaths, errors.WithStack(err)
 			}
-
-			renderedPaths = append(renderedPaths, destPath)
 		}
+
+		renderedPaths = append(renderedPaths, destPath)
 	}
 
 	return renderedPaths, nil

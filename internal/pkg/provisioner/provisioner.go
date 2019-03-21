@@ -33,7 +33,7 @@ type Provisioner interface {
 	// Creates a cluster
 	create(dryRun bool) error
 	// Returns whether the cluster is already running
-	isAlreadyOnline() (bool, error)
+	isAlreadyOnline(dryRun bool) (bool, error)
 	// Update the cluster config if supported by the provisioner
 	update(dryRun bool) error
 	// We need to use an interface to work with Stack objects to avoid circular dependencies
@@ -92,7 +92,7 @@ func Update(p Provisioner, dryRun bool) error {
 }
 
 // Return whether the cluster is already online
-func IsAlreadyOnline(p Provisioner) (bool, error) {
+func IsAlreadyOnline(p Provisioner, dryRun bool) (bool, error) {
 
 	clusterName := p.iStack().GetConfig().Name
 
@@ -109,7 +109,7 @@ func IsAlreadyOnline(p Provisioner) (bool, error) {
 		return false, nil
 	}
 
-	online, err := p.isAlreadyOnline()
+	online, err := p.isAlreadyOnline(dryRun)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}

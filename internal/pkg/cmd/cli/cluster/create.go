@@ -142,7 +142,7 @@ func CreateCluster(out io.Writer, stackObj *structs.Stack, dryRun bool) error {
 			dryRunPrefix)
 
 	} else {
-		online, err := provisioner.IsAlreadyOnline(stackObj.Provisioner)
+		online, err := provisioner.IsAlreadyOnline(stackObj.Provisioner, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

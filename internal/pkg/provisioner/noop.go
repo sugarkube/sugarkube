@@ -50,7 +50,7 @@ func (p NoOpProvisioner) create(dryRun bool) error {
 }
 
 // Returns whether a noop cluster is already online
-func (p NoOpProvisioner) isAlreadyOnline() (bool, error) {
+func (p NoOpProvisioner) isAlreadyOnline(dryRun bool) (bool, error) {
 
 	log.Logger.Infof("Noop provisioner - pretending a cluster is online")
 	// return that the cluster is online

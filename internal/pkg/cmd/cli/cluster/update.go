@@ -135,7 +135,7 @@ func UpdateCluster(out io.Writer, stackObj *structs.Stack, autoCreate bool,
 		return errors.WithStack(err)
 	}
 
-	online, err := provisioner.IsAlreadyOnline(stackObj.Provisioner)
+	online, err := provisioner.IsAlreadyOnline(stackObj.Provisioner, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

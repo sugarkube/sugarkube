@@ -202,7 +202,14 @@ func (p KopsProvisioner) create(dryRun bool) error {
 }
 
 // Returns a boolean indicating whether the cluster is already online
-func (p KopsProvisioner) isAlreadyOnline() (bool, error) {
+func (p KopsProvisioner) isAlreadyOnline(dryRun bool) (bool, error) {
+
+	if dryRun {
+		// say we'll check but don't actually check
+		log.Logger.Debug("[Dry run] Checking whether a cluster config already exists")
+		return true, nil
+	}
+
 	configExists, err := p.clusterConfigExists()
 	if err != nil {
 		return false, errors.WithStack(err)
@@ -266,14 +273,21 @@ func (p KopsProvisioner) update(dryRun bool) error {
 // Patches a Kops cluster configuration. Downloads the current config then merges in any configured
 // spec.
 func (p KopsProvisioner) patch(dryRun bool) error {
-	configExists, err := p.clusterConfigExists()
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	var err error
 
-	// can't update a non-existent config
-	if !configExists {
-		return nil
+	if dryRun {
+		// say we'll check but don't actually check
+		log.Logger.Debug("[Dry run] Checking whether a cluster config already exists")
+	} else {
+		configExists, err := p.clusterConfigExists()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		// can't update a non-existent config
+		if !configExists {
+			return nil
+		}
 	}
 
 	// get the kops config

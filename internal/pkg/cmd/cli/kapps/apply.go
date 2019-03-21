@@ -197,7 +197,7 @@ func (c *applyCmd) run() error {
 		log.Logger.Infof("%sEstablishing connectivity to the API server",
 			dryRunPrefix)
 		if !c.dryRun {
-			isOnline, err := provisioner.IsAlreadyOnline(stackObj.Provisioner)
+			isOnline, err := provisioner.IsAlreadyOnline(stackObj.Provisioner, c.dryRun)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -227,7 +227,7 @@ func (c *applyCmd) run() error {
 			return errors.WithStack(err)
 		}
 
-		_, err = fmt.Fprint(c.out, "%sFirst applying the plan with APPROVED=false for "+
+		_, err = fmt.Fprintf(c.out, "%sFirst applying the plan with APPROVED=false for "+
 			"kapps to plan their changes...\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
