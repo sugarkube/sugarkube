@@ -48,6 +48,7 @@ type applyCmd struct {
 	account             string
 	cluster             string
 	region              string
+	runUntil            string // todo - implement, and add the same flag to the destroy command
 	includeSelector     []string
 	excludeSelector     []string
 	onlineTimeout       uint32
@@ -104,11 +105,13 @@ process before installing the selected kapps.
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
+	f.StringVarP(&c.runUntil, "until", "u", "", fmt.Sprintf("apply kapps upto and including the selected kapp formatted "+
+		"'manifest-id:kapp-id' or 'manifest-id:%s'", kapp.WildcardCharacter))
 	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
-		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
+		fmt.Sprintf("only process specified kapps (can specify multiple, formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all)",
 			kapp.WildcardCharacter))
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
-		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
+		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all)",
 			kapp.WildcardCharacter))
 	f.Uint32Var(&c.onlineTimeout, "online-timeout", 600, "max number of seconds to wait for the cluster to come online")
 	f.Uint32Var(&c.readyTimeout, "ready-timeout", 600, "max number of seconds to wait for the cluster to become ready")
