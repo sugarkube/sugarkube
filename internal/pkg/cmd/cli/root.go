@@ -154,7 +154,7 @@ func init() {
 			config.CurrentConfig.JsonLogs)
 	})
 
-	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|debug|info|warn|error|fatal")
+	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|trace|debug|info|warn|error|fatal")
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "",
 		fmt.Sprintf("path to a config file. If not given, default paths "+
 			"will be searched for a file called '%s.(yaml|json)'", config.ConfigFileName))

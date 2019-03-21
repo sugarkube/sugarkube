@@ -43,7 +43,7 @@ func Merge(result *map[string]interface{}, paths ...string) error {
 			return errors.Wrapf(err, "Error parsing YAML: %s", path)
 		}
 
-		log.Logger.Debugf("Merging %v with %v", result, yamlData)
+		log.Logger.Tracef("Merging %v with %v", result, yamlData)
 
 		err = mergo.Merge(result, yamlData, mergo.WithOverride)
 		if err != nil {

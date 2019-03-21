@@ -72,6 +72,8 @@ func setLevel(l *logrus.Logger, level string) {
 	switch level {
 	case "none":
 		l.Out = ioutil.Discard
+	case "trace":
+		l.Level = logrus.TraceLevel
 	case "debug":
 		l.Level = logrus.DebugLevel
 	case "info":

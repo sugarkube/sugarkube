@@ -28,6 +28,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
+	"gopkg.in/yaml.v2"
 )
 
 // Top-level struct that holds references to instantiations of other objects
@@ -182,11 +183,11 @@ func (s *Stack) TemplatedVars(kappObj *kapp.Kapp,
 		return nil, errors.WithStack(err)
 	}
 
-	//yamlData, err := yaml.Marshal(&templatedVars)
-	//if err != nil {
-	//	return nil, errors.WithStack(err)
-	//}
-	//log.Logger.Debugf("Vars after merging and templating:\n%s", yamlData)
+	yamlData, err := yaml.Marshal(&templatedVars)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	log.Logger.Tracef("Vars after merging and templating:\n%s", yamlData)
 
 	return templatedVars, nil
 }
