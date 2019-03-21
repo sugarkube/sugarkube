@@ -515,7 +515,22 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 
 // Converts an array of key-value parameters to CLI args
 func parameteriseValues(args []string, valueMap map[string]string) []string {
+	// In kops, booleans can only indicate truth. Passing e.g. `--bastion false`
+	// trips it up. So we need to explicitly filter out such keys if they have
+	// the corresponding values
+	excludeBooleans := map[string]string{
+		"bastion": "false",
+	}
+
 	for k, v := range valueMap {
+		for excludeK, excludeV := range excludeBooleans {
+			if k == excludeK && v == excludeV {
+				log.Logger.Tracef("Ignoring kops parameter '%s' (which is %v)",
+					excludeK, excludeV)
+				continue
+			}
+		}
+
 		key := strings.Replace(k, "_", "-", -1)
 		args = append(args, "--"+key)
 
