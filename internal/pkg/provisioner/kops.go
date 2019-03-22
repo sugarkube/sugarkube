@@ -122,7 +122,7 @@ func (p KopsProvisioner) clusterConfigExists() (bool, error) {
 		return false, errors.WithStack(err)
 	}
 	log.Logger.Info("Checking if a Kops cluster config already exists...")
-	log.Logger.Debugf("Checking if a Kops cluster config exists for values: %#v", templatedVars)
+	log.Logger.Tracef("Checking if a Kops cluster config exists for values: %#v", templatedVars)
 
 	args := []string{"get", "clusters"}
 	args = parameteriseValues(args, p.kopsConfig.Params.Global)
@@ -312,7 +312,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 	}
 
 	if !dryRun {
-		log.Logger.Debugf("Downloaded config for kops cluster:\n%s", stdoutBuf.String())
+		log.Logger.Tracef("Downloaded config for kops cluster:\n%s", stdoutBuf.String())
 	}
 
 	kopsYamlConfig := map[string]interface{}{}
@@ -337,7 +337,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 
 	specValues := map[string]interface{}{"spec": clusterSpecs}
 
-	log.Logger.Debugf("Spec to merge in:\n%s", specValues)
+	log.Logger.Tracef("Spec to merge in:\n%s", specValues)
 
 	// patch in the configured spec
 	err = mergo.Merge(&kopsYamlConfig, specValues, mergo.WithOverride)
@@ -345,7 +345,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Merged config is:\n%s", kopsYamlConfig)
+	log.Logger.Tracef("Merged config is:\n%s", kopsYamlConfig)
 
 	yamlBytes, err := yaml.Marshal(&kopsYamlConfig)
 	if err != nil {
@@ -353,7 +353,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 	}
 
 	yamlString := string(yamlBytes[:])
-	log.Logger.Debugf("Merged config:\n%s", yamlString)
+	log.Logger.Tracef("Merged config:\n%s", yamlString)
 
 	// todo - if the merged values are the same as the original, skip replacing the config
 
@@ -448,7 +448,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Downloaded instance group config is:\n%s",
+	log.Logger.Tracef("Downloaded instance group config is:\n%s",
 		stdoutBuf.String())
 
 	kopsYamlConfig := map[string]interface{}{}
@@ -456,7 +456,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 	if err != nil {
 		return errors.Wrap(err, "Error parsing kops instance group config")
 	}
-	log.Logger.Debugf("Yaml instance group kopsYamlConfig:\n%s", kopsYamlConfig)
+	log.Logger.Tracef("Yaml instance group kopsYamlConfig:\n%s", kopsYamlConfig)
 
 	// patch in the configured spec
 	err = mergo.Merge(&kopsYamlConfig, newSpec, mergo.WithOverride)
@@ -464,7 +464,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Merged instance group config is:\n%s", kopsYamlConfig)
+	log.Logger.Tracef("Merged instance group config is:\n%s", kopsYamlConfig)
 
 	yamlBytes, err := yaml.Marshal(&kopsYamlConfig)
 	if err != nil {
@@ -472,7 +472,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 	}
 
 	yamlString := string(yamlBytes[:])
-	log.Logger.Debugf("Merged config:\n%s", yamlString)
+	log.Logger.Tracef("Merged config:\n%s", yamlString)
 
 	// write the merged data to a temp file because we can't pipe it into kops
 	tmpfile, err := ioutil.TempFile("", "kops.*.yaml")
@@ -523,12 +523,18 @@ func parameteriseValues(args []string, valueMap map[string]string) []string {
 	}
 
 	for k, v := range valueMap {
+		ignoreValue := false
+
 		for excludeK, excludeV := range excludeBooleans {
 			if k == excludeK && v == excludeV {
-				log.Logger.Tracef("Ignoring kops parameter '%s' (which is %v)",
+				log.Logger.Tracef("Ignoring kops parameter '%s' (which is '%v')",
 					excludeK, excludeV)
-				continue
+				ignoreValue = true
 			}
+		}
+
+		if ignoreValue {
+			continue
 		}
 
 		key := strings.Replace(k, "_", "-", -1)
@@ -552,7 +558,7 @@ func parseKopsConfig(stackConfig interfaces.IStack) (*KopsConfig, error) {
 	if !ok {
 		return nil, errors.New("No provisioner found in stack config. You must at least set the binary path.")
 	}
-	log.Logger.Debugf("Marshalling: %#v", provisionerValues)
+	log.Logger.Tracef("Marshalling: %#v", provisionerValues)
 
 	// marshal then unmarshal the provisioner values to get the command parameters
 	byteData, err := yaml.Marshal(provisionerValues)
@@ -560,7 +566,7 @@ func parseKopsConfig(stackConfig interfaces.IStack) (*KopsConfig, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Marshalled to: %s", string(byteData[:]))
+	log.Logger.Tracef("Marshalled to: %s", string(byteData[:]))
 
 	var kopsConfig KopsConfig
 	err = yaml.Unmarshal(byteData, &kopsConfig)
