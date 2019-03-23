@@ -30,6 +30,7 @@ type Installer interface {
 		dryRun bool) error
 	destroy(kappObj *kapp.Kapp, stack interfaces.IStack, approved bool, renderTemplates bool,
 		dryRun bool) error
+	name() string
 }
 
 // implemented installers

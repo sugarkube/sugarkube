@@ -10,7 +10,7 @@ programs:
       KUBE_CONTEXT: "{{ .kube_context }}"
 
     args:
-      targets:
+      make:
         install:
           # Search for parameters dynamically. The `findFiles` function takes a list of
           # file name patterns and a starting directory to search from. It then recursively

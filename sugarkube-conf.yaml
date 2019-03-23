@@ -11,7 +11,7 @@ programs:
       KUBE_CONTEXT: "{{ .kube_context }}"
 
     args:
-      targets:
+      make:
         install:
           # Search for parameters dynamically. The `findFiles` function takes a list of
           # file name patterns and a starting directory to search from. It then recursively
@@ -43,7 +43,7 @@ programs:
       REGION: "{{ .stack.region }}"
       RUN_TERRAFORM: "{{ if isSet .kapp.vars "run_terraform" }}{{ .kapp.vars.run_terraform }}{{ else }}true{{ end }}"
     args:
-      targets:
+      make:
         install:
         # search for terraform vars files under `terraform_<provider>`
         - name: tf-opts

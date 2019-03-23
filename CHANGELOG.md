@@ -24,6 +24,8 @@
 * Provider vars directories will be searched breadth-first in a similar way to how kapp vars dirs are searched to allow cross-cutting configuration (e.g. all AMI IDs for a region can be set once and will be merged into each region's config)
 * Add a way of connecting to K8s API servers that were created with internal load balancers by kops (provided there's a bastion) 
 * Allow the path to a custom config file to be given
+* Enable and use trace-level logging to make debug level logging easier to read
+* Change the format of the 'args' YAML in kapps
 
 ## 0.5.0 (2/12/19)
 * Kapps need to declare what environment variables they want and what to map to them in a 'sugarkube.yaml' file

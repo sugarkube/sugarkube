@@ -5,7 +5,7 @@ envVars:
   REGION: "{{.stack.region}}"
 
 args:
-  targets:
+  make:
     install:
       - name: helm-opts
         value: {{ .blank | default "yes" }}

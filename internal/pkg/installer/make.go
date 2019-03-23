@@ -38,6 +38,11 @@ type MakeInstaller struct {
 const TargetInstall = "install"
 const TargetDestroy = "destroy"
 
+// Return the name of this installer
+func (i MakeInstaller) name() string {
+	return "make"
+}
+
 // Run the given make target
 func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
@@ -126,7 +131,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfac
 
 	// todo - move this to a method. Make it more defensive and pull values from
 	// the overall config depending on the programs the kapp uses
-	targetArgs := kappObj.Config.Args["targets"][makeTarget]
+	targetArgs := kappObj.Config.Args[i.name()][makeTarget]
 	log.Logger.Debugf("Kapp '%s' has args for target '%s' (approved=%v): %#v",
 		kappObj.FullyQualifiedId(), makeTarget, approved, targetArgs)
 

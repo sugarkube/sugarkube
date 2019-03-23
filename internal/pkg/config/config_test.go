@@ -44,7 +44,7 @@ func TestLoadConfig(t *testing.T) {
 					"kube_context": "{{ .kube_context }}",
 				},
 				Args: map[string]map[string][]map[string]string{
-					"targets": {
+					"make": {
 						"install": {
 							{
 								"name":  "helm-opts",

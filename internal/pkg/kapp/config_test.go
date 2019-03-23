@@ -40,7 +40,7 @@ func TestLoad(t *testing.T) {
 	}
 
 	expectedArgs := map[string]map[string][]map[string]string{
-		"targets": {
+		"make": {
 			"install": {
 				{
 					"name":  "helm-opts",
