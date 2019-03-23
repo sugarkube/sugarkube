@@ -28,6 +28,7 @@ var CustomFunctions = template.FuncMap{
 	"findFiles":  findFiles,
 	"mapPrintF":  mapPrintF,
 	"listString": listString,
+	"isSet":      isSet,
 }
 
 // Turn separate string parameters into a single []string array
@@ -88,4 +89,11 @@ func findFiles(root string, patterns []string) ([]string, error) {
 	}
 
 	return output, nil
+}
+
+// Returns whether a key is in a map (Sprig provides a similar function but it
+// requires a map[string]interface{} and ours are map[interface{}]interface{}
+func isSet(input map[interface{}]interface{}, key string) bool {
+	_, ok := input[key]
+	return ok
 }
