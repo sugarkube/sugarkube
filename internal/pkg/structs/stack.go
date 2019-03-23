@@ -28,6 +28,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
+	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"gopkg.in/yaml.v2"
 )
 
@@ -101,19 +102,18 @@ func (s *Stack) TemplatedVars(kappObj *kapp.Kapp,
 
 	stackConfig := s.Config
 
+	// build an array of config fragments that should all be merged together,
+	// with later values overriding earlier ones.
+	configFragments := make([]map[string]interface{}, 0)
+
 	stackIntrinsicData := stackConfig.GetIntrinsicData()
 	// convert the map to the appropriate type and namespace it
-	stackConfigMap := map[string]interface{}{
+	configFragments = append(configFragments, map[string]interface{}{
 		"stack": convert.MapStringStringToMapStringInterface(stackIntrinsicData),
-	}
+	})
 
-	mergedVars := map[string]interface{}{}
-	err := mergo.Merge(&mergedVars, stackConfigMap, mergo.WithOverride)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	defaultVars := []string{
+	// store additional runtime values under the "sugarkube" key
+	installerVars["defaultVars"] = []string{
 		stackConfig.Provider,
 		stackConfig.Account, // may be blank depending on the provider
 		stackConfig.Profile,
@@ -121,22 +121,15 @@ func (s *Stack) TemplatedVars(kappObj *kapp.Kapp,
 		stackConfig.Region, // may be blank depending on the provider
 	}
 
-	// store additional runtime values under the "sugarkube" key
-	installerVars["defaultVars"] = defaultVars
-	mergedVars["sugarkube"] = installerVars
+	configFragments = append(configFragments, map[string]interface{}{
+		"sugarkube": installerVars,
+	})
 
-	err = mergo.Merge(&mergedVars, stackConfig.GetProviderVars(), mergo.WithOverride)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	log.Logger.Debugf("Merging stack vars with registry: %v", s.registry)
+	configFragments = append(configFragments, stackConfig.GetProviderVars())
 
 	// merge in values from the registry
-	err = mergo.Merge(&mergedVars, s.registry.AsMap(), mergo.WithOverride)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+	log.Logger.Tracef("Merging stack vars with registry: %v", s.registry)
+	configFragments = append(configFragments, s.registry.AsMap())
 
 	if kappObj != nil {
 		kappVars, err := kappObj.GetVarsFromFiles(s.Config)
@@ -172,10 +165,14 @@ func (s *Stack) TemplatedVars(kappObj *kapp.Kapp,
 		namespacedKappMap := map[string]interface{}{
 			"kapp": kappIntrinsicDataConverted,
 		}
-		err = mergo.Merge(&mergedVars, namespacedKappMap, mergo.WithOverride)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
+
+		configFragments = append(configFragments, namespacedKappMap)
+	}
+
+	mergedVars := map[string]interface{}{}
+	err := vars.MergeFragments(&mergedVars, configFragments...)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	templatedVars, err := templater.IterativelyTemplate(mergedVars)

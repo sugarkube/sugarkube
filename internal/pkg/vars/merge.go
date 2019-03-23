@@ -53,3 +53,19 @@ func MergePaths(result *map[string]interface{}, paths ...string) error {
 
 	return nil
 }
+
+// Merges all given fragments, with values from later fragments overriding values
+// from earlier ones.
+func MergeFragments(result *map[string]interface{}, fragments ...map[string]interface{}) error {
+
+	for _, fragment := range fragments {
+		log.Logger.Tracef("Merging map %#v into existing map %#v - values "+
+			"will be overridden", fragment, result)
+		err := mergo.Merge(result, fragment, mergo.WithOverride)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	return nil
+}
