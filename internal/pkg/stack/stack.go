@@ -21,6 +21,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
@@ -75,7 +76,7 @@ func newStack(globalConfig *config.Config, config *StackConfig,
 	return stack, nil
 }
 
-func (s Stack) GetConfig() *StackConfig {
+func (s Stack) GetConfig() interfaces.IStackConfig {
 	return s.Config
 }
 
@@ -83,7 +84,7 @@ func (s Stack) GetGlobalConfig() *config.Config {
 	return s.GlobalConfig
 }
 
-func (s Stack) GetStatus() *ClusterStatus {
+func (s Stack) GetStatus() interfaces.IClusterStatus {
 	return s.Status
 }
 

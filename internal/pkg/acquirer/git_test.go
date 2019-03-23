@@ -18,6 +18,7 @@ package acquirer
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"testing"
 )
 
@@ -33,7 +34,7 @@ func discardErr(acquirer Acquirer, err error) Acquirer {
 func TestId(t *testing.T) {
 	// the URI is invalid. It should cause an error
 	invalidUriAcquirer, err := NewGitAcquirer(
-		Source{
+		structs.Source{
 			Uri: "git@github.com:helm:thing/charts.git//stable/wordpress#master",
 		})
 	assert.Nil(t, invalidUriAcquirer)
@@ -50,7 +51,7 @@ func TestId(t *testing.T) {
 			name: "good",
 			desc: "check IDs are generated with expected input",
 			input: discardErr(NewGitAcquirer(
-				Source{
+				structs.Source{
 					Uri: "git@github.com:helm/charts.git//stable/wordpress#master",
 				})),
 			expectValues: "helm-charts-wordpress",
@@ -59,7 +60,7 @@ func TestId(t *testing.T) {
 			name: "good_path_leading_trailing_slash",
 			desc: "check leading/trailing slashes on paths don't affect IDs",
 			input: discardErr(NewGitAcquirer(
-				Source{
+				structs.Source{
 					Uri: "git@github.com:helm/charts.git///stable/wordpress/#master",
 				})),
 			expectValues: "helm-charts-wordpress",
@@ -68,7 +69,7 @@ func TestId(t *testing.T) {
 			name: "good_name_in_id",
 			desc: "check explicit names are put into IDs",
 			input: discardErr(NewGitAcquirer(
-				Source{
+				structs.Source{
 					Id:  "site1-values",
 					Uri: "git@github.com:sugarkube/sugarkube.git//examples/values/wordpress/site1/#master",
 				})),

@@ -19,7 +19,7 @@ package config
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/program"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"path"
 	"testing"
 )
@@ -35,7 +35,7 @@ func TestLoadConfig(t *testing.T) {
 	expectedConfig := &Config{
 		JsonLogs: false,
 		LogLevel: "warn",
-		Programs: map[string]program.Config{
+		Programs: map[string]structs.ProgramConfig{
 			"helm": {
 				EnvVars: map[string]interface{}{
 					"kubeconfig":   "{{ .kube_config }}",

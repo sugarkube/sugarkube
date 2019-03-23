@@ -88,6 +88,10 @@ func (s StackConfig) Region() string {
 	return s.rawConfig.Region
 }
 
+func (s StackConfig) OnlineTimeout() uint32 {
+	return s.onlineTimeout
+}
+
 // Validates that there aren't multiple manifests in the stack config with the
 // same ID, which would break creating caches
 func validateStackConfig(stackConfig *StackConfig) error {

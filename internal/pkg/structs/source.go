@@ -17,7 +17,8 @@
 package structs
 
 type Source struct {
-	Id      string
-	Uri     string
-	Options map[string]interface{}
+	Id            string
+	Uri           string
+	Options       map[string]interface{}
+	IncludeValues bool // todo - decide if this is needed and remove if not
 }

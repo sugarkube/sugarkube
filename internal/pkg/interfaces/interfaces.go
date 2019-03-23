@@ -35,7 +35,15 @@ type IClusterStatus interface {
 
 type IStackConfig interface {
 	Name() string
-	OnlineTimeout() uint16
+	Provider() string
+	Provisioner() string
+	Account() string
+	Region() string
+	Profile() string
+	Cluster() string
+	OnlineTimeout() uint32
+	KappVarsDirs() []string
+	Dir() string
 }
 
 type IStack interface {
