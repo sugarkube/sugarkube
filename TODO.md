@@ -33,11 +33,6 @@
 * Support variables at the manifest level so we can set manifest-wide vars. Use them as defaults for kapp vars (or 
   just namespace them under "manifest.vars" - decide which is better. The first would require we manually set a 
   default to the manifest vars ). E.g. this could be helpful for setting manifest-wide tiller-namespaces, etc.
-* If the kops provisioner is using a private topology and a bastion, set up an SSH tunnel on a random port, and 
-  pass '-s localhost:<random_port>' to kubectl when polling it for readiness and when installing things (helm has
-  a similar setting I think). Perhaps set some additional extra args for kubectl/helm to pass them through to kapps.
-  * We'll need an initialisation step to try adding the SSH key to the agent, throwing an error if it's password
-  protected
 * The `requires` block in `sugarkube.yaml` is currenntly useless. We should do several things with it:
   * Create a 'validate' command to verify that the necessary binary exists
   * Allow each value to have a corresponding config in the sugarkube-conf.yaml file that determines:
@@ -49,11 +44,6 @@
   install some stuff into it, but then want to scale down the bastion IG. That'll require 2 different kops configs
   so we should acknowledge they're for different phases of the lifecycle. Similarly to install new stuff into that 
   cluster we may need to relaunch the bastion, install stuff then remove it again.
-
-## Gaining access to private kops clusters
-If the provisioner is kops, the api_loadbalancer_type is internal and there's a bastion, gain access to it 
-by downloading the kubeconfig file, modifying it to use the .local hostname, then use SSH to port forward
-to the bastion. Pass the kubeconfig file to other commands and continue as usual
 
 ## Other things to consider
 * Is being focussed on clusters a mistake? 
