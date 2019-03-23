@@ -22,10 +22,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
-	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 )

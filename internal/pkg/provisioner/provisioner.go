@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfacestokeep"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"time"
 )
@@ -37,7 +37,7 @@ type Provisioner interface {
 	// Update the cluster config if supported by the provisioner
 	update(dryRun bool) error
 	// We need to use an interface to work with Stack objects to avoid circular dependencies
-	iStack() interfaces.IStack
+	iStack() interfacestokeep.IStack
 	// if the API server is internal we need to set up connectivity to it. Returns a boolean
 	// indicating whether connectivity exists (not necessarily if it's been set up, i.e. it
 	// might not be necessary to do anything, or it may have already been set up)
@@ -48,7 +48,7 @@ type Provisioner interface {
 const ProvisionerKey = "provisioner"
 
 // Factory that creates providers
-func New(name string, stack interfaces.IStack,
+func New(name string, stack interfacestokeep.IStack,
 	clusterSot clustersot.ClusterSot) (Provisioner, error) {
 	if stack == nil {
 		return nil, errors.New("Stack parameter can't be nil")
@@ -94,7 +94,7 @@ func Update(p Provisioner, dryRun bool) error {
 // Return whether the cluster is already online
 func IsAlreadyOnline(p Provisioner, dryRun bool) (bool, error) {
 
-	clusterName := p.iStack().GetConfig().Name
+	clusterName := p.iStack().GetConfig().Name()
 
 	log.Logger.Infof("Checking whether cluster '%s' is already online...",
 		clusterName)
@@ -128,7 +128,7 @@ func IsAlreadyOnline(p Provisioner, dryRun bool) (bool, error) {
 func WaitForClusterReadiness(p Provisioner) error {
 	clusterSot := p.ClusterSot()
 
-	onlineTimeout := p.iStack().GetConfig().OnlineTimeout
+	onlineTimeout := p.iStack().GetConfig().OnlineTimeout()
 
 	log.Logger.Infof("Checking whether the cluster is online... Will "+
 		"try for %d seconds", onlineTimeout)

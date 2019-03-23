@@ -21,11 +21,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
-	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 )

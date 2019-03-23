@@ -23,7 +23,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
-	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
 	"os"
 	"strings"
 	"testing"

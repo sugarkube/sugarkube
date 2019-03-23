@@ -35,6 +35,22 @@ import (
 	"strings"
 )
 
+type stackConfigInterface interface {
+	Name() string
+	Provider() string
+	Provisioner() string
+	Account() string
+	Region() string
+	Profile() string
+	Cluster() string
+	KappVarsDirs() []string
+	Dir() string
+}
+
+type stackInterface interface {
+	GetConfig() stackConfigInterface
+}
+
 type Kapp struct {
 	descriptor structs.KappDescriptor
 	manifestId string
@@ -123,8 +139,8 @@ func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
 }
 
 // Returns a map of all variables for the kapp
-func (k Kapp) Vars() (map[string]interface{}, error) {
-	kappVars, err := k.getVarsFromFiles(s.Config)
+func (k Kapp) Vars(stackObj stackInterface) (map[string]interface{}, error) {
+	kappVars, err := k.getVarsFromFiles(stackObj.GetConfig())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -172,7 +188,7 @@ func (k Kapp) getIntrinsicData() map[string]string {
 
 // Finds all vars files for the given kapp and returns the result of merging
 // all the data.
-func (k Kapp) getVarsFromFiles(stackConfig *StackConfig) (map[string]interface{}, error) {
+func (k Kapp) getVarsFromFiles(stackConfig stackConfigInterface) (map[string]interface{}, error) {
 	dirs, err := k.findVarsFiles(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -191,16 +207,16 @@ func (k Kapp) getVarsFromFiles(stackConfig *StackConfig) (map[string]interface{}
 // This searches a directory tree from a given root path for files whose values
 // should be merged together for a kapp. If a kapp instance is supplied, additional files
 // will be searched for, in addition to stack-specific ones.
-func (k Kapp) findVarsFiles(stackConfig *StackConfig) ([]string, error) {
+func (k Kapp) findVarsFiles(stackConfig stackConfigInterface) ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.ValuesFile),
 		stackConfig.Name(),
-		stackConfig.Provider,
-		stackConfig.Provisioner,
-		stackConfig.Account,
-		stackConfig.Region,
-		stackConfig.Profile,
-		stackConfig.Cluster,
+		stackConfig.Provider(),
+		stackConfig.Provisioner(),
+		stackConfig.Account(),
+		stackConfig.Region(),
+		stackConfig.Profile(),
+		stackConfig.Cluster(),
 		constants.ProfileDir,
 		constants.ClusterDir,
 	}
@@ -230,7 +246,7 @@ func (k Kapp) findVarsFiles(stackConfig *StackConfig) ([]string, error) {
 
 	paths := make([]string, 0)
 
-	for _, searchDir := range stackConfig.KappVarsDirs {
+	for _, searchDir := range stackConfig.KappVarsDirs() {
 		searchPath, err := filepath.Abs(filepath.Join(stackConfig.Dir(), searchDir))
 		if err != nil {
 			return nil, errors.WithStack(err)

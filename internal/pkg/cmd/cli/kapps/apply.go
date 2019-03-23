@@ -27,7 +27,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
-	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
 	"io"
 )
 

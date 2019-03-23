@@ -19,27 +19,27 @@ package clustersot
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfacestokeep"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 )
 
 type ClusterSot interface {
 	isOnline() (bool, error)
 	isReady() (bool, error)
-	stack() stack.Stack
+	stack() interfacestokeep.IStack
 }
 
 // Implemented ClusterSot names
 const KUBECTL = "kubectl"
 
 // Factory that creates ClusterSots
-func NewClusterSot(name string, stack stack.Stack) (ClusterSot, error) {
-	if stack == nil {
+func NewClusterSot(name string, iStack interfacestokeep.IStack) (ClusterSot, error) {
+	if iStack == nil {
 		return nil, errors.New("Stack parameter can't be nil")
 	}
 
 	if name == KUBECTL {
-		return KubeCtlClusterSot{stack: stack}, nil
+		return KubeCtlClusterSot{iStack: iStack}, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("ClusterSot '%s' doesn't exist", name))

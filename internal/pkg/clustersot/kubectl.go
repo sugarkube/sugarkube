@@ -20,15 +20,15 @@ import (
 	"bytes"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfacestokeep"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os/exec"
 	"strings"
 )
 
 type KubeCtlClusterSot struct {
-	stack stack.Stack
+	iStack interfacestokeep.IStack
 }
 
 // todo - make configurable
@@ -39,7 +39,7 @@ const timeoutSeconds = 30
 
 // Tests whether the cluster is online
 func (c KubeCtlClusterSot) isOnline() (bool, error) {
-	templatedVars, err := c.stack.TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := c.iStack.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -47,7 +47,7 @@ func (c KubeCtlClusterSot) isOnline() (bool, error) {
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	kubeConfig, _ := c.stack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
+	kubeConfig, _ := c.iStack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
 	envVars := map[string]string{
 		"KUBECONFIG": kubeConfig,
 	}
@@ -70,7 +70,7 @@ func (c KubeCtlClusterSot) isOnline() (bool, error) {
 // Tests whether all pods are Ready (or rather whether any pods have a status
 // apart from "Running" or "Succeeded")
 func (c KubeCtlClusterSot) isReady() (bool, error) {
-	templatedVars, err := c.stack.TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := c.iStack.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -79,7 +79,7 @@ func (c KubeCtlClusterSot) isReady() (bool, error) {
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	kubeConfig, _ := c.stack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
+	kubeConfig, _ := c.iStack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
 
 	args := []string{
 		"--context", context,
@@ -108,6 +108,6 @@ func (c KubeCtlClusterSot) isReady() (bool, error) {
 	return strings.TrimSpace(kubeConfig) == "", nil
 }
 
-func (c KubeCtlClusterSot) stack() stack.Stack {
-	return c.stack
+func (c KubeCtlClusterSot) stack() interfacestokeep.IStack {
+	return c.iStack
 }

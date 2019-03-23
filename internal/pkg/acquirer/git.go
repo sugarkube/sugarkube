@@ -134,9 +134,9 @@ func (a GitAcquirer) Uri() string {
 }
 
 // return whether this source should be searched for values files
-func (a GitAcquirer) IncludeValues() bool {
-	return a.includeValues
-}
+//func (a GitAcquirer) IncludeValues() bool {
+//	return a.includeValues
+//}
 
 // Acquires kapps via git and saves them to `dest`.
 func (a GitAcquirer) acquire(dest string) error {

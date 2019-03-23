@@ -18,7 +18,7 @@ package provisioner
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfacestokeep"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 )
 
@@ -28,7 +28,7 @@ const NoopProvisionerName = "none"
 // if you just want to create raw resources without a K8s cluster, e.g. to
 // create a transit VPC, launch some EC2s with CloudFormation, etc.
 type NoOpProvisioner struct {
-	stack interfaces.IStack
+	stack interfacestokeep.IStack
 }
 
 type NoopConfig struct {
@@ -38,7 +38,7 @@ func (p NoOpProvisioner) ClusterSot() clustersot.ClusterSot {
 	return nil
 }
 
-func (p NoOpProvisioner) iStack() interfaces.IStack {
+func (p NoOpProvisioner) iStack() interfacestokeep.IStack {
 	return p.stack
 }
 
