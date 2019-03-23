@@ -26,7 +26,7 @@ import (
 
 // Merges YAML files from multiple paths, with data from files loaded later
 // overriding values loaded earlier.
-func Merge(result *map[string]interface{}, paths ...string) error {
+func MergePaths(result *map[string]interface{}, paths ...string) error {
 
 	for _, path := range paths {
 		log.Logger.Debug("Loading path ", path)

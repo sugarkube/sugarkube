@@ -42,7 +42,7 @@ func getAbsPath(t *testing.T, path string) string {
 	return absPath
 }
 
-func TestMerge(t *testing.T) {
+func TestMergePaths(t *testing.T) {
 	topAbsPath := getAbsPath(t, topPath)
 	sub1AbsPath := getAbsPath(t, subPath1)
 	sub2AbsPath := getAbsPath(t, subPath2)
@@ -144,7 +144,7 @@ func TestMerge(t *testing.T) {
 
 	for _, test := range tests {
 		result := map[string]interface{}{}
-		err := Merge(&result, test.paths...)
+		err := MergePaths(&result, test.paths...)
 		assert.Nil(t, err)
 
 		assert.Equal(t, test.expectValues, result, "unexpected merge result for %s", test.name)

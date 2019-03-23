@@ -89,7 +89,7 @@ func GetVarsFromFiles(provider Provider, stackConfig *kapp.StackConfig) (map[str
 
 	values := map[string]interface{}{}
 
-	err = vars.Merge(&values, dirs...)
+	err = vars.MergePaths(&values, dirs...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

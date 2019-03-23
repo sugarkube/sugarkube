@@ -404,7 +404,7 @@ func (k *Kapp) GetVarsFromFiles(stackConfig *StackConfig) (map[string]interface{
 
 	values := map[string]interface{}{}
 
-	err = vars.Merge(&values, dirs...)
+	err = vars.MergePaths(&values, dirs...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
