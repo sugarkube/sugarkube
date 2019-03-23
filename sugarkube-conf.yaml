@@ -4,6 +4,7 @@
 programs:
   helm:
     envVars:
+      RUN_HELM: "{{ if isSet .kapp.vars "run_helm" }}{{ .kapp.vars.run_helm }}{{ else }}true{{ end }}"
       KUBECONFIG: "{{ .kube_config }}"
       NAMESPACE: "{{ .kapp.vars.namespace | default .kapp.id }}"
       RELEASE: "{{ .kapp.vars.release | default .kapp.id }}"
@@ -26,7 +27,7 @@ programs:
           # all files that exists and prepends '-f' to them so they'll be passed as options to helm.
           #
           - name: helm-opts
-            value: -f {{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | uniq | join " " }} {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " }}
+            value: {{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | uniq | join "-f " }} {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " }}
 
   kubectl:
     envVars:
@@ -40,3 +41,10 @@ programs:
   terraform:
     envVars:
       REGION: "{{ .stack.region }}"
+      RUN_TERRAFORM: "{{ if isSet .kapp.vars "run_terraform" }}{{ .kapp.vars.run_terraform }}{{ else }}true{{ end }}"
+    args:
+      targets:
+        install:
+        # search for terraform vars files under `terraform_<provider>`
+        - name: tf-opts
+          value: {{ listString (printf "terraform_%s/.*/defaults.tfvars" .stack.provider) | findFiles .kapp.cacheRoot | uniq | join "-var-file " }} {{ mapPrintF (printf "terraform_%s/.*/%%s.tfvars" .stack.provider) .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " }}
