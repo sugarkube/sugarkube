@@ -144,7 +144,7 @@ func TestMergePaths(t *testing.T) {
 
 	for _, test := range tests {
 		result := map[string]interface{}{}
-		err := MergePaths(result, test.paths...)
+		err := MergePaths(&result, test.paths...)
 		assert.Nil(t, err)
 
 		assert.Equal(t, test.expectValues, result, "unexpected merge result for %s", test.name)

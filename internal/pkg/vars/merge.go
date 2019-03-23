@@ -26,7 +26,7 @@ import (
 
 // Merges YAML files from multiple paths, with data from files loaded later
 // overriding values loaded earlier.
-func MergePaths(result map[string]interface{}, paths ...string) error {
+func MergePaths(result *map[string]interface{}, paths ...string) error {
 
 	for _, path := range paths {
 		log.Logger.Debug("Loading path ", path)
@@ -56,7 +56,7 @@ func MergePaths(result map[string]interface{}, paths ...string) error {
 
 // Merges all given fragments, with values from later fragments overriding values
 // from earlier ones.
-func MergeFragments(result map[string]interface{}, fragments ...map[string]interface{}) error {
+func MergeFragments(result *map[string]interface{}, fragments ...map[string]interface{}) error {
 
 	for _, fragment := range fragments {
 		log.Logger.Tracef("Merging map %#v into existing map %#v - values "+

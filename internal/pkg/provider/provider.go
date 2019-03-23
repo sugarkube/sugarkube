@@ -99,7 +99,7 @@ func GetVarsFromFiles(provider Provider, stackDesc stackDescription) (map[string
 
 	values := map[string]interface{}{}
 
-	err = vars.MergePaths(values, dirs...)
+	err = vars.MergePaths(&values, dirs...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

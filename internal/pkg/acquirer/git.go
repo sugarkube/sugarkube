@@ -98,10 +98,11 @@ func NewGitAcquirer(source structs.Source) (*GitAcquirer, error) {
 	}
 
 	return &GitAcquirer{
-		id:     id,
-		uri:    uri,
-		branch: branch,
-		path:   path,
+		id:            id,
+		uri:           uri,
+		branch:        branch,
+		path:          path,
+		includeValues: source.IncludeValues,
 	}, nil
 }
 

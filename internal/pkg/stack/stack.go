@@ -139,7 +139,7 @@ func (s *Stack) TemplatedVars(installableObj installable.Installable,
 	}
 
 	mergedVars := map[string]interface{}{}
-	err := vars.MergeFragments(mergedVars, configFragments...)
+	err := vars.MergeFragments(&mergedVars, configFragments...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
