@@ -47,10 +47,6 @@ type Kapp struct {
 	Templates   []Template
 }
 
-const StateKey = "state"
-const SourcesKey = "sources"
-const VarsKey = "vars"
-
 // todo - allow templates to be overridden in manifest overrides blocks
 //const TEMPLATES_KEY = "templates"
 
@@ -64,120 +60,6 @@ func (k *Kapp) SetCacheDir(cacheDir string) {
 // Return the manifest the kapp is in
 func (k Kapp) GetManifest() *Manifest {
 	return k.manifest
-}
-
-// Updates the kapp's struct after merging any manifest overrides
-func (k *Kapp) refresh() error {
-	manifestOverrides, err := k.manifestOverrides()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if manifestOverrides != nil {
-		// we can't just unmarshal it to YAML, merge the overrides and marshal it again because overrides
-		// use keys whose values are IDs of e.g. sources instead of referring to sources by index.
-		overriddenState, ok := manifestOverrides[StateKey]
-		if ok {
-			k.State = overriddenState.(string)
-		}
-
-		// update any overridden variables
-		overriddenVars, ok := manifestOverrides[VarsKey]
-		if ok {
-			overriddenVarsConverted, err := convert.MapInterfaceInterfaceToMapStringInterface(
-				overriddenVars.(map[interface{}]interface{}))
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			err = mergo.Merge(&k.Vars, overriddenVarsConverted, mergo.WithOverride)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-		}
-
-		// update sources
-		overriddenSources, ok := manifestOverrides[SourcesKey]
-		if ok {
-			overriddenSourcesConverted, err := convert.MapInterfaceInterfaceToMapStringInterface(
-				overriddenSources.(map[interface{}]interface{}))
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			currentAcquirers, err := k.Acquirers()
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			// sources are overridden by specifying the ID of a source as the key. So we need to iterate through
-			// the overrides and also through the list of sources to update values
-			for sourceId, v := range overriddenSourcesConverted {
-				sourceOverridesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(
-					v.(map[interface{}]interface{}))
-				if err != nil {
-					return errors.WithStack(err)
-				}
-
-				for i, source := range k.Sources {
-					if sourceId == currentAcquirers[i].Id() {
-						sourceYaml, err := yaml.Marshal(source)
-						if err != nil {
-							return errors.WithStack(err)
-						}
-
-						sourceMapInterface := map[string]interface{}{}
-						err = yaml.Unmarshal(sourceYaml, sourceMapInterface)
-						if err != nil {
-							return errors.WithStack(err)
-						}
-
-						// we now have the overridden source values and the original source values as
-						// types compatible for merging
-
-						err = mergo.Merge(&sourceMapInterface, sourceOverridesMap, mergo.WithOverride)
-						if err != nil {
-							return errors.WithStack(err)
-						}
-
-						// convert the merged generic values back to a Source
-						mergedSourceYaml, err := yaml.Marshal(sourceMapInterface)
-						if err != nil {
-							return errors.WithStack(err)
-						}
-
-						mergedSource := acquirer.Source{}
-						err = yaml.Unmarshal(mergedSourceYaml, &mergedSource)
-						if err != nil {
-							return errors.WithStack(err)
-						}
-
-						log.Logger.Debugf("Updating kapp source at index %d to: %#v", i, mergedSource)
-
-						k.Sources[i] = mergedSource
-					}
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-// Return overrides specified in the manifest associated with this kapp if there are any
-func (k Kapp) manifestOverrides() (map[string]interface{}, error) {
-	rawOverrides, ok := k.manifest.Overrides[k.Id]
-	if ok {
-		overrides, err := convert.MapInterfaceInterfaceToMapStringInterface(
-			rawOverrides.(map[interface{}]interface{}))
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		return overrides, nil
-	}
-
-	return nil, nil
 }
 
 // Returns the physical path to this kapp in a cache

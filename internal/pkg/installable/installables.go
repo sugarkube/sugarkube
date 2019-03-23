@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package installables
+package installable
 
 import "github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 

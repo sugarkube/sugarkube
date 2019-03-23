@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/installable"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -44,20 +45,20 @@ func (i MakeInstaller) name() string {
 }
 
 // Run the given make target
-func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfaces.IStack,
+func (i MakeInstaller) run(makeTarget string, installable installable.Installable, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
 
 	// search for the Makefile
-	makefilePaths, err := utils.FindFilesByPattern(kappObj.CacheDir(), "Makefile",
+	makefilePaths, err := utils.FindFilesByPattern(installable.CacheDir(), "Makefile",
 		true, false)
 	if err != nil {
 		return errors.Wrapf(err, "Error finding Makefile in '%s'",
-			kappObj.CacheDir())
+			installable.CacheDir())
 	}
 
 	if len(makefilePaths) == 0 {
 		return errors.New(fmt.Sprintf("No makefile found for kapp '%s' "+
-			"in '%s'", kappObj.Id, kappObj.CacheDir()))
+			"in '%s'", installable.Id(), installable.CacheDir()))
 	}
 	if len(makefilePaths) > 1 {
 		// todo - select the right makefile from the installerConfig if it exists,
@@ -67,11 +68,11 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfac
 	}
 
 	// merge all the vars required to render the kapp's sugarkube.yaml file
-	templatedVars, err := stack.TemplatedVars(kappObj,
+	templatedVars, err := stack.TemplatedVars(installable,
 		map[string]interface{}{"target": makeTarget, "approved": approved})
 
 	if renderTemplates {
-		renderedTemplates, err := kappObj.RenderTemplates(templatedVars, stack.GetConfig(), dryRun)
+		renderedTemplates, err := installable.RenderTemplates(templatedVars, stack.GetConfig(), dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -92,11 +93,11 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfac
 			return errors.WithStack(err)
 		}
 	} else {
-		log.Logger.Infof("Skipping writing templates for kapp '%s'", kappObj.FullyQualifiedId())
+		log.Logger.Infof("Skipping writing templates for kapp '%s'", installable.FullyQualifiedId())
 	}
 
 	// load the kapp's own config
-	err = kappObj.Load(templatedVars)
+	err = installable.Load(templatedVars)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -105,7 +106,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfac
 
 	// populate env vars that are always supplied
 	envVars := map[string]string{
-		"KAPP_ROOT": kappObj.CacheDir(),
+		"KAPP_ROOT": installable.CacheDir(),
 		"APPROVED":  fmt.Sprintf("%v", approved),
 		"CLUSTER":   stackConfig.Cluster,
 		"PROFILE":   stackConfig.Profile,
@@ -119,7 +120,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfac
 	}
 
 	// add the env vars the kapp needs
-	for k, v := range kappObj.Config.EnvVars {
+	for k, v := range installable.Config.EnvVars {
 		upperKey := strings.ToUpper(k)
 		envVars[upperKey] = strings.Trim(fmt.Sprintf("%#v", v), "\"")
 	}
@@ -131,9 +132,9 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfac
 
 	// todo - move this to a method. Make it more defensive and pull values from
 	// the overall config depending on the programs the kapp uses
-	targetArgs := kappObj.Config.Args[i.name()][makeTarget]
+	targetArgs := installable.Config.Args[i.name()][makeTarget]
 	log.Logger.Debugf("Kapp '%s' has args for target '%s' (approved=%v): %#v",
-		kappObj.FullyQualifiedId(), makeTarget, approved, targetArgs)
+		installable.FullyQualifiedId(), makeTarget, approved, targetArgs)
 
 	for _, targetArg := range targetArgs {
 		cliArgs = append(cliArgs, strings.Join([]string{
@@ -146,9 +147,9 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfac
 	}
 
 	if approved {
-		log.Logger.Infof("Installing kapp '%s'...", kappObj.FullyQualifiedId())
+		log.Logger.Infof("Installing kapp '%s'...", installable.FullyQualifiedId())
 	} else {
-		log.Logger.Infof("Planning kapp '%s'...", kappObj.FullyQualifiedId())
+		log.Logger.Infof("Planning kapp '%s'...", installable.FullyQualifiedId())
 	}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
@@ -163,7 +164,7 @@ func (i MakeInstaller) run(makeTarget string, kappObj *kapp.Kapp, stack interfac
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Infof("Kapp '%s' successfully processed", kappObj.FullyQualifiedId())
+	log.Logger.Infof("Kapp '%s' successfully processed", installable.FullyQualifiedId())
 
 	return nil
 }

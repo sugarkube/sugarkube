@@ -314,7 +314,7 @@ func TestFindKappVarsFiles(t *testing.T) {
 //		"location": "kappFile",
 //	}
 //
-//	kappObj := &stackConfig.Manifests[0].ParsedKapps()[0]
+//	kappObj := &stackConfig.Manifests[0].Installables()[0]
 //
 //	results, err := kappObj.GetVarsFromFiles(stackConfig)
 //	assert.Nil(t, err)

@@ -18,12 +18,15 @@ package stack
 
 import (
 	"fmt"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/installables"
+	"github.com/sugarkube/sugarkube/internal/pkg/convert"
+	"github.com/sugarkube/sugarkube/internal/pkg/installable"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"github.com/sugarkube/sugarkube/internal/pkg/vars"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
+	"gopkg.in/yaml.v2"
 	"path/filepath"
 	"strings"
 )
@@ -31,7 +34,7 @@ import (
 type Manifest struct {
 	address      structs.ManifestAddress
 	rawConfig    structs.Manifest
-	installables []*installables.Installable
+	installables []installable.Installable
 }
 
 // Sets fields to default values
@@ -41,60 +44,174 @@ func (m *Manifest) Id() string {
 	}
 
 	// use the basename after stripping the extension by default
-	// todo - get this from the acquirer for the manifest
+	// todo - get this from the cache manager for the manifest
 	return strings.Replace(filepath.Base(m.address.Uri), filepath.Ext(m.address.Uri), "", 1)
 }
 
-// After parsing a YAML manifest, we need to add additional fields to each kapp. This method does so and
-// returns the updated kapps. Having this method simplifies loading kapps because we can directly unmarshal
-// them into a struct.
-func (m *Manifest) ParsedKapps() []installables.Installable {
-	if m.kappsParsed {
-		return m.UnparsedKapps
-	}
+func (m *Manifest) Installables() []installable.Installable {
+	return m.installables
+}
 
-	// modify the unparsedKapps array since we won't need it in future - it's just a stepping stone after
-	// loading the a manifest
-	for i, unparsedKapp := range m.UnparsedKapps {
-		unparsedKapp.manifest = m
-		err := unparsedKapp.refresh()
+// Parse installables defined in a manifest file
+func parseInstallables(rawManifest structs.Manifest, manifestOverrides map[string]interface{}) ([]installable.Installable, error) {
+	installables := make([]installable.Installable, 0)
+
+	for i, kappAddress := range rawManifest.KappAddress {
+		installableId := kappAddress.Id
+		overrides, err := installableOverrides(manifestOverrides, installableId)
 		if err != nil {
-			// todo - return this error after deciding how to deal with adding variables dynamically
-			log.Logger.Fatalf("Error refreshing kapp: %#v - Error was: %#v", unparsedKapp, err)
+			return nil, errors.WithStack(err)
 		}
-		m.UnparsedKapps[i] = unparsedKapp
+
+		if overrides != nil {
+			err = applyOverrides(&kappAddress, overrides)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+		}
+
+		// convert the kappAddress to an installable
+		installableObj, err := installable.New(kappAddress)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		installables[i] = installableObj
 	}
 
-	m.kappsParsed = true
+	return installables, nil
+}
 
-	return m.UnparsedKapps
+// Updates the kappAddress struct with any overrides specified in the manifest file
+func applyOverrides(kappAddress *structs.KappAddress, overrides map[string]interface{}) error {
+	// we can't just unmarshal it to YAML, merge the overrides and marshal it again because overrides
+	// use keys whose values are IDs of e.g. sources instead of referring to sources by index.
+	overriddenState, ok := overrides[constants.StateKey]
+	if ok {
+		kappAddress.State = overriddenState.(string)
+	}
+
+	// update any overridden variables
+	overriddenVars, ok := overrides[constants.VarsKey]
+	if ok {
+		overriddenVarsConverted, err := convert.MapInterfaceInterfaceToMapStringInterface(
+			overriddenVars.(map[interface{}]interface{}))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		err = mergo.Merge(&kappAddress.Vars, overriddenVarsConverted, mergo.WithOverride)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	// update sources
+	overriddenSources, ok := overrides[constants.SourcesKey]
+	if ok {
+		overriddenSourcesConverted, err := convert.MapInterfaceInterfaceToMapStringInterface(
+			overriddenSources.(map[interface{}]interface{}))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		currentAcquirers := kappAddress.Sources
+
+		// sources are overridden by specifying the ID of a source as the key. So we need to iterate through
+		// the overrides and also through the list of sources to update values
+		for sourceId, v := range overriddenSourcesConverted {
+			sourceOverridesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(
+				v.(map[interface{}]interface{}))
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			for i, source := range kappAddress.Sources {
+				if sourceId == currentAcquirers[i].Id {
+					sourceYaml, err := yaml.Marshal(source)
+					if err != nil {
+						return errors.WithStack(err)
+					}
+
+					sourceMapInterface := map[string]interface{}{}
+					err = yaml.Unmarshal(sourceYaml, sourceMapInterface)
+					if err != nil {
+						return errors.WithStack(err)
+					}
+
+					// we now have the overridden source values and the original source values as
+					// types compatible for merging
+
+					err = mergo.Merge(&sourceMapInterface, sourceOverridesMap, mergo.WithOverride)
+					if err != nil {
+						return errors.WithStack(err)
+					}
+
+					// convert the merged generic values back to a Source
+					mergedSourceYaml, err := yaml.Marshal(sourceMapInterface)
+					if err != nil {
+						return errors.WithStack(err)
+					}
+
+					mergedSource := structs.Source{}
+					err = yaml.Unmarshal(mergedSourceYaml, &mergedSource)
+					if err != nil {
+						return errors.WithStack(err)
+					}
+
+					log.Logger.Tracef("Updating source at index %d to: %#v", i, mergedSource)
+
+					kappAddress.Sources[i] = mergedSource
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// Return overrides specified in the manifest associated with this kapp if there are any
+func installableOverrides(manifestOverrides map[string]interface{}, installableId string) (map[string]interface{}, error) {
+	rawOverrides, ok := manifestOverrides[installableId]
+	if ok {
+		overrides, err := convert.MapInterfaceInterfaceToMapStringInterface(
+			rawOverrides.(map[interface{}]interface{}))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		return overrides, nil
+	}
+
+	return nil, nil
 }
 
 // Load a single manifest file and parse the kapps it defines
-// todo - change this to use an acquirer. Use the ID defined in the manifest
-// settings YAML, or default to the manifest file basename.
-func ParseManifestFile(path string) (*Manifest, error) {
-	log.Logger.Infof("Parsing manifest: %s", path)
+func parseManifestFile(path string, address structs.ManifestAddress) (*Manifest, error) {
 
-	data := map[string]interface{}{}
-	err := vars.LoadYamlFile(path, &data)
+	log.Logger.Infof("Parsing manifest file: %s", path)
+
+	rawManifest := structs.Manifest{}
+
+	err := utils.LoadYamlFile(path, &rawManifest)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Loaded manifest data: %#v", data)
+	log.Logger.Tracef("Loaded raw manifest: %#v", rawManifest)
 
-	parsedManifest := Manifest{}
-	err = vars.LoadYamlFile(path, &parsedManifest)
+	installables, err := parseInstallables(rawManifest, address.Overrides)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	parsedManifest.Uri = path
+	populatedManifest := Manifest{
+		address:      address,
+		rawConfig:    rawManifest,
+		installables: installables,
+	}
 
-	log.Logger.Debugf("Returning manifest: %#v", parsedManifest)
-
-	return &parsedManifest, nil
+	return &populatedManifest, nil
 }
 
 // Validates that there aren't multiple kapps with the same ID in the manifest,
@@ -102,7 +219,7 @@ func ParseManifestFile(path string) (*Manifest, error) {
 func ValidateManifest(manifest *Manifest) error {
 	ids := map[string]bool{}
 
-	for _, kapp := range manifest.ParsedKapps() {
+	for _, kapp := range manifest.Installables() {
 		id := kapp.Id()
 
 		if _, ok := ids[id]; ok {
@@ -131,14 +248,14 @@ func ValidateManifest(manifest *Manifest) error {
 // manifests. Installables will be returned in the order they appear in the manifests
 // regardless of the orders of the selectors.
 func SelectInstallables(manifests []*Manifest, includeSelector []string,
-	excludeSelector []string) ([]installables.Installable, error) {
+	excludeSelector []string) ([]installable.Installable, error) {
 	var err error
 	var match bool
 
-	selectedKapps := make([]installables.Installable, 0)
+	selectedKapps := make([]installable.Installable, 0)
 
 	for _, manifest := range manifests {
-		for _, installable := range manifest.ParsedKapps() {
+		for _, installable := range manifest.Installables() {
 			match = false
 			// a kapp is selected either if it matches an include selector or there are no include selectors,
 			// and it doesn't match an exclude selector
@@ -192,7 +309,7 @@ func SelectInstallables(manifests []*Manifest, includeSelector []string,
 }
 
 // Returns a boolean indicating whether the installable matches the given selector
-func MatchesSelector(installable installables.Installable, selector string) (bool, error) {
+func MatchesSelector(installable installable.Installable, selector string) (bool, error) {
 
 	selectorParts := strings.Split(selector, constants.NamespaceSeparator)
 	if len(selectorParts) != 2 {
@@ -233,16 +350,16 @@ func acquireManifest(stackConfigFileDir string, manifestAddress structs.Manifest
 		uri = filepath.Join(stackConfigFileDir, uri)
 	}
 
-	// parse the manifests
-	parsedManifest, err := ParseManifestFile(uri)
+	// todo - get rid of this once we've switched to an acquirer and can pull the path from a cache manager
+	manifestAddress.Uri = uri
+
+	filePath := uri
+
+	// parse the manifest file we've acquired
+	manifest, err := parseManifestFile(filePath, manifestAddress)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	// todo - remove this. It should be handled by an acquirer
-	//SetManifestDefaults(&manifest)
-	parsedManifest.ConfiguredId = manifest.ConfiguredId
-	parsedManifest.Overrides = manifest.Overrides
-
-	return parsedManifest, nil
+	return manifest, nil
 }

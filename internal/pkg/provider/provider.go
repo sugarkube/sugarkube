@@ -22,6 +22,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"os"
@@ -44,7 +45,7 @@ const LOCAL = "local"
 const AWS = "aws"
 
 // Factory that creates providers
-func newProviderImpl(name string, stackConfig *kapp.StackConfig) (Provider, error) {
+func newProviderImpl(name string, stackConfig *stack.StackConfig) (Provider, error) {
 	if name == LOCAL {
 		return &LocalProvider{}, nil
 	}
@@ -60,7 +61,7 @@ func newProviderImpl(name string, stackConfig *kapp.StackConfig) (Provider, erro
 
 // Instantiates a Provider and returns it along with the stack config vars it can
 // load, or an error.
-func NewProvider(stackConfig *kapp.StackConfig) (Provider, error) {
+func NewProvider(stackConfig *stack.StackConfig) (Provider, error) {
 	providerImpl, err := newProviderImpl(stackConfig.Provider, stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -81,7 +82,7 @@ func GetName(p Provider) string {
 
 // Finds all vars files for the given provider and returns the result of merging
 // all the data.
-func GetVarsFromFiles(provider Provider, stackConfig *kapp.StackConfig) (map[string]interface{}, error) {
+func GetVarsFromFiles(provider Provider, stackConfig *stack.StackConfig) (map[string]interface{}, error) {
 	dirs, err := findVarsFiles(provider, stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -98,7 +99,7 @@ func GetVarsFromFiles(provider Provider, stackConfig *kapp.StackConfig) (map[str
 }
 
 // Search for paths to provider vars files
-func findVarsFiles(provider Provider, stackConfig *kapp.StackConfig) ([]string, error) {
+func findVarsFiles(provider Provider, stackConfig *stack.StackConfig) ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.ValuesFile),
 		stackConfig.Provider,

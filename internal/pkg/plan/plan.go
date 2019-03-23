@@ -37,7 +37,7 @@ type task struct {
 
 type tranche struct {
 	// The manifest associated with this tranche
-	manifest kapp.Manifest
+	manifest stack.Manifest
 	// tasks to run for this tranche (by default they'll run in parallel)
 	tasks []task
 }
@@ -74,20 +74,20 @@ type job struct {
 // reversed which will be useful when tearing down a cluster.
 // If the `runPostActions` parameter is false, no post actions will be executed.
 // This can be useful to quickly tear down a cluster.
-func Create(forward bool, stackObj *stack.Stack, manifests []*kapp.Manifest,
+func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 	cacheDir string, includeSelector []string, excludeSelector []string,
 	renderTemplates bool, runPostActions bool) (*Plan, error) {
 
 	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
 	// in selectors
-	selectedKapps, err := kapp.SelectInstallables(manifests, includeSelector, excludeSelector)
+	selectedKapps, err := stack.SelectInstallables(manifests, includeSelector, excludeSelector)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	tranches := make([]tranche, 0)
 	tasks := make([]task, 0)
-	var previousManifest *kapp.Manifest
+	var previousManifest *stack.Manifest
 
 	for _, kappObj := range selectedKapps {
 		var installDestroyTask *task

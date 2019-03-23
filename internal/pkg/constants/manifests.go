@@ -21,3 +21,7 @@ const WildcardCharacter = "*"
 
 const PresentKey = "present"
 const AbsentKey = "absent"
+
+const StateKey = "state"
+const SourcesKey = "sources"
+const VarsKey = "vars"
