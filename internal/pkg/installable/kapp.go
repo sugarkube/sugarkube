@@ -24,7 +24,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
@@ -125,8 +124,8 @@ func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
 }
 
 // Returns a map of all variables for the kapp
-func (k Kapp) Vars(iStack interfaces.IStack) (map[string]interface{}, error) {
-	kappVars, err := k.getVarsFromFiles(iStack.GetConfig())
+func (k Kapp) Vars(stack iStack) (map[string]interface{}, error) {
+	kappVars, err := k.getVarsFromFiles(stack.GetConfig())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -174,7 +173,7 @@ func (k Kapp) getIntrinsicData() map[string]string {
 
 // Finds all vars files for the given kapp and returns the result of merging
 // all the data.
-func (k Kapp) getVarsFromFiles(stackConfig interfaces.IStackConfig) (map[string]interface{}, error) {
+func (k Kapp) getVarsFromFiles(stackConfig iStackConfig) (map[string]interface{}, error) {
 	dirs, err := k.findVarsFiles(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -193,7 +192,7 @@ func (k Kapp) getVarsFromFiles(stackConfig interfaces.IStackConfig) (map[string]
 // This searches a directory tree from a given root path for files whose values
 // should be merged together for a kapp. If a kapp instance is supplied, additional files
 // will be searched for, in addition to stack-specific ones.
-func (k Kapp) findVarsFiles(stackConfig interfaces.IStackConfig) ([]string, error) {
+func (k Kapp) findVarsFiles(stackConfig iStackConfig) ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.ValuesFile),
 		stackConfig.Name(),
@@ -275,7 +274,7 @@ func (k Kapp) findVarsFiles(stackConfig interfaces.IStackConfig) ([]string, erro
 }
 
 // Renders templates for the kapp and returns the paths they were written to
-func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig interfaces.IStackConfig,
+func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig iStackConfig,
 	dryRun bool) ([]string, error) {
 
 	renderedPaths := make([]string, 0)
