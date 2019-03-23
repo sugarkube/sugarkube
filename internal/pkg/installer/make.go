@@ -22,10 +22,9 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/installable"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"path/filepath"
 	"strings"
@@ -45,7 +44,7 @@ func (i MakeInstaller) name() string {
 }
 
 // Run the given make target
-func (i MakeInstaller) run(makeTarget string, installable installable.Installable, stack interfaces.IStack,
+func (i MakeInstaller) run(makeTarget string, installable installable.Installable, stack stack.Stack,
 	approved bool, renderTemplates bool, dryRun bool) error {
 
 	// search for the Makefile
@@ -108,9 +107,9 @@ func (i MakeInstaller) run(makeTarget string, installable installable.Installabl
 	envVars := map[string]string{
 		"KAPP_ROOT": installable.CacheDir(),
 		"APPROVED":  fmt.Sprintf("%v", approved),
-		"CLUSTER":   stackConfig.Cluster,
-		"PROFILE":   stackConfig.Profile,
-		"PROVIDER":  stackConfig.Provider,
+		"CLUSTER":   stackConfig.Cluster(),
+		"PROFILE":   stackConfig.Profile(),
+		"PROVIDER":  stackConfig.Provider(),
 	}
 
 	// Provider-specific env vars, e.g. the AwsProvider adds REGION
@@ -170,13 +169,13 @@ func (i MakeInstaller) run(makeTarget string, installable installable.Installabl
 }
 
 // Install a kapp
-func (i MakeInstaller) install(kappObj *kapp.Kapp, stack interfaces.IStack,
+func (i MakeInstaller) install(installableObj installable.Installable, stack stack.Stack,
 	approved bool, renderTemplates bool, dryRun bool) error {
-	return i.run(TargetInstall, kappObj, stack, approved, renderTemplates, dryRun)
+	return i.run(TargetInstall, installableObj, stack, approved, renderTemplates, dryRun)
 }
 
 // Destroy a kapp
-func (i MakeInstaller) destroy(kappObj *kapp.Kapp, stack interfaces.IStack,
+func (i MakeInstaller) destroy(installableObj installable.Installable, stack stack.Stack,
 	approved bool, renderTemplates bool, dryRun bool) error {
-	return i.run(TargetDestroy, kappObj, stack, approved, renderTemplates, dryRun)
+	return i.run(TargetDestroy, installableObj, stack, approved, renderTemplates, dryRun)
 }

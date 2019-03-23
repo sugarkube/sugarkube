@@ -22,8 +22,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/installable"
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"os"
@@ -31,8 +31,8 @@ import (
 )
 
 type task struct {
-	action string
-	kapp   kapp.Kapp
+	action         string
+	installableObj installable.Installable
 }
 
 type tranche struct {
@@ -80,7 +80,7 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 
 	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
 	// in selectors
-	selectedKapps, err := stack.SelectInstallables(manifests, includeSelector, excludeSelector)
+	selectedInstallables, err := stack.SelectInstallables(manifests, includeSelector, excludeSelector)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -89,11 +89,11 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 	tasks := make([]task, 0)
 	var previousManifest *stack.Manifest
 
-	for _, kappObj := range selectedKapps {
+	for _, installableObj := range selectedInstallables {
 		var installDestroyTask *task
 
 		// create a new tranche for each new manifest
-		if previousManifest != nil && previousManifest.Id() != kappObj.GetManifest().Id() &&
+		if previousManifest != nil && previousManifest.Id() != installableObj.ManifestId() &&
 			len(tasks) > 0 {
 			tranche := tranche{
 				manifest: *previousManifest,
@@ -102,37 +102,37 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 
 			tranches = append(tranches, tranche)
 			tasks = make([]task, 0)
-			previousManifest = kappObj.GetManifest()
+			previousManifest = GetManifestById(manifests, installableObj.ManifestId())
 		}
 
 		// when creating a forward plan, we can install kapps...
-		if forward && kappObj.State == constants.PresentKey {
+		if forward && installableObj.State() == constants.PresentKey {
 			installDestroyTask = &task{
-				kapp:   kappObj,
-				action: constants.TaskActionInstall,
+				installableObj: installableObj,
+				action:         constants.TaskActionInstall,
 			}
 			// but reverse plans must always destroy them
-		} else if !forward || kappObj.State == constants.AbsentKey {
+		} else if !forward || installableObj.State() == constants.AbsentKey {
 			installDestroyTask = &task{
-				kapp:   kappObj,
-				action: constants.TaskActionDestroy,
+				installableObj: installableObj,
+				action:         constants.TaskActionDestroy,
 			}
 		}
 
 		if installDestroyTask != nil {
 			log.Logger.Debugf("Adding %s task for kapp '%s'", installDestroyTask.action,
-				kappObj.FullyQualifiedId())
+				installableObj.FullyQualifiedId())
 			tasks = append(tasks, *installDestroyTask)
 		}
 
 		// when tearing down a cluster users may not want to execute any post-actions
-		if len(kappObj.PostActions) > 0 && runPostActions {
-			for _, postAction := range kappObj.PostActions {
+		if len(installableObj.PostActions) > 0 && runPostActions {
+			for _, postAction := range installableObj.PostActions {
 				var actionTask *task
 				if postAction == constants.TaskActionClusterUpdate {
 					actionTask = &task{
-						kapp:   kappObj,
-						action: constants.TaskActionClusterUpdate,
+						installableObj: installableObj,
+						action:         constants.TaskActionClusterUpdate,
 					}
 				} else {
 					log.Logger.Errorf("Invalid post_action encountered: %s", postAction)
@@ -141,11 +141,11 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 				// post action tasks are added to their own tranche to avoid race conditions
 				if actionTask != nil {
 					log.Logger.Debugf("Kapp '%s' has a post action task to add: %#v",
-						kappObj.FullyQualifiedId(), actionTask)
+						installableObj.FullyQualifiedId(), actionTask)
 					// add any previously queued tasks to a tranche
 					if len(tasks) > 0 {
 						tranche := tranche{
-							manifest: *kappObj.GetManifest(),
+							manifest: *GetManifestById(manifests, installableObj.ManifestId()),
 							tasks:    tasks,
 						}
 
@@ -156,11 +156,11 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 					}
 
 					log.Logger.Debugf("Adding %s task for kapp '%s'",
-						actionTask.action, kappObj.FullyQualifiedId())
+						actionTask.action, installableObj.FullyQualifiedId())
 
 					// create a tranche just for the post action
 					tranche := tranche{
-						manifest: *kappObj.GetManifest(),
+						manifest: *GetManifestById(manifests, installableObj.ManifestId()),
 						tasks:    []task{*actionTask},
 					}
 
@@ -170,7 +170,7 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 		}
 
 		if len(tasks) > 0 && previousManifest != nil &&
-			previousManifest.Id() != kappObj.GetManifest().Id() {
+			previousManifest.Id() != installableObj.ManifestId() {
 			tranche := tranche{
 				manifest: *previousManifest,
 				tasks:    tasks,
@@ -180,7 +180,7 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 			tasks = make([]task, 0)
 		}
 
-		previousManifest = kappObj.GetManifest()
+		previousManifest = GetManifestById(manifests, installableObj.ManifestId())
 	}
 
 	// add a tranche if there are any tasks for the final manifest
@@ -210,6 +210,17 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 	// create a cluster diff
 
 	return &plan, nil
+}
+
+// Returns a manifest by ID. Panics if it doesn't exist (for a simpler interface)
+func GetManifestById(manifests []*stack.Manifest, manifestId string) *stack.Manifest {
+	for _, manifest := range manifests {
+		if manifest.Id() == manifestId {
+			return manifest
+		}
+	}
+
+	panic(fmt.Sprintf("No manifest found with ID '%s'", manifestId))
 }
 
 // Reverses the order of all tranches and all tasks within each tranche to reverse
@@ -258,7 +269,7 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 		}
 
 		for _, task := range tranche.tasks {
-			task.kapp.SetCacheDir(p.cacheDir)
+			task.installableObj.SetCacheDir(p.cacheDir)
 
 			job := job{
 				approved:        approved,
@@ -305,20 +316,20 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 
 	for job := range jobs {
 		task := job.task
-		kappObj := task.kapp
+		installableObj := task.installableObj
 		stackObj := job.stack
 		approved := job.approved
 		dryRun := job.dryRun
 		renderTemplates := job.renderTemplates
 
-		kappRootDir := kappObj.CacheDir()
-		log.Logger.Infof("Processing kapp '%s' in %s", kappObj.FullyQualifiedId(), kappRootDir)
+		kappRootDir := installableObj.CacheDir()
+		log.Logger.Infof("Processing kapp '%s' in %s", installableObj.FullyQualifiedId(), kappRootDir)
 
 		// todo - print (to stdout) detais of the kapp being executed
 
 		_, err := os.Stat(kappRootDir)
 		if err != nil {
-			msg := fmt.Sprintf("Kapp '%s' doesn't exist in the cache at '%s'", kappObj.Id, kappRootDir)
+			msg := fmt.Sprintf("Kapp '%s' doesn't exist in the cache at '%s'", installableObj.Id(), kappRootDir)
 			log.Logger.Warn(msg)
 			errCh <- errors.Wrap(err, msg)
 		}
@@ -327,20 +338,20 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 		installerImpl, err := installer.NewInstaller(installer.MAKE, stackObj.Provider)
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
-				"kapp '%s'", kappObj.Id)
+				"kapp '%s'", installableObj.Id())
 		}
 
 		switch task.action {
 		case constants.TaskActionInstall:
-			err := installer.Install(installerImpl, &kappObj, stackObj, approved, renderTemplates, dryRun)
+			err := installer.Install(installerImpl, installableObj, stackObj, approved, renderTemplates, dryRun)
 			if err != nil {
-				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", kappObj.Id)
+				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
 			}
 			break
 		case constants.TaskActionDestroy:
-			err := installer.Destroy(installerImpl, &kappObj, stackObj, approved, renderTemplates, dryRun)
+			err := installer.Destroy(installerImpl, installableObj, stackObj, approved, renderTemplates, dryRun)
 			if err != nil {
-				errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", kappObj.Id)
+				errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", installableObj.Id())
 			}
 			break
 		case constants.TaskActionClusterUpdate:
@@ -348,7 +359,8 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				log.Logger.Info("Running cluster update action")
 				err := cluster.UpdateCluster(os.Stdout, stackObj, true, dryRun)
 				if err != nil {
-					errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'", kappObj.Id)
+					errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'",
+						installableObj.Id())
 				}
 			} else {
 				log.Logger.Info("Skipping cluster update action since the approved=false")

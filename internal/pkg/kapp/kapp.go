@@ -34,7 +34,6 @@ import (
 
 type Kapp struct {
 	Id          string
-	manifest    *Manifest
 	cacheDir    string
 	Config      Config
 	State       string
@@ -52,11 +51,6 @@ func (k *Kapp) SetCacheDir(cacheDir string) {
 	log.Logger.Debugf("Setting cache dir on kapp '%s' to '%s'",
 		k.FullyQualifiedId(), cacheDir)
 	k.cacheDir = cacheDir
-}
-
-// Return the manifest the kapp is in
-func (k Kapp) GetManifest() *Manifest {
-	return k.manifest
 }
 
 // Returns the physical path to this kapp in a cache

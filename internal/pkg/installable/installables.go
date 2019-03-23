@@ -26,6 +26,8 @@ import (
 type Installable interface {
 	Id() string
 	FullyQualifiedId() string
+	ManifestId() string
+	State() string
 	Acquirers() ([]acquirer.Acquirer, error)
 }
 

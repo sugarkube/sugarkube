@@ -27,11 +27,21 @@ import (
 type Kapp struct {
 	descriptor structs.KappDescriptor
 	manifestId string
+	state      string
 }
 
 // Returns the non-fully qualified ID
 func (k Kapp) Id() string {
 	return k.descriptor.Id
+}
+
+// Returns the manifest ID
+func (k Kapp) ManifestId() string {
+	return k.manifestId
+}
+
+func (k Kapp) State() string {
+	return k.state
 }
 
 // Returns the fully-qualified ID of a kapp
