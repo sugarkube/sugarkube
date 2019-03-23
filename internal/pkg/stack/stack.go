@@ -21,8 +21,8 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces-to-delete"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
@@ -93,10 +93,10 @@ func (s Stack) GetRegistry() *registry.Registry {
 	return s.registry
 }
 
-// Merges and templates vars from all configured sources. If a kapp instance
-// is given, data specific to the kapp will be included in the returned map,
+// Merges and templates vars from all configured sources. If an installable instance
+// is given, data specific to it will be included in the returned map,
 // otherwise only stack-specific variables will be returned.
-func (s *Stack) TemplatedVars(kappObj *kapp.Kapp,
+func (s *Stack) TemplatedVars(installableObj installable.Installable,
 	installerVars map[string]interface{}) (map[string]interface{}, error) {
 
 	stackConfig := s.Config
@@ -130,19 +130,19 @@ func (s *Stack) TemplatedVars(kappObj *kapp.Kapp,
 	log.Logger.Tracef("Merging stack vars with registry: %v", s.registry)
 	configFragments = append(configFragments, s.registry.AsMap())
 
-	if kappObj != nil {
-		kappVars, err := kappObj.GetVarsFromFiles(s.Config)
+	if installableObj != nil {
+		kappVars, err := installableObj.GetVarsFromFiles(s.Config)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
 		kappIntrinsicDataConverted := map[string]interface{}{}
 
-		kappIntrinsicData := kappObj.GetIntrinsicData()
+		kappIntrinsicData := installableObj.GetIntrinsicData()
 		kappIntrinsicDataConverted = convert.MapStringStringToMapStringInterface(kappIntrinsicData)
 
 		// merge kapp.Vars with the vars from files so kapp.Vars take precedence. Todo - document the order of precedence
-		err = mergo.Merge(&kappVars, kappObj.Vars, mergo.WithOverride)
+		err = mergo.Merge(&kappVars, installableObj.Vars, mergo.WithOverride)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -154,9 +154,9 @@ func (s *Stack) TemplatedVars(kappObj *kapp.Kapp,
 
 		// add placeholders templated paths so kapps that use them work when running
 		// `kapp vars`, etc.
-		templatePlaceholders := make([]string, len(kappObj.Templates))
+		templatePlaceholders := make([]string, len(installableObj.Templates))
 
-		for i, _ := range kappObj.Templates {
+		for i, _ := range installableObj.Templates {
 			templatePlaceholders[i] = "<generated>"
 		}
 		kappIntrinsicDataConverted["templates"] = templatePlaceholders

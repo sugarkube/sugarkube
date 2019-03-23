@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
@@ -33,14 +32,8 @@ import (
 )
 
 type Kapp struct {
-	Id          string
-	cacheDir    string
-	Config      Config
-	State       string
-	Vars        map[string]interface{}
-	PostActions []string `yaml:"post_actions"`
-	Sources     []acquirer.Source
-	Templates   []Template
+	cacheDir string
+	Config   Config
 }
 
 // todo - allow templates to be overridden in manifest overrides blocks
@@ -223,7 +216,7 @@ func (k *Kapp) GetVarsFromFiles(stackConfig *StackConfig) (map[string]interface{
 func (k *Kapp) findVarsFiles(stackConfig *StackConfig) ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.ValuesFile),
-		stackConfig.Name,
+		stackConfig.Name(),
 		stackConfig.Provider,
 		stackConfig.Provisioner,
 		stackConfig.Account,

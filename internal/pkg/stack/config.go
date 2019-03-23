@@ -50,6 +50,10 @@ func (s *StackConfig) GetProviderVars() map[string]interface{} {
 	return s.providerVars
 }
 
+func (s StackConfig) Name() string {
+	return s.rawConfig.Name
+}
+
 func (s StackConfig) Provider() string {
 	return s.rawConfig.Provider
 }
@@ -111,7 +115,7 @@ func (s *StackConfig) Dir() string {
 // Returns certain stack data that should be exposed as variables when running kapps
 func (s *StackConfig) GetIntrinsicData() map[string]string {
 	return map[string]string{
-		"name":        s.rawConfig.Name,
+		"name":        s.Name(),
 		"filePath":    s.rawConfig.FilePath,
 		"provider":    s.Provider(),
 		"provisioner": s.Provisioner(),
