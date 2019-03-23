@@ -45,6 +45,11 @@ func (s StackConfig) KappVarsDirs() []string {
 	return s.rawConfig.KappVarsDirs
 }
 
+// Returns the configured list of template dirs
+func (s StackConfig) TemplateDirs() []string {
+	return s.rawConfig.TemplateDirs
+}
+
 // Returns the configured list of provider vars dirs
 func (s StackConfig) ProviderVarsDirs() []string {
 	return s.rawConfig.ProviderVarsDirs

@@ -17,7 +17,7 @@
 package interfaces
 
 import (
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/installable"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 )
 
@@ -43,6 +43,7 @@ type IStackConfig interface {
 	Cluster() string
 	OnlineTimeout() uint32
 	KappVarsDirs() []string
+	TemplateDirs() []string
 	Dir() string
 }
 
@@ -50,6 +51,6 @@ type IStack interface {
 	GetConfig() IStackConfig
 	GetStatus() IClusterStatus
 	GetRegistry() *registry.Registry
-	TemplatedVars(kappObj *kapp.Kapp,
+	TemplatedVars(installables installable.Installable,
 		installerVars map[string]interface{}) (map[string]interface{}, error)
 }

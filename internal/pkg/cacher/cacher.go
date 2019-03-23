@@ -19,7 +19,7 @@ package cacher
 import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/installable"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"path/filepath"
@@ -34,7 +34,7 @@ type Ider interface {
 
 type CacheGrouper interface {
 	Ider
-	ParsedKapps() []kapp.Kapp
+	Installables() []installable.Installable
 }
 
 // Returns the path that the group of cacheable objects should be stored under
@@ -60,27 +60,27 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 	}
 
 	// acquire each kapp and cache it
-	for _, kappObj := range cacheGroup.ParsedKapps() {
+	for _, installableObj := range cacheGroup.Installables() {
 		// build a directory path for the kapp in the cacheGroup cache directory
-		kappObj.SetCacheDir(rootCacheDir)
+		installableObj.SetCacheDir(rootCacheDir)
 
-		log.Logger.Infof("Caching kapp '%s'", kappObj.FullyQualifiedId())
-		log.Logger.Debugf("Kapp to cache: %#v", kappObj)
+		log.Logger.Infof("Caching kapp '%s'", installableObj.FullyQualifiedId())
+		log.Logger.Debugf("Kapp to cache: %#v", installableObj)
 
 		// build a directory path for the kapp's .sugarkube cache directory
-		kappHiddenCacheDir := getKappCachePath(kappObj.CacheDir())
+		kappHiddenCacheDir := getKappCachePath(installableObj.CacheDir())
 
 		err := createDirectoryIfMissing(kappHiddenCacheDir)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		acquirers, err := kappObj.Acquirers()
+		acquirers, err := installableObj.Acquirers()
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		err = acquireSources(cacheGroup.Id(), acquirers, kappObj.CacheDir(),
+		err = acquireSources(cacheGroup.Id(), acquirers, installableObj.CacheDir(),
 			kappHiddenCacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)

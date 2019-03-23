@@ -22,7 +22,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
@@ -106,7 +107,8 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := kapp.SelectInstallables(stackObj.Config.Manifests, c.includeSelector, c.excludeSelector)
+	selectedKapps, err := stack.SelectInstallables(stackObj.Config.Manifests(), c.includeSelector,
+		c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -130,11 +132,11 @@ func (c *templateConfig) run() error {
 }
 
 // Render templates for kapps defined in a stack config
-func RenderTemplates(kapps []kapp.Kapp, cacheDir string, stack stack.Stack,
+func RenderTemplates(installables []installable.Installable, cacheDir string, stack interfaces.IStack,
 	dryRun bool) error {
 
-	if len(kapps) == 0 {
-		return errors.New("No kapps supplied to template function")
+	if len(installables) == 0 {
+		return errors.New("No installables supplied to template function")
 	}
 
 	// make sure the cache dir exists
@@ -144,14 +146,14 @@ func RenderTemplates(kapps []kapp.Kapp, cacheDir string, stack stack.Stack,
 	}
 
 	candidateKappIds := make([]string, 0)
-	for _, k := range kapps {
+	for _, k := range installables {
 		candidateKappIds = append(candidateKappIds, k.FullyQualifiedId())
 	}
 
-	log.Logger.Debugf("Rendering templates for kapps: %s", strings.Join(candidateKappIds, ", "))
+	log.Logger.Debugf("Rendering templates for installables: %s", strings.Join(candidateKappIds, ", "))
 
-	for _, kappObj := range kapps {
-		templatedVars, err := stack.TemplatedVars(&kappObj, map[string]interface{}{})
+	for _, kappObj := range installables {
+		templatedVars, err := stack.TemplatedVars(kappObj, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)
 		}

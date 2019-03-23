@@ -130,7 +130,7 @@ func (s *Stack) TemplatedVars(installableObj installable.Installable,
 	configFragments = append(configFragments, s.registry.AsMap())
 
 	if installableObj != nil {
-		installableVars, err := installableObj.Vars()
+		installableVars, err := installableObj.Vars(s)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

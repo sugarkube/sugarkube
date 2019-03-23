@@ -18,6 +18,7 @@ package installable
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
 
@@ -31,7 +32,9 @@ type Installable interface {
 	PostActions() []string
 	Acquirers() ([]acquirer.Acquirer, error)
 	RefreshConfig(templateVars map[string]interface{}) error
-	Vars() (map[string]interface{}, error)
+	Vars(iStack interfaces.IStack) (map[string]interface{}, error)
+	RenderTemplates(templateVars map[string]interface{}, stackConfig interfaces.IStackConfig,
+		dryRun bool) ([]string, error)
 }
 
 func New(manifestId string, descriptor structs.KappDescriptor) (Installable, error) {
