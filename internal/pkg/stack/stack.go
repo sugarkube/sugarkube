@@ -21,7 +21,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/installable"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces-to-delete"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
@@ -84,9 +83,10 @@ func (s Stack) GetGlobalConfig() *config.Config {
 	return s.GlobalConfig
 }
 
-func (s Stack) GetStatus() interfaces.IClusterStatus {
-	return s.Status
-}
+// todo - delete this
+//func (s Stack) GetStatus() interfaces.IClusterStatus {
+//	return s.Status
+//}
 
 func (s Stack) GetRegistry() *registry.Registry {
 	return s.registry

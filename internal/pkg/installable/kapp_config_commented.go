@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Sugarkube Authors
+ * Copyright 2019 The Sugarkube Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package kapp
+package installable
 
 // Templates global program configs for programs used by the kapp and merges
 // them wtih the kapps own config declared in its sugarkube.yaml file

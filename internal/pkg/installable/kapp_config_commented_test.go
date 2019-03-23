@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package kapp
+package installable
 
 import (
 	"github.com/stretchr/testify/assert"
