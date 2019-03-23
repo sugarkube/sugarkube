@@ -25,13 +25,13 @@ import (
 )
 
 type Kapp struct {
-	rawConfig  structs.KappAddress
+	descriptor structs.KappDescriptor
 	manifestId string
 }
 
 // Returns the non-fully qualified ID
 func (k Kapp) Id() string {
-	return k.rawConfig.Id
+	return k.descriptor.Id
 }
 
 // Returns the fully-qualified ID of a kapp
@@ -46,7 +46,7 @@ func (k Kapp) FullyQualifiedId() string {
 // Returns an array of acquirers configured for the sources for this kapp. We need to recompute these each time
 // instead of caching them so that any manifest overrides will take effect.
 func (k Kapp) Acquirers() ([]acquirer.Acquirer, error) {
-	acquirers, err := acquirer.GetAcquirersFromSources(k.rawConfig.Sources)
+	acquirers, err := acquirer.GetAcquirersFromSources(k.descriptor.Sources)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

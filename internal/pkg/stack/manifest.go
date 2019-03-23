@@ -32,20 +32,20 @@ import (
 )
 
 type Manifest struct {
-	address      structs.ManifestAddress
+	descriptor   structs.ManifestDescriptor
 	rawConfig    structs.Manifest
 	installables []installable.Installable
 }
 
 // Sets fields to default values
 func (m *Manifest) Id() string {
-	if len(m.address.Id) > 0 {
-		return m.address.Id
+	if len(m.descriptor.Id) > 0 {
+		return m.descriptor.Id
 	}
 
 	// use the basename after stripping the extension by default
 	// todo - get this from the cache manager for the manifest
-	return strings.Replace(filepath.Base(m.address.Uri), filepath.Ext(m.address.Uri), "", 1)
+	return strings.Replace(filepath.Base(m.descriptor.Uri), filepath.Ext(m.descriptor.Uri), "", 1)
 }
 
 func (m *Manifest) Installables() []installable.Installable {
@@ -56,22 +56,22 @@ func (m *Manifest) Installables() []installable.Installable {
 func parseInstallables(manifestId string, rawManifest structs.Manifest, manifestOverrides map[string]interface{}) ([]installable.Installable, error) {
 	installables := make([]installable.Installable, 0)
 
-	for i, kappAddress := range rawManifest.KappAddress {
-		installableId := kappAddress.Id
+	for i, kappDescriptor := range rawManifest.KappDescriptor {
+		installableId := kappDescriptor.Id
 		overrides, err := installableOverrides(manifestOverrides, installableId)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
 		if overrides != nil {
-			err = applyOverrides(&kappAddress, overrides)
+			err = applyOverrides(&kappDescriptor, overrides)
 			if err != nil {
 				return nil, errors.WithStack(err)
 			}
 		}
 
-		// convert the kappAddress to an installable
-		installableObj, err := installable.New(manifestId, kappAddress)
+		// convert the kappDescriptor to an installable
+		installableObj, err := installable.New(manifestId, kappDescriptor)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -82,13 +82,13 @@ func parseInstallables(manifestId string, rawManifest structs.Manifest, manifest
 	return installables, nil
 }
 
-// Updates the kappAddress struct with any overrides specified in the manifest file
-func applyOverrides(kappAddress *structs.KappAddress, overrides map[string]interface{}) error {
+// Updates the kappDescriptor struct with any overrides specified in the manifest file
+func applyOverrides(kappDescriptor *structs.KappDescriptor, overrides map[string]interface{}) error {
 	// we can't just unmarshal it to YAML, merge the overrides and marshal it again because overrides
 	// use keys whose values are IDs of e.g. sources instead of referring to sources by index.
 	overriddenState, ok := overrides[constants.StateKey]
 	if ok {
-		kappAddress.State = overriddenState.(string)
+		kappDescriptor.State = overriddenState.(string)
 	}
 
 	// update any overridden variables
@@ -100,7 +100,7 @@ func applyOverrides(kappAddress *structs.KappAddress, overrides map[string]inter
 			return errors.WithStack(err)
 		}
 
-		err = mergo.Merge(&kappAddress.Vars, overriddenVarsConverted, mergo.WithOverride)
+		err = mergo.Merge(&kappDescriptor.Vars, overriddenVarsConverted, mergo.WithOverride)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -115,7 +115,7 @@ func applyOverrides(kappAddress *structs.KappAddress, overrides map[string]inter
 			return errors.WithStack(err)
 		}
 
-		currentAcquirers := kappAddress.Sources
+		currentAcquirers := kappDescriptor.Sources
 
 		// sources are overridden by specifying the ID of a source as the key. So we need to iterate through
 		// the overrides and also through the list of sources to update values
@@ -126,7 +126,7 @@ func applyOverrides(kappAddress *structs.KappAddress, overrides map[string]inter
 				return errors.WithStack(err)
 			}
 
-			for i, source := range kappAddress.Sources {
+			for i, source := range kappDescriptor.Sources {
 				if sourceId == currentAcquirers[i].Id {
 					sourceYaml, err := yaml.Marshal(source)
 					if err != nil {
@@ -161,7 +161,7 @@ func applyOverrides(kappAddress *structs.KappAddress, overrides map[string]inter
 
 					log.Logger.Tracef("Updating source at index %d to: %#v", i, mergedSource)
 
-					kappAddress.Sources[i] = mergedSource
+					kappDescriptor.Sources[i] = mergedSource
 				}
 			}
 		}
@@ -187,7 +187,7 @@ func installableOverrides(manifestOverrides map[string]interface{}, installableI
 }
 
 // Load a single manifest file and parse the kapps it defines
-func parseManifestFile(path string, address structs.ManifestAddress) (*Manifest, error) {
+func parseManifestFile(path string, descriptor structs.ManifestDescriptor) (*Manifest, error) {
 
 	log.Logger.Infof("Parsing manifest file: %s", path)
 
@@ -200,13 +200,13 @@ func parseManifestFile(path string, address structs.ManifestAddress) (*Manifest,
 
 	log.Logger.Tracef("Loaded raw manifest: %#v", rawManifest)
 
-	installables, err := parseInstallables(address.Id, rawManifest, address.Overrides)
+	installables, err := parseInstallables(descriptor.Id, rawManifest, descriptor.Overrides)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	populatedManifest := Manifest{
-		address:      address,
+		descriptor:   descriptor,
 		rawConfig:    rawManifest,
 		installables: installables,
 	}
@@ -342,21 +342,21 @@ func MatchesSelector(installable installable.Installable, selector string) (bool
 
 // Acquires a manifest.
 // todo - refactor to use an acquirer
-func acquireManifest(stackConfigFileDir string, manifestAddress structs.ManifestAddress) (*Manifest, error) {
+func acquireManifest(stackConfigFileDir string, manifestDescriptor structs.ManifestDescriptor) (*Manifest, error) {
 
 	// The file acquirer needs to convert relative paths to absolute.
-	uri := manifestAddress.Uri
+	uri := manifestDescriptor.Uri
 	if !filepath.IsAbs(uri) {
 		uri = filepath.Join(stackConfigFileDir, uri)
 	}
 
 	// todo - get rid of this once we've switched to an acquirer and can pull the path from a cache manager
-	manifestAddress.Uri = uri
+	manifestDescriptor.Uri = uri
 
 	filePath := uri
 
 	// parse the manifest file we've acquired
-	manifest, err := parseManifestFile(filePath, manifestAddress)
+	manifest, err := parseManifestFile(filePath, manifestDescriptor)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

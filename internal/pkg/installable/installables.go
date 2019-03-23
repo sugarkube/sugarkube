@@ -29,9 +29,9 @@ type Installable interface {
 	Acquirers() ([]acquirer.Acquirer, error)
 }
 
-func New(manifestId string, address structs.KappAddress) (Installable, error) {
+func New(manifestId string, descriptor structs.KappDescriptor) (Installable, error) {
 	return Kapp{
 		manifestId: manifestId,
-		rawConfig:  address,
+		descriptor: descriptor,
 	}, nil
 }

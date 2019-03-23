@@ -18,8 +18,8 @@ package structs
 
 // Structs to load a stack YAML file
 
-// Not the manifest itself, just an address to it along with some other data
-type ManifestAddress struct {
+// Describes where to find the manifest plus some other data, but isn't the manifest itself
+type ManifestDescriptor struct {
 	Id  string `yaml:"id"` // a default will be used if not explicitly set. Used to namespace cache entries
 	Uri string
 
@@ -33,14 +33,14 @@ type Stack struct {
 	Name     string // this is in the YAML file, but is the key that the config is under
 	FilePath string // this is immutable too and is intrinsically related to the config so although it's
 	// not directly in the YAML, an exception has been made
-	Provider          string
-	Provisioner       string
-	Account           string
-	Region            string
-	Profile           string
-	Cluster           string
-	ProviderVarsDirs  []string          `yaml:"providerVarsDirs"`
-	KappVarsDirs      []string          `yaml:"kappVarsDirs"`
-	ManifestAddresses []ManifestAddress `yaml:"manifests"` // this struct should be immutable, so don't store pointers
-	TemplateDirs      []string          `yaml:"templateDirs"`
+	Provider            string
+	Provisioner         string
+	Account             string
+	Region              string
+	Profile             string
+	Cluster             string
+	ProviderVarsDirs    []string             `yaml:"providerVarsDirs"`
+	KappVarsDirs        []string             `yaml:"kappVarsDirs"`
+	ManifestDescriptors []ManifestDescriptor `yaml:"manifests"` // this struct should be immutable, so don't store pointers
+	TemplateDirs        []string             `yaml:"templateDirs"`
 }

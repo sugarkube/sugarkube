@@ -182,14 +182,13 @@ func parseRawConfig(rawStackConfig structs.Stack) (*StackConfig, error) {
 	return stackConfig, nil
 }
 
-// todo - call this...
 func acquireManifests(stackObj structs.Stack) ([]*Manifest, error) {
 	log.Logger.Info("Acquiring manifests...")
 
-	manifests := make([]*Manifest, len(stackObj.ManifestAddresses))
+	manifests := make([]*Manifest, len(stackObj.ManifestDescriptors))
 
-	for i, manifest := range stackObj.ManifestAddresses {
-		manifest, err := acquireManifest(filepath.Dir(stackObj.FilePath), manifest)
+	for i, descriptor := range stackObj.ManifestDescriptors {
+		manifest, err := acquireManifest(filepath.Dir(stackObj.FilePath), descriptor)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

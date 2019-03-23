@@ -23,8 +23,8 @@ type Template struct {
 	Dest   string
 }
 
-// Not the kapp itself, just an address to it along with some other data
-type KappAddress struct {
+// Describes where to find the kapp plus some other data, but isn't the kapp itself
+type KappDescriptor struct {
 	Id          string
 	State       string
 	Vars        map[string]interface{}
@@ -38,6 +38,6 @@ type ManifestOptions struct {
 }
 
 type Manifest struct {
-	Options     ManifestOptions
-	KappAddress []KappAddress `yaml:"kapps"`
+	Options        ManifestOptions
+	KappDescriptor []KappDescriptor `yaml:"kapps"`
 }
