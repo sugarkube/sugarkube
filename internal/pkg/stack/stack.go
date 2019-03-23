@@ -83,10 +83,9 @@ func (s Stack) GetGlobalConfig() *config.Config {
 	return s.GlobalConfig
 }
 
-// todo - delete this
-//func (s Stack) GetStatus() interfaces.IClusterStatus {
-//	return s.Status
-//}
+func (s Stack) GetStatus() *ClusterStatus {
+	return s.Status
+}
 
 func (s Stack) GetRegistry() *registry.Registry {
 	return s.registry

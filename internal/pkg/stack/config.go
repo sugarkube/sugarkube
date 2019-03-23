@@ -40,6 +40,11 @@ func (s StackConfig) Manifests() []*Manifest {
 	return s.manifests
 }
 
+// Returns the configured list of provider vars dirs
+func (s StackConfig) ProviderVarsDirs() []string {
+	return s.rawConfig.ProviderVarsDirs
+}
+
 // Sets provider vars
 func (s *StackConfig) SetProviderVars(vars map[string]interface{}) {
 	s.providerVars = vars

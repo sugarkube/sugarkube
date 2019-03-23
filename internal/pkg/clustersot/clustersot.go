@@ -19,21 +19,21 @@ package clustersot
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 )
 
 type ClusterSot interface {
 	isOnline() (bool, error)
 	isReady() (bool, error)
-	iStack() interfaces.IStack
+	stack() stack.Stack
 }
 
 // Implemented ClusterSot names
 const KUBECTL = "kubectl"
 
 // Factory that creates ClusterSots
-func NewClusterSot(name string, stack interfaces.IStack) (ClusterSot, error) {
+func NewClusterSot(name string, stack stack.Stack) (ClusterSot, error) {
 	if stack == nil {
 		return nil, errors.New("Stack parameter can't be nil")
 	}
@@ -48,7 +48,7 @@ func NewClusterSot(name string, stack interfaces.IStack) (ClusterSot, error) {
 // Uses an implementation to determine whether the cluster is reachable/online, but it
 // may not be ready to install Kapps into yet.
 func IsOnline(c ClusterSot) (bool, error) {
-	if c.iStack().GetStatus().IsOnline() {
+	if c.stack().GetStatus().IsOnline() {
 		return true, nil
 	}
 
@@ -59,7 +59,7 @@ func IsOnline(c ClusterSot) (bool, error) {
 
 	if online {
 		log.Logger.Info("Cluster is online. Updating cluster status.")
-		c.iStack().GetStatus().SetIsOnline(true)
+		c.stack().GetStatus().SetIsOnline(true)
 	}
 
 	return online, nil
@@ -67,7 +67,7 @@ func IsOnline(c ClusterSot) (bool, error) {
 
 // Uses an implementation to determine whether the cluster is ready to install kapps into
 func IsReady(c ClusterSot) (bool, error) {
-	if c.iStack().GetStatus().IsReady() {
+	if c.stack().GetStatus().IsReady() {
 		return true, nil
 	}
 
@@ -78,7 +78,7 @@ func IsReady(c ClusterSot) (bool, error) {
 
 	if ready {
 		log.Logger.Info("Cluster is ready. Updating cluster status.")
-		c.iStack().GetStatus().SetIsReady(true)
+		c.stack().GetStatus().SetIsReady(true)
 	}
 
 	return ready, nil

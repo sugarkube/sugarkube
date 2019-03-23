@@ -20,9 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"os"
@@ -40,19 +38,30 @@ type Provider interface {
 	customVarsDirs() []string
 }
 
+type stackDescription interface {
+	Region() string
+	Provider() string
+	Provisioner() string
+	Account() string
+	Profile() string
+	Cluster() string
+	ProviderVarsDirs() []string
+	Dir() string
+}
+
 // implemented providers
 const LOCAL = "local"
 const AWS = "aws"
 
 // Factory that creates providers
-func newProviderImpl(name string, stackConfig *stack.StackConfig) (Provider, error) {
+func newProviderImpl(name string, stackDesc stackDescription) (Provider, error) {
 	if name == LOCAL {
 		return &LocalProvider{}, nil
 	}
 
 	if name == AWS {
 		return &AwsProvider{
-			region: stackConfig.Region,
+			region: stackDesc.Region(),
 		}, nil
 	}
 
@@ -61,8 +70,8 @@ func newProviderImpl(name string, stackConfig *stack.StackConfig) (Provider, err
 
 // Instantiates a Provider and returns it along with the stack config vars it can
 // load, or an error.
-func NewProvider(stackConfig *stack.StackConfig) (Provider, error) {
-	providerImpl, err := newProviderImpl(stackConfig.Provider, stackConfig)
+func NewProvider(stackDesc stackDescription) (Provider, error) {
+	providerImpl, err := newProviderImpl(stackDesc.Provider(), stackDesc)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -82,8 +91,8 @@ func GetName(p Provider) string {
 
 // Finds all vars files for the given provider and returns the result of merging
 // all the data.
-func GetVarsFromFiles(provider Provider, stackConfig *stack.StackConfig) (map[string]interface{}, error) {
-	dirs, err := findVarsFiles(provider, stackConfig)
+func GetVarsFromFiles(provider Provider, stackDesc stackDescription) (map[string]interface{}, error) {
+	dirs, err := findVarsFiles(provider, stackDesc)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -99,15 +108,15 @@ func GetVarsFromFiles(provider Provider, stackConfig *stack.StackConfig) (map[st
 }
 
 // Search for paths to provider vars files
-func findVarsFiles(provider Provider, stackConfig *stack.StackConfig) ([]string, error) {
+func findVarsFiles(provider Provider, stackDesc stackDescription) ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.ValuesFile),
-		stackConfig.Provider,
-		stackConfig.Provisioner,
-		stackConfig.Account,
-		stackConfig.Profile,
-		stackConfig.Cluster,
-		stackConfig.Region,
+		stackDesc.Provider(),
+		stackDesc.Provisioner(),
+		stackDesc.Account(),
+		stackDesc.Profile(),
+		stackDesc.Cluster(),
+		stackDesc.Region(),
 	}
 
 	// append the provider-specific static directory names to search
@@ -115,8 +124,8 @@ func findVarsFiles(provider Provider, stackConfig *stack.StackConfig) ([]string,
 
 	paths := make([]string, 0)
 
-	for _, searchDir := range stackConfig.ProviderVarsDirs {
-		searchPath, err := filepath.Abs(filepath.Join(stackConfig.Dir(), searchDir))
+	for _, searchDir := range stackDesc.ProviderVarsDirs() {
+		searchPath, err := filepath.Abs(filepath.Join(stackDesc.Dir(), searchDir))
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

@@ -22,11 +22,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
-	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 	"os"
@@ -132,7 +130,7 @@ func (c *templateConfig) run() error {
 }
 
 // Render templates for kapps defined in a stack config
-func RenderTemplates(kapps []kapp.Kapp, cacheDir string, stack interfaces.IStack,
+func RenderTemplates(kapps []kapp.Kapp, cacheDir string, stack stack.Stack,
 	dryRun bool) error {
 
 	if len(kapps) == 0 {

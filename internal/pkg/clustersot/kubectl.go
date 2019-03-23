@@ -20,15 +20,15 @@ import (
 	"bytes"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os/exec"
 	"strings"
 )
 
 type KubeCtlClusterSot struct {
-	stack interfaces.IStack
+	stack stack.Stack
 }
 
 // todo - make configurable
@@ -108,6 +108,6 @@ func (c KubeCtlClusterSot) isReady() (bool, error) {
 	return strings.TrimSpace(kubeConfig) == "", nil
 }
 
-func (c KubeCtlClusterSot) iStack() interfaces.IStack {
+func (c KubeCtlClusterSot) stack() stack.Stack {
 	return c.stack
 }
