@@ -24,6 +24,8 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 	"time"
 )
@@ -84,7 +86,7 @@ Note: Not all providers require all arguments. See documentation for help.
 func (c *connectCmd) run() error {
 
 	// CLI overrides - will be merged with and take precedence over values loaded from the stack config file
-	cliStackConfig := &kapp.StackConfig{
+	cliStackConfig := &structs.Stack{
 		Provider:    c.provider,
 		Provisioner: c.provisioner,
 		Profile:     c.profile,

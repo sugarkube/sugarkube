@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Sugarkube Authors
+ * Copyright 2019 The Sugarkube Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package kapp
+package stack
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -102,7 +102,7 @@ func TestSelectKapps(t *testing.T) {
 		"exampleManifest2:kappA",
 	}
 
-	selectedKapps, err := SelectKapps(stackConfig.Manifests, includeSelector, excludeSelector)
+	selectedKapps, err := SelectInstallables(stackConfig.Manifests, includeSelector, excludeSelector)
 	assert.Nil(t, err)
 
 	for i := 0; i < len(expectedKappIds); i++ {
@@ -133,7 +133,7 @@ func TestSelectKappsExclusions(t *testing.T) {
 		"exampleManifest2:kappD",
 	}
 
-	selectedKapps, err := SelectKapps(stackConfig.Manifests, includeSelector, excludeSelector)
+	selectedKapps, err := SelectInstallables(stackConfig.Manifests, includeSelector, excludeSelector)
 	assert.Nil(t, err)
 
 	for i := 0; i < len(expectedKappIds); i++ {

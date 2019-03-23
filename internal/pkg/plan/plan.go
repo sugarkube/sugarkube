@@ -25,7 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"os"
 	"sort"
 )
@@ -47,7 +47,7 @@ type Plan struct {
 	// each kapp in the tranche will be processed in parallel
 	tranches []tranche
 	// contains details of the target cluster
-	stack *structs.Stack
+	stack *stack.Stack
 	// a cache dir to run the (make) installer over. It should already have
 	// been validated to match the stack config.
 	cacheDir string
@@ -58,7 +58,7 @@ type Plan struct {
 // A job to be run by a worker
 type job struct {
 	task             task
-	stack            *structs.Stack
+	stack            *stack.Stack
 	manifestCacheDir string
 	renderTemplates  bool
 	approved         bool
@@ -74,13 +74,13 @@ type job struct {
 // reversed which will be useful when tearing down a cluster.
 // If the `runPostActions` parameter is false, no post actions will be executed.
 // This can be useful to quickly tear down a cluster.
-func Create(forward bool, stackObj *structs.Stack, manifests []*kapp.Manifest,
+func Create(forward bool, stackObj *stack.Stack, manifests []*kapp.Manifest,
 	cacheDir string, includeSelector []string, excludeSelector []string,
 	renderTemplates bool, runPostActions bool) (*Plan, error) {
 
 	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
 	// in selectors
-	selectedKapps, err := kapp.SelectKapps(manifests, includeSelector, excludeSelector)
+	selectedKapps, err := kapp.SelectInstallables(manifests, includeSelector, excludeSelector)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -106,13 +106,13 @@ func Create(forward bool, stackObj *structs.Stack, manifests []*kapp.Manifest,
 		}
 
 		// when creating a forward plan, we can install kapps...
-		if forward && kappObj.State == kapp.PresentKey {
+		if forward && kappObj.State == constants.PresentKey {
 			installDestroyTask = &task{
 				kapp:   kappObj,
 				action: constants.TaskActionInstall,
 			}
 			// but reverse plans must always destroy them
-		} else if !forward || kappObj.State == kapp.AbsentKey {
+		} else if !forward || kappObj.State == constants.AbsentKey {
 			installDestroyTask = &task{
 				kapp:   kappObj,
 				action: constants.TaskActionDestroy,

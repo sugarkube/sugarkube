@@ -26,6 +26,8 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 	"path/filepath"
 )
@@ -74,7 +76,7 @@ func (c *createCmd) run() error {
 	log.Logger.Debugf("Got CLI args: %#v", c)
 
 	// CLI args override configured args, so merge them in
-	cliStackConfig := &kapp.StackConfig{}
+	cliStackConfig := &structs.Stack{}
 
 	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig,
 		config.CurrentConfig, c.out)

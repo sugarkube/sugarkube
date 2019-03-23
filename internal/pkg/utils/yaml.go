@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Sugarkube Authors
+ * Copyright 2019 The Sugarkube Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package vars
+package utils
 
 import (
 	"github.com/pkg/errors"
@@ -53,12 +53,12 @@ func LoadYamlFile(path string, out interface{}) error {
 	return nil
 }
 
-// Returns a YAML representation of an object
-func AsYaml(in interface{}) (string, error) {
-	yamlData, err := yaml.Marshal(in)
-	if err != nil {
-		return "", errors.WithStack(err)
-	}
-
-	return string(yamlData[:]), nil
-}
+//// Returns a YAML representation of an object
+//func AsYaml(in interface{}) (string, error) {
+//	yamlData, err := yaml.Marshal(in)
+//	if err != nil {
+//		return "", errors.WithStack(err)
+//	}
+//
+//	return string(yamlData[:]), nil
+//}

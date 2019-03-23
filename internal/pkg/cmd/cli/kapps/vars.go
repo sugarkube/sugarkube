@@ -6,9 +6,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	datautils "github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -64,10 +67,10 @@ file will be displayed templated.`,
 	f.StringVar(&c.cacheDir, "cache-dir", "", "path to cache dir (if given, each kapp's sugarkube.yaml config file will be displayed)")
 	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
 		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			kapp.WildcardCharacter))
+			constants.WildcardCharacter))
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			kapp.WildcardCharacter))
+			constants.WildcardCharacter))
 	f.StringArrayVarP(&c.suppress, "suppress", "s", []string{},
 		"paths to variables to suppress from the output to simplify it (e.g. 'provision.specs')")
 	return cmd
@@ -76,7 +79,7 @@ file will be displayed templated.`,
 func (c *varsConfig) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
-	cliStackConfig := &kapp.StackConfig{
+	cliStackConfig := &structs.Stack{
 		Provider:    c.provider,
 		Provisioner: c.provisioner,
 		Profile:     c.profile,
@@ -91,7 +94,7 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := kapp.SelectKapps(stackObj.Config.Manifests, c.includeSelector, c.excludeSelector)
+	selectedKapps, err := kapp.SelectInstallables(stackObj.Config.Manifests, c.includeSelector, c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}

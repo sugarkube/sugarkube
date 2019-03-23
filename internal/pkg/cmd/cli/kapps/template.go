@@ -21,10 +21,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 	"os"
 	"strings"
@@ -80,17 +83,17 @@ configured for the region the target cluster is in, generating Helm
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
 	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
 		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			kapp.WildcardCharacter))
+			constants.WildcardCharacter))
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			kapp.WildcardCharacter))
+			constants.WildcardCharacter))
 	return cmd
 }
 
 func (c *templateConfig) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
-	cliStackConfig := &kapp.StackConfig{
+	cliStackConfig := &structs.Stack{
 		Provider:    c.provider,
 		Provisioner: c.provisioner,
 		Profile:     c.profile,
@@ -105,7 +108,7 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := kapp.SelectKapps(stackObj.Config.Manifests, c.includeSelector, c.excludeSelector)
+	selectedKapps, err := kapp.SelectInstallables(stackObj.Config.Manifests, c.includeSelector, c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}

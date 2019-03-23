@@ -14,4 +14,10 @@
  * limitations under the License.
  */
 
-package program
+package structs
+
+type Source struct {
+	Id      string
+	Uri     string
+	Options map[string]interface{}
+}

@@ -19,6 +19,7 @@ package acquirer
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"strings"
 )
 
@@ -28,18 +29,11 @@ type Acquirer interface {
 	Id() string
 	Path() string
 	Uri() string
-	IncludeValues() bool // todo - clarify if this is actually used, and if not, remove it
-}
-
-type Source struct {
-	Id            string
-	Uri           string
-	Options       map[string]interface{}
-	IncludeValues bool // todo - see if we actually need this
+	//IncludeValues() bool // todo - clarify if this is actually used, and if not, remove it
 }
 
 // Instantiates a new acquirer from a source
-func newAcquirer(source Source) (Acquirer, error) {
+func newAcquirer(source structs.Source) (Acquirer, error) {
 
 	if strings.Contains(source.Uri, ".git") {
 		acquirerObj, err := NewGitAcquirer(source)
@@ -65,7 +59,7 @@ func Acquire(a Acquirer, dest string) error {
 }
 
 // Takes a list of Sources and returns a list of instantiated acquirers that represent them
-func GetAcquirersFromSources(sources []Source) ([]Acquirer, error) {
+func GetAcquirersFromSources(sources []structs.Source) ([]Acquirer, error) {
 	acquirers := make([]Acquirer, len(sources))
 
 	for i, source := range sources {

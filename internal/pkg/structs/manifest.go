@@ -14,4 +14,30 @@
  * limitations under the License.
  */
 
-package program
+package structs
+
+// Structs to load a manifest YAML file
+
+type Template struct {
+	Source string
+	Dest   string
+}
+
+// Not the kapp itself, just an address to it along with some other data
+type KappAddress struct {
+	Id          string
+	State       string
+	Vars        map[string]interface{}
+	PostActions []string `yaml:"post_actions"`
+	Sources     []Source
+	Templates   []Template
+}
+
+type ManifestOptions struct {
+	Parallelisation uint16
+}
+
+type Manifest struct {
+	Options     ManifestOptions
+	KappAddress []KappAddress `yaml:"kapps"`
+}

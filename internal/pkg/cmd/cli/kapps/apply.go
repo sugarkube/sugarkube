@@ -21,11 +21,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
 	"io"
 )
 
@@ -106,13 +108,13 @@ process before installing the selected kapps.
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
 	f.StringVarP(&c.runUntil, "until", "u", "", fmt.Sprintf("apply kapps upto and including the selected kapp formatted "+
-		"'manifest-id:kapp-id' or 'manifest-id:%s'", kapp.WildcardCharacter))
+		"'manifest-id:kapp-id' or 'manifest-id:%s'", constants.WildcardCharacter))
 	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
 		fmt.Sprintf("only process specified kapps (can specify multiple, formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all)",
-			kapp.WildcardCharacter))
+			constants.WildcardCharacter))
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all)",
-			kapp.WildcardCharacter))
+			constants.WildcardCharacter))
 	f.Uint32Var(&c.onlineTimeout, "online-timeout", 600, "max number of seconds to wait for the cluster to come online")
 	f.Uint32Var(&c.readyTimeout, "ready-timeout", 600, "max number of seconds to wait for the cluster to become ready")
 	return cmd

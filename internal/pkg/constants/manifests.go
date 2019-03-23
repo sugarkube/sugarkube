@@ -14,4 +14,10 @@
  * limitations under the License.
  */
 
-package program
+package constants
+
+const NamespaceSeparator = ":"
+const WildcardCharacter = "*"
+
+const PresentKey = "present"
+const AbsentKey = "absent"

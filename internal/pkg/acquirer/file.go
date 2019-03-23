@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,7 +37,7 @@ type FileAcquirer struct {
 
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
-func newFileAcquirer(source Source) (*FileAcquirer, error) {
+func newFileAcquirer(source structs.Source) (*FileAcquirer, error) {
 
 	uri := source.Uri
 

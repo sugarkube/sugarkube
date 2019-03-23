@@ -25,7 +25,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/program"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
@@ -35,17 +34,6 @@ import (
 	"path/filepath"
 	"strings"
 )
-
-type Template struct {
-	Source string
-	Dest   string
-}
-
-// Populated from the kapp's sugarkube.yaml file
-type Config struct {
-	program.Config `yaml:",inline"`
-	Requires       []string `yaml:"requires"`
-}
 
 type Kapp struct {
 	Id          string
@@ -59,11 +47,6 @@ type Kapp struct {
 	Templates   []Template
 }
 
-const NamespaceSeparator = ":"
-
-const PresentKey = "present"
-const AbsentKey = "absent"
-
 const StateKey = "state"
 const SourcesKey = "sources"
 const VarsKey = "vars"
@@ -76,15 +59,6 @@ func (k *Kapp) SetCacheDir(cacheDir string) {
 	log.Logger.Debugf("Setting cache dir on kapp '%s' to '%s'",
 		k.FullyQualifiedId(), cacheDir)
 	k.cacheDir = cacheDir
-}
-
-// Returns the fully-qualified ID of a kapp
-func (k Kapp) FullyQualifiedId() string {
-	if k.manifest == nil {
-		return k.Id
-	} else {
-		return strings.Join([]string{k.manifest.Id(), k.Id}, NamespaceSeparator)
-	}
 }
 
 // Return the manifest the kapp is in
@@ -236,17 +210,6 @@ func (k Kapp) GetIntrinsicData() map[string]string {
 	}
 }
 
-// Returns an array of acquirers configured for the sources for this kapp. We need to recompute these each time
-// instead of caching them so that any manifest overrides will take effect.
-func (k *Kapp) Acquirers() ([]acquirer.Acquirer, error) {
-	acquirers, err := acquirer.GetAcquirersFromSources(k.Sources)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return acquirers, nil
-}
-
 // Renders templates for the kapp and returns the paths they were written to
 func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfig *StackConfig,
 	dryRun bool) ([]string, error) {
@@ -363,37 +326,6 @@ func (k *Kapp) RenderTemplates(mergedKappVars map[string]interface{}, stackConfi
 	return renderedPaths, nil
 }
 
-// Returns a boolean indicating whether the kapp matches the given selector
-func (k Kapp) MatchesSelector(selector string) (bool, error) {
-
-	selectorParts := strings.Split(selector, NamespaceSeparator)
-	if len(selectorParts) != 2 {
-		return false, errors.New(fmt.Sprintf("Fully-qualified kapps must be given, i.e. "+
-			"formatted 'manifest-id%skapp-id' or 'manifest-id%s%s' for all kapps in a manifest",
-			NamespaceSeparator, NamespaceSeparator, WildcardCharacter))
-	}
-
-	selectorManifestId := selectorParts[0]
-	selectorKappId := selectorParts[1]
-
-	kappIdParts := strings.Split(k.FullyQualifiedId(), NamespaceSeparator)
-	if len(kappIdParts) != 2 {
-		return false, errors.New(fmt.Sprintf("Fully-qualified kapp ID has an unexpected format: %s",
-			k.FullyQualifiedId()))
-	}
-
-	kappManifestId := kappIdParts[0]
-	kappId := kappIdParts[1]
-
-	if selectorManifestId == kappManifestId {
-		if selectorKappId == WildcardCharacter || selectorKappId == kappId {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 // Finds all vars files for the given kapp and returns the result of merging
 // all the data.
 func (k *Kapp) GetVarsFromFiles(stackConfig *StackConfig) (map[string]interface{}, error) {
@@ -404,7 +336,7 @@ func (k *Kapp) GetVarsFromFiles(stackConfig *StackConfig) (map[string]interface{
 
 	values := map[string]interface{}{}
 
-	err = vars.MergePaths(&values, dirs...)
+	err = vars.MergePaths(values, dirs...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -460,10 +392,12 @@ func (k *Kapp) findVarsFiles(stackConfig *StackConfig) ([]string, error) {
 			return nil, errors.WithStack(err)
 		}
 
-		log.Logger.Infof("Searching for files/dirs for kapp '%s' under '%s' with basenames: %s",
-			kappId, searchPath, strings.Join(precedence, ", "))
+		log.Logger.Infof("Searching for files/dirs for kapp '%s' under "+
+			"'%s' with basenames: %s", kappId, searchPath,
+			strings.Join(precedence, ", "))
 
-		err = utils.PrecedenceWalk(searchPath, precedence, func(path string, info os.FileInfo, err error) error {
+		err = utils.PrecedenceWalk(searchPath, precedence, func(path string,
+			info os.FileInfo, err error) error {
 			if err != nil {
 				return errors.WithStack(err)
 			}

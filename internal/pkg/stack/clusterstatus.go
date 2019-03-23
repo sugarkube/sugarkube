@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package structs
+package stack
 
 // Hold information about the status of the cluster
 type ClusterStatus struct {

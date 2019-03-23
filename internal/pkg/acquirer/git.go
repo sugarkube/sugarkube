@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os"
 	"path/filepath"
@@ -28,11 +29,10 @@ import (
 )
 
 type GitAcquirer struct {
-	id            string
-	uri           string
-	branch        string
-	path          string
-	includeValues bool
+	id     string
+	uri    string
+	branch string
+	path   string
 }
 
 // todo - make configurable, or use go-git
@@ -46,7 +46,7 @@ const BranchKey = "branch"
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
 // todo - this is only public so we can use it in tests. We should find a way to make it private again
-func NewGitAcquirer(source Source) (*GitAcquirer, error) {
+func NewGitAcquirer(source structs.Source) (*GitAcquirer, error) {
 
 	branchFromOptions := ""
 
@@ -97,11 +97,10 @@ func NewGitAcquirer(source Source) (*GitAcquirer, error) {
 	}
 
 	return &GitAcquirer{
-		id:            id,
-		uri:           uri,
-		branch:        branch,
-		path:          path,
-		includeValues: source.IncludeValues,
+		id:     id,
+		uri:    uri,
+		branch: branch,
+		path:   path,
 	}, nil
 }
 

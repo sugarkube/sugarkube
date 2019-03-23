@@ -14,4 +14,14 @@
  * limitations under the License.
  */
 
-package program
+package installables
+
+import "github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+
+// this encapsulates different package formats that sugarkube can install in
+// a target stack
+type Installable interface {
+	Id() string
+	FullyQualifiedId() string
+	Acquirers() ([]acquirer.Acquirer, error)
+}

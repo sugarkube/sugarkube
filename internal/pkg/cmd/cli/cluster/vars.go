@@ -25,6 +25,8 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	datautils "github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -81,7 +83,7 @@ func newVarsCmd(out io.Writer) *cobra.Command {
 func (c *varsConfig) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
-	cliStackConfig := &kapp.StackConfig{
+	cliStackConfig := &structs.Stack{
 		Provider:    c.provider,
 		Provisioner: c.provisioner,
 		Profile:     c.profile,

@@ -21,9 +21,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 )
 
@@ -92,10 +95,10 @@ func newDestroyCmd(out io.Writer) *cobra.Command {
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
 	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
 		fmt.Sprintf("only process specified kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			kapp.WildcardCharacter))
+			constants.WildcardCharacter))
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
-			kapp.WildcardCharacter))
+			constants.WildcardCharacter))
 	return cmd
 }
 
@@ -104,7 +107,7 @@ func (c *destroyCmd) run() error {
 	// todo - pull out the command stuff with apply.go
 
 	// CLI overrides - will be merged with any loaded from a stack config file
-	cliStackConfig := &kapp.StackConfig{
+	cliStackConfig := &structs.Stack{
 		Provider:    c.provider,
 		Provisioner: c.provisioner,
 		Profile:     c.profile,

@@ -25,6 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/stackloader"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 )
@@ -100,15 +101,13 @@ Note: Not all providers require all arguments. See documentation for help.
 func (c *createCmd) run() error {
 
 	// CLI overrides - will be merged with and take precedence over values loaded from the stack config file
-	cliStackConfig := &kapp.StackConfig{
-		Provider:      c.provider,
-		Provisioner:   c.provisioner,
-		Profile:       c.profile,
-		Cluster:       c.cluster,
-		Region:        c.region,
-		Account:       c.account,
-		ReadyTimeout:  c.readyTimeout,
-		OnlineTimeout: c.onlineTimeout,
+	cliStackConfig := &structs.Stack{
+		Provider:    c.provider,
+		Provisioner: c.provisioner,
+		Profile:     c.profile,
+		Cluster:     c.cluster,
+		Region:      c.region,
+		Account:     c.account,
 	}
 
 	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig,
@@ -116,6 +115,9 @@ func (c *createCmd) run() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	stackObj.Config.SetReadyTimeout(c.readyTimeout)
+	stackObj.Config.SetOnlineTimeout(c.onlineTimeout)
 
 	err = CreateCluster(c.out, stackObj, c.dryRun)
 	if err != nil {
@@ -126,7 +128,7 @@ func (c *createCmd) run() error {
 }
 
 // Creates a cluster with a stack config
-func CreateCluster(out io.Writer, stackObj *structs.Stack, dryRun bool) error {
+func CreateCluster(out io.Writer, stackObj *stack.Stack, dryRun bool) error {
 	dryRunPrefix := ""
 	if dryRun {
 		dryRunPrefix = "[Dry run] "

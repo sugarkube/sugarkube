@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package structs
+package stack
 
 import (
 	"github.com/stretchr/testify/assert"
