@@ -37,7 +37,7 @@ import (
 // dependencies.
 type Stack struct {
 	GlobalConfig *config.Config // config loaded for the program from the 'sugarkube-conf.yaml' file
-	Config       *kapp.StackConfig
+	Config       *StackConfig
 	Provider     provider.Provider
 	Provisioner  provisioner.Provisioner
 	Status       *ClusterStatus
@@ -45,7 +45,7 @@ type Stack struct {
 }
 
 // Creates a new Stack
-func newStack(globalConfig *config.Config, config *kapp.StackConfig,
+func newStack(globalConfig *config.Config, config *StackConfig,
 	provider provider.Provider, registry *registry.Registry) (*Stack, error) {
 
 	stack := &Stack{
@@ -67,8 +67,7 @@ func newStack(globalConfig *config.Config, config *kapp.StackConfig,
 		return nil, errors.WithStack(err)
 	}
 
-	provisionerImpl, err := provisioner.New(stack.Config.Provisioner,
-		stack, clusterSot)
+	provisionerImpl, err := provisioner.New(stack.Config.Provisioner(), stack, clusterSot)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -78,7 +77,7 @@ func newStack(globalConfig *config.Config, config *kapp.StackConfig,
 	return stack, nil
 }
 
-func (s Stack) GetConfig() *kapp.StackConfig {
+func (s Stack) GetConfig() *StackConfig {
 	return s.Config
 }
 
@@ -114,11 +113,11 @@ func (s *Stack) TemplatedVars(kappObj *kapp.Kapp,
 
 	// store additional runtime values under the "sugarkube" key
 	installerVars["defaultVars"] = []string{
-		stackConfig.Provider,
-		stackConfig.Account, // may be blank depending on the provider
-		stackConfig.Profile,
-		stackConfig.Cluster,
-		stackConfig.Region, // may be blank depending on the provider
+		stackConfig.Provider(),
+		stackConfig.Account(), // may be blank depending on the provider
+		stackConfig.Profile(),
+		stackConfig.Cluster(),
+		stackConfig.Region(), // may be blank depending on the provider
 	}
 
 	configFragments = append(configFragments, map[string]interface{}{

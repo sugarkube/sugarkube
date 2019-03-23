@@ -50,6 +50,30 @@ func (s *StackConfig) GetProviderVars() map[string]interface{} {
 	return s.providerVars
 }
 
+func (s StackConfig) Provider() string {
+	return s.rawConfig.Provider
+}
+
+func (s StackConfig) Provisioner() string {
+	return s.rawConfig.Provisioner
+}
+
+func (s StackConfig) Account() string {
+	return s.rawConfig.Account
+}
+
+func (s StackConfig) Profile() string {
+	return s.rawConfig.Profile
+}
+
+func (s StackConfig) Cluster() string {
+	return s.rawConfig.Cluster
+}
+
+func (s StackConfig) Region() string {
+	return s.rawConfig.Region
+}
+
 // Validates that there aren't multiple manifests in the stack config with the
 // same ID, which would break creating caches
 func validateStackConfig(stackConfig *StackConfig) error {
@@ -89,11 +113,11 @@ func (s *StackConfig) GetIntrinsicData() map[string]string {
 	return map[string]string{
 		"name":        s.rawConfig.Name,
 		"filePath":    s.rawConfig.FilePath,
-		"provider":    s.rawConfig.Provider,
-		"provisioner": s.rawConfig.Provisioner,
-		"account":     s.rawConfig.Account,
-		"region":      s.rawConfig.Region,
-		"profile":     s.rawConfig.Profile,
-		"cluster":     s.rawConfig.Cluster,
+		"provider":    s.Provider(),
+		"provisioner": s.Provisioner(),
+		"account":     s.Account(),
+		"region":      s.Region(),
+		"profile":     s.Profile(),
+		"cluster":     s.Cluster(),
 	}
 }

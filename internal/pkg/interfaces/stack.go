@@ -19,11 +19,12 @@ package interfaces
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 )
 
 // We need to code against interfaces in certain places to avoid cyclic dependencies
 type IStack interface {
-	GetConfig() *kapp.StackConfig
+	GetConfig() *stack.StackConfig
 	GetStatus() IClusterStatus
 	GetRegistry() *registry.Registry
 	TemplatedVars(kappObj *kapp.Kapp,
