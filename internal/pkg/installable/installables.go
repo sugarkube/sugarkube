@@ -28,6 +28,7 @@ type Installable interface {
 	FullyQualifiedId() string
 	ManifestId() string
 	State() string
+	PostActions() []string
 	Acquirers() ([]acquirer.Acquirer, error)
 }
 

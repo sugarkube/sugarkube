@@ -126,8 +126,8 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 		}
 
 		// when tearing down a cluster users may not want to execute any post-actions
-		if len(installableObj.PostActions) > 0 && runPostActions {
-			for _, postAction := range installableObj.PostActions {
+		if len(installableObj.PostActions()) > 0 && runPostActions {
+			for _, postAction := range installableObj.PostActions() {
 				var actionTask *task
 				if postAction == constants.TaskActionClusterUpdate {
 					actionTask = &task{
@@ -256,7 +256,7 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 	log.Logger.Debugf("Applying plan: %#v", p)
 
 	for i, tranche := range p.tranches {
-		numWorkers := tranche.manifest.Options.Parallelisation
+		numWorkers := tranche.manifest.Parallelisation()
 		if numWorkers == 0 {
 			numWorkers = uint16(len(tranche.tasks))
 		}

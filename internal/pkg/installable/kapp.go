@@ -44,6 +44,10 @@ func (k Kapp) State() string {
 	return k.state
 }
 
+func (k Kapp) PostActions() []string {
+	return k.descriptor.PostActions
+}
+
 // Returns the fully-qualified ID of a kapp
 func (k Kapp) FullyQualifiedId() string {
 	if k.manifestId == "" {

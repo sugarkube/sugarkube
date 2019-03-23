@@ -52,6 +52,11 @@ func (m *Manifest) Installables() []installable.Installable {
 	return m.installables
 }
 
+// Return the parallelisation if set
+func (m Manifest) Parallelisation() uint16 {
+	return m.rawConfig.Options.Parallelisation
+}
+
 // Parse installables defined in a manifest file
 func parseInstallables(manifestId string, rawManifest structs.Manifest, manifestOverrides map[string]interface{}) ([]installable.Installable, error) {
 	installables := make([]installable.Installable, 0)
