@@ -48,7 +48,7 @@ type Provisioner interface {
 const ProvisionerKey = "provisioner"
 
 // Factory that creates providers
-func NewProvisioner(name string, stack interfaces.IStack,
+func New(name string, stack interfaces.IStack,
 	clusterSot clustersot.ClusterSot) (Provisioner, error) {
 	if stack == nil {
 		return nil, errors.New("Stack parameter can't be nil")

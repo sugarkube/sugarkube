@@ -67,7 +67,7 @@ func newStack(globalConfig *config.Config, config *kapp.StackConfig,
 		return nil, errors.WithStack(err)
 	}
 
-	provisionerImpl, err := provisioner.NewProvisioner(stack.Config.Provisioner,
+	provisionerImpl, err := provisioner.New(stack.Config.Provisioner,
 		stack, clusterSot)
 	if err != nil {
 		return nil, errors.WithStack(err)

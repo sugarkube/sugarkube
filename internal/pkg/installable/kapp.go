@@ -20,22 +20,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"strings"
 )
 
-// A struct representing the raw config for a kapp that can come from YAML (but
-// in future probably from other sources as well). Making a distinction between
-// the raw input config and runtime values means we can stop other parts of
-// the codebase grabbing values from the raw config struct directly and enforce
-// that they use an interface.
-type RawKappConfig struct {
-	Id string
-}
-
 type Kapp struct {
-	rawConfig RawKappConfig
-	manifest  *kapp.Manifest
+	rawConfig  structs.KappAddress
+	manifestId string
 }
 
 // Returns the non-fully qualified ID
@@ -45,17 +36,17 @@ func (k Kapp) Id() string {
 
 // Returns the fully-qualified ID of a kapp
 func (k Kapp) FullyQualifiedId() string {
-	if k.manifest == nil {
+	if k.manifestId == "" {
 		return k.Id()
 	} else {
-		return strings.Join([]string{k.manifest.Id(), k.Id()}, constants.NamespaceSeparator)
+		return strings.Join([]string{k.manifestId, k.Id()}, constants.NamespaceSeparator)
 	}
 }
 
 // Returns an array of acquirers configured for the sources for this kapp. We need to recompute these each time
 // instead of caching them so that any manifest overrides will take effect.
-func (k *Kapp) Acquirers() ([]acquirer.Acquirer, error) {
-	acquirers, err := acquirer.GetAcquirersFromSources(k.Sources)
+func (k Kapp) Acquirers() ([]acquirer.Acquirer, error) {
+	acquirers, err := acquirer.GetAcquirersFromSources(k.rawConfig.Sources)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

@@ -16,7 +16,10 @@
 
 package installable
 
-import "github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+import (
+	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+)
 
 // this encapsulates different package formats that sugarkube can install in
 // a target stack
@@ -24,4 +27,11 @@ type Installable interface {
 	Id() string
 	FullyQualifiedId() string
 	Acquirers() ([]acquirer.Acquirer, error)
+}
+
+func New(manifestId string, address structs.KappAddress) (Installable, error) {
+	return Kapp{
+		manifestId: manifestId,
+		rawConfig:  address,
+	}, nil
 }

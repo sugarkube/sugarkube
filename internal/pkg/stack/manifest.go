@@ -53,7 +53,7 @@ func (m *Manifest) Installables() []installable.Installable {
 }
 
 // Parse installables defined in a manifest file
-func parseInstallables(rawManifest structs.Manifest, manifestOverrides map[string]interface{}) ([]installable.Installable, error) {
+func parseInstallables(manifestId string, rawManifest structs.Manifest, manifestOverrides map[string]interface{}) ([]installable.Installable, error) {
 	installables := make([]installable.Installable, 0)
 
 	for i, kappAddress := range rawManifest.KappAddress {
@@ -71,7 +71,7 @@ func parseInstallables(rawManifest structs.Manifest, manifestOverrides map[strin
 		}
 
 		// convert the kappAddress to an installable
-		installableObj, err := installable.New(kappAddress)
+		installableObj, err := installable.New(manifestId, kappAddress)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -200,7 +200,7 @@ func parseManifestFile(path string, address structs.ManifestAddress) (*Manifest,
 
 	log.Logger.Tracef("Loaded raw manifest: %#v", rawManifest)
 
-	installables, err := parseInstallables(rawManifest, address.Overrides)
+	installables, err := parseInstallables(address.Id, rawManifest, address.Overrides)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -255,12 +255,12 @@ func SelectInstallables(manifests []*Manifest, includeSelector []string,
 	selectedKapps := make([]installable.Installable, 0)
 
 	for _, manifest := range manifests {
-		for _, installable := range manifest.Installables() {
+		for _, installableObj := range manifest.Installables() {
 			match = false
 			// a kapp is selected either if it matches an include selector or there are no include selectors,
 			// and it doesn't match an exclude selector
 			for _, selector := range includeSelector {
-				match, err = MatchesSelector(installable, selector)
+				match, err = MatchesSelector(installableObj, selector)
 				if err != nil {
 					return nil, errors.WithStack(err)
 				}
@@ -274,12 +274,12 @@ func SelectInstallables(manifests []*Manifest, includeSelector []string,
 			// it doesn't match any exclude selectors
 			if len(includeSelector) == 0 || match {
 				log.Logger.Debugf("Kapp '%s' is a candidate... testing "+
-					"exclude selectors", installable.FullyQualifiedId())
+					"exclude selectors", installableObj.FullyQualifiedId())
 
 				match = false
 
 				for _, selector := range excludeSelector {
-					match, err = MatchesSelector(installable, selector)
+					match, err = MatchesSelector(installableObj, selector)
 					if err != nil {
 						return nil, errors.WithStack(err)
 					}
@@ -291,8 +291,8 @@ func SelectInstallables(manifests []*Manifest, includeSelector []string,
 
 				if !match {
 					log.Logger.Debugf("Kapp '%s' matches selectors and "+
-						"will be included in the results", installable.FullyQualifiedId())
-					selectedKapps = append(selectedKapps, installable)
+						"will be included in the results", installableObj.FullyQualifiedId())
+					selectedKapps = append(selectedKapps, installableObj)
 				}
 			}
 		}

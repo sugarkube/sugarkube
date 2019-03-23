@@ -55,7 +55,7 @@ func (s *StackConfig) GetProviderVars() map[string]interface{} {
 func validateStackConfig(stackConfig *StackConfig) error {
 	ids := map[string]bool{}
 
-	for _, manifest := range stackConfig.Manifests {
+	for _, manifest := range stackConfig.Manifests() {
 		id := manifest.Id()
 
 		if _, ok := ids[id]; ok {

@@ -27,7 +27,7 @@ func init() {
 }
 
 func TestNewNonExistentProvisioner(t *testing.T) {
-	actual, err := NewProvisioner("bananas", nil, nil)
+	actual, err := New("bananas", nil, nil)
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
@@ -38,7 +38,7 @@ func TestNewNonExistentProvisioner(t *testing.T) {
 //	stackConfig, err := kapp.LoadStackConfig("standard", "../../testdata/stacks.yaml")
 //	assert.Nil(t, err)
 //
-//	actual, err := NewProvisioner(MinikubeProvisionerName, stackConfig)
+//	actual, err := New(MinikubeProvisionerName, stackConfig)
 //	assert.Nil(t, err)
 //	assert.Equal(t, MinikubeProvisioner{
 //		stackConfig: stackConfig,
@@ -65,7 +65,7 @@ func TestNewNonExistentProvisioner(t *testing.T) {
 //		&kapp.StackConfig{}, os.Stdout)
 //	assert.Nil(t, err)
 //
-//	actual, err := NewProvisioner(KopsProvisionerName, stackObj.Config)
+//	actual, err := New(KopsProvisionerName, stackObj.Config)
 //	assert.Nil(t, err)
 //	assert.Equal(t, KopsProvisioner{
 //		stackConfig: stackObj.Config,
@@ -76,7 +76,7 @@ func TestNewNonExistentProvisioner(t *testing.T) {
 //}
 
 //func TestNewNoOpProvisioner(t *testing.T) {
-//	actual, err := NewProvisioner(NoopProvisionerName, nil)
+//	actual, err := New(NoopProvisionerName, nil)
 //	assert.Nil(t, err)
 //	assert.Equal(t, NoOpProvisioner{}, actual)
 //}
