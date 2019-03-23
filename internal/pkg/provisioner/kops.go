@@ -25,7 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfacestokeep"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
@@ -69,7 +69,7 @@ const kubernetesLocalHostname = "kubernetes.default.svc.cluster.local"
 
 type KopsProvisioner struct {
 	clusterSot           clustersot.ClusterSot
-	stack                interfacestokeep.IStack
+	stack                interfaces.IStack
 	kopsConfig           KopsConfig
 	portForwardingActive bool
 }
@@ -92,7 +92,7 @@ type KopsConfig struct {
 }
 
 // Instantiates a new instance
-func newKopsProvisioner(stackConfig interfacestokeep.IStack,
+func newKopsProvisioner(stackConfig interfaces.IStack,
 	clusterSot clustersot.ClusterSot) (*KopsProvisioner, error) {
 	kopsConfig, err := parseKopsConfig(stackConfig)
 	if err != nil {
@@ -106,7 +106,7 @@ func newKopsProvisioner(stackConfig interfacestokeep.IStack,
 	}, nil
 }
 
-func (p KopsProvisioner) iStack() interfacestokeep.IStack {
+func (p KopsProvisioner) iStack() interfaces.IStack {
 	return p.stack
 }
 
@@ -549,7 +549,7 @@ func parameteriseValues(args []string, valueMap map[string]string) []string {
 }
 
 // Parses the Kops provisioner config
-func parseKopsConfig(stackConfig interfacestokeep.IStack) (*KopsConfig, error) {
+func parseKopsConfig(stackConfig interfaces.IStack) (*KopsConfig, error) {
 	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return nil, errors.WithStack(err)

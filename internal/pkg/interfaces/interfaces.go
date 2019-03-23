@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package interfacestokeep
+package interfaces
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/kapp"

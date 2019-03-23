@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfacestokeep"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"time"
 )
@@ -37,7 +37,7 @@ type Provisioner interface {
 	// Update the cluster config if supported by the provisioner
 	update(dryRun bool) error
 	// We need to use an interface to work with Stack objects to avoid circular dependencies
-	iStack() interfacestokeep.IStack
+	iStack() interfaces.IStack
 	// if the API server is internal we need to set up connectivity to it. Returns a boolean
 	// indicating whether connectivity exists (not necessarily if it's been set up, i.e. it
 	// might not be necessary to do anything, or it may have already been set up)
@@ -48,7 +48,7 @@ type Provisioner interface {
 const ProvisionerKey = "provisioner"
 
 // Factory that creates providers
-func New(name string, stack interfacestokeep.IStack,
+func New(name string, stack interfaces.IStack,
 	clusterSot clustersot.ClusterSot) (Provisioner, error) {
 	if stack == nil {
 		return nil, errors.New("Stack parameter can't be nil")
