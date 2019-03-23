@@ -19,14 +19,19 @@ package installable
 import (
 	"bytes"
 	"fmt"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
+	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"gopkg.in/yaml.v2"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -115,4 +120,154 @@ func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
 
 	k.config = config
 	return nil
+}
+
+// Returns a map of all variables for the kapp
+func (k Kapp) Vars() (map[string]interface{}, error) {
+	kappVars, err := k.getVarsFromFiles(s.Config)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	kappIntrinsicDataConverted := map[string]interface{}{}
+
+	kappIntrinsicData := k.getIntrinsicData()
+	kappIntrinsicDataConverted = convert.MapStringStringToMapStringInterface(kappIntrinsicData)
+
+	// merge kapp.Vars with the vars from files so kapp.Vars take precedence. Todo - document the order of precedence
+	err = mergo.Merge(&kappVars, k.descriptor.Vars, mergo.WithOverride)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	// namespace kapp variables. This is safer than letting kapp variables overwrite arbitrary values (e.g.
+	// so they can't change the target stack, whether the kapp's approved, etc.), but may be too restrictive
+	// in certain situations. We'll have to see
+	kappIntrinsicDataConverted["vars"] = kappVars
+
+	// add placeholders templated paths so kapps that use them work when running
+	// `kapp vars`, etc.
+	templatePlaceholders := make([]string, len(k.descriptor.Templates))
+
+	for i, _ := range k.descriptor.Templates {
+		templatePlaceholders[i] = "<generated>"
+	}
+	kappIntrinsicDataConverted["templates"] = templatePlaceholders
+
+	namespacedKappMap := map[string]interface{}{
+		"kapp": kappIntrinsicDataConverted,
+	}
+
+	return namespacedKappMap, nil
+}
+
+// Returns certain kapp data that should be exposed as variables when running kapps
+func (k Kapp) getIntrinsicData() map[string]string {
+	return map[string]string{
+		"id":        k.Id(),
+		"state":     k.State(),
+		"cacheRoot": k.CacheDir(),
+	}
+}
+
+// Finds all vars files for the given kapp and returns the result of merging
+// all the data.
+func (k Kapp) getVarsFromFiles(stackConfig *StackConfig) (map[string]interface{}, error) {
+	dirs, err := k.findVarsFiles(stackConfig)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	values := map[string]interface{}{}
+
+	err = vars.MergePaths(values, dirs...)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return values, nil
+}
+
+// This searches a directory tree from a given root path for files whose values
+// should be merged together for a kapp. If a kapp instance is supplied, additional files
+// will be searched for, in addition to stack-specific ones.
+func (k Kapp) findVarsFiles(stackConfig *StackConfig) ([]string, error) {
+	precedence := []string{
+		utils.StripExtension(constants.ValuesFile),
+		stackConfig.Name(),
+		stackConfig.Provider,
+		stackConfig.Provisioner,
+		stackConfig.Account,
+		stackConfig.Region,
+		stackConfig.Profile,
+		stackConfig.Cluster,
+		constants.ProfileDir,
+		constants.ClusterDir,
+	}
+
+	var kappId string
+
+	// prepend the kapp ID to the precedence array
+	precedence = append([]string{k.Id()}, precedence...)
+
+	acquirers, err := k.Acquirers()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	for _, acquirerObj := range acquirers {
+		precedence = append(precedence, acquirerObj.Id())
+
+		id, err := acquirerObj.FullyQualifiedId()
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		precedence = append(precedence, id)
+	}
+
+	kappId = k.Id()
+
+	paths := make([]string, 0)
+
+	for _, searchDir := range stackConfig.KappVarsDirs {
+		searchPath, err := filepath.Abs(filepath.Join(stackConfig.Dir(), searchDir))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		log.Logger.Infof("Searching for files/dirs for kapp '%s' under "+
+			"'%s' with basenames: %s", kappId, searchPath,
+			strings.Join(precedence, ", "))
+
+		err = utils.PrecedenceWalk(searchPath, precedence, func(path string,
+			info os.FileInfo, err error) error {
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			if !info.IsDir() {
+				ext := filepath.Ext(path)
+
+				if strings.ToLower(ext) != ".yaml" {
+					log.Logger.Debugf("Ignoring non-yaml file: %s", path)
+					return nil
+				}
+
+				log.Logger.Debugf("Adding kapp var file: %s", path)
+				paths = append(paths, path)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	log.Logger.Debugf("Kapp var paths for kapp '%s' are: %s", kappId,
+		strings.Join(paths, ", "))
+
+	return paths, nil
 }

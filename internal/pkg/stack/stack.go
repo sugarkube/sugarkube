@@ -16,7 +16,6 @@
 package stack
 
 import (
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
@@ -131,41 +130,12 @@ func (s *Stack) TemplatedVars(installableObj installable.Installable,
 	configFragments = append(configFragments, s.registry.AsMap())
 
 	if installableObj != nil {
-		kappVars, err := installableObj.GetVarsFromFiles(s.Config)
+		installableVars, err := installableObj.Vars()
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
-		kappIntrinsicDataConverted := map[string]interface{}{}
-
-		kappIntrinsicData := installableObj.GetIntrinsicData()
-		kappIntrinsicDataConverted = convert.MapStringStringToMapStringInterface(kappIntrinsicData)
-
-		// merge kapp.Vars with the vars from files so kapp.Vars take precedence. Todo - document the order of precedence
-		err = mergo.Merge(&kappVars, installableObj.Vars, mergo.WithOverride)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		// namespace kapp variables. This is safer than letting kapp variables overwrite arbitrary values (e.g.
-		// so they can't change the target stack, whether the kapp's approved, etc.), but may be too restrictive
-		// in certain situations. We'll have to see
-		kappIntrinsicDataConverted["vars"] = kappVars
-
-		// add placeholders templated paths so kapps that use them work when running
-		// `kapp vars`, etc.
-		templatePlaceholders := make([]string, len(installableObj.Templates))
-
-		for i, _ := range installableObj.Templates {
-			templatePlaceholders[i] = "<generated>"
-		}
-		kappIntrinsicDataConverted["templates"] = templatePlaceholders
-
-		namespacedKappMap := map[string]interface{}{
-			"kapp": kappIntrinsicDataConverted,
-		}
-
-		configFragments = append(configFragments, namespacedKappMap)
+		configFragments = append(configFragments, installableVars)
 	}
 
 	mergedVars := map[string]interface{}{}

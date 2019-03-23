@@ -31,6 +31,7 @@ type Installable interface {
 	PostActions() []string
 	Acquirers() ([]acquirer.Acquirer, error)
 	RefreshConfig(templateVars map[string]interface{}) error
+	Vars() (map[string]interface{}, error)
 }
 
 func New(manifestId string, descriptor structs.KappDescriptor) (Installable, error) {

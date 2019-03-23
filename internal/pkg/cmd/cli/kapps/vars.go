@@ -94,7 +94,7 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := kapp.SelectInstallables(stackObj.Config.Manifests, c.includeSelector, c.excludeSelector)
+	selectedKapps, err := stack.SelectInstallables(stackObj.Config.Manifests(), c.includeSelector, c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -109,7 +109,7 @@ func (c *varsConfig) run() error {
 			kappObj.SetCacheDir(c.cacheDir)
 		}
 
-		templatedVars, err := stackObj.TemplatedVars(&kappObj, map[string]interface{}{})
+		templatedVars, err := stackObj.TemplatedVars(kappObj, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -145,7 +145,7 @@ func (c *varsConfig) run() error {
 				"'%s'. Provide the path to the cache dir with the --cache-dir "+
 				"option to display it.\n", kappObj.FullyQualifiedId(), constants.KappConfigFileName)
 		} else {
-			err = kappObj.Load(templatedVars)
+			err = kappObj.RefreshConfig(templatedVars)
 			if err != nil {
 				return errors.WithStack(err)
 			}
