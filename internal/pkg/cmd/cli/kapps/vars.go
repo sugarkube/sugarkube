@@ -143,7 +143,7 @@ func (c *varsConfig) run() error {
 		if c.cacheDir == "" {
 			_, err = fmt.Fprintf(c.out, "Won't display the %s file for "+
 				"'%s'. Provide the path to the cache dir with the --cache-dir "+
-				"option to display it.\n", kappObj.FullyQualifiedId(), kapp.ConfigFile)
+				"option to display it.\n", kappObj.FullyQualifiedId(), constants.KappConfigFileName)
 		} else {
 			err = kappObj.Load(templatedVars)
 			if err != nil {

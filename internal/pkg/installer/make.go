@@ -96,7 +96,7 @@ func (i MakeInstaller) run(makeTarget string, installable installable.Installabl
 	}
 
 	// load the kapp's own config
-	err = installable.Load(templatedVars)
+	err = installable.RefreshConfig(templatedVars)
 	if err != nil {
 		return errors.WithStack(err)
 	}

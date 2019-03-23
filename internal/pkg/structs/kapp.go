@@ -28,7 +28,7 @@ type ProgramConfig struct {
 }
 
 // A struct for an actual sugarkube.yaml file
-type Config struct {
+type KappConfig struct {
 	ProgramConfig `yaml:",inline"`
 	Requires      []string `yaml:"requires"`
 }

@@ -16,62 +16,6 @@
 
 package kapp
 
-import (
-	"bytes"
-	"fmt"
-	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/templater"
-	"github.com/sugarkube/sugarkube/internal/pkg/utils"
-	"gopkg.in/yaml.v2"
-	"strings"
-)
-
-const ConfigFile = "sugarkube.yaml"
-
-// Loads the kapp's sugarkube.yaml file, renders it and sets its attributes as
-// an attribute on the kapp
-func (k *Kapp) Load(mergedKappVars map[string]interface{}) error {
-
-	configFilePaths, err := utils.FindFilesByPattern(k.CacheDir(), ConfigFile,
-		true, false)
-	if err != nil {
-		return errors.Wrapf(err, "Error finding '%s' in '%s'",
-			ConfigFile, k.CacheDir())
-	}
-
-	if len(configFilePaths) == 0 {
-		return errors.New(fmt.Sprintf("No '%s' file found for kapp "+
-			"'%s' in %s", ConfigFile, k.FullyQualifiedId(), k.CacheDir()))
-	} else if len(configFilePaths) > 1 {
-		// todo - have a way of declaring the 'right' one in the manifest
-		panic(fmt.Sprintf("Multiple '%s' found for kapp '%s'. Disambiguation "+
-			"not implemented yet: %s", ConfigFile, k.FullyQualifiedId(),
-			strings.Join(configFilePaths, ", ")))
-	}
-
-	configFilePath := configFilePaths[0]
-
-	var outBuf bytes.Buffer
-	err = templater.TemplateFile(configFilePath, &outBuf, mergedKappVars)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	log.Logger.Debugf("Rendered %s file at '%s' to: \n%s", ConfigFile,
-		configFilePath, outBuf.String())
-
-	config := Config{}
-	err = yaml.Unmarshal(outBuf.Bytes(), &config)
-	if err != nil {
-		return errors.Wrapf(err, "Error unmarshalling rendered %s file: %s",
-			ConfigFile, outBuf.String())
-	}
-
-	k.Config = config
-	return nil
-}
-
 // Templates global program configs for programs used by the kapp and merges
 // them wtih the kapps own config declared in its sugarkube.yaml file
 // todo - uncomment and test once viper supports not lowercasing all keys

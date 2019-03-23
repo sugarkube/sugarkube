@@ -17,10 +17,16 @@
 package installable
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"github.com/sugarkube/sugarkube/internal/pkg/templater"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
+	"gopkg.in/yaml.v2"
 	"strings"
 )
 
@@ -28,6 +34,7 @@ type Kapp struct {
 	descriptor structs.KappDescriptor
 	manifestId string
 	state      string
+	config     structs.KappConfig
 }
 
 // Returns the non-fully qualified ID
@@ -66,4 +73,46 @@ func (k Kapp) Acquirers() ([]acquirer.Acquirer, error) {
 	}
 
 	return acquirers, nil
+}
+
+// (Re)loads the kapp's sugarkube.yaml file, templates it and saves is at as an attribute on the kapp
+func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
+
+	configFilePaths, err := utils.FindFilesByPattern(k.CacheDir(), constants.KappConfigFileName,
+		true, false)
+	if err != nil {
+		return errors.Wrapf(err, "Error finding '%s' in '%s'",
+			constants.KappConfigFileName, k.CacheDir())
+	}
+
+	if len(configFilePaths) == 0 {
+		return errors.New(fmt.Sprintf("No '%s' file found for kapp "+
+			"'%s' in %s", constants.KappConfigFileName, k.FullyQualifiedId(), k.CacheDir()))
+	} else if len(configFilePaths) > 1 {
+		// todo - have a way of declaring the 'right' one in the manifest
+		panic(fmt.Sprintf("Multiple '%s' found for kapp '%s'. Disambiguation "+
+			"not implemented yet: %s", constants.KappConfigFileName, k.FullyQualifiedId(),
+			strings.Join(configFilePaths, ", ")))
+	}
+
+	configFilePath := configFilePaths[0]
+
+	var outBuf bytes.Buffer
+	err = templater.TemplateFile(configFilePath, &outBuf, templateVars)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	log.Logger.Tracef("Rendered %s file at '%s' to: \n%s", constants.KappConfigFileName,
+		configFilePath, outBuf.String())
+
+	config := structs.KappConfig{}
+	err = yaml.Unmarshal(outBuf.Bytes(), &config)
+	if err != nil {
+		return errors.Wrapf(err, "Error unmarshalling rendered %s file: %s",
+			constants.KappConfigFileName, outBuf.String())
+	}
+
+	k.config = config
+	return nil
 }

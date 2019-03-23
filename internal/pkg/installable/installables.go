@@ -30,10 +30,11 @@ type Installable interface {
 	State() string
 	PostActions() []string
 	Acquirers() ([]acquirer.Acquirer, error)
+	RefreshConfig(templateVars map[string]interface{}) error
 }
 
 func New(manifestId string, descriptor structs.KappDescriptor) (Installable, error) {
-	return Kapp{
+	return &Kapp{
 		manifestId: manifestId,
 		descriptor: descriptor,
 	}, nil
