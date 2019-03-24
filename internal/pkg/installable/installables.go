@@ -18,26 +18,9 @@ package installable
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
-
-// These are defined here to avoid circular dependencies
-type iStackConfig interface {
-	Name() string
-	Provider() string
-	Provisioner() string
-	Account() string
-	Region() string
-	Profile() string
-	Cluster() string
-	KappVarsDirs() []string
-	Dir() string
-	TemplateDirs() []string
-}
-
-type iStack interface {
-	GetConfig() iStackConfig
-}
 
 // this encapsulates different package formats that sugarkube can install in
 // a target stack
@@ -51,8 +34,8 @@ type Installable interface {
 	ObjectCacheDir() string
 	Acquirers() ([]acquirer.Acquirer, error)
 	RefreshConfig(templateVars map[string]interface{}) error
-	Vars(stack iStack) (map[string]interface{}, error)
-	RenderTemplates(templateVars map[string]interface{}, stackConfig iStackConfig,
+	Vars(stack interfaces.IStack) (map[string]interface{}, error)
+	RenderTemplates(templateVars map[string]interface{}, stackConfig interfaces.IStackConfig,
 		dryRun bool) ([]string, error)
 }
 

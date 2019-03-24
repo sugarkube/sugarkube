@@ -20,10 +20,8 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
-	"github.com/sugarkube/sugarkube/internal/pkg/installable"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
@@ -35,24 +33,24 @@ import (
 // we need to pass around. This is in its own package to avoid circular
 // dependencies.
 type Stack struct {
-	GlobalConfig *config.Config // config loaded for the program from the 'sugarkube-conf.yaml' file
-	Config       *StackConfig
-	Provider     provider.Provider
-	Provisioner  provisioner.Provisioner
-	Status       *ClusterStatus
+	globalConfig *config.Config // config loaded for the program from the 'sugarkube-conf.yaml' file
+	config       *StackConfig
+	provider     interfaces.IProvider
+	provisioner  provisioner.Provisioner
+	status       *ClusterStatus
 	registry     *registry.Registry
 }
 
 // Creates a new Stack
 func newStack(globalConfig *config.Config, config *StackConfig,
-	provider provider.Provider, registry *registry.Registry) (*Stack, error) {
+	provider interfaces.IProvider, registry *registry.Registry) (interfaces.IStack, error) {
 
 	stack := &Stack{
-		GlobalConfig: globalConfig,
-		Config:       config,
-		Provider:     provider,
-		Provisioner:  nil,
-		Status: &ClusterStatus{
+		globalConfig: globalConfig,
+		config:       config,
+		provider:     provider,
+		provisioner:  nil,
+		status: &ClusterStatus{
 			isOnline:              false,
 			isReady:               false,
 			sleepBeforeReadyCheck: 0,
@@ -61,31 +59,35 @@ func newStack(globalConfig *config.Config, config *StackConfig,
 		registry: registry,
 	}
 
-	clusterSot, err := clustersot.NewClusterSot(clustersot.KUBECTL, *stack)
+	clusterSot, err := clustersot.New(clustersot.KUBECTL, stack)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	provisionerImpl, err := provisioner.New(stack.Config.Provisioner(), stack, clusterSot)
+	provisionerImpl, err := provisioner.New(stack.config.Provisioner(), stack, clusterSot)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	stack.Provisioner = provisionerImpl
+	stack.provisioner = provisionerImpl
 
 	return stack, nil
 }
 
-func (s Stack) GetConfig() *StackConfig {
-	return s.Config
+func (s Stack) GetConfig() interfaces.IStackConfig {
+	return s.config
 }
 
 func (s Stack) GetGlobalConfig() *config.Config {
-	return s.GlobalConfig
+	return s.globalConfig
 }
 
 func (s Stack) GetStatus() interfaces.IClusterStatus {
-	return s.Status
+	return s.status
+}
+
+func (s Stack) GetProvisioner() provisioner.Provisioner {
+	return s.provisioner
 }
 
 func (s Stack) GetRegistry() *registry.Registry {
@@ -95,10 +97,10 @@ func (s Stack) GetRegistry() *registry.Registry {
 // Merges and templates vars from all configured sources. If an installable instance
 // is given, data specific to it will be included in the returned map,
 // otherwise only stack-specific variables will be returned.
-func (s *Stack) TemplatedVars(installableObj installable.Installable,
+func (s *Stack) TemplatedVars(installableObj interfaces.IInstallable,
 	installerVars map[string]interface{}) (map[string]interface{}, error) {
 
-	stackConfig := s.Config
+	stackConfig := s.config
 
 	// build an array of config fragments that should all be merged together,
 	// with later values overriding earlier ones.

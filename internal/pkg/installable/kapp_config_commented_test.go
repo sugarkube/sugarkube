@@ -120,7 +120,7 @@ func TestLoad(t *testing.T) {
 //		Config:      stackConfig,
 //		Provider:    nil,
 //		Provisioner: nil,
-//		Status: nil,
+//		status: nil,
 //	}
 //
 //	mergedVars, err := stackObj.TemplatedVars(nil, map[string]interface{}{})

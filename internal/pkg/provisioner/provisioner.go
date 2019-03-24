@@ -20,47 +20,12 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
-	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"time"
 )
 
 const shortSleepTime = 5
-
-// These are defined here to avoid circular dependencies
-type iStackConfig interface {
-	Name() string
-	OnlineTimeout() uint32
-	//Provider() string
-	//Provisioner() string
-	//Account() string
-	Region() string
-	//Profile() string
-	Cluster() string
-	//KappVarsDirs() []string
-	//Dir() string
-	//TemplateDirs() []string
-}
-
-type iClusterStatus interface {
-	IsOnline() bool
-	SetIsOnline(bool)
-	IsReady() bool
-	//SetIsReady(bool)
-	StartedThisRun() bool
-	SetStartedThisRun(bool)
-	SleepBeforeReadyCheck() uint32
-	SetSleepBeforeReadyCheck(uint32)
-}
-
-type iStack interface {
-	GetConfig() iStackConfig
-	GetStatus() iClusterStatus
-	GetRegistry() *registry.Registry
-	TemplatedVars(installableObj installable.Installable,
-		installerVars map[string]interface{}) (map[string]interface{}, error)
-}
 
 type Provisioner interface {
 	// Returns the ClusterSot for this provisioner
@@ -72,7 +37,7 @@ type Provisioner interface {
 	// Update the cluster config if supported by the provisioner
 	update(dryRun bool) error
 	// We need to use an interface to work with Stack objects to avoid circular dependencies
-	getStack() iStack
+	getStack() interfaces.IStack
 	// if the API server is internal we need to set up connectivity to it. Returns a boolean
 	// indicating whether connectivity exists (not necessarily if it's been set up, i.e. it
 	// might not be necessary to do anything, or it may have already been set up)
@@ -83,8 +48,8 @@ type Provisioner interface {
 const ProvisionerKey = "provisioner"
 
 // Factory that creates providers
-func New(name string, stack iStack,
-	clusterSot clustersot.ClusterSot) (Provisioner, error) {
+func New(name string, stack interfaces.IStack,
+	clusterSot clustersot.ClusterSot) (interfaces.IProvisioner, error) {
 	if stack == nil {
 		return nil, errors.New("Stack parameter can't be nil")
 	}

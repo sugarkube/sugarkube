@@ -19,6 +19,7 @@ package provider
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"os"
@@ -28,7 +29,7 @@ import (
 
 const testDir = "../../testdata"
 
-func loadStack(t *testing.T) *stack.Stack {
+func loadStack(t *testing.T) interfaces.IStack {
 	stackObj, err := stack.BuildStack("large", "../../testdata/stacks.yaml",
 		&structs.Stack{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
@@ -52,10 +53,10 @@ func TestStackConfigVars(t *testing.T) {
 		},
 	}
 
-	providerImpl, err := newProviderImpl(stackObj.Config.Provider(), stackObj.Config)
+	providerImpl, err := newProviderImpl(stackObj.GetConfig().Provider(), stackObj.GetConfig())
 	assert.Nil(t, err)
 
-	actual, err := GetVarsFromFiles(providerImpl, stackObj.Config)
+	actual, err := GetVarsFromFiles(providerImpl, stackObj.GetConfig())
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual, "Mismatching vars")
 }
@@ -63,28 +64,28 @@ func TestStackConfigVars(t *testing.T) {
 func TestNewNonExistentProvider(t *testing.T) {
 	stackObj := loadStack(t)
 
-	actual, err := newProviderImpl("bananas", stackObj.Config)
+	actual, err := newProviderImpl("bananas", stackObj.GetConfig())
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
 
 func TestNewProviderError(t *testing.T) {
 	stackObj := loadStack(t)
-	actual, err := newProviderImpl("nonsense", stackObj.Config)
+	actual, err := newProviderImpl("nonsense", stackObj.GetConfig())
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
 
 func TestNewLocalProvider(t *testing.T) {
 	stackObj := loadStack(t)
-	actual, err := newProviderImpl(LOCAL, stackObj.Config)
+	actual, err := newProviderImpl(LOCAL, stackObj.GetConfig())
 	assert.Nil(t, err)
 	assert.Equal(t, &LocalProvider{}, actual)
 }
 
 func TestNewAWSProvider(t *testing.T) {
 	stackObj := loadStack(t)
-	actual, err := newProviderImpl(AWS, stackObj.Config)
+	actual, err := newProviderImpl(AWS, stackObj.GetConfig())
 	assert.Nil(t, err)
 	assert.Equal(t, &AwsProvider{}, actual)
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
@@ -67,7 +68,7 @@ const kubernetesLocalHostname = "kubernetes.default.svc.cluster.local"
 
 type KopsProvisioner struct {
 	clusterSot           clustersot.ClusterSot
-	stack                iStack
+	stack                interfaces.IStack
 	kopsConfig           KopsConfig
 	portForwardingActive bool
 }
@@ -90,7 +91,7 @@ type KopsConfig struct {
 }
 
 // Instantiates a new instance
-func newKopsProvisioner(stackConfig iStack, clusterSot clustersot.ClusterSot) (*KopsProvisioner, error) {
+func newKopsProvisioner(stackConfig interfaces.IStack, clusterSot clustersot.ClusterSot) (*KopsProvisioner, error) {
 	kopsConfig, err := parseKopsConfig(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -103,7 +104,7 @@ func newKopsProvisioner(stackConfig iStack, clusterSot clustersot.ClusterSot) (*
 	}, nil
 }
 
-func (p KopsProvisioner) getStack() iStack {
+func (p KopsProvisioner) getStack() interfaces.IStack {
 	return p.stack
 }
 
@@ -546,7 +547,7 @@ func parameteriseValues(args []string, valueMap map[string]string) []string {
 }
 
 // Parses the Kops provisioner config
-func parseKopsConfig(stack iStack) (*KopsConfig, error) {
+func parseKopsConfig(stack interfaces.IStack) (*KopsConfig, error) {
 	templatedVars, err := stack.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -783,7 +784,7 @@ func (p KopsProvisioner) setupPortForwarding(privateKey string, sshUser string, 
 }
 
 // Returns the hostname of the bastion or an empty string if it can't be found
-func getBastionHostname(stackConfig iStackConfig) (string, error) {
+func getBastionHostname(stackConfig interfaces.IStackConfig) (string, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	query := fmt.Sprintf("LoadBalancerDescriptions["+

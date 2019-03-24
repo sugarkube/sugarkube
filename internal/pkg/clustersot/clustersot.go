@@ -33,7 +33,7 @@ type ClusterSot interface {
 const KUBECTL = "kubectl"
 
 // Factory that creates ClusterSots
-func NewClusterSot(name string, iStack interfaces.IStack) (ClusterSot, error) {
+func New(name string, iStack interfaces.IStack) (ClusterSot, error) {
 	if iStack == nil {
 		return nil, errors.New("Stack parameter can't be nil")
 	}

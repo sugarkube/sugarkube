@@ -21,6 +21,7 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
@@ -37,7 +38,7 @@ import (
 // all config values for the entire stack (although it won't have been templated yet so any '{{var_name}}'
 // type strings won't have been interpolated yet.
 func BuildStack(stackName string, stackFile string, cliStackConfig *structs.Stack,
-	globalConfig *config.Config, out io.Writer) (*Stack, error) {
+	globalConfig *config.Config, out io.Writer) (interfaces.IStack, error) {
 
 	if strings.TrimSpace(stackName) == "" {
 		return nil, errors.New("The stack name is required")

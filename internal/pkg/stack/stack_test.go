@@ -89,7 +89,7 @@ func TestTemplatedVarsWithRegistry(t *testing.T) {
 		Config:      stackConfig,
 		Provider:    nil,
 		Provisioner: nil,
-		Status: &ClusterStatus{
+		status: &ClusterStatus{
 			isOnline:              false,
 			isReady:               false,
 			sleepBeforeReadyCheck: 0,

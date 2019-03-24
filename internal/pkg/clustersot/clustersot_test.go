@@ -21,7 +21,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
-	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"testing"
 )
 
@@ -30,12 +29,12 @@ func init() {
 }
 
 type MockStack struct {
-	stackConfig *stack.StackConfig
+	stackConfig interfaces.IStackConfig
 	status      interfaces.IClusterStatus
 	registry    *registry.Registry
 }
 
-func (m MockStack) GetConfig() *stack.StackConfig {
+func (m MockStack) GetConfig() interfaces.IStackConfig {
 	return m.stackConfig
 }
 
@@ -47,7 +46,7 @@ func (m MockStack) GetRegistry() *registry.Registry {
 	return m.registry
 }
 
-func (m MockStack) TemplatedVars(kappObj *kapp.Kapp,
+func (m MockStack) TemplatedVars(installableObj interfaces.IInstallable,
 	installerVars map[string]interface{}) (map[string]interface{}, error) {
 	return nil, nil
 }
@@ -55,7 +54,7 @@ func (m MockStack) TemplatedVars(kappObj *kapp.Kapp,
 func TestNewClusterSot(t *testing.T) {
 	istack := MockStack{}
 
-	actual, err := NewClusterSot(KUBECTL, istack)
+	actual, err := New(KUBECTL, istack)
 	assert.Nil(t, err)
-	assert.Equal(t, KubeCtlClusterSot{stack: istack}, actual)
+	assert.Equal(t, KubeCtlClusterSot{iStack: istack}, actual)
 }

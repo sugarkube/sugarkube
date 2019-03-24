@@ -17,11 +17,10 @@
 package interfaces
 
 import (
-	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 )
 
-// We need to code against interfaces in certain places to avoid cyclic dependencies
 type IClusterStatus interface {
 	IsOnline() bool
 	SetIsOnline(bool)
@@ -42,6 +41,7 @@ type IStackConfig interface {
 	Profile() string
 	Cluster() string
 	OnlineTimeout() uint32
+	ProviderVarsDirs() []string
 	KappVarsDirs() []string
 	TemplateDirs() []string
 	Dir() string
@@ -50,7 +50,8 @@ type IStackConfig interface {
 type IStack interface {
 	GetConfig() IStackConfig
 	GetStatus() IClusterStatus
+	GetProvisioner() provisioner.Provisioner
 	GetRegistry() *registry.Registry
-	TemplatedVars(installables installable.Installable,
+	TemplatedVars(installableObj IInstallable,
 		installerVars map[string]interface{}) (map[string]interface{}, error)
 }
