@@ -148,7 +148,7 @@ func (c *varsConfig) run() error {
 				return errors.WithStack(err)
 			}
 
-			kappConfig, err := yaml.Marshal(&kappObj.Config)
+			kappConfig, err := yaml.Marshal(kappObj.GetConfig())
 			if err != nil {
 				return errors.WithStack(err)
 			}

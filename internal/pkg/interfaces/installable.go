@@ -16,7 +16,10 @@
 
 package interfaces
 
-import "github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+import (
+	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+)
 
 // this encapsulates different package formats that sugarkube can install in
 // a target stack
@@ -26,6 +29,7 @@ type IInstallable interface {
 	ManifestId() string
 	State() string
 	PostActions() []string
+	GetConfig() structs.KappConfig
 	SetRootCacheDir(cacheDir string)
 	ObjectCacheDir() string
 	Acquirers() ([]acquirer.Acquirer, error)

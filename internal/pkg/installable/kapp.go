@@ -63,6 +63,10 @@ func (k Kapp) PostActions() []string {
 	return k.descriptor.PostActions
 }
 
+func (k Kapp) GetConfig() structs.KappConfig {
+	return k.config
+}
+
 // Returns the fully-qualified ID of a kapp
 func (k Kapp) FullyQualifiedId() string {
 	if k.manifestId == "" {

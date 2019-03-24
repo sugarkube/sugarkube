@@ -23,7 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
-	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
@@ -83,10 +83,10 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Loaded %d manifest(s)", len(stackObj.Config.Manifests()))
+	log.Logger.Debugf("Loaded %d manifest(s)", len(stackObj.GetConfig().Manifests()))
 
 	// todo - why is this here? why don't we always validate manifests?
-	for _, manifest := range stackObj.Config.Manifests() {
+	for _, manifest := range stackObj.GetConfig().Manifests() {
 		err = stack.ValidateManifest(manifest)
 		if err != nil {
 			return errors.WithStack(err)
@@ -108,7 +108,7 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	for _, manifest := range stackObj.Config.Manifests() {
+	for _, manifest := range stackObj.GetConfig().Manifests() {
 		err := cacher.CacheManifest(manifest, absRootCacheDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
@@ -129,9 +129,9 @@ func (c *createCmd) run() error {
 		}
 
 		// template kapps
-		candidateKapps := make([]installable.Installable, 0)
+		candidateKapps := make([]interfaces.IInstallable, 0)
 
-		for _, manifest := range stackObj.Config.Manifests() {
+		for _, manifest := range stackObj.GetConfig().Manifests() {
 			for _, manifestKapp := range manifest.Installables() {
 				candidateKapps = append(candidateKapps, manifestKapp)
 			}
