@@ -19,7 +19,7 @@ package cacher
 import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
-	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"path/filepath"
@@ -34,7 +34,7 @@ type Ider interface {
 
 type CacheGrouper interface {
 	Ider
-	Installables() []installable.Installable
+	Installables() []interfaces.IInstallable
 }
 
 // Returns the path that the group of cacheable objects should be stored under

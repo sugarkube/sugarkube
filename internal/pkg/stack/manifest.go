@@ -23,6 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
@@ -34,7 +35,7 @@ import (
 type Manifest struct {
 	descriptor   structs.ManifestDescriptor
 	rawConfig    structs.Manifest
-	installables []installable.Installable
+	installables []interfaces.IInstallable
 }
 
 // Sets fields to default values
@@ -48,7 +49,7 @@ func (m *Manifest) Id() string {
 	return strings.Replace(filepath.Base(m.descriptor.Uri), filepath.Ext(m.descriptor.Uri), "", 1)
 }
 
-func (m *Manifest) Installables() []installable.Installable {
+func (m *Manifest) Installables() []interfaces.IInstallable {
 	return m.installables
 }
 
@@ -58,8 +59,9 @@ func (m Manifest) Parallelisation() uint16 {
 }
 
 // Parse installables defined in a manifest file
-func parseInstallables(manifestId string, rawManifest structs.Manifest, manifestOverrides map[string]interface{}) ([]installable.Installable, error) {
-	installables := make([]installable.Installable, 0)
+func parseInstallables(manifestId string, rawManifest structs.Manifest,
+	manifestOverrides map[string]interface{}) ([]interfaces.IInstallable, error) {
+	installables := make([]interfaces.IInstallable, len(rawManifest.KappDescriptor))
 
 	for i, kappDescriptor := range rawManifest.KappDescriptor {
 		installableId := kappDescriptor.Id
@@ -192,7 +194,7 @@ func installableOverrides(manifestOverrides map[string]interface{}, installableI
 }
 
 // Load a single manifest file and parse the kapps it defines
-func parseManifestFile(path string, descriptor structs.ManifestDescriptor) (*Manifest, error) {
+func parseManifestFile(path string, descriptor structs.ManifestDescriptor) (interfaces.IManifest, error) {
 
 	log.Logger.Infof("Parsing manifest file: %s", path)
 
@@ -221,7 +223,7 @@ func parseManifestFile(path string, descriptor structs.ManifestDescriptor) (*Man
 
 // Validates that there aren't multiple kapps with the same ID in the manifest,
 // or it'll break creating a cache
-func ValidateManifest(manifest *Manifest) error {
+func ValidateManifest(manifest interfaces.IManifest) error {
 	ids := map[string]bool{}
 
 	for _, kapp := range manifest.Installables() {
@@ -252,12 +254,12 @@ func ValidateManifest(manifest *Manifest) error {
 // Return installables selected by inclusion/exclusion selectors from the given
 // manifests. Installables will be returned in the order they appear in the manifests
 // regardless of the orders of the selectors.
-func SelectInstallables(manifests []*Manifest, includeSelector []string,
-	excludeSelector []string) ([]installable.Installable, error) {
+func SelectInstallables(manifests []interfaces.IManifest, includeSelector []string,
+	excludeSelector []string) ([]interfaces.IInstallable, error) {
 	var err error
 	var match bool
 
-	selectedKapps := make([]installable.Installable, 0)
+	selectedKapps := make([]interfaces.IInstallable, 0)
 
 	for _, manifest := range manifests {
 		for _, installableObj := range manifest.Installables() {
@@ -314,7 +316,7 @@ func SelectInstallables(manifests []*Manifest, includeSelector []string,
 }
 
 // Returns a boolean indicating whether the installable matches the given selector
-func MatchesSelector(installable installable.Installable, selector string) (bool, error) {
+func MatchesSelector(installable interfaces.IInstallable, selector string) (bool, error) {
 
 	selectorParts := strings.Split(selector, constants.NamespaceSeparator)
 	if len(selectorParts) != 2 {
@@ -345,10 +347,10 @@ func MatchesSelector(installable installable.Installable, selector string) (bool
 	return false, nil
 }
 
-func acquireManifests(stackObj structs.Stack) ([]*Manifest, error) {
+func acquireManifests(stackObj structs.Stack) ([]interfaces.IManifest, error) {
 	log.Logger.Info("Acquiring manifests...")
 
-	manifests := make([]*Manifest, len(stackObj.ManifestDescriptors))
+	manifests := make([]interfaces.IManifest, len(stackObj.ManifestDescriptors))
 
 	for i, descriptor := range stackObj.ManifestDescriptors {
 		manifest, err := acquireManifest(filepath.Dir(stackObj.FilePath), descriptor)
@@ -364,7 +366,7 @@ func acquireManifests(stackObj structs.Stack) ([]*Manifest, error) {
 
 // Acquires a manifest.
 // todo - refactor to use an acquirer
-func acquireManifest(stackConfigFileDir string, manifestDescriptor structs.ManifestDescriptor) (*Manifest, error) {
+func acquireManifest(stackConfigFileDir string, manifestDescriptor structs.ManifestDescriptor) (interfaces.IManifest, error) {
 
 	// The file acquirer needs to convert relative paths to absolute.
 	uri := manifestDescriptor.Uri

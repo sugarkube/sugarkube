@@ -169,7 +169,7 @@ func loadStackConfigFile(name string, path string) (*structs.Stack, error) {
 }
 
 // Takes a raw config struct and populates the manifests and installables
-func parseRawStackConfig(rawStackConfig structs.Stack) (*StackConfig, error) {
+func parseRawStackConfig(rawStackConfig structs.Stack) (interfaces.IStackConfig, error) {
 	manifests, err := acquireManifests(rawStackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)

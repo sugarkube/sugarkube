@@ -19,6 +19,7 @@ package stack
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"os"
@@ -30,13 +31,13 @@ import (
 type StackConfig struct {
 	rawConfig     structs.Stack
 	providerVars  map[string]interface{}
-	manifests     []*Manifest
+	manifests     []interfaces.IManifest
 	onlineTimeout uint32
 	readyTimeout  uint32
 }
 
 // Returns the populated manifests
-func (s StackConfig) Manifests() []*Manifest {
+func (s StackConfig) Manifests() []interfaces.IManifest {
 	return s.manifests
 }
 
@@ -109,7 +110,7 @@ func (s StackConfig) OnlineTimeout() uint32 {
 
 // Validates that there aren't multiple manifests in the stack config with the
 // same ID, which would break creating caches
-func validateStackConfig(stackConfig *StackConfig) error {
+func validateStackConfig(stackConfig interfaces.IStackConfig) error {
 	ids := map[string]bool{}
 
 	for _, manifest := range stackConfig.Manifests() {

@@ -17,29 +17,11 @@
 package installable
 
 import (
-	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
 
-// this encapsulates different package formats that sugarkube can install in
-// a target stack
-type Installable interface {
-	Id() string
-	FullyQualifiedId() string
-	ManifestId() string
-	State() string
-	PostActions() []string
-	SetRootCacheDir(cacheDir string)
-	ObjectCacheDir() string
-	Acquirers() ([]acquirer.Acquirer, error)
-	RefreshConfig(templateVars map[string]interface{}) error
-	Vars(stack interfaces.IStack) (map[string]interface{}, error)
-	RenderTemplates(templateVars map[string]interface{}, stackConfig interfaces.IStackConfig,
-		dryRun bool) ([]string, error)
-}
-
-func New(manifestId string, descriptor structs.KappDescriptor) (Installable, error) {
+func New(manifestId string, descriptor structs.KappDescriptor) (interfaces.IInstallable, error) {
 	return &Kapp{
 		manifestId: manifestId,
 		descriptor: descriptor,

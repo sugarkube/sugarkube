@@ -34,7 +34,7 @@ import (
 // dependencies.
 type Stack struct {
 	globalConfig *config.Config // config loaded for the program from the 'sugarkube-conf.yaml' file
-	config       *StackConfig
+	config       interfaces.IStackConfig
 	provider     interfaces.IProvider
 	provisioner  interfaces.IProvisioner
 	status       *ClusterStatus
@@ -42,7 +42,7 @@ type Stack struct {
 }
 
 // Creates a new Stack
-func newStack(globalConfig *config.Config, config *StackConfig,
+func newStack(globalConfig *config.Config, config interfaces.IStackConfig,
 	provider interfaces.IProvider, registry *registry.Registry) (interfaces.IStack, error) {
 
 	stack := &Stack{

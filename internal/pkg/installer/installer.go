@@ -19,16 +19,16 @@ package installer
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 )
 
 type Installer interface {
-	install(installableObj installable.Installable, stack stack.Stack, approved bool,
+	install(installableObj interfaces.IInstallable, stack stack.Stack, approved bool,
 		renderTemplates bool, dryRun bool) error
-	destroy(installableObj installable.Installable, stack stack.Stack, approved bool,
+	destroy(installableObj interfaces.IInstallable, stack stack.Stack, approved bool,
 		renderTemplates bool, dryRun bool) error
 	name() string
 }
@@ -48,14 +48,14 @@ func NewInstaller(name string, providerImpl provider.Provider) (Installer, error
 }
 
 // Installs a kapp by delegating to an Installer implementation
-func Install(i Installer, installableObj installable.Installable, stack stack.Stack, approved bool,
+func Install(i Installer, installableObj interfaces.IInstallable, stack stack.Stack, approved bool,
 	renderTemplates bool, dryRun bool) error {
 	log.Logger.Infof("Installing kapp '%s'...", installableObj.FullyQualifiedId())
 	return i.install(installableObj, stack, approved, renderTemplates, dryRun)
 }
 
 // Destroys a kapp by delegating to an Installer implementation
-func Destroy(i Installer, installableObj installable.Installable, stack stack.Stack,
+func Destroy(i Installer, installableObj interfaces.IInstallable, stack stack.Stack,
 	approved bool, renderTemplates bool, dryRun bool) error {
 	log.Logger.Infof("Destroying kapp '%s'...", installableObj.FullyQualifiedId())
 	return i.destroy(installableObj, stack, approved, renderTemplates, dryRun)

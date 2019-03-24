@@ -46,6 +46,10 @@ type IStackConfig interface {
 	KappVarsDirs() []string
 	TemplateDirs() []string
 	Dir() string
+	Manifests() []IManifest
+	GetIntrinsicData() map[string]string
+	GetProviderVars() map[string]interface{}
+	SetProviderVars(vars map[string]interface{})
 }
 
 type IStack interface {

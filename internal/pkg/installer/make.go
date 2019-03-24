@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
@@ -44,7 +44,7 @@ func (i MakeInstaller) name() string {
 }
 
 // Run the given make target
-func (i MakeInstaller) run(makeTarget string, installable installable.Installable, stack stack.Stack,
+func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallable, stack stack.Stack,
 	approved bool, renderTemplates bool, dryRun bool) error {
 
 	// search for the Makefile
@@ -169,13 +169,13 @@ func (i MakeInstaller) run(makeTarget string, installable installable.Installabl
 }
 
 // Install a kapp
-func (i MakeInstaller) install(installableObj installable.Installable, stack stack.Stack,
+func (i MakeInstaller) install(installableObj interfaces.IInstallable, stack stack.Stack,
 	approved bool, renderTemplates bool, dryRun bool) error {
 	return i.run(TargetInstall, installableObj, stack, approved, renderTemplates, dryRun)
 }
 
 // Destroy a kapp
-func (i MakeInstaller) destroy(installableObj installable.Installable, stack stack.Stack,
+func (i MakeInstaller) destroy(installableObj interfaces.IInstallable, stack stack.Stack,
 	approved bool, renderTemplates bool, dryRun bool) error {
 	return i.run(TargetDestroy, installableObj, stack, approved, renderTemplates, dryRun)
 }

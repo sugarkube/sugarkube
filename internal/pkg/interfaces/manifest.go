@@ -16,21 +16,8 @@
 
 package interfaces
 
-import "github.com/sugarkube/sugarkube/internal/pkg/acquirer"
-
-// this encapsulates different package formats that sugarkube can install in
-// a target stack
-type IInstallable interface {
+type IManifest interface {
 	Id() string
-	FullyQualifiedId() string
-	ManifestId() string
-	State() string
-	PostActions() []string
-	SetRootCacheDir(cacheDir string)
-	ObjectCacheDir() string
-	Acquirers() ([]acquirer.Acquirer, error)
-	RefreshConfig(templateVars map[string]interface{}) error
-	Vars(stack IStack) (map[string]interface{}, error)
-	RenderTemplates(templateVars map[string]interface{}, stackConfig IStackConfig,
-		dryRun bool) ([]string, error)
+	Installables() []IInstallable
+	Parallelisation() uint16
 }
