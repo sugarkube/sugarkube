@@ -19,9 +19,9 @@ package stack
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"testing"
 )
 
@@ -72,9 +72,11 @@ func TestTemplatedVarsWithRegistry(t *testing.T) {
 
 	registryObj := registry.NewRegistry()
 
-	stackConfig := &kapp.StackConfig{
-		Region:  "testRegion",
-		Account: "testAccount",
+	stackConfig := &StackConfig{
+		rawConfig: structs.Stack{
+			Region:  "testRegion",
+			Account: "testAccount",
+		},
 	}
 
 	stackConfig.SetProviderVars(map[string]interface{}{

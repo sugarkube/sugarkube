@@ -18,8 +18,11 @@ package provider
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -29,7 +32,8 @@ func init() {
 }
 
 func TestLocalVarsDirs(t *testing.T) {
-	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
+	sc, err := stack.BuildStack("large", "../../testdata/stacks.yaml",
+		&structs.Stack{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 
 	absTestDir, err := filepath.Abs("../../testdata")

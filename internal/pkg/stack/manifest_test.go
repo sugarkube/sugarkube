@@ -18,10 +18,24 @@ package stack
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"os"
 	"testing"
 )
 
+// Helper to get acquirers in a single-valued context
+func discardErrInstallable(installable installable.Installable, err error) installable.Installable {
+	if err != nil {
+		panic(err)
+	}
+
+	return installable
+}
+
 func TestValidateManifest(t *testing.T) {
+	testManifestId := "testManifest"
 	tests := []struct {
 		name          string
 		desc          string
@@ -32,9 +46,9 @@ func TestValidateManifest(t *testing.T) {
 			name: "good",
 			desc: "kapp IDs should be unique",
 			input: Manifest{
-				UnparsedKapps: []Kapp{
-					{Id: "example1"},
-					{Id: "example2"},
+				installables: []installable.Installable{
+					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptor{Id: "example1"})),
+					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptor{Id: "example2"})),
 				},
 			},
 		},
@@ -42,10 +56,10 @@ func TestValidateManifest(t *testing.T) {
 			name: "error_multiple_kapps_same_id",
 			desc: "error when kapp IDs aren't unique",
 			input: Manifest{
-				UnparsedKapps: []Kapp{
-					{Id: "example1"},
-					{Id: "example2"},
-					{Id: "example1"},
+				installables: []installable.Installable{
+					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptor{Id: "example1"})),
+					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptor{Id: "example2"})),
+					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptor{Id: "example1"})),
 				},
 			},
 		},
@@ -65,13 +79,13 @@ func TestSetManifestDefaults(t *testing.T) {
 	tests := []struct {
 		name     string
 		desc     string
-		input    Manifest
+		input    structs.ManifestDescriptor
 		expected string
 	}{
 		{
 			name:     "good",
 			desc:     "default manifest IDs should be the URI basename minus extension",
-			input:    Manifest{ConfiguredId: "", Uri: "example/manifest.yaml"},
+			input:    structs.ManifestDescriptor{Id: "", Uri: "example/manifest.yaml"},
 			expected: "manifest",
 		},
 	}
@@ -84,7 +98,8 @@ func TestSetManifestDefaults(t *testing.T) {
 func TestSelectKapps(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
-	stackConfig, err := LoadStackConfig("kops", "../../testdata/stacks.yaml")
+	stackConfig, err := BuildStack("kops", "../../testdata/stacks.yaml",
+		&structs.Stack{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 	assert.NotNil(t, stackConfig)
 
@@ -102,7 +117,7 @@ func TestSelectKapps(t *testing.T) {
 		"exampleManifest2:kappA",
 	}
 
-	selectedKapps, err := SelectInstallables(stackConfig.Manifests, includeSelector, excludeSelector)
+	selectedKapps, err := SelectInstallables(stackConfig.Config.Manifests(), includeSelector, excludeSelector)
 	assert.Nil(t, err)
 
 	for i := 0; i < len(expectedKappIds); i++ {
@@ -113,9 +128,10 @@ func TestSelectKapps(t *testing.T) {
 func TestSelectKappsExclusions(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
-	stackConfig, err := LoadStackConfig("kops", "../../testdata/stacks.yaml")
+	stack, err := BuildStack("kops", "../../testdata/stacks.yaml",
+		&structs.Stack{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
-	assert.NotNil(t, stackConfig)
+	assert.NotNil(t, stack)
 
 	includeSelector := []string{
 		"exampleManifest2:*",
@@ -133,7 +149,7 @@ func TestSelectKappsExclusions(t *testing.T) {
 		"exampleManifest2:kappD",
 	}
 
-	selectedKapps, err := SelectInstallables(stackConfig.Manifests, includeSelector, excludeSelector)
+	selectedKapps, err := SelectInstallables(stack.Config.Manifests(), includeSelector, excludeSelector)
 	assert.Nil(t, err)
 
 	for i := 0; i < len(expectedKappIds); i++ {
