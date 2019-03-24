@@ -76,25 +76,27 @@ func TestValidateManifest(t *testing.T) {
 	}
 }
 
-//func TestSetManifestDefaults(t *testing.T) {
-//	tests := []struct {
-//		name     string
-//		desc     string
-//		input    structs.ManifestDescriptor
-//		expected string
-//	}{
-//		{
-//			name:     "good",
-//			desc:     "default manifest IDs should be the URI basename minus extension",
-//			input:    structs.ManifestDescriptor{Id: "", Uri: "example/manifest.yaml"},
-//			expected: "manifest",
-//		},
-//	}
-//
-//	for _, test := range tests {
-//		assert.Equal(t, test.expected, test.input.Id())
-//	}
-//}
+func TestSetManifestDefaults(t *testing.T) {
+	tests := []struct {
+		name     string
+		desc     string
+		input    interfaces.IManifest
+		expected string
+	}{
+		{
+			name: "good",
+			desc: "default manifest IDs should be the URI basename minus extension",
+			input: &Manifest{
+				descriptor: structs.ManifestDescriptor{Id: "", Uri: "example/manifest.yaml"},
+			},
+			expected: "manifest",
+		},
+	}
+
+	for _, test := range tests {
+		assert.Equal(t, test.expected, test.input.Id())
+	}
+}
 
 func TestSelectKapps(t *testing.T) {
 
