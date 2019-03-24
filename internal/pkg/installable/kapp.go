@@ -78,6 +78,28 @@ func (k *Kapp) SetRootCacheDir(cacheDir string) {
 	k.rootCacheDir = cacheDir
 }
 
+// todo - this needs a rethink
+// Returns the physical path to this kapp in a cache
+func (k Kapp) ObjectCacheDir() string {
+	cacheDir := filepath.Join(k.rootCacheDir, k.manifestId, k.Id())
+
+	// if no cache dir has been set (e.g. because the user is doing a dry-run),
+	// don't return an absolute path
+	if k.rootCacheDir != "" {
+		absCacheDir, err := filepath.Abs(cacheDir)
+		if err != nil {
+			panic(fmt.Sprintf("Couldn't convert path to absolute path: %#v", err))
+		}
+
+		cacheDir = absCacheDir
+	} else {
+		log.Logger.Debug("No cache dir has been set on kapp. Cache dir will " +
+			"not be converted to an absolute path.")
+	}
+
+	return cacheDir
+}
+
 // Returns an array of acquirers configured for the sources for this kapp. We need to recompute these each time
 // instead of caching them so that any manifest overrides will take effect.
 func (k Kapp) Acquirers() ([]acquirer.Acquirer, error) {
@@ -92,16 +114,16 @@ func (k Kapp) Acquirers() ([]acquirer.Acquirer, error) {
 // (Re)loads the kapp's sugarkube.yaml file, templates it and saves is at as an attribute on the kapp
 func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
 
-	configFilePaths, err := utils.FindFilesByPattern(k.CacheDir(), constants.KappConfigFileName,
+	configFilePaths, err := utils.FindFilesByPattern(k.ObjectCacheDir(), constants.KappConfigFileName,
 		true, false)
 	if err != nil {
 		return errors.Wrapf(err, "Error finding '%s' in '%s'",
-			constants.KappConfigFileName, k.CacheDir())
+			constants.KappConfigFileName, k.ObjectCacheDir())
 	}
 
 	if len(configFilePaths) == 0 {
 		return errors.New(fmt.Sprintf("No '%s' file found for kapp "+
-			"'%s' in %s", constants.KappConfigFileName, k.FullyQualifiedId(), k.CacheDir()))
+			"'%s' in %s", constants.KappConfigFileName, k.FullyQualifiedId(), k.ObjectCacheDir()))
 	} else if len(configFilePaths) > 1 {
 		// todo - have a way of declaring the 'right' one in the manifest
 		panic(fmt.Sprintf("Multiple '%s' found for kapp '%s'. Disambiguation "+
@@ -175,7 +197,7 @@ func (k Kapp) getIntrinsicData() map[string]string {
 	return map[string]string{
 		"id":        k.Id(),
 		"state":     k.State(),
-		"cacheRoot": k.CacheDir(),
+		"cacheRoot": k.ObjectCacheDir(),
 	}
 }
 
@@ -307,7 +329,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 			foundTemplate := false
 
 			// see whether the template is in the kapp itself
-			possibleSource := filepath.Join(k.CacheDir(), templateSource)
+			possibleSource := filepath.Join(k.ObjectCacheDir(), templateSource)
 			log.Logger.Debugf("Searching for kapp template in '%s'", possibleSource)
 			_, err := os.Stat(possibleSource)
 			if err == nil {
@@ -355,7 +377,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		}
 
 		if !filepath.IsAbs(destPath) {
-			destPath = filepath.Join(k.CacheDir(), destPath)
+			destPath = filepath.Join(k.ObjectCacheDir(), destPath)
 		}
 
 		// check whether the dest path exists

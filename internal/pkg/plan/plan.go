@@ -322,7 +322,7 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 		dryRun := job.dryRun
 		renderTemplates := job.renderTemplates
 
-		kappRootDir := installableObj.CacheDir()
+		kappRootDir := installableObj.ObjectCacheDir()
 		log.Logger.Infof("Processing kapp '%s' in %s", installableObj.FullyQualifiedId(), kappRootDir)
 
 		// todo - print (to stdout) detais of the kapp being executed

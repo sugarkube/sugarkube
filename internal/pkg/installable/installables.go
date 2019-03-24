@@ -48,6 +48,7 @@ type Installable interface {
 	State() string
 	PostActions() []string
 	SetRootCacheDir(cacheDir string)
+	ObjectCacheDir() string
 	Acquirers() ([]acquirer.Acquirer, error)
 	RefreshConfig(templateVars map[string]interface{}) error
 	Vars(stack iStack) (map[string]interface{}, error)

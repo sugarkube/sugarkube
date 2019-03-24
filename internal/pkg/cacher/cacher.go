@@ -68,7 +68,7 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 		log.Logger.Debugf("Kapp to cache: %#v", installableObj)
 
 		// build a directory path for the kapp's .sugarkube cache directory
-		kappHiddenCacheDir := getKappCachePath(installableObj.CacheDir())
+		kappHiddenCacheDir := getKappCachePath(installableObj.ObjectCacheDir())
 
 		err := createDirectoryIfMissing(kappHiddenCacheDir)
 		if err != nil {
@@ -80,7 +80,7 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 			return errors.WithStack(err)
 		}
 
-		err = acquireSources(cacheGroup.Id(), acquirers, installableObj.CacheDir(),
+		err = acquireSources(cacheGroup.Id(), acquirers, installableObj.ObjectCacheDir(),
 			kappHiddenCacheDir, dryRun)
 		if err != nil {
 			return errors.WithStack(err)

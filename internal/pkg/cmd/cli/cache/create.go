@@ -95,12 +95,12 @@ func (c *createCmd) run() error {
 
 	log.Logger.Debugf("Manifests validated.")
 
-	absCacheDir, err := filepath.Abs(c.cacheDir)
+	absRootCacheDir, err := filepath.Abs(c.cacheDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Caching manifests into %s...", absCacheDir)
+	log.Logger.Debugf("Caching manifests into %s...", absRootCacheDir)
 
 	// don't use the abs cache path here to keep the output simpler
 	_, err = fmt.Fprintf(c.out, "Caching kapps into '%s'...\n", c.cacheDir)
@@ -109,7 +109,7 @@ func (c *createCmd) run() error {
 	}
 
 	for _, manifest := range stackObj.Config.Manifests() {
-		err := cacher.CacheManifest(manifest, absCacheDir, c.dryRun)
+		err := cacher.CacheManifest(manifest, absRootCacheDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -120,7 +120,7 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Infof("Manifests cached to: %s", absCacheDir)
+	log.Logger.Infof("Manifests cached to: %s", absRootCacheDir)
 
 	if !c.skipTemplating {
 		_, err = fmt.Fprintln(c.out, "Rendering templates for kapps...")
@@ -137,7 +137,7 @@ func (c *createCmd) run() error {
 			}
 		}
 
-		err = kapps.RenderTemplates(candidateKapps, absCacheDir, stackObj, c.dryRun)
+		err = kapps.RenderTemplates(candidateKapps, absRootCacheDir, stackObj, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -153,7 +153,7 @@ func (c *createCmd) run() error {
 		}
 	}
 
-	_, err = fmt.Fprintf(c.out, "Kapps successfully cached into '%s'\n", absCacheDir)
+	_, err = fmt.Fprintf(c.out, "Kapps successfully cached into '%s'\n", absRootCacheDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
