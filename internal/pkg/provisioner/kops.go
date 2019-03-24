@@ -25,8 +25,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
@@ -69,7 +67,7 @@ const kubernetesLocalHostname = "kubernetes.default.svc.cluster.local"
 
 type KopsProvisioner struct {
 	clusterSot           clustersot.ClusterSot
-	stack                interfaces.IStack
+	stack                iStack
 	kopsConfig           KopsConfig
 	portForwardingActive bool
 }
@@ -92,8 +90,7 @@ type KopsConfig struct {
 }
 
 // Instantiates a new instance
-func newKopsProvisioner(stackConfig interfaces.IStack,
-	clusterSot clustersot.ClusterSot) (*KopsProvisioner, error) {
+func newKopsProvisioner(stackConfig iStack, clusterSot clustersot.ClusterSot) (*KopsProvisioner, error) {
 	kopsConfig, err := parseKopsConfig(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -106,7 +103,7 @@ func newKopsProvisioner(stackConfig interfaces.IStack,
 	}, nil
 }
 
-func (p KopsProvisioner) iStack() interfaces.IStack {
+func (p KopsProvisioner) getStack() iStack {
 	return p.stack
 }
 
@@ -161,7 +158,7 @@ func (p KopsProvisioner) create(dryRun bool) error {
 
 	if configExists {
 		log.Logger.Debugf("Kops config already exists for '%s'. Won't recreate it...",
-			p.iStack().GetConfig().Cluster)
+			p.getStack().GetConfig().Cluster())
 		return nil
 	}
 
@@ -549,8 +546,8 @@ func parameteriseValues(args []string, valueMap map[string]string) []string {
 }
 
 // Parses the Kops provisioner config
-func parseKopsConfig(stackConfig interfaces.IStack) (*KopsConfig, error) {
-	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
+func parseKopsConfig(stack iStack) (*KopsConfig, error) {
+	templatedVars, err := stack.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -714,7 +711,7 @@ func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
 	log.Logger.Debugf("Downloading kubeconfig file for '%s'...",
 		p.kopsConfig.clusterName)
 
-	pattern := fmt.Sprintf("kubeconfig-%s-*", p.iStack().GetConfig().Cluster)
+	pattern := fmt.Sprintf("kubeconfig-%s-*", p.getStack().GetConfig().Cluster())
 
 	tmpfile, err := ioutil.TempFile("", pattern)
 	if err != nil {
@@ -786,15 +783,15 @@ func (p KopsProvisioner) setupPortForwarding(privateKey string, sshUser string, 
 }
 
 // Returns the hostname of the bastion or an empty string if it can't be found
-func getBastionHostname(config *kapp.StackConfig) (string, error) {
+func getBastionHostname(stackConfig iStackConfig) (string, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	query := fmt.Sprintf("LoadBalancerDescriptions["+
-		"?starts_with(DNSName, `bastion-%s-`) == `true`].DNSName | [0]", config.Cluster)
+		"?starts_with(DNSName, `bastion-%s-`) == `true`].DNSName | [0]", stackConfig.Cluster())
 
 	// get the bastion ELB's hostname
 	err := utils.ExecCommand(awsCliPath, []string{
-		"--region", config.Region,
+		"--region", stackConfig.Region(),
 		"elb", "describe-load-balancers",
 		"--query", query,
 		"--output", "text",
@@ -811,7 +808,7 @@ func getBastionHostname(config *kapp.StackConfig) (string, error) {
 	}
 
 	if bastionHostname == "" {
-		log.Logger.Infof("No bastion found for cluster '%s'", config.Cluster)
+		log.Logger.Infof("No bastion found for cluster '%s'", stackConfig.Cluster())
 	} else {
 		log.Logger.Infof("The bastion hostname is '%s'", bastionHostname)
 	}

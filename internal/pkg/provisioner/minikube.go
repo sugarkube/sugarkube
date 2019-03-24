@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
@@ -32,7 +31,7 @@ const MinikubeDefaultBinary = "minikube"
 
 type MinikubeProvisioner struct {
 	clusterSot     clustersot.ClusterSot
-	stack          interfaces.IStack
+	stack          iStack
 	minikubeConfig MinikubeConfig
 }
 
@@ -51,7 +50,7 @@ type MinikubeConfig struct {
 const MinikubeSleepSecondsBeforeReadyCheck = 30
 
 // Instantiates a new instance
-func newMinikubeProvisioner(iStack interfaces.IStack,
+func newMinikubeProvisioner(iStack iStack,
 	clusterSot clustersot.ClusterSot) (*MinikubeProvisioner, error) {
 	config, err := parseMinikubeConfig(iStack)
 	if err != nil {
@@ -65,7 +64,7 @@ func newMinikubeProvisioner(iStack interfaces.IStack,
 	}, nil
 }
 
-func (p MinikubeProvisioner) iStack() interfaces.IStack {
+func (p MinikubeProvisioner) getStack() iStack {
 	return p.stack
 }
 
@@ -127,8 +126,8 @@ func (p MinikubeProvisioner) update(dryRun bool) error {
 }
 
 // Parses the provisioner config
-func parseMinikubeConfig(stackConfig interfaces.IStack) (*MinikubeConfig, error) {
-	templatedVars, err := stackConfig.TemplatedVars(nil, map[string]interface{}{})
+func parseMinikubeConfig(stack iStack) (*MinikubeConfig, error) {
+	templatedVars, err := stack.TemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

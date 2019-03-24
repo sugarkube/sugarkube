@@ -20,12 +20,47 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
+	"github.com/sugarkube/sugarkube/internal/pkg/installable"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"time"
 )
 
 const shortSleepTime = 5
+
+// These are defined here to avoid circular dependencies
+type iStackConfig interface {
+	Name() string
+	OnlineTimeout() uint32
+	//Provider() string
+	//Provisioner() string
+	//Account() string
+	Region() string
+	//Profile() string
+	Cluster() string
+	//KappVarsDirs() []string
+	//Dir() string
+	//TemplateDirs() []string
+}
+
+type iClusterStatus interface {
+	IsOnline() bool
+	SetIsOnline(bool)
+	IsReady() bool
+	//SetIsReady(bool)
+	StartedThisRun() bool
+	SetStartedThisRun(bool)
+	SleepBeforeReadyCheck() uint32
+	SetSleepBeforeReadyCheck(uint32)
+}
+
+type iStack interface {
+	GetConfig() iStackConfig
+	GetStatus() iClusterStatus
+	GetRegistry() *registry.Registry
+	TemplatedVars(installableObj installable.Installable,
+		installerVars map[string]interface{}) (map[string]interface{}, error)
+}
 
 type Provisioner interface {
 	// Returns the ClusterSot for this provisioner
@@ -37,7 +72,7 @@ type Provisioner interface {
 	// Update the cluster config if supported by the provisioner
 	update(dryRun bool) error
 	// We need to use an interface to work with Stack objects to avoid circular dependencies
-	iStack() interfaces.IStack
+	getStack() iStack
 	// if the API server is internal we need to set up connectivity to it. Returns a boolean
 	// indicating whether connectivity exists (not necessarily if it's been set up, i.e. it
 	// might not be necessary to do anything, or it may have already been set up)
@@ -48,7 +83,7 @@ type Provisioner interface {
 const ProvisionerKey = "provisioner"
 
 // Factory that creates providers
-func New(name string, stack interfaces.IStack,
+func New(name string, stack iStack,
 	clusterSot clustersot.ClusterSot) (Provisioner, error) {
 	if stack == nil {
 		return nil, errors.New("Stack parameter can't be nil")
@@ -94,7 +129,7 @@ func Update(p Provisioner, dryRun bool) error {
 // Return whether the cluster is already online
 func IsAlreadyOnline(p Provisioner, dryRun bool) (bool, error) {
 
-	clusterName := p.iStack().GetConfig().Name()
+	clusterName := p.getStack().GetConfig().Name()
 
 	log.Logger.Infof("Checking whether cluster '%s' is already online...",
 		clusterName)
@@ -120,7 +155,7 @@ func IsAlreadyOnline(p Provisioner, dryRun bool) (bool, error) {
 		log.Logger.Infof("Cluster '%s' is not online", clusterName)
 	}
 
-	p.iStack().GetStatus().SetIsOnline(online)
+	p.getStack().GetStatus().SetIsOnline(online)
 	return online, nil
 }
 
@@ -128,7 +163,7 @@ func IsAlreadyOnline(p Provisioner, dryRun bool) (bool, error) {
 func WaitForClusterReadiness(p Provisioner) error {
 	clusterSot := p.ClusterSot()
 
-	onlineTimeout := p.iStack().GetConfig().OnlineTimeout()
+	onlineTimeout := p.getStack().GetConfig().OnlineTimeout()
 
 	log.Logger.Infof("Checking whether the cluster is online... Will "+
 		"try for %d seconds", onlineTimeout)
@@ -173,13 +208,13 @@ func WaitForClusterReadiness(p Provisioner) error {
 		}
 	}
 
-	if !p.iStack().GetStatus().IsOnline() {
+	if !p.getStack().GetStatus().IsOnline() {
 		return errors.New("Timed out waiting for the cluster to come online")
 	}
 
 	// only sleep before checking readiness if the cluster was initially offline
-	sleepTime := p.iStack().GetStatus().SleepBeforeReadyCheck()
-	if clusterWasOffline || p.iStack().GetStatus().StartedThisRun() && sleepTime > 0 {
+	sleepTime := p.getStack().GetStatus().SleepBeforeReadyCheck()
+	if clusterWasOffline || p.getStack().GetStatus().StartedThisRun() && sleepTime > 0 {
 		log.Logger.Infof("Sleeping for %d seconds before checking cluster readiness...", sleepTime)
 		time.Sleep(time.Second * time.Duration(sleepTime))
 	}
@@ -202,7 +237,7 @@ func WaitForClusterReadiness(p Provisioner) error {
 		}
 	}
 
-	if !p.iStack().GetStatus().IsReady() {
+	if !p.getStack().GetStatus().IsReady() {
 		return errors.New("Timed out waiting for the cluster to become ready")
 	}
 
