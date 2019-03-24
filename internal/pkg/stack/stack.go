@@ -59,7 +59,7 @@ func newStack(globalConfig *config.Config, config interfaces.IStackConfig,
 		registry: registry,
 	}
 
-	clusterSot, err := clustersot.New(clustersot.KUBECTL, stack)
+	clusterSot, err := clustersot.New(clustersot.KubeCtl, stack)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

@@ -31,8 +31,8 @@ const shortSleepTime = 5
 const ProvisionerKey = "provisioner"
 
 // Factory that creates providers
-func New(name string, stack interfaces.IStack,
-	clusterSot interfaces.IClusterSot) (interfaces.IProvisioner, error) {
+func New(name string, stack interfaces.IStack, clusterSot interfaces.IClusterSot) (
+	interfaces.IProvisioner, error) {
 	if stack == nil {
 		return nil, errors.New("Stack parameter can't be nil")
 	}

@@ -24,7 +24,7 @@ import (
 )
 
 // Implemented ClusterSot names
-const KUBECTL = "kubectl"
+const KubeCtl = "kubectl"
 
 // Factory that creates ClusterSots
 func New(name string, iStack interfaces.IStack) (interfaces.IClusterSot, error) {
@@ -32,7 +32,7 @@ func New(name string, iStack interfaces.IStack) (interfaces.IClusterSot, error) 
 		return nil, errors.New("Stack parameter can't be nil")
 	}
 
-	if name == KUBECTL {
+	if name == KubeCtl {
 		return KubeCtlClusterSot{iStack: iStack}, nil
 	}
 

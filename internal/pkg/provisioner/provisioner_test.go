@@ -32,16 +32,20 @@ func TestNewNonExistentProvisioner(t *testing.T) {
 	assert.Nil(t, actual)
 }
 
-// todo - reinstate these
 //func TestNewMinikubeProvisioner(t *testing.T) {
 //
-//	stackConfig, err := kapp.LoadStackConfig("standard", "../../testdata/stacks.yaml")
+//	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
+//		&structs.Stack{}, &config.Config{}, os.Stdout)
 //	assert.Nil(t, err)
 //
-//	actual, err := New(MinikubeProvisionerName, stackConfig)
+//	clusterSot, err := clustersot.New(clustersot.KubeCtl, stackObj)
+//	assert.Nil(t, err)
+//
+//	actual, err := New(MinikubeProvisionerName, stackObj, clusterSot)
 //	assert.Nil(t, err)
 //	assert.Equal(t, MinikubeProvisioner{
-//		stackConfig: stackConfig,
+//		clusterSot: clusterSot,
+//		stack:      stackObj,
 //		minikubeConfig: MinikubeConfig{
 //			Binary: "minikube",
 //			Params: struct {
@@ -59,24 +63,35 @@ func TestNewNonExistentProvisioner(t *testing.T) {
 //		},
 //	}, actual)
 //}
-
+//
 //func TestNewKopsProvisioner(t *testing.T) {
-//	stackObj, err := stack.BuildStack("kops", "../../testdata/stacks.yaml",
-//		&kapp.StackConfig{}, os.Stdout)
+//	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
+//		&structs.Stack{}, &config.Config{}, os.Stdout)
 //	assert.Nil(t, err)
 //
-//	actual, err := New(KopsProvisionerName, stackObj.Config)
+//	clusterSot, err := clustersot.New(clustersot.KubeCtl, stackObj)
+//	assert.Nil(t, err)
+//
+//	actual, err := New(kopsProvisionerName, stackObj, clusterSot)
 //	assert.Nil(t, err)
 //	assert.Equal(t, KopsProvisioner{
-//		stackConfig: stackObj.Config,
+//		stack:      stackObj,
+//		clusterSot: clusterSot,
 //		kopsConfig: KopsConfig{
 //			Binary: "kops",
 //		},
 //	}, actual)
 //}
-
+//
 //func TestNewNoOpProvisioner(t *testing.T) {
-//	actual, err := New(NoopProvisionerName, nil)
+//	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
+//		&structs.Stack{}, &config.Config{}, os.Stdout)
+//	assert.Nil(t, err)
+//
+//	clusterSot, err := clustersot.New(clustersot.KubeCtl, stackObj)
+//	assert.Nil(t, err)
+//
+//	actual, err := New(NoopProvisionerName, stackObj, clusterSot)
 //	assert.Nil(t, err)
 //	assert.Equal(t, NoOpProvisioner{}, actual)
 //}

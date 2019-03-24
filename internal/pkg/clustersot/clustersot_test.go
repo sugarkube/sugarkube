@@ -64,7 +64,7 @@ func (m MockStack) TemplatedVars(installableObj interfaces.IInstallable,
 func TestNewClusterSot(t *testing.T) {
 	istack := MockStack{}
 
-	actual, err := New(KUBECTL, istack)
+	actual, err := New(KubeCtl, istack)
 	assert.Nil(t, err)
 	assert.Equal(t, KubeCtlClusterSot{iStack: istack}, actual)
 }
