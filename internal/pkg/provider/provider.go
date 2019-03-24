@@ -35,6 +35,8 @@ const AWS = "aws"
 
 // Factory that creates providers
 func newProviderImpl(name string, stackConfig interfaces.IStackConfig) (interfaces.IProvider, error) {
+	log.Logger.Debugf("Will try to instantiate a provider called '%s'", name)
+
 	if name == LOCAL {
 		return &LocalProvider{}, nil
 	}

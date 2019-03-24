@@ -176,6 +176,7 @@ func parseRawStackConfig(rawStackConfig structs.Stack) (interfaces.IStackConfig,
 	}
 
 	stackConfig := &StackConfig{
+		rawConfig: rawStackConfig,
 		manifests: manifests,
 	}
 
