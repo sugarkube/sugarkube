@@ -92,7 +92,7 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := stack.SelectInstallables(stackObj.Config.Manifests(), c.includeSelector, c.excludeSelector)
+	selectedKapps, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(), c.includeSelector, c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}

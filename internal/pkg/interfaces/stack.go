@@ -55,6 +55,7 @@ type IStackConfig interface {
 type IStack interface {
 	GetConfig() IStackConfig
 	GetStatus() IClusterStatus
+	GetProvider() IProvider
 	GetProvisioner() IProvisioner
 	GetRegistry() *registry.Registry
 	TemplatedVars(installableObj IInstallable,

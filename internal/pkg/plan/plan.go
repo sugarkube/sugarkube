@@ -22,8 +22,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/installable"
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"os"
@@ -32,12 +32,12 @@ import (
 
 type task struct {
 	action         string
-	installableObj installable.Installable
+	installableObj interfaces.IInstallable
 }
 
 type tranche struct {
 	// The manifest associated with this tranche
-	manifest stack.Manifest
+	manifest interfaces.IManifest
 	// tasks to run for this tranche (by default they'll run in parallel)
 	tasks []task
 }
@@ -47,7 +47,7 @@ type Plan struct {
 	// each kapp in the tranche will be processed in parallel
 	tranches []tranche
 	// contains details of the target cluster
-	stack *stack.Stack
+	stack interfaces.IStack
 	// a cache dir to run the (make) installer over. It should already have
 	// been validated to match the stack config.
 	cacheDir string
@@ -58,7 +58,7 @@ type Plan struct {
 // A job to be run by a worker
 type job struct {
 	task             task
-	stack            *stack.Stack
+	stack            interfaces.IStack
 	manifestCacheDir string
 	renderTemplates  bool
 	approved         bool
@@ -74,7 +74,7 @@ type job struct {
 // reversed which will be useful when tearing down a cluster.
 // If the `runPostActions` parameter is false, no post actions will be executed.
 // This can be useful to quickly tear down a cluster.
-func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
+func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IManifest,
 	cacheDir string, includeSelector []string, excludeSelector []string,
 	renderTemplates bool, runPostActions bool) (*Plan, error) {
 
@@ -87,7 +87,7 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 
 	tranches := make([]tranche, 0)
 	tasks := make([]task, 0)
-	var previousManifest *stack.Manifest
+	var previousManifest interfaces.IManifest
 
 	for _, installableObj := range selectedInstallables {
 		var installDestroyTask *task
@@ -96,7 +96,7 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 		if previousManifest != nil && previousManifest.Id() != installableObj.ManifestId() &&
 			len(tasks) > 0 {
 			tranche := tranche{
-				manifest: *previousManifest,
+				manifest: previousManifest,
 				tasks:    tasks,
 			}
 
@@ -145,7 +145,7 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 					// add any previously queued tasks to a tranche
 					if len(tasks) > 0 {
 						tranche := tranche{
-							manifest: *GetManifestById(manifests, installableObj.ManifestId()),
+							manifest: GetManifestById(manifests, installableObj.ManifestId()),
 							tasks:    tasks,
 						}
 
@@ -160,7 +160,7 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 
 					// create a tranche just for the post action
 					tranche := tranche{
-						manifest: *GetManifestById(manifests, installableObj.ManifestId()),
+						manifest: GetManifestById(manifests, installableObj.ManifestId()),
 						tasks:    []task{*actionTask},
 					}
 
@@ -172,7 +172,7 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 		if len(tasks) > 0 && previousManifest != nil &&
 			previousManifest.Id() != installableObj.ManifestId() {
 			tranche := tranche{
-				manifest: *previousManifest,
+				manifest: previousManifest,
 				tasks:    tasks,
 			}
 
@@ -186,7 +186,7 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 	// add a tranche if there are any tasks for the final manifest
 	if len(tasks) > 0 {
 		tranche := tranche{
-			manifest: *previousManifest,
+			manifest: previousManifest,
 			tasks:    tasks,
 		}
 
@@ -213,7 +213,7 @@ func Create(forward bool, stackObj *stack.Stack, manifests []*stack.Manifest,
 }
 
 // Returns a manifest by ID. Panics if it doesn't exist (for a simpler interface)
-func GetManifestById(manifests []*stack.Manifest, manifestId string) *stack.Manifest {
+func GetManifestById(manifests []interfaces.IManifest, manifestId string) interfaces.IManifest {
 	for _, manifest := range manifests {
 		if manifest.Id() == manifestId {
 			return manifest
@@ -335,7 +335,7 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 		}
 
 		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a Make installer)
-		installerImpl, err := installer.NewInstaller(installer.MAKE, stackObj.Provider)
+		installerImpl, err := installer.New(installer.MAKE, stackObj.GetProvider())
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
 				"kapp '%s'", installableObj.Id())

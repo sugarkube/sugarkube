@@ -17,4 +17,11 @@
 package interfaces
 
 type IProvider interface {
+	// Returns the name of the provider
+	GetName() string
+	// Associate provider variables with the provider
+	SetVars(map[string]interface{})
+	// Returns variables installers should pass on to kapps
+	GetInstallerVars() map[string]interface{}
+	CustomVarsDirs() []string
 }

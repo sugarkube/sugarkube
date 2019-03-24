@@ -137,7 +137,7 @@ func (c *destroyCmd) run() error {
 
 			// in future we may want to be able to work entirely from a cluster
 			// diff, in which case it'd really be a plan for us
-			if len(stackObj.Config.Manifests) > 0 {
+			if len(stackObj.GetConfig().Manifests()) > 0 {
 				// todo - validate that the cluster diff matches the manifests, e.g. that
 				// the versions of kapps in the manifests match the versions in the cluster
 				// diff
@@ -167,7 +167,7 @@ func (c *destroyCmd) run() error {
 
 		// force mode, so no need to perform validation. Just create a reverse plan
 		actionPlan, err = plan.Create(false, stackObj,
-			stackObj.Config.Manifests, c.cacheDir, c.includeSelector, c.excludeSelector,
+			stackObj.GetConfig().Manifests(), c.cacheDir, c.includeSelector, c.excludeSelector,
 			!c.skipTemplating, !c.skipPostActions)
 		if err != nil {
 			return errors.WithStack(err)

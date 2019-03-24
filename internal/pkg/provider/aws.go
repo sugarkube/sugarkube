@@ -27,25 +27,25 @@ const AwsProviderName = "aws"
 const AwsAccountDir = "accounts"
 
 // Associate provider variables with the provider
-func (p *AwsProvider) setVars(values map[string]interface{}) {
+func (p *AwsProvider) SetVars(values map[string]interface{}) {
 	p.stackConfigVars = values
 }
 
 // Return vars loaded from configs that should be passed on to all kapps by
 // installers so kapps can be installed into this provider
-func (p *AwsProvider) getInstallerVars() map[string]interface{} {
+func (p *AwsProvider) GetInstallerVars() map[string]interface{} {
 	return map[string]interface{}{
 		"REGION": p.region,
 	}
 }
 
 // Returns the name of this provider
-func (p *AwsProvider) getName() string {
+func (p *AwsProvider) GetName() string {
 	return AwsProviderName
 }
 
 // Return static vars dirs names we should search for this provider
-func (p *AwsProvider) customVarsDirs() []string {
+func (p *AwsProvider) CustomVarsDirs() []string {
 	return []string{
 		AwsAccountDir,
 		constants.ProfileDir,

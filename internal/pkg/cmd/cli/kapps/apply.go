@@ -199,7 +199,7 @@ func (c *applyCmd) run() error {
 		log.Logger.Infof("%sEstablishing connectivity to the API server",
 			dryRunPrefix)
 		if !c.dryRun {
-			isOnline, err := provisioner.IsAlreadyOnline(stackObj.Provisioner, c.dryRun)
+			isOnline, err := provisioner.IsAlreadyOnline(stackObj.GetProvisioner(), c.dryRun)
 			if err != nil {
 				return errors.WithStack(err)
 			}

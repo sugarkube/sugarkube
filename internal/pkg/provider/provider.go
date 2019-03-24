@@ -29,22 +29,12 @@ import (
 	"strings"
 )
 
-type Provider interface {
-	// Returns the name of the provider
-	getName() string
-	// Associate provider variables with the provider
-	setVars(map[string]interface{})
-	// Returns variables installers should pass on to kapps
-	getInstallerVars() map[string]interface{}
-	customVarsDirs() []string
-}
-
 // implemented providers
 const LOCAL = "local"
 const AWS = "aws"
 
 // Factory that creates providers
-func newProviderImpl(name string, stackConfig interfaces.IStackConfig) (Provider, error) {
+func newProviderImpl(name string, stackConfig interfaces.IStackConfig) (interfaces.IProvider, error) {
 	if name == LOCAL {
 		return &LocalProvider{}, nil
 	}
@@ -60,7 +50,7 @@ func newProviderImpl(name string, stackConfig interfaces.IStackConfig) (Provider
 
 // Instantiates a Provider and returns it along with the stack config vars it can
 // load, or an error.
-func New(stackConfig interfaces.IStackConfig) (Provider, error) {
+func New(stackConfig interfaces.IStackConfig) (interfaces.IProvider, error) {
 	providerImpl, err := newProviderImpl(stackConfig.Provider(), stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -70,18 +60,19 @@ func New(stackConfig interfaces.IStackConfig) (Provider, error) {
 }
 
 // Return vars loaded from configs that should be passed on to kapps by Installers
-func GetInstallerVars(provider Provider) map[string]interface{} {
-	return provider.getInstallerVars()
+func GetInstallerVars(provider interfaces.IProvider) map[string]interface{} {
+	return provider.GetInstallerVars()
 }
 
 // Returns the name of the provider
-func GetName(p Provider) string {
-	return p.getName()
+func GetName(p interfaces.IProvider) string {
+	return p.GetName()
 }
 
 // Finds all vars files for the given provider and returns the result of merging
 // all the data.
-func GetVarsFromFiles(provider Provider, stackConfig interfaces.IStackConfig) (map[string]interface{}, error) {
+func GetVarsFromFiles(provider interfaces.IProvider,
+	stackConfig interfaces.IStackConfig) (map[string]interface{}, error) {
 	dirs, err := findVarsFiles(provider, stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -98,7 +89,7 @@ func GetVarsFromFiles(provider Provider, stackConfig interfaces.IStackConfig) (m
 }
 
 // Search for paths to provider vars files
-func findVarsFiles(provider Provider, stackConfig interfaces.IStackConfig) ([]string, error) {
+func findVarsFiles(provider interfaces.IProvider, stackConfig interfaces.IStackConfig) ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.ValuesFile),
 		stackConfig.Provider(),
@@ -110,7 +101,7 @@ func findVarsFiles(provider Provider, stackConfig interfaces.IStackConfig) ([]st
 	}
 
 	// append the provider-specific static directory names to search
-	precedence = append(precedence, provider.customVarsDirs()...)
+	precedence = append(precedence, provider.CustomVarsDirs()...)
 
 	paths := make([]string, 0)
 

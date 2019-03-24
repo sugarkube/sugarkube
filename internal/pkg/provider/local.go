@@ -25,23 +25,23 @@ type LocalProvider struct {
 const LocalProviderName = "local"
 
 // Associate provider variables with the provider
-func (p *LocalProvider) setVars(values map[string]interface{}) {
+func (p *LocalProvider) SetVars(values map[string]interface{}) {
 	p.stackConfigVars = values
 }
 
 // Return vars loaded from configs that should be passed on to all kapps by
 // installers so kapps can be installed into this provider
-func (p *LocalProvider) getInstallerVars() map[string]interface{} {
+func (p *LocalProvider) GetInstallerVars() map[string]interface{} {
 	return map[string]interface{}{}
 }
 
 // Returns the name of this provider
-func (p *LocalProvider) getName() string {
+func (p *LocalProvider) GetName() string {
 	return LocalProviderName
 }
 
 // Return static vars dirs names we should search for this provider
-func (p *LocalProvider) customVarsDirs() []string {
+func (p *LocalProvider) CustomVarsDirs() []string {
 	return []string{
 		constants.ProfileDir,
 		constants.ClusterDir,

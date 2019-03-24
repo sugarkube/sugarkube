@@ -22,7 +22,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/installable"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
@@ -107,7 +106,7 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := stack.SelectInstallables(stackObj.Config.Manifests(), c.includeSelector,
+	selectedKapps, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(), c.includeSelector,
 		c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
@@ -132,7 +131,7 @@ func (c *templateConfig) run() error {
 }
 
 // Render templates for kapps defined in a stack config
-func RenderTemplates(installables []installable.Installable, cacheDir string, stack interfaces.IStack,
+func RenderTemplates(installables []interfaces.IInstallable, cacheDir string, stack interfaces.IStack,
 	dryRun bool) error {
 
 	if len(installables) == 0 {

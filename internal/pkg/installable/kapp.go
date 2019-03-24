@@ -72,6 +72,32 @@ func (k Kapp) FullyQualifiedId() string {
 	}
 }
 
+// Return env vars
+func (k Kapp) GetEnvVars() map[string]interface{} {
+	return k.config.EnvVars
+}
+
+// Return CLI args for the Kapp for the given installer and command/target
+func (k Kapp) GetCliArgs(installerName string, command string) map[string]string {
+	installerArgs, ok := k.config.Args[installerName]
+	if !ok {
+		return map[string]string{}
+	}
+
+	commandArgs, ok := installerArgs[command]
+	if !ok {
+		return map[string]string{}
+	}
+
+	cliArgs := make(map[string]string, 0)
+
+	for _, arg := range commandArgs {
+		strings.Join([]string{arg["name"], arg["value"]}, "=")
+	}
+
+	return cliArgs
+}
+
 // Sets the root cache directory the kapp is checked out into
 func (k *Kapp) SetRootCacheDir(cacheDir string) {
 	log.Logger.Debugf("Setting the root cache dir on kapp '%s' to '%s'",

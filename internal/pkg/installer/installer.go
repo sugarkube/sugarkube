@@ -21,14 +21,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
-	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 )
 
 type Installer interface {
-	install(installableObj interfaces.IInstallable, stack stack.Stack, approved bool,
+	install(installableObj interfaces.IInstallable, stack interfaces.IStack, approved bool,
 		renderTemplates bool, dryRun bool) error
-	destroy(installableObj interfaces.IInstallable, stack stack.Stack, approved bool,
+	destroy(installableObj interfaces.IInstallable, stack interfaces.IStack, approved bool,
 		renderTemplates bool, dryRun bool) error
 	name() string
 }
@@ -37,7 +35,7 @@ type Installer interface {
 const MAKE = "make"
 
 // Factory that creates installers
-func NewInstaller(name string, providerImpl provider.Provider) (Installer, error) {
+func New(name string, providerImpl interfaces.IProvider) (Installer, error) {
 	if name == MAKE {
 		return MakeInstaller{
 			provider: providerImpl,
@@ -48,14 +46,14 @@ func NewInstaller(name string, providerImpl provider.Provider) (Installer, error
 }
 
 // Installs a kapp by delegating to an Installer implementation
-func Install(i Installer, installableObj interfaces.IInstallable, stack stack.Stack, approved bool,
+func Install(i Installer, installableObj interfaces.IInstallable, stack interfaces.IStack, approved bool,
 	renderTemplates bool, dryRun bool) error {
 	log.Logger.Infof("Installing kapp '%s'...", installableObj.FullyQualifiedId())
 	return i.install(installableObj, stack, approved, renderTemplates, dryRun)
 }
 
 // Destroys a kapp by delegating to an Installer implementation
-func Destroy(i Installer, installableObj interfaces.IInstallable, stack stack.Stack,
+func Destroy(i Installer, installableObj interfaces.IInstallable, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
 	log.Logger.Infof("Destroying kapp '%s'...", installableObj.FullyQualifiedId())
 	return i.destroy(installableObj, stack, approved, renderTemplates, dryRun)

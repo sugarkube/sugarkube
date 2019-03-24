@@ -90,6 +90,10 @@ func (s Stack) GetProvisioner() interfaces.IProvisioner {
 	return s.provisioner
 }
 
+func (s Stack) GetProvider() interfaces.IProvider {
+	return s.provider
+}
+
 func (s Stack) GetRegistry() *registry.Registry {
 	return s.registry
 }

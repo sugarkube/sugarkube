@@ -24,7 +24,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
-	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"path/filepath"
 	"strings"
@@ -32,7 +31,7 @@ import (
 
 // Installs kapps with make
 type MakeInstaller struct {
-	provider provider.Provider
+	provider interfaces.IProvider
 }
 
 const TargetInstall = "install"
@@ -44,7 +43,7 @@ func (i MakeInstaller) name() string {
 }
 
 // Run the given make target
-func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallable, stack stack.Stack,
+func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallable, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
 
 	// search for the Makefile
@@ -119,7 +118,7 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 	}
 
 	// add the env vars the kapp needs
-	for k, v := range installable.Config.EnvVars {
+	for k, v := range installable.GetEnvVars() {
 		upperKey := strings.ToUpper(k)
 		envVars[upperKey] = strings.Trim(fmt.Sprintf("%#v", v), "\"")
 	}
@@ -129,15 +128,14 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 	// todo - merge in values from the global config for each program declared in
 	// the kapp's sugarkube.yaml file. Make sure to respect the registry...
 
-	// todo - move this to a method. Make it more defensive and pull values from
+	// todo - move this to a method. Make it pull values from
 	// the overall config depending on the programs the kapp uses
-	targetArgs := installable.Config.Args[i.name()][makeTarget]
+	targetArgs := installable.GetCliArgs(i.name(), makeTarget)
 	log.Logger.Debugf("Kapp '%s' has args for target '%s' (approved=%v): %#v",
 		installable.FullyQualifiedId(), makeTarget, approved, targetArgs)
 
 	for _, targetArg := range targetArgs {
-		cliArgs = append(cliArgs, strings.Join([]string{
-			targetArg["name"], targetArg["value"]}, "="))
+		cliArgs = append(cliArgs, targetArg)
 	}
 
 	makefilePath, err := filepath.Abs(makefilePaths[0])
@@ -169,13 +167,13 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 }
 
 // Install a kapp
-func (i MakeInstaller) install(installableObj interfaces.IInstallable, stack stack.Stack,
+func (i MakeInstaller) install(installableObj interfaces.IInstallable, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
 	return i.run(TargetInstall, installableObj, stack, approved, renderTemplates, dryRun)
 }
 
 // Destroy a kapp
-func (i MakeInstaller) destroy(installableObj interfaces.IInstallable, stack stack.Stack,
+func (i MakeInstaller) destroy(installableObj interfaces.IInstallable, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
 	return i.run(TargetDestroy, installableObj, stack, approved, renderTemplates, dryRun)
 }
