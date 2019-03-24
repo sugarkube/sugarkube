@@ -67,7 +67,7 @@ const etcHostsPath = "/etc/hosts"
 const kubernetesLocalHostname = "kubernetes.default.svc.cluster.local"
 
 type KopsProvisioner struct {
-	clusterSot           clustersot.ClusterSot
+	clusterSot           interfaces.IClusterSot
 	stack                interfaces.IStack
 	kopsConfig           KopsConfig
 	portForwardingActive bool
@@ -91,7 +91,7 @@ type KopsConfig struct {
 }
 
 // Instantiates a new instance
-func newKopsProvisioner(stackConfig interfaces.IStack, clusterSot clustersot.ClusterSot) (*KopsProvisioner, error) {
+func newKopsProvisioner(stackConfig interfaces.IStack, clusterSot interfaces.IClusterSot) (*KopsProvisioner, error) {
 	kopsConfig, err := parseKopsConfig(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -104,11 +104,11 @@ func newKopsProvisioner(stackConfig interfaces.IStack, clusterSot clustersot.Clu
 	}, nil
 }
 
-func (p KopsProvisioner) getStack() interfaces.IStack {
+func (p KopsProvisioner) GetStack() interfaces.IStack {
 	return p.stack
 }
 
-func (p KopsProvisioner) ClusterSot() clustersot.ClusterSot {
+func (p KopsProvisioner) ClusterSot() interfaces.IClusterSot {
 	return p.clusterSot
 }
 
@@ -150,7 +150,7 @@ func (p KopsProvisioner) clusterConfigExists() (bool, error) {
 
 // Creates a Kops cluster config. Note: This doesn't actually launch a Kops cluster,
 // that only happens when 'kops update' is run.
-func (p KopsProvisioner) create(dryRun bool) error {
+func (p KopsProvisioner) Create(dryRun bool) error {
 
 	configExists, err := p.clusterConfigExists()
 	if err != nil {
@@ -159,7 +159,7 @@ func (p KopsProvisioner) create(dryRun bool) error {
 
 	if configExists {
 		log.Logger.Debugf("Kops config already exists for '%s'. Won't recreate it...",
-			p.getStack().GetConfig().Cluster())
+			p.GetStack().GetConfig().Cluster())
 		return nil
 	}
 
@@ -200,7 +200,7 @@ func (p KopsProvisioner) create(dryRun bool) error {
 }
 
 // Returns a boolean indicating whether the cluster is already online
-func (p KopsProvisioner) isAlreadyOnline(dryRun bool) (bool, error) {
+func (p KopsProvisioner) IsAlreadyOnline(dryRun bool) (bool, error) {
 
 	if dryRun {
 		// say we'll check but don't actually check
@@ -227,7 +227,7 @@ func (p KopsProvisioner) isAlreadyOnline(dryRun bool) (bool, error) {
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p KopsProvisioner) update(dryRun bool) error {
+func (p KopsProvisioner) Update(dryRun bool) error {
 
 	err := p.patch(dryRun)
 	if err != nil {
@@ -618,7 +618,7 @@ func (p KopsProvisioner) needApiAccessViaBastion() bool {
 }
 
 // If the API server is internal and there's a bastion, set up SSH port forwarding
-func (p *KopsProvisioner) ensureClusterConnectivity() (bool, error) {
+func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 
 	if !p.needApiAccessViaBastion() || p.portForwardingActive {
 		log.Logger.Infof("No need to set up SSH port forwarding to access " +
@@ -712,7 +712,7 @@ func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
 	log.Logger.Debugf("Downloading kubeconfig file for '%s'...",
 		p.kopsConfig.clusterName)
 
-	pattern := fmt.Sprintf("kubeconfig-%s-*", p.getStack().GetConfig().Cluster())
+	pattern := fmt.Sprintf("kubeconfig-%s-*", p.GetStack().GetConfig().Cluster())
 
 	tmpfile, err := ioutil.TempFile("", pattern)
 	if err != nil {

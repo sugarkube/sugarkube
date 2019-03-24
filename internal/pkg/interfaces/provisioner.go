@@ -16,18 +16,19 @@
 
 package interfaces
 
-//type IProvisioner interface {
-//	ClusterSot() clustersot.ClusterSot
-//	create(dryRun bool) error
-//	// Returns whether the cluster is already running
-//	isAlreadyOnline(dryRun bool) (bool, error)
-//	// Update the cluster config if supported by the provisioner
-//	update(dryRun bool) error
-//	// We need to use an interface to work with Stack objects to avoid circular dependencies
-//	getStack() IStack
-//	// if the API server is internal we need to set up connectivity to it. Returns a boolean
-//	// indicating whether connectivity exists (not necessarily if it's been set up, i.e. it
-//	// might not be necessary to do anything, or it may have already been set up)
-//	ensureClusterConnectivity() (bool, error)
-//
-//}
+type IProvisioner interface {
+	// Returns the ClusterSot for this provisioner
+	ClusterSot() IClusterSot
+	// Creates a cluster
+	Create(dryRun bool) error
+	// Returns whether the cluster is already running
+	IsAlreadyOnline(dryRun bool) (bool, error)
+	// Update the cluster config if supported by the provisioner
+	Update(dryRun bool) error
+	// We need to use an interface to work with Stack objects to avoid circular dependencies
+	GetStack() IStack
+	// if the API server is internal we need to set up connectivity to it. Returns a boolean
+	// indicating whether connectivity exists (not necessarily if it's been set up, i.e. it
+	// might not be necessary to do anything, or it may have already been set up)
+	EnsureClusterConnectivity() (bool, error)
+}

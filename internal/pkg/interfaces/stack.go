@@ -17,7 +17,6 @@
 package interfaces
 
 import (
-	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 )
 
@@ -41,6 +40,8 @@ type IStackConfig interface {
 	Profile() string
 	Cluster() string
 	OnlineTimeout() uint32
+	SetReadyTimeout(timeout uint32)
+	SetOnlineTimeout(timeout uint32)
 	ProviderVarsDirs() []string
 	KappVarsDirs() []string
 	TemplateDirs() []string
@@ -50,7 +51,7 @@ type IStackConfig interface {
 type IStack interface {
 	GetConfig() IStackConfig
 	GetStatus() IClusterStatus
-	GetProvisioner() provisioner.Provisioner
+	GetProvisioner() IProvisioner
 	GetRegistry() *registry.Registry
 	TemplatedVars(installableObj IInstallable,
 		installerVars map[string]interface{}) (map[string]interface{}, error)

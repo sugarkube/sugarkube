@@ -122,7 +122,7 @@ func TestFindProviderVarsFiles(t *testing.T) {
 		filepath.Join(absTestDir, "providers/region1/test-cluster.yaml"),
 	}
 
-	providerImpl, err := NewProvider(&stackConfig)
+	providerImpl, err := New(&stackConfig)
 	assert.Nil(t, err)
 
 	results, err := findVarsFiles(providerImpl, &stackConfig)

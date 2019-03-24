@@ -17,7 +17,6 @@
 package provisioner
 
 import (
-	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 )
@@ -34,23 +33,23 @@ type NoOpProvisioner struct {
 type NoopConfig struct {
 }
 
-func (p NoOpProvisioner) ClusterSot() clustersot.ClusterSot {
+func (p NoOpProvisioner) ClusterSot() interfaces.IClusterSot {
 	return nil
 }
 
-func (p NoOpProvisioner) getStack() interfaces.IStack {
+func (p NoOpProvisioner) GetStack() interfaces.IStack {
 	return p.stack
 }
 
 // Creates a new noop cluster
-func (p NoOpProvisioner) create(dryRun bool) error {
+func (p NoOpProvisioner) Create(dryRun bool) error {
 
 	log.Logger.Infof("Noop provisioner - no cluster will be created")
 	return nil
 }
 
 // Returns whether a noop cluster is already online
-func (p NoOpProvisioner) isAlreadyOnline(dryRun bool) (bool, error) {
+func (p NoOpProvisioner) IsAlreadyOnline(dryRun bool) (bool, error) {
 
 	log.Logger.Infof("Noop provisioner - pretending a cluster is online")
 	// return that the cluster is online
@@ -58,13 +57,13 @@ func (p NoOpProvisioner) isAlreadyOnline(dryRun bool) (bool, error) {
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p NoOpProvisioner) update(dryRun bool) error {
+func (p NoOpProvisioner) Update(dryRun bool) error {
 
 	log.Logger.Infof("Noop provisioner - no cluster will be updated")
 	return nil
 }
 
 // No special connectivity is required for this provisioner
-func (p NoOpProvisioner) ensureClusterConnectivity() (bool, error) {
+func (p NoOpProvisioner) EnsureClusterConnectivity() (bool, error) {
 	return true, nil
 }

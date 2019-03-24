@@ -36,7 +36,7 @@ type Stack struct {
 	globalConfig *config.Config // config loaded for the program from the 'sugarkube-conf.yaml' file
 	config       *StackConfig
 	provider     interfaces.IProvider
-	provisioner  provisioner.Provisioner
+	provisioner  interfaces.IProvisioner
 	status       *ClusterStatus
 	registry     *registry.Registry
 }
@@ -86,7 +86,7 @@ func (s Stack) GetStatus() interfaces.IClusterStatus {
 	return s.status
 }
 
-func (s Stack) GetProvisioner() provisioner.Provisioner {
+func (s Stack) GetProvisioner() interfaces.IProvisioner {
 	return s.provisioner
 }
 

@@ -60,7 +60,7 @@ func newProviderImpl(name string, stackConfig interfaces.IStackConfig) (Provider
 
 // Instantiates a Provider and returns it along with the stack config vars it can
 // load, or an error.
-func NewProvider(stackConfig interfaces.IStackConfig) (Provider, error) {
+func New(stackConfig interfaces.IStackConfig) (Provider, error) {
 	providerImpl, err := newProviderImpl(stackConfig.Provider(), stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)

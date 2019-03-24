@@ -27,29 +27,12 @@ import (
 
 const shortSleepTime = 5
 
-type Provisioner interface {
-	// Returns the ClusterSot for this provisioner
-	ClusterSot() clustersot.ClusterSot
-	// Creates a cluster
-	create(dryRun bool) error
-	// Returns whether the cluster is already running
-	isAlreadyOnline(dryRun bool) (bool, error)
-	// Update the cluster config if supported by the provisioner
-	update(dryRun bool) error
-	// We need to use an interface to work with Stack objects to avoid circular dependencies
-	getStack() interfaces.IStack
-	// if the API server is internal we need to set up connectivity to it. Returns a boolean
-	// indicating whether connectivity exists (not necessarily if it's been set up, i.e. it
-	// might not be necessary to do anything, or it may have already been set up)
-	ensureClusterConnectivity() (bool, error)
-}
-
 // key in Values that relates to this provisioner
 const ProvisionerKey = "provisioner"
 
 // Factory that creates providers
 func New(name string, stack interfaces.IStack,
-	clusterSot clustersot.ClusterSot) (interfaces.IProvisioner, error) {
+	clusterSot interfaces.IClusterSot) (interfaces.IProvisioner, error) {
 	if stack == nil {
 		return nil, errors.New("Stack parameter can't be nil")
 	}
@@ -82,24 +65,24 @@ func New(name string, stack interfaces.IStack,
 }
 
 // Creates a cluster using an implementation of a Provisioner
-func Create(p Provisioner, dryRun bool) error {
-	return p.create(dryRun)
+func Create(p interfaces.IProvisioner, dryRun bool) error {
+	return p.Create(dryRun)
 }
 
 // Updates a cluster using an implementation of a Provisioner
-func Update(p Provisioner, dryRun bool) error {
-	return p.update(dryRun)
+func Update(p interfaces.IProvisioner, dryRun bool) error {
+	return p.Update(dryRun)
 }
 
 // Return whether the cluster is already online
-func IsAlreadyOnline(p Provisioner, dryRun bool) (bool, error) {
+func IsAlreadyOnline(p interfaces.IProvisioner, dryRun bool) (bool, error) {
 
-	clusterName := p.getStack().GetConfig().Name()
+	clusterName := p.GetStack().GetConfig().Name()
 
 	log.Logger.Infof("Checking whether cluster '%s' is already online...",
 		clusterName)
 
-	connected, err := p.ensureClusterConnectivity()
+	connected, err := p.EnsureClusterConnectivity()
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -109,7 +92,7 @@ func IsAlreadyOnline(p Provisioner, dryRun bool) (bool, error) {
 		return false, nil
 	}
 
-	online, err := p.isAlreadyOnline(dryRun)
+	online, err := p.IsAlreadyOnline(dryRun)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -120,15 +103,15 @@ func IsAlreadyOnline(p Provisioner, dryRun bool) (bool, error) {
 		log.Logger.Infof("Cluster '%s' is not online", clusterName)
 	}
 
-	p.getStack().GetStatus().SetIsOnline(online)
+	p.GetStack().GetStatus().SetIsOnline(online)
 	return online, nil
 }
 
 // Wait for a cluster to come online, then to become ready.
-func WaitForClusterReadiness(p Provisioner) error {
+func WaitForClusterReadiness(p interfaces.IProvisioner) error {
 	clusterSot := p.ClusterSot()
 
-	onlineTimeout := p.getStack().GetConfig().OnlineTimeout()
+	onlineTimeout := p.GetStack().GetConfig().OnlineTimeout()
 
 	log.Logger.Infof("Checking whether the cluster is online... Will "+
 		"try for %d seconds", onlineTimeout)
@@ -138,7 +121,7 @@ func WaitForClusterReadiness(p Provisioner) error {
 
 	timeoutTime := time.Now().Add(time.Second * time.Duration(onlineTimeout))
 	for time.Now().Before(timeoutTime) {
-		connected, err := p.ensureClusterConnectivity()
+		connected, err := p.EnsureClusterConnectivity()
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -173,13 +156,13 @@ func WaitForClusterReadiness(p Provisioner) error {
 		}
 	}
 
-	if !p.getStack().GetStatus().IsOnline() {
+	if !p.GetStack().GetStatus().IsOnline() {
 		return errors.New("Timed out waiting for the cluster to come online")
 	}
 
 	// only sleep before checking readiness if the cluster was initially offline
-	sleepTime := p.getStack().GetStatus().SleepBeforeReadyCheck()
-	if clusterWasOffline || p.getStack().GetStatus().StartedThisRun() && sleepTime > 0 {
+	sleepTime := p.GetStack().GetStatus().SleepBeforeReadyCheck()
+	if clusterWasOffline || p.GetStack().GetStatus().StartedThisRun() && sleepTime > 0 {
 		log.Logger.Infof("Sleeping for %d seconds before checking cluster readiness...", sleepTime)
 		time.Sleep(time.Second * time.Duration(sleepTime))
 	}
@@ -202,7 +185,7 @@ func WaitForClusterReadiness(p Provisioner) error {
 		}
 	}
 
-	if !p.getStack().GetStatus().IsReady() {
+	if !p.GetStack().GetStatus().IsReady() {
 		return errors.New("Timed out waiting for the cluster to become ready")
 	}
 

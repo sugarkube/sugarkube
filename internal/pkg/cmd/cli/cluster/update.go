@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
@@ -110,8 +111,8 @@ func (c *updateCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	stackObj.Config.SetReadyTimeout(c.readyTimeout)
-	stackObj.Config.SetOnlineTimeout(c.onlineTimeout)
+	stackObj.GetConfig().SetReadyTimeout(c.readyTimeout)
+	stackObj.GetConfig().SetOnlineTimeout(c.onlineTimeout)
 
 	err = UpdateCluster(c.out, stackObj, !c.skipCreate, c.dryRun)
 	if err != nil {
@@ -122,7 +123,7 @@ func (c *updateCmd) run() error {
 }
 
 // Updates a cluster with a stack config
-func UpdateCluster(out io.Writer, stackObj *stack.Stack, autoCreate bool,
+func UpdateCluster(out io.Writer, stackObj interfaces.IStack, autoCreate bool,
 	dryRun bool) error {
 	dryRunPrefix := ""
 	if dryRun {
@@ -130,12 +131,12 @@ func UpdateCluster(out io.Writer, stackObj *stack.Stack, autoCreate bool,
 	}
 
 	_, err := fmt.Fprintf(out, "%sChecking whether the target cluster '%s' is already "+
-		"online...\n", dryRunPrefix, stackObj.Config.Cluster)
+		"online...\n", dryRunPrefix, stackObj.GetConfig().Cluster())
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	online, err := provisioner.IsAlreadyOnline(stackObj.Provisioner, dryRun)
+	online, err := provisioner.IsAlreadyOnline(stackObj.GetProvisioner(), dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -166,7 +167,7 @@ func UpdateCluster(out io.Writer, stackObj *stack.Stack, autoCreate bool,
 			return errors.WithStack(err)
 		}
 
-		err = provisioner.Update(stackObj.Provisioner, dryRun)
+		err = provisioner.Update(stackObj.GetProvisioner(), dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -174,13 +175,13 @@ func UpdateCluster(out io.Writer, stackObj *stack.Stack, autoCreate bool,
 		if dryRun {
 			log.Logger.Infof("%sSkipping cluster readiness check.", dryRunPrefix)
 		} else {
-			err = provisioner.WaitForClusterReadiness(stackObj.Provisioner)
+			err = provisioner.WaitForClusterReadiness(stackObj.GetProvisioner())
 			if err != nil {
 				return errors.WithStack(err)
 			}
 
 			_, err = fmt.Fprintf(out, "%sCluster '%s' successfully updated.\n",
-				dryRunPrefix, stackObj.Config.Cluster)
+				dryRunPrefix, stackObj.GetConfig().Cluster())
 			if err != nil {
 				return errors.WithStack(err)
 			}

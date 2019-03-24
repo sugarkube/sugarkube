@@ -70,7 +70,7 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *structs.Stac
 	}
 
 	// initialise the provider and load its variables
-	providerImpl, err := provider.NewProvider(stackConfig)
+	providerImpl, err := provider.New(stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

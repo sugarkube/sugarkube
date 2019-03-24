@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
@@ -126,13 +127,13 @@ func (c *createCmd) run() error {
 }
 
 // Creates a cluster with a stack config
-func CreateCluster(out io.Writer, stackObj *stack.Stack, dryRun bool) error {
+func CreateCluster(out io.Writer, stackObj interfaces.IStack, dryRun bool) error {
 	dryRunPrefix := ""
 	if dryRun {
 		dryRunPrefix = "[Dry run] "
 	}
 	_, err := fmt.Fprintf(out, "%sChecking whether the target cluster '%s' is already "+
-		"online...\n", dryRunPrefix, stackObj.Config.Cluster)
+		"online...\n", dryRunPrefix, stackObj.GetConfig().Cluster())
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -142,7 +143,7 @@ func CreateCluster(out io.Writer, stackObj *stack.Stack, dryRun bool) error {
 			dryRunPrefix)
 
 	} else {
-		online, err := provisioner.IsAlreadyOnline(stackObj.Provisioner, dryRun)
+		online, err := provisioner.IsAlreadyOnline(stackObj.GetProvisioner(), dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -164,7 +165,7 @@ func CreateCluster(out io.Writer, stackObj *stack.Stack, dryRun bool) error {
 		return errors.WithStack(err)
 	}
 
-	err = provisioner.Create(stackObj.Provisioner, dryRun)
+	err = provisioner.Create(stackObj.GetProvisioner(), dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -172,13 +173,13 @@ func CreateCluster(out io.Writer, stackObj *stack.Stack, dryRun bool) error {
 	if dryRun {
 		log.Logger.Infof("%sSkipping cluster readiness check.", dryRunPrefix)
 	} else {
-		err = provisioner.WaitForClusterReadiness(stackObj.Provisioner)
+		err = provisioner.WaitForClusterReadiness(stackObj.GetProvisioner())
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
 		_, err = fmt.Fprintf(out, "%sCluster '%s' successfully created.\n",
-			dryRunPrefix, stackObj.Config.Cluster)
+			dryRunPrefix, stackObj.GetConfig().Cluster())
 		if err != nil {
 			return errors.WithStack(err)
 		}

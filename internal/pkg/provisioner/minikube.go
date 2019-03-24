@@ -19,7 +19,6 @@ package provisioner
 import (
 	"bytes"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
@@ -31,7 +30,7 @@ const MinikubeProvisionerName = "minikube"
 const MinikubeDefaultBinary = "minikube"
 
 type MinikubeProvisioner struct {
-	clusterSot     clustersot.ClusterSot
+	clusterSot     interfaces.IClusterSot
 	stack          interfaces.IStack
 	minikubeConfig MinikubeConfig
 }
@@ -52,7 +51,7 @@ const MinikubeSleepSecondsBeforeReadyCheck = 30
 
 // Instantiates a new instance
 func newMinikubeProvisioner(iStack interfaces.IStack,
-	clusterSot clustersot.ClusterSot) (*MinikubeProvisioner, error) {
+	clusterSot interfaces.IClusterSot) (*MinikubeProvisioner, error) {
 	config, err := parseMinikubeConfig(iStack)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -65,16 +64,16 @@ func newMinikubeProvisioner(iStack interfaces.IStack,
 	}, nil
 }
 
-func (p MinikubeProvisioner) getStack() interfaces.IStack {
+func (p MinikubeProvisioner) GetStack() interfaces.IStack {
 	return p.stack
 }
 
-func (p MinikubeProvisioner) ClusterSot() clustersot.ClusterSot {
+func (p MinikubeProvisioner) ClusterSot() interfaces.IClusterSot {
 	return p.clusterSot
 }
 
 // Creates a new minikube cluster
-func (p MinikubeProvisioner) create(dryRun bool) error {
+func (p MinikubeProvisioner) Create(dryRun bool) error {
 
 	args := []string{"start"}
 	args = parameteriseValues(args, p.minikubeConfig.Params.Global)
@@ -101,7 +100,7 @@ func (p MinikubeProvisioner) create(dryRun bool) error {
 }
 
 // Returns whether a minikube cluster is already online
-func (p MinikubeProvisioner) isAlreadyOnline(dryRun bool) (bool, error) {
+func (p MinikubeProvisioner) IsAlreadyOnline(dryRun bool) (bool, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	err := utils.ExecCommand(p.minikubeConfig.Binary, []string{"status"}, map[string]string{},
@@ -121,7 +120,7 @@ func (p MinikubeProvisioner) isAlreadyOnline(dryRun bool) (bool, error) {
 }
 
 // No-op function, required to fully implement the Provisioner interface
-func (p MinikubeProvisioner) update(dryRun bool) error {
+func (p MinikubeProvisioner) Update(dryRun bool) error {
 	log.Logger.Warn("Updating minikube clusters has no effect. Ignoring.")
 	return nil
 }
@@ -164,6 +163,6 @@ func parseMinikubeConfig(stack interfaces.IStack) (*MinikubeConfig, error) {
 }
 
 // No special connectivity is required for this provisioner
-func (p MinikubeProvisioner) ensureClusterConnectivity() (bool, error) {
+func (p MinikubeProvisioner) EnsureClusterConnectivity() (bool, error) {
 	return true, nil
 }

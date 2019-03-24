@@ -31,6 +31,7 @@ func init() {
 type MockStack struct {
 	stackConfig interfaces.IStackConfig
 	status      interfaces.IClusterStatus
+	provisioner interfaces.IProvisioner
 	registry    *registry.Registry
 }
 
@@ -40,6 +41,10 @@ func (m MockStack) GetConfig() interfaces.IStackConfig {
 
 func (m MockStack) GetStatus() interfaces.IClusterStatus {
 	return m.status
+}
+
+func (m MockStack) GetProvisioner() interfaces.IProvisioner {
+	return m.provisioner
 }
 
 func (m MockStack) GetRegistry() *registry.Registry {
