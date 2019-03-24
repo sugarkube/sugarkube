@@ -19,9 +19,12 @@ package installable
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"path"
 	"testing"
 )
+
+const testDir = "../../testdata"
 
 func init() {
 	log.ConfigureLogger("debug", false)
@@ -60,19 +63,20 @@ func TestLoad(t *testing.T) {
 		},
 	}
 
-	testKapp := Kapp{Id: "sample-kapp",
-		manifest: &Manifest{
-			ConfiguredId: "sample-manifest",
+	testKapp := Kapp{
+		descriptor: structs.KappDescriptor{
+			Id: "sample-kapp",
 		},
+		manifestId: "sample-manifest",
 	}
-	testKapp.SetCacheDir(path.Join(testDir, "sample-cache"))
+	testKapp.SetRootCacheDir(path.Join(testDir, "sample-cache"))
 
-	err := testKapp.Load(templateVars)
+	err := testKapp.RefreshConfig(templateVars)
 	assert.Nil(t, err)
 
-	assert.Equal(t, expectedEnvVars, testKapp.Config.EnvVars)
-	assert.Equal(t, []string{"helm"}, testKapp.Config.Requires)
-	assert.Equal(t, expectedArgs, testKapp.Config.Args)
+	assert.Equal(t, expectedEnvVars, testKapp.config.EnvVars)
+	assert.Equal(t, []string{"helm"}, testKapp.config.Requires)
+	assert.Equal(t, expectedArgs, testKapp.config.Args)
 }
 
 //func TestMergeProgramConfigs(t *testing.T) {

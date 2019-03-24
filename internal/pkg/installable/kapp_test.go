@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Sugarkube Authors
+ * Copyright 2019 The Sugarkube Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package kapp
+package installable
 
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"gopkg.in/yaml.v2"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -31,10 +34,19 @@ func init() {
 	log.ConfigureLogger("debug", false)
 }
 
+// Helper to get acquirers in a single-valued context
+func discardErr(acquirer acquirer.Acquirer, err error) acquirer.Acquirer {
+	if err != nil {
+		panic(err)
+	}
+
+	return acquirer
+}
+
 func TestParseManifestYaml(t *testing.T) {
-	manifest := Manifest{
-		Uri:          "fake/uri",
-		ConfiguredId: "test-manifest",
+	manifest := structs.ManifestDescriptor{
+		Uri: "fake/uri",
+		Id:  "test-manifest",
 	}
 
 	tests := []struct {
@@ -51,35 +63,35 @@ func TestParseManifestYaml(t *testing.T) {
 			desc: "check parsing acceptable input works",
 			input: `
 kapps:
-  - id: example1
-    state: present
-    templates:        
-      - source: example/template1.tpl
-        dest: example/dest.txt
-    sources:
-      - id: pathASpecial
-        uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
-      - id: sampleNameB
-        uri: git@github.com:exampleB/repoB.git//example/pathB#branchB
+ - id: example1
+   state: present
+   templates:
+     - source: example/template1.tpl
+       dest: example/dest.txt
+   sources:
+     - id: pathASpecial
+       uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+     - id: sampleNameB
+       uri: git@github.com:exampleB/repoB.git//example/pathB#branchB
 
-  - id: example2
-    state: present
-    sources:
-    - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
-      options:
-        branch: new-branch
-    vars:
-      someVarA: valueA
-      someList:
-      - val1
-      - val2
+ - id: example2
+   state: present
+   sources:
+   - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+     options:
+       branch: new-branch
+   vars:
+     someVarA: valueA
+     someList:
+     - val1
+     - val2
 
-  - id: example3
-    state: absent
-    sources:
-    - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
-    post_actions:
-    - cluster_update
+ - id: example3
+   state: absent
+   sources:
+   - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
+   post_actions:
+   - cluster_update
 `,
 			expectUnparsed: []structs.KappDescriptor{
 				{
@@ -194,7 +206,8 @@ kapps:
 func TestManifestOverrides(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
-	stackConfig, err := loadStackConfigFileFile("large", "../../testdata/stacks.yaml")
+	stackConfig, err := stack.BuildStack("large", "../../testdata/stacks.yaml",
+		&structs.Stack{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 	assert.NotNil(t, stackConfig)
 
@@ -222,7 +235,8 @@ func TestManifestOverrides(t *testing.T) {
 func TestManifestOverridesNil(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
-	stackConfig, err := loadStackConfigFileFile("large", "../../testdata/stacks.yaml")
+	stackConfig, err := stack.BuildStack("large", "../../testdata/stacks.yaml",
+		&structs.Stack{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 	assert.NotNil(t, stackConfig)
 
@@ -234,7 +248,8 @@ func TestManifestOverridesNil(t *testing.T) {
 func TestApplyingManifestOverrides(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
-	stackConfig, err := loadStackConfigFile("large", "../../testdata/stacks.yaml")
+	stackConfig, err := stack.BuildStack("large", "../../testdata/stacks.yaml",
+		&structs.Stack{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 	assert.NotNil(t, stackConfig)
 
@@ -298,71 +313,72 @@ func TestFindKappVarsFiles(t *testing.T) {
 	assert.Equal(t, expected, results)
 }
 
-//func TestMergeVarsForKapp(t *testing.T) {
-//
-//	// testing the correctness of this stack is handled in stack_test.go
-//	stackConfig, err := loadStackConfigFile("large", "../../testdata/stacks.yaml")
-//	assert.Nil(t, err)
-//	assert.NotNil(t, stackConfig)
-//
-//	expectedVarsFromFiles := map[string]interface{}{
-//		"colours": []interface{}{
-//			"green",
-//		},
-//		"location": "kappFile",
-//	}
-//
-//	kappObj := &stackConfig.Manifests[0].Installables()[0]
-//
-//	results, err := kappObj.GetVarsFromFiles(stackConfig)
-//	assert.Nil(t, err)
-//
-//	assert.Equal(t, expectedVarsFromFiles, results)
-//
-//	// now we've loaded kapp variables from a file, test merging vars for the kapp
-//	expectedMergedVars := map[string]interface{}{
-//		"stack": map[interface{}]interface{}{
-//			"name":        "large",
-//			"profile":     "local",
-//			"provider":    "local",
-//			"provisioner": "minikube",
-//			"region":      "",
-//			"account":     "",
-//			"cluster":     "large",
-//			"filePath":    "../../testdata/stacks.yaml",
-//		},
-//		"sugarkube": map[interface{}]interface{}{
-//			"target":   "myTarget",
-//			"approved": true,
-//			"defaultVars": []interface{}{
-//				"local",
-//				"",
-//				"local",
-//				"large",
-//				"",
-//			},
-//		},
-//		"kapp": map[interface{}]interface{}{
-//			"id":        "kappA",
-//			"state":     "absent",
-//			"cacheRoot": "manifest1/kappA",
-//			"vars": map[interface{}]interface{}{
-//				"colours": []interface{}{
-//					"red",
-//					"black",
-//				},
-//				"location": "kappFile",
-//				"sizeVar":  "mediumOverridden",
-//				"stackVar": "setInOverrides",
-//			},
-//		},
-//	}
-//
-//	stack, err := structs.NewStack(stackConfig, nil, nil)
-//	assert.Nil(t, err)
-//
-//	templatedVars, err := stack.TemplatedVars(kappObj,
-//		map[string]interface{}{"target": "myTarget", "approved": true})
-//
-//	assert.Equal(t, expectedMergedVars, templatedVars)
-//}
+func TestMergeVarsForKapp(t *testing.T) {
+
+	// testing the correctness of this stack is handled in stack_test.go
+	stackConfig, err := stack.BuildStack("large", "../../testdata/stacks.yaml",
+		&structs.Stack{}, &config.Config{}, os.Stdout)
+	assert.Nil(t, err)
+	assert.NotNil(t, stackConfig)
+
+	expectedVarsFromFiles := map[string]interface{}{
+		"colours": []interface{}{
+			"green",
+		},
+		"location": "kappFile",
+	}
+
+	kappObj := &stackConfig.Manifests[0].Installables()[0]
+
+	results, err := kappObj.GetVarsFromFiles(stackConfig)
+	assert.Nil(t, err)
+
+	assert.Equal(t, expectedVarsFromFiles, results)
+
+	// now we've loaded kapp variables from a file, test merging vars for the kapp
+	expectedMergedVars := map[string]interface{}{
+		"stack": map[interface{}]interface{}{
+			"name":        "large",
+			"profile":     "local",
+			"provider":    "local",
+			"provisioner": "minikube",
+			"region":      "",
+			"account":     "",
+			"cluster":     "large",
+			"filePath":    "../../testdata/stacks.yaml",
+		},
+		"sugarkube": map[interface{}]interface{}{
+			"target":   "myTarget",
+			"approved": true,
+			"defaultVars": []interface{}{
+				"local",
+				"",
+				"local",
+				"large",
+				"",
+			},
+		},
+		"kapp": map[interface{}]interface{}{
+			"id":        "kappA",
+			"state":     "absent",
+			"cacheRoot": "manifest1/kappA",
+			"vars": map[interface{}]interface{}{
+				"colours": []interface{}{
+					"red",
+					"black",
+				},
+				"location": "kappFile",
+				"sizeVar":  "mediumOverridden",
+				"stackVar": "setInOverrides",
+			},
+		},
+	}
+
+	stack, err := structs.NewStack(stackConfig, nil, nil)
+	assert.Nil(t, err)
+
+	templatedVars, err := stack.TemplatedVars(kappObj,
+		map[string]interface{}{"target": "myTarget", "approved": true})
+
+	assert.Equal(t, expectedMergedVars, templatedVars)
+}
