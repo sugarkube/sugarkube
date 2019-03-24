@@ -26,19 +26,9 @@ type Kapp struct {
 	cacheDir string
 }
 
-// todo - allow templates to be overridden in manifest overrides blocks
-//const TEMPLATES_KEY = "templates"
-
-// Sets the root cache directory the kapp is checked out into
-func (k *Kapp) SetCacheDir(cacheDir string) {
-	log.Logger.Debugf("Setting cache dir on kapp '%s' to '%s'",
-		k.FullyQualifiedId(), cacheDir)
-	k.cacheDir = cacheDir
-}
-
 // Returns the physical path to this kapp in a cache
 func (k Kapp) CacheDir() string {
-	cacheDir := filepath.Join(k.cacheDir, k.manifest.Id(), k.Id)
+	cacheDir := filepath.Join(k.cacheDir, k.manifestId, k.Id)
 
 	// if no cache dir has been set (e.g. because the user is doing a dry-run),
 	// don't return an absolute path

@@ -47,6 +47,7 @@ type Installable interface {
 	ManifestId() string
 	State() string
 	PostActions() []string
+	SetRootCacheDir(cacheDir string)
 	Acquirers() ([]acquirer.Acquirer, error)
 	RefreshConfig(templateVars map[string]interface{}) error
 	Vars(stack iStack) (map[string]interface{}, error)

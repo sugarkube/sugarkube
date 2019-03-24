@@ -345,6 +345,23 @@ func MatchesSelector(installable installable.Installable, selector string) (bool
 	return false, nil
 }
 
+func acquireManifests(stackObj structs.Stack) ([]*Manifest, error) {
+	log.Logger.Info("Acquiring manifests...")
+
+	manifests := make([]*Manifest, len(stackObj.ManifestDescriptors))
+
+	for i, descriptor := range stackObj.ManifestDescriptors {
+		manifest, err := acquireManifest(filepath.Dir(stackObj.FilePath), descriptor)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		manifests[i] = manifest
+	}
+
+	return manifests, nil
+}
+
 // Acquires a manifest.
 // todo - refactor to use an acquirer
 func acquireManifest(stackConfigFileDir string, manifestDescriptor structs.ManifestDescriptor) (*Manifest, error) {

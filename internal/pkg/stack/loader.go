@@ -29,7 +29,6 @@ import (
 	"gopkg.in/yaml.v2"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -48,7 +47,7 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *structs.Stac
 		return nil, errors.New("A stack config file path is required")
 	}
 
-	rawStackConfig, err := loadRawStackConfig(stackName, stackFile)
+	rawStackConfig, err := loadStackConfigFile(stackName, stackFile)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -64,7 +63,7 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *structs.Stac
 	log.Logger.Debugf("Final raw stack config: %#v", rawStackConfig)
 
 	// parse the raw config, populating objects and return a stackConfig
-	stackConfig, err := parseRawConfig(*rawStackConfig)
+	stackConfig, err := parseRawStackConfig(*rawStackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -117,7 +116,7 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *structs.Stac
 }
 
 // Loads the config for a stack from a YAML file and returns either it or an error
-func loadRawStackConfig(name string, path string) (*structs.Stack, error) {
+func loadStackConfigFile(name string, path string) (*structs.Stack, error) {
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, errors.Wrap(err, "Can't load non-existent stack file")
@@ -169,7 +168,7 @@ func loadRawStackConfig(name string, path string) (*structs.Stack, error) {
 }
 
 // Takes a raw config struct and populates the manifests and installables
-func parseRawConfig(rawStackConfig structs.Stack) (*StackConfig, error) {
+func parseRawStackConfig(rawStackConfig structs.Stack) (*StackConfig, error) {
 	manifests, err := acquireManifests(rawStackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -180,21 +179,4 @@ func parseRawConfig(rawStackConfig structs.Stack) (*StackConfig, error) {
 	}
 
 	return stackConfig, nil
-}
-
-func acquireManifests(stackObj structs.Stack) ([]*Manifest, error) {
-	log.Logger.Info("Acquiring manifests...")
-
-	manifests := make([]*Manifest, len(stackObj.ManifestDescriptors))
-
-	for i, descriptor := range stackObj.ManifestDescriptors {
-		manifest, err := acquireManifest(filepath.Dir(stackObj.FilePath), descriptor)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		manifests[i] = manifest
-	}
-
-	return manifests, nil
 }

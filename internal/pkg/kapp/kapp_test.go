@@ -21,6 +21,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"gopkg.in/yaml.v2"
 	"path/filepath"
 	"testing"
@@ -41,7 +42,7 @@ func TestParseManifestYaml(t *testing.T) {
 		desc                 string
 		input                string
 		inputShouldBePresent bool
-		expectUnparsed       []Kapp
+		expectUnparsed       []structs.KappDescriptor
 		expectAcquirers      [][]acquirer.Acquirer
 		expectedError        bool
 	}{
@@ -80,18 +81,17 @@ kapps:
     post_actions:
     - cluster_update
 `,
-			expectUnparsed: []Kapp{
+			expectUnparsed: []structs.KappDescriptor{
 				{
-					Id:       "example1",
-					State:    "present",
-					manifest: nil,
-					Templates: []Template{
+					Id:    "example1",
+					State: "present",
+					Templates: []structs.Template{
 						{
 							"example/template1.tpl",
 							"example/dest.txt",
 						},
 					},
-					Sources: []acquirer.Source{
+					Sources: []structs.Source{
 						{Id: "pathASpecial",
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA"},
 						{Id: "sampleNameB",
@@ -99,10 +99,9 @@ kapps:
 					},
 				},
 				{
-					Id:       "example2",
-					State:    "present",
-					manifest: nil,
-					Sources: []acquirer.Source{
+					Id:    "example2",
+					State: "present",
+					Sources: []structs.Source{
 						{
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
 							Options: map[string]interface{}{
@@ -119,10 +118,9 @@ kapps:
 					},
 				},
 				{
-					Id:       "example3",
-					State:    "absent",
-					manifest: nil,
-					Sources: []acquirer.Source{
+					Id:    "example3",
+					State: "absent",
+					Sources: []structs.Source{
 						{
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
 						},
@@ -136,13 +134,13 @@ kapps:
 				{
 					// kapp1
 					discardErr(acquirer.NewGitAcquirer(
-						acquirer.Source{
+						structs.Source{
 							Id:  "pathASpecial",
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
 						},
 					)),
 					discardErr(acquirer.NewGitAcquirer(
-						acquirer.Source{
+						structs.Source{
 							Id:  "sampleNameB",
 							Uri: "git@github.com:exampleB/repoB.git//example/pathB#branchB",
 						})),
@@ -150,7 +148,7 @@ kapps:
 				// kapp 2
 				{
 					discardErr(acquirer.NewGitAcquirer(
-						acquirer.Source{
+						structs.Source{
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
 							Options: map[string]interface{}{
 								"branch": "new-branch",
@@ -160,7 +158,7 @@ kapps:
 				// kapp3
 				{
 					discardErr(acquirer.NewGitAcquirer(
-						acquirer.Source{
+						structs.Source{
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
 						},
 					)),
@@ -196,7 +194,7 @@ kapps:
 func TestManifestOverrides(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
-	stackConfig, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
+	stackConfig, err := loadStackConfigFileFile("large", "../../testdata/stacks.yaml")
 	assert.Nil(t, err)
 	assert.NotNil(t, stackConfig)
 
@@ -224,7 +222,7 @@ func TestManifestOverrides(t *testing.T) {
 func TestManifestOverridesNil(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
-	stackConfig, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
+	stackConfig, err := loadStackConfigFileFile("large", "../../testdata/stacks.yaml")
 	assert.Nil(t, err)
 	assert.NotNil(t, stackConfig)
 
@@ -236,13 +234,13 @@ func TestManifestOverridesNil(t *testing.T) {
 func TestApplyingManifestOverrides(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
-	stackConfig, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
+	stackConfig, err := loadStackConfigFile("large", "../../testdata/stacks.yaml")
 	assert.Nil(t, err)
 	assert.NotNil(t, stackConfig)
 
 	// in the actual manifest, the state is set to present but it's overridden
 	kappObj := stackConfig.Manifests[0].ParsedKapps()[0]
-	assert.Equal(t, AbsentKey, kappObj.State)
+	assert.Equal(t, constants.AbsentKey, kappObj.State())
 	assert.Equal(t, map[string]interface{}{
 		"sizeVar":  "mediumOverridden",
 		"stackVar": "setInOverrides",
@@ -263,7 +261,7 @@ func TestFindKappVarsFiles(t *testing.T) {
 
 	manifest1, manifest2 := GetTestManifests()
 
-	stackConfig := StackConfig{
+	stackConfig := structs.Stack{
 		Name:        "large",
 		FilePath:    "../../testdata/stacks.yaml",
 		Provider:    "test-provider",
@@ -303,7 +301,7 @@ func TestFindKappVarsFiles(t *testing.T) {
 //func TestMergeVarsForKapp(t *testing.T) {
 //
 //	// testing the correctness of this stack is handled in stack_test.go
-//	stackConfig, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
+//	stackConfig, err := loadStackConfigFile("large", "../../testdata/stacks.yaml")
 //	assert.Nil(t, err)
 //	assert.NotNil(t, stackConfig)
 //

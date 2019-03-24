@@ -104,7 +104,7 @@ func (c *varsConfig) run() error {
 
 	for _, kappObj := range selectedKapps {
 		if c.cacheDir != "" {
-			kappObj.SetCacheDir(c.cacheDir)
+			kappObj.SetRootCacheDir(c.cacheDir)
 		}
 
 		templatedVars, err := stackObj.TemplatedVars(kappObj, map[string]interface{}{})

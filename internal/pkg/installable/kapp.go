@@ -37,10 +37,11 @@ import (
 )
 
 type Kapp struct {
-	descriptor structs.KappDescriptor
-	manifestId string
-	state      string
-	config     structs.KappConfig
+	descriptor   structs.KappDescriptor
+	manifestId   string
+	state        string
+	config       structs.KappConfig
+	rootCacheDir string
 }
 
 // Returns the non-fully qualified ID
@@ -68,6 +69,13 @@ func (k Kapp) FullyQualifiedId() string {
 	} else {
 		return strings.Join([]string{k.manifestId, k.Id()}, constants.NamespaceSeparator)
 	}
+}
+
+// Sets the root cache directory the kapp is checked out into
+func (k *Kapp) SetRootCacheDir(cacheDir string) {
+	log.Logger.Debugf("Setting the root cache dir on kapp '%s' to '%s'",
+		k.FullyQualifiedId(), cacheDir)
+	k.rootCacheDir = cacheDir
 }
 
 // Returns an array of acquirers configured for the sources for this kapp. We need to recompute these each time

@@ -158,7 +158,7 @@ func RenderTemplates(installables []installable.Installable, cacheDir string, st
 			return errors.WithStack(err)
 		}
 
-		kappObj.SetCacheDir(cacheDir)
+		kappObj.SetRootCacheDir(cacheDir)
 
 		_, err = kappObj.RenderTemplates(templatedVars, stack.GetConfig(), dryRun)
 		if err != nil {

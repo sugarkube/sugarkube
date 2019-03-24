@@ -35,17 +35,17 @@ func discardErr(acquirer acquirer.Acquirer, err error) acquirer.Acquirer {
 }
 
 func TestLoadStackConfigGarbagePath(t *testing.T) {
-	_, err := LoadStackConfig("fake-path", "/fake/~/some?/~/garbage")
+	_, err := loadStackConfigFile("fake-path", "/fake/~/some?/~/garbage")
 	assert.Error(t, err)
 }
 
 func TestLoadStackConfigNonExistentPath(t *testing.T) {
-	_, err := LoadStackConfig("missing-path", "/missing/stacks.yaml")
+	_, err := loadStackConfigFile("missing-path", "/missing/stacks.yaml")
 	assert.Error(t, err)
 }
 
 func TestLoadStackConfigDir(t *testing.T) {
-	_, err := LoadStackConfig("dir-path", "../../testdata")
+	_, err := loadStackConfigFile("dir-path", "../../testdata")
 	assert.Error(t, err)
 }
 
@@ -180,13 +180,13 @@ func TestLoadStackConfig(t *testing.T) {
 		},
 	}
 
-	actual, err := LoadStackConfig("large", "../../testdata/stacks.yaml")
+	actual, err := loadStackConfigFile("large", "../../testdata/stacks.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual, "unexpected stack")
 }
 
 func TestLoadStackConfigMissingStackName(t *testing.T) {
-	_, err := LoadStackConfig("missing-stack-name", "../../testdata/stacks.yaml")
+	_, err := loadStackConfigFile("missing-stack-name", "../../testdata/stacks.yaml")
 	assert.Error(t, err)
 }
 

@@ -269,7 +269,7 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 		}
 
 		for _, task := range tranche.tasks {
-			task.installableObj.SetCacheDir(p.cacheDir)
+			task.installableObj.SetRootCacheDir(p.cacheDir)
 
 			job := job{
 				approved:        approved,

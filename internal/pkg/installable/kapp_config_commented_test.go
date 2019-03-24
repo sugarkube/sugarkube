@@ -95,7 +95,7 @@ func TestLoad(t *testing.T) {
 //			ConfiguredId: "sample-manifest",
 //		},
 //	}
-//	testKapp.SetCacheDir(path.Join(testDir, "sample-cache"))
+//	testKapp.SetRootCacheDir(path.Join(testDir, "sample-cache"))
 //
 //	// load the kapp
 //	err := testKapp.Load(templateVars)
