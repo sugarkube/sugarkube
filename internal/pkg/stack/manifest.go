@@ -207,26 +207,19 @@ func parseManifestFile(path string, descriptor structs.ManifestDescriptor) (inte
 
 	log.Logger.Tracef("Loaded raw manifest: %#v", rawManifest)
 
-	// use a default manifest ID if one isn't explicitly set
-	manifestId := descriptor.Id
-	if manifestId == "" {
-		manifestId = filepath.Base(path)
-		extension := filepath.Ext(manifestId)
-		manifestId = strings.TrimSuffix(manifestId, extension)
+	manifest := Manifest{
+		descriptor: descriptor,
+		rawConfig:  rawManifest,
 	}
 
-	installables, err := parseInstallables(manifestId, rawManifest, descriptor.Overrides)
+	installables, err := parseInstallables(manifest.Id(), rawManifest, descriptor.Overrides)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	populatedManifest := Manifest{
-		descriptor:   descriptor,
-		rawConfig:    rawManifest,
-		installables: installables,
-	}
+	manifest.installables = installables
 
-	return &populatedManifest, nil
+	return &manifest, nil
 }
 
 // Validates that there aren't multiple kapps with the same ID in the manifest,
