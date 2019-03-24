@@ -20,9 +20,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"os"
 	"strings"
 	"testing"
@@ -35,7 +35,7 @@ func init() {
 func TestCreateForward(t *testing.T) {
 	// testing the correctness of stacks is handled in stack_test.go
 	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
-		&kapp.StackConfig{}, &config.Config{}, os.Stdout)
+		&structs.Stack{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 
 	stackConfig := stackObj.Config
@@ -46,72 +46,72 @@ func TestCreateForward(t *testing.T) {
 	expectedPlan := Plan{
 		tranches: []tranche{
 			{
-				manifest: *stackConfig.Manifests[0],
+				manifest: *stackConfig.Manifests()[0],
 				tasks: []task{
 					{
-						action: constants.TaskActionInstall,
-						kapp:   stackConfig.Manifests[0].ParsedKapps()[0],
+						action:         constants.TaskActionInstall,
+						installableObj: stackConfig.Manifests()[0].Installables()[0],
 					},
 				},
 			},
 			{
-				manifest: *stackConfig.Manifests[1],
+				manifest: *stackConfig.Manifests()[1],
 				tasks: []task{
 					{
-						action: constants.TaskActionInstall,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[0],
+						action:         constants.TaskActionInstall,
+						installableObj: stackConfig.Manifests()[1].Installables()[0],
 					},
 					{
-						action: constants.TaskActionInstall,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[1],
+						action:         constants.TaskActionInstall,
+						installableObj: stackConfig.Manifests()[1].Installables()[1],
 					},
 					{
-						action: constants.TaskActionInstall,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[2],
+						action:         constants.TaskActionInstall,
+						installableObj: stackConfig.Manifests()[1].Installables()[2],
 					},
 					{
-						action: constants.TaskActionInstall,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[3],
+						action:         constants.TaskActionInstall,
+						installableObj: stackConfig.Manifests()[1].Installables()[3],
 					},
 				},
 			},
 			{ // manifest3.yaml
-				manifest: *stackConfig.Manifests[2],
+				manifest: *stackConfig.Manifests()[2],
 				tasks: []task{
 					{
-						action: constants.TaskActionInstall,
-						kapp:   stackConfig.Manifests[2].ParsedKapps()[0],
+						action:         constants.TaskActionInstall,
+						installableObj: stackConfig.Manifests()[2].Installables()[0],
 					},
 				},
 			},
 			{ // manifest3.yaml - this kapp has an additional tranche for the cluster update post action
-				manifest: *stackConfig.Manifests[2],
+				manifest: *stackConfig.Manifests()[2],
 				tasks: []task{
 					{
-						action: constants.TaskActionClusterUpdate,
-						kapp:   stackConfig.Manifests[2].ParsedKapps()[0],
+						action:         constants.TaskActionClusterUpdate,
+						installableObj: stackConfig.Manifests()[2].Installables()[0],
 					},
 				},
 			},
 			{ // manifest3.yaml
-				manifest: *stackConfig.Manifests[2],
+				manifest: *stackConfig.Manifests()[2],
 				tasks: []task{
 					{
-						action: constants.TaskActionInstall,
-						kapp:   stackConfig.Manifests[2].ParsedKapps()[1],
+						action:         constants.TaskActionInstall,
+						installableObj: stackConfig.Manifests()[2].Installables()[1],
 					},
 				},
 			},
 			{
-				manifest: *stackConfig.Manifests[3],
+				manifest: *stackConfig.Manifests()[3],
 				tasks: []task{
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[3].ParsedKapps()[0],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[3].Installables()[0],
 					},
 					{
-						action: constants.TaskActionInstall,
-						kapp:   stackConfig.Manifests[3].ParsedKapps()[1],
+						action:         constants.TaskActionInstall,
+						installableObj: stackConfig.Manifests()[3].Installables()[1],
 					},
 				},
 			},
@@ -121,15 +121,15 @@ func TestCreateForward(t *testing.T) {
 		renderTemplates: true,
 	}
 
-	actionPlan, err := Create(true, stackObj, stackConfig.Manifests,
+	actionPlan, err := Create(true, stackObj, stackConfig.Manifests(),
 		fakeCacheDir, []string{}, []string{}, true, true)
 	assert.Nil(t, err)
 
 	// assert that manifests are in the correct order in stack configs
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[0].Uri, "manifest1.yaml"))
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[1].Uri, "manifest2.yaml"))
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[2].Uri, "manifest3.yaml"))
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[3].Uri, "manifest4.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[0].Uri, "manifest1.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[1].Uri, "manifest2.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[2].Uri, "manifest3.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[3].Uri, "manifest4.yaml"))
 
 	assert.Equal(t, expectedPlan.tranches[0].manifest.Uri, actionPlan.tranches[0].manifest.Uri)
 
@@ -139,7 +139,7 @@ func TestCreateForward(t *testing.T) {
 func TestCreateReverse(t *testing.T) {
 	// testing the correctness of stacks is handled in stack_test.go
 	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
-		&kapp.StackConfig{}, &config.Config{}, os.Stdout)
+		&structs.Stack{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 
 	stackConfig := stackObj.Config
@@ -150,72 +150,72 @@ func TestCreateReverse(t *testing.T) {
 	expectedPlan := Plan{
 		tranches: []tranche{
 			{
-				manifest: *stackConfig.Manifests[3],
+				manifest: *stackConfig.Manifests()[3],
 				tasks: []task{
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[3].ParsedKapps()[1],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[3].Installables()[1],
 					},
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[3].ParsedKapps()[0],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[3].Installables()[0],
 					},
 				},
 			},
 			{ // manifest3.yaml
-				manifest: *stackConfig.Manifests[2],
+				manifest: *stackConfig.Manifests()[2],
 				tasks: []task{
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[2].ParsedKapps()[1],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[2].Installables()[1],
 					},
 				},
 			},
 			{ // manifest3.yaml - this kapp has an additional tranche for the cluster update post action
-				manifest: *stackConfig.Manifests[2],
+				manifest: *stackConfig.Manifests()[2],
 				tasks: []task{
 					{
-						action: constants.TaskActionClusterUpdate,
-						kapp:   stackConfig.Manifests[2].ParsedKapps()[0],
+						action:         constants.TaskActionClusterUpdate,
+						installableObj: stackConfig.Manifests()[2].Installables()[0],
 					},
 				},
 			},
 			{ // manifest3.yaml
-				manifest: *stackConfig.Manifests[2],
+				manifest: *stackConfig.Manifests()[2],
 				tasks: []task{
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[2].ParsedKapps()[0],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[2].Installables()[0],
 					},
 				},
 			},
 			{
-				manifest: *stackConfig.Manifests[1],
+				manifest: *stackConfig.Manifests()[1],
 				tasks: []task{
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[3],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[1].Installables()[3],
 					},
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[2],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[1].Installables()[2],
 					},
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[1],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[1].Installables()[1],
 					},
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[0],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[1].Installables()[0],
 					},
 				},
 			},
 			{
-				manifest: *stackConfig.Manifests[0],
+				manifest: *stackConfig.Manifests()[0],
 				tasks: []task{
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[0].ParsedKapps()[0],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[0].Installables()[0],
 					},
 				},
 			},
@@ -225,15 +225,15 @@ func TestCreateReverse(t *testing.T) {
 		renderTemplates: true,
 	}
 
-	actionPlan, err := Create(false, stackObj, stackConfig.Manifests,
+	actionPlan, err := Create(false, stackObj, stackConfig.Manifests(),
 		fakeCacheDir, []string{}, []string{}, true, true)
 	assert.Nil(t, err)
 
 	// assert that manifests are in the correct order in stack configs
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[0].Uri, "manifest1.yaml"))
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[1].Uri, "manifest2.yaml"))
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[2].Uri, "manifest3.yaml"))
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[3].Uri, "manifest4.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[0].Uri, "manifest1.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[1].Uri, "manifest2.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[2].Uri, "manifest3.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[3].Uri, "manifest4.yaml"))
 
 	assert.Equal(t, expectedPlan.tranches[0].manifest.Uri, actionPlan.tranches[0].manifest.Uri)
 
@@ -243,7 +243,7 @@ func TestCreateReverse(t *testing.T) {
 func TestCreateReverseNoPostActions(t *testing.T) {
 	// testing the correctness of stacks is handled in stack_test.go
 	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
-		&kapp.StackConfig{}, &config.Config{}, os.Stdout)
+		&structs.Stack{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 
 	stackConfig := stackObj.Config
@@ -254,58 +254,58 @@ func TestCreateReverseNoPostActions(t *testing.T) {
 	expectedPlan := Plan{
 		tranches: []tranche{
 			{
-				manifest: *stackConfig.Manifests[3],
+				manifest: *stackConfig.Manifests()[3],
 				tasks: []task{
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[3].ParsedKapps()[1],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[3].Installables()[1],
 					},
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[3].ParsedKapps()[0],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[3].Installables()[0],
 					},
 				},
 			},
 			{ // manifest3.yaml
-				manifest: *stackConfig.Manifests[2],
+				manifest: *stackConfig.Manifests()[2],
 				tasks: []task{
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[2].ParsedKapps()[1],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[2].Installables()[1],
 					},
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[2].ParsedKapps()[0],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[2].Installables()[0],
 					},
 				},
 			},
 			{
-				manifest: *stackConfig.Manifests[1],
+				manifest: *stackConfig.Manifests()[1],
 				tasks: []task{
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[3],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[1].Installables()[3],
 					},
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[2],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[1].Installables()[2],
 					},
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[1],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[1].Installables()[1],
 					},
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[1].ParsedKapps()[0],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[1].Installables()[0],
 					},
 				},
 			},
 			{
-				manifest: *stackConfig.Manifests[0],
+				manifest: *stackConfig.Manifests()[0],
 				tasks: []task{
 					{
-						action: constants.TaskActionDestroy,
-						kapp:   stackConfig.Manifests[0].ParsedKapps()[0],
+						action:         constants.TaskActionDestroy,
+						installableObj: stackConfig.Manifests()[0].Installables()[0],
 					},
 				},
 			},
@@ -315,15 +315,15 @@ func TestCreateReverseNoPostActions(t *testing.T) {
 		renderTemplates: true,
 	}
 
-	actionPlan, err := Create(false, stackObj, stackConfig.Manifests,
+	actionPlan, err := Create(false, stackObj, stackConfig.Manifests(),
 		fakeCacheDir, []string{}, []string{}, true, false)
 	assert.Nil(t, err)
 
 	// assert that manifests are in the correct order in stack configs
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[0].Uri, "manifest1.yaml"))
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[1].Uri, "manifest2.yaml"))
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[2].Uri, "manifest3.yaml"))
-	assert.True(t, strings.HasSuffix(stackConfig.Manifests[3].Uri, "manifest4.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[0].Uri, "manifest1.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[1].Uri, "manifest2.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[2].Uri, "manifest3.yaml"))
+	assert.True(t, strings.HasSuffix(stackConfig.Manifests()[3].Uri, "manifest4.yaml"))
 
 	assert.Equal(t, expectedPlan.tranches[0].manifest.Uri, actionPlan.tranches[0].manifest.Uri)
 

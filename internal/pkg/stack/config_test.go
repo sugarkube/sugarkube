@@ -19,11 +19,10 @@ package stack
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"gopkg.in/yaml.v2"
 	"testing"
 )
-
-const testDir = "../../testdata"
 
 // Helper to get acquirers in a single-valued context
 func discardErr(acquirer acquirer.Acquirer, err error) acquirer.Acquirer {
@@ -50,9 +49,9 @@ func TestLoadStackConfigDir(t *testing.T) {
 }
 
 func GetTestManifests() (*Manifest, *Manifest) {
-	manifest1 := Manifest{
-		ConfiguredId: "",
-		Uri:          "../../testdata/manifests/manifest1.yaml",
+	manifest1 := structs.ManifestDescriptor{
+		Id:  "",
+		Uri: "../../testdata/manifests/manifest1.yaml",
 		Overrides: map[string]interface{}{
 			"kappA": map[interface{}]interface{}{
 				"state": "absent",
@@ -71,12 +70,11 @@ func GetTestManifests() (*Manifest, *Manifest) {
 		},
 	}
 
-	manifest1UnparsedKapps := []Kapp{
+	manifest1KappDescriptors := []structs.KappDescriptor{
 		{
-			Id:       "kappA",
-			State:    "present",
-			manifest: nil,
-			Sources: []acquirer.Source{
+			Id:    "kappA",
+			State: "present",
+			Sources: []structs.Source{
 				{
 					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
 				},
@@ -93,20 +91,19 @@ func GetTestManifests() (*Manifest, *Manifest) {
 
 	manifest1.UnparsedKapps = manifest1UnparsedKapps
 
-	manifest2 := Manifest{
-		ConfiguredId: "exampleManifest2",
-		Uri:          "../../testdata/manifests/manifest2.yaml",
+	manifest2 := structs.ManifestDescriptor{
+		Id:  "exampleManifest2",
+		Uri: "../../testdata/manifests/manifest2.yaml",
 		Options: ManifestOptions{
 			Parallelisation: uint16(1),
 		},
 	}
 
-	manifest2UnparsedKapps := []Kapp{
+	manifest2KappDescriptors := []structs.KappDescriptor{
 		{
-			Id:       "kappC",
-			State:    "present",
-			manifest: nil,
-			Sources: []acquirer.Source{
+			Id:    "kappC",
+			State: "present",
+			Sources: []structs.Source{
 				{
 					Id:  "special",
 					Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/special-path#kappC-0.3.0",
@@ -117,18 +114,16 @@ func GetTestManifests() (*Manifest, *Manifest) {
 			},
 		},
 		{
-			Id:       "kappB",
-			State:    "present",
-			manifest: nil,
-			Sources: []acquirer.Source{
+			Id:    "kappB",
+			State: "present",
+			Sources: []structs.Source{
 				{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
 			},
 		},
 		{
-			Id:       "kappD",
-			State:    "present",
-			manifest: nil,
-			Sources: []acquirer.Source{
+			Id:    "kappD",
+			State: "present",
+			Sources: []structs.Source{
 				{
 					Uri: "git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0",
 					Options: map[string]interface{}{
@@ -138,10 +133,9 @@ func GetTestManifests() (*Manifest, *Manifest) {
 			},
 		},
 		{
-			Id:       "kappA",
-			State:    "present",
-			manifest: nil,
-			Sources: []acquirer.Source{
+			Id:    "kappA",
+			State: "present",
+			Sources: []structs.Source{
 				{IncludeValues: false,
 					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.2.0"},
 			},
@@ -157,7 +151,7 @@ func TestLoadStackConfig(t *testing.T) {
 
 	manifest1, manifest2 := GetTestManifests()
 
-	expected := &StackConfig{
+	expected := &structs.Stack{
 		Name:        "large",
 		FilePath:    "../../testdata/stacks.yaml",
 		Provider:    "local",
@@ -191,7 +185,7 @@ func TestLoadStackConfigMissingStackName(t *testing.T) {
 }
 
 func TestDir(t *testing.T) {
-	stack := StackConfig{
+	stack := structs.Stack{
 		FilePath: "../../testdata/stacks.yaml",
 	}
 
@@ -215,7 +209,7 @@ func TestGetKappVarsFromFiles(t *testing.T) {
 
 	manifest1, manifest2 := GetTestManifests()
 
-	stackConfig := StackConfig{
+	stackConfig := structs.Stack{
 		Name:        "large",
 		FilePath:    "../../testdata/stacks.yaml",
 		Provider:    "test-provider",
@@ -239,7 +233,7 @@ func TestGetKappVarsFromFiles(t *testing.T) {
 	}
 
 	expected := `globals:
-  account: test-account-val
+ account: test-account-val
 kapp: kappA-val
 kappASisterDir: extra-val
 kappOverride: kappA-val-override
@@ -248,7 +242,7 @@ region: test-region1-val
 regionOverride: region-val-override
 `
 
-	kappObj := &stackConfig.Manifests[0].ParsedKapps()[0]
+	kappObj := &stackConfig.Manifests[0].Installables()[0]
 	results, err := kappObj.GetVarsFromFiles(&stackConfig)
 	assert.Nil(t, err)
 

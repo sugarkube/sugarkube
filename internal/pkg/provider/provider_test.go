@@ -18,16 +18,26 @@ package provider
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"os"
 	"path/filepath"
 	"testing"
 )
 
 const testDir = "../../testdata"
 
-func TestStackConfigVars(t *testing.T) {
-	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
+func loadStack(t *testing.T) *stack.Stack {
+	stackObj, err := stack.BuildStack("large", "../../testdata/stacks.yaml",
+		&structs.Stack{}, &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
+
+	return stackObj
+}
+
+func TestStackConfigVars(t *testing.T) {
+	stackObj := loadStack(t)
 
 	expected := map[string]interface{}{
 		"provisioner": map[interface{}]interface{}{
@@ -42,42 +52,39 @@ func TestStackConfigVars(t *testing.T) {
 		},
 	}
 
-	providerImpl, err := newProviderImpl(sc.Provider, sc)
+	providerImpl, err := newProviderImpl(stackObj.Config.Provider(), stackObj.Config)
 	assert.Nil(t, err)
 
-	actual, err := GetVarsFromFiles(providerImpl, sc)
+	actual, err := GetVarsFromFiles(providerImpl, stackObj.Config)
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual, "Mismatching vars")
 }
 
 func TestNewNonExistentProvider(t *testing.T) {
-	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
-	assert.Nil(t, err)
-	actual, err := newProviderImpl("bananas", sc)
+	stackObj := loadStack(t)
+
+	actual, err := newProviderImpl("bananas", stackObj.Config)
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
 
 func TestNewProviderError(t *testing.T) {
-	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
-	assert.Nil(t, err)
-	actual, err := newProviderImpl("nonsense", sc)
+	stackObj := loadStack(t)
+	actual, err := newProviderImpl("nonsense", stackObj.Config)
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
 
 func TestNewLocalProvider(t *testing.T) {
-	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
-	assert.Nil(t, err)
-	actual, err := newProviderImpl(LOCAL, sc)
+	stackObj := loadStack(t)
+	actual, err := newProviderImpl(LOCAL, stackObj.Config)
 	assert.Nil(t, err)
 	assert.Equal(t, &LocalProvider{}, actual)
 }
 
 func TestNewAWSProvider(t *testing.T) {
-	sc, err := kapp.LoadStackConfig("large", "../../testdata/stacks.yaml")
-	assert.Nil(t, err)
-	actual, err := newProviderImpl(AWS, sc)
+	stackObj := loadStack(t)
+	actual, err := newProviderImpl(AWS, stackObj.Config)
 	assert.Nil(t, err)
 	assert.Equal(t, &AwsProvider{}, actual)
 }
@@ -87,7 +94,7 @@ func TestFindProviderVarsFiles(t *testing.T) {
 	absTestDir, err := filepath.Abs(testDir)
 	assert.Nil(t, err)
 
-	stackConfig := kapp.StackConfig{
+	stackConfig := structs.Stack{
 		Name:        "large",
 		FilePath:    "../../testdata/stacks.yaml",
 		Provider:    "aws",
@@ -99,7 +106,6 @@ func TestFindProviderVarsFiles(t *testing.T) {
 		ProviderVarsDirs: []string{
 			"./providers/",
 		},
-		Manifests: []*kapp.Manifest{},
 	}
 
 	expected := []string{

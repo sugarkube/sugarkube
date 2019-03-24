@@ -45,6 +45,16 @@ func (s StackConfig) KappVarsDirs() []string {
 	return s.rawConfig.KappVarsDirs
 }
 
+// Sets the ready timeout
+func (s StackConfig) SetReadyTimeout(timeout uint32) {
+	s.readyTimeout = timeout
+}
+
+// Sets the online timeout
+func (s StackConfig) SetOnlineTimeout(timeout uint32) {
+	s.onlineTimeout = timeout
+}
+
 // Returns the configured list of template dirs
 func (s StackConfig) TemplateDirs() []string {
 	return s.rawConfig.TemplateDirs

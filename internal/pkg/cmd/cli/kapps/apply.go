@@ -22,11 +22,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 )
 
@@ -122,15 +122,13 @@ process before installing the selected kapps.
 func (c *applyCmd) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
-	cliStackConfig := &kapp.StackConfig{
-		Provider:      c.provider,
-		Provisioner:   c.provisioner,
-		Profile:       c.profile,
-		Cluster:       c.cluster,
-		Region:        c.region,
-		Account:       c.account,
-		ReadyTimeout:  c.readyTimeout,
-		OnlineTimeout: c.onlineTimeout,
+	cliStackConfig := &structs.Stack{
+		Provider:    c.provider,
+		Provisioner: c.provisioner,
+		Profile:     c.profile,
+		Cluster:     c.cluster,
+		Region:      c.region,
+		Account:     c.account,
 	}
 
 	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig,
@@ -138,6 +136,9 @@ func (c *applyCmd) run() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	stackObj.GetConfig().SetReadyTimeout(c.readyTimeout)
+	stackObj.GetConfig().SetOnlineTimeout(c.onlineTimeout)
 
 	dryRunPrefix := ""
 	if c.dryRun {
@@ -156,7 +157,7 @@ func (c *applyCmd) run() error {
 
 			// in future we may want to be able to work entirely from a cluster
 			// diff, in which case it'd really be a plan for us
-			if len(stackObj.Config.Manifests) > 0 {
+			if len(stackObj.GetConfig().Manifests()) > 0 {
 				// todo - validate that the cluster diff matches the manifests, e.g. that
 				// the versions of kapps in the manifests match the versions in the cluster
 				// diff
@@ -185,7 +186,7 @@ func (c *applyCmd) run() error {
 		}
 
 		// force mode, so no need to perform validation. Just create a plan
-		actionPlan, err = plan.Create(true, stackObj, stackObj.Config.Manifests,
+		actionPlan, err = plan.Create(true, stackObj, stackObj.GetConfig().Manifests(),
 			c.cacheDir, c.includeSelector, c.excludeSelector, !c.skipTemplating, !c.skipPostActions)
 		if err != nil {
 			return errors.WithStack(err)

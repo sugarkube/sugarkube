@@ -19,9 +19,9 @@ package clustersot
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
-	"github.com/sugarkube/sugarkube/internal/pkg/kapp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"testing"
 )
 
@@ -30,12 +30,12 @@ func init() {
 }
 
 type MockStack struct {
-	stackConfig *kapp.StackConfig
+	stackConfig *stack.StackConfig
 	status      interfaces.IClusterStatus
 	registry    *registry.Registry
 }
 
-func (m MockStack) GetConfig() *kapp.StackConfig {
+func (m MockStack) GetConfig() *stack.StackConfig {
 	return m.stackConfig
 }
 

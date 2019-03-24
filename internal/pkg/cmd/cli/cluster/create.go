@@ -114,8 +114,8 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	stackObj.Config.SetReadyTimeout(c.readyTimeout)
-	stackObj.Config.SetOnlineTimeout(c.onlineTimeout)
+	stackObj.GetConfig().SetReadyTimeout(c.readyTimeout)
+	stackObj.GetConfig().SetOnlineTimeout(c.onlineTimeout)
 
 	err = CreateCluster(c.out, stackObj, c.dryRun)
 	if err != nil {
