@@ -207,7 +207,15 @@ func parseManifestFile(path string, descriptor structs.ManifestDescriptor) (inte
 
 	log.Logger.Tracef("Loaded raw manifest: %#v", rawManifest)
 
-	installables, err := parseInstallables(descriptor.Id, rawManifest, descriptor.Overrides)
+	// use a default manifest ID if one isn't explicitly set
+	manifestId := descriptor.Id
+	if manifestId == "" {
+		manifestId = filepath.Base(path)
+		extension := filepath.Ext(manifestId)
+		manifestId = strings.TrimSuffix(manifestId, extension)
+	}
+
+	installables, err := parseInstallables(manifestId, rawManifest, descriptor.Overrides)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
