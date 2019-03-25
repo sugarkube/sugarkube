@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.6.0
-* Major code clean up
+* Major code clean up & refactoring
 * Variables can now be interpolated based on other variables
 * Kapp variables are now namespaced under a dedicated key ('kapp') to prevent them overwriting system variables
 * Added a command `kapps vars` for inspecting variables available to a kapp
