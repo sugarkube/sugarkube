@@ -18,12 +18,32 @@ package provisioner
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/mock"
 	"testing"
 )
 
 func init() {
 	log.ConfigureLogger("debug", false)
+}
+
+const testDir = "../../testdata"
+
+func getMockStackConfig(t *testing.T, dir string, name string, account string, provider string,
+	provisioner string, profile string, cluster string, region string, providerVarsDirs []string) interfaces.IStackConfig {
+
+	return mock.Config{
+		Name:             name,
+		Account:          account,
+		Provider:         provider,
+		Provisioner:      provisioner,
+		Profile:          profile,
+		Cluster:          cluster,
+		Region:           region,
+		ProviderVarsDirs: providerVarsDirs,
+		Dir:              dir,
+	}
 }
 
 func TestNewNonExistentProvisioner(t *testing.T) {
@@ -34,9 +54,15 @@ func TestNewNonExistentProvisioner(t *testing.T) {
 
 //func TestNewMinikubeProvisioner(t *testing.T) {
 //
-//	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
-//		&structs.Stack{}, &config.Config{}, os.Stdout)
-//	assert.Nil(t, err)
+//	stackConfig := getMockStackConfig(t, testDir, "standard", "", "local",
+//		"minikube", "local", "standard", "", []string{"./stacks/"})
+//
+//	stackObj := mock.MockStack{
+//		Config: stackConfig,
+//		TemplatedVars: map[string]interface{}{
+//			ProvisionerKey: // todo - populate this,
+//		},
+//	}
 //
 //	clusterSot, err := clustersot.New(clustersot.KubeCtl, stackObj)
 //	assert.Nil(t, err)
@@ -63,7 +89,7 @@ func TestNewNonExistentProvisioner(t *testing.T) {
 //		},
 //	}, actual)
 //}
-//
+
 //func TestNewKopsProvisioner(t *testing.T) {
 //	stackObj, err := stack.BuildStack("standard", "../../testdata/stacks.yaml",
 //		&structs.Stack{}, &config.Config{}, os.Stdout)

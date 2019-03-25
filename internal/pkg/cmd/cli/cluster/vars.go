@@ -102,7 +102,7 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	templatedVars, err := stackObj.TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := stackObj.GetTemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return errors.WithStack(err)
 	}

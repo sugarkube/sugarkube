@@ -58,6 +58,6 @@ type IStack interface {
 	GetProvider() IProvider
 	GetProvisioner() IProvisioner
 	GetRegistry() *registry.Registry
-	TemplatedVars(installableObj IInstallable,
+	GetTemplatedVars(installableObj IInstallable,
 		installerVars map[string]interface{}) (map[string]interface{}, error)
 }

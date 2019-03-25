@@ -101,8 +101,9 @@ func (c Config) GetProviderVars() map[string]interface{} {
 func (c Config) SetProviderVars(vars map[string]interface{}) {}
 
 type MockStack struct {
-	Config   Config
-	Provider interfaces.IProvider
+	Config        interfaces.IStackConfig
+	Provider      interfaces.IProvider
+	TemplatedVars map[string]interface{}
 }
 
 func (m MockStack) GetConfig() interfaces.IStackConfig {
@@ -125,7 +126,7 @@ func (m MockStack) GetRegistry() *registry.Registry {
 	return nil
 }
 
-func (m MockStack) TemplatedVars(installableObj interfaces.IInstallable,
+func (m MockStack) GetTemplatedVars(installableObj interfaces.IInstallable,
 	installerVars map[string]interface{}) (map[string]interface{}, error) {
-	return nil, nil
+	return m.TemplatedVars, nil
 }

@@ -39,7 +39,7 @@ const timeoutSeconds = 30
 
 // Tests whether the cluster is online
 func (c KubeCtlClusterSot) IsOnline() (bool, error) {
-	templatedVars, err := c.iStack.TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := c.iStack.GetTemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}
@@ -70,7 +70,7 @@ func (c KubeCtlClusterSot) IsOnline() (bool, error) {
 // Tests whether all pods are Ready (or rather whether any pods have a status
 // apart from "Running" or "Succeeded")
 func (c KubeCtlClusterSot) IsReady() (bool, error) {
-	templatedVars, err := c.iStack.TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := c.iStack.GetTemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return false, errors.WithStack(err)
 	}

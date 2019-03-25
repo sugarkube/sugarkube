@@ -66,7 +66,7 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 	}
 
 	// merge all the vars required to render the kapp's sugarkube.yaml file
-	templatedVars, err := stack.TemplatedVars(installable,
+	templatedVars, err := stack.GetTemplatedVars(installable,
 		map[string]interface{}{"target": makeTarget, "approved": approved})
 
 	if renderTemplates {

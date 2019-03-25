@@ -152,7 +152,7 @@ func RenderTemplates(installables []interfaces.IInstallable, cacheDir string, st
 	log.Logger.Debugf("Rendering templates for installables: %s", strings.Join(candidateKappIds, ", "))
 
 	for _, kappObj := range installables {
-		templatedVars, err := stack.TemplatedVars(kappObj, map[string]interface{}{})
+		templatedVars, err := stack.GetTemplatedVars(kappObj, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)
 		}

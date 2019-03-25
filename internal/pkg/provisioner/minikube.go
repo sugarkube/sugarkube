@@ -127,7 +127,7 @@ func (p MinikubeProvisioner) Update(dryRun bool) error {
 
 // Parses the provisioner config
 func parseMinikubeConfig(stack interfaces.IStack) (*MinikubeConfig, error) {
-	templatedVars, err := stack.TemplatedVars(nil, map[string]interface{}{})
+	templatedVars, err := stack.GetTemplatedVars(nil, map[string]interface{}{})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

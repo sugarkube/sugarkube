@@ -101,7 +101,7 @@ func (s Stack) GetRegistry() *registry.Registry {
 // Merges and templates vars from all configured sources. If an installable instance
 // is given, data specific to it will be included in the returned map,
 // otherwise only stack-specific variables will be returned.
-func (s *Stack) TemplatedVars(installableObj interfaces.IInstallable,
+func (s *Stack) GetTemplatedVars(installableObj interfaces.IInstallable,
 	installerVars map[string]interface{}) (map[string]interface{}, error) {
 
 	stackConfig := s.config
