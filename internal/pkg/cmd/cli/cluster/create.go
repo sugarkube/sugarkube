@@ -133,7 +133,7 @@ func CreateCluster(out io.Writer, stackObj interfaces.IStack, dryRun bool) error
 		dryRunPrefix = "[Dry run] "
 	}
 	_, err := fmt.Fprintf(out, "%sChecking whether the target cluster '%s' is already "+
-		"online...\n", dryRunPrefix, stackObj.GetConfig().Cluster())
+		"online...\n", dryRunPrefix, stackObj.GetConfig().GetCluster())
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -179,7 +179,7 @@ func CreateCluster(out io.Writer, stackObj interfaces.IStack, dryRun bool) error
 		}
 
 		_, err = fmt.Fprintf(out, "%sCluster '%s' successfully created.\n",
-			dryRunPrefix, stackObj.GetConfig().Cluster())
+			dryRunPrefix, stackObj.GetConfig().GetCluster())
 		if err != nil {
 			return errors.WithStack(err)
 		}

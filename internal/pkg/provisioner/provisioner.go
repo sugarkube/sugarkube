@@ -77,7 +77,7 @@ func Update(p interfaces.IProvisioner, dryRun bool) error {
 // Return whether the cluster is already online
 func IsAlreadyOnline(p interfaces.IProvisioner, dryRun bool) (bool, error) {
 
-	clusterName := p.GetStack().GetConfig().Name()
+	clusterName := p.GetStack().GetConfig().GetName()
 
 	log.Logger.Infof("Checking whether cluster '%s' is already online...",
 		clusterName)
@@ -111,7 +111,7 @@ func IsAlreadyOnline(p interfaces.IProvisioner, dryRun bool) (bool, error) {
 func WaitForClusterReadiness(p interfaces.IProvisioner) error {
 	clusterSot := p.ClusterSot()
 
-	onlineTimeout := p.GetStack().GetConfig().OnlineTimeout()
+	onlineTimeout := p.GetStack().GetConfig().GetOnlineTimeout()
 
 	log.Logger.Infof("Checking whether the cluster is online... Will "+
 		"try for %d seconds", onlineTimeout)

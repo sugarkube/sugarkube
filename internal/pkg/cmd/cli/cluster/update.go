@@ -131,7 +131,7 @@ func UpdateCluster(out io.Writer, stackObj interfaces.IStack, autoCreate bool,
 	}
 
 	_, err := fmt.Fprintf(out, "%sChecking whether the target cluster '%s' is already "+
-		"online...\n", dryRunPrefix, stackObj.GetConfig().Cluster())
+		"online...\n", dryRunPrefix, stackObj.GetConfig().GetCluster())
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -181,7 +181,7 @@ func UpdateCluster(out io.Writer, stackObj interfaces.IStack, autoCreate bool,
 			}
 
 			_, err = fmt.Fprintf(out, "%sCluster '%s' successfully updated.\n",
-				dryRunPrefix, stackObj.GetConfig().Cluster())
+				dryRunPrefix, stackObj.GetConfig().GetCluster())
 			if err != nil {
 				return errors.WithStack(err)
 			}

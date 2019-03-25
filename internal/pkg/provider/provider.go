@@ -43,17 +43,17 @@ func newProviderImpl(name string, stackConfig interfaces.IStackConfig) (interfac
 
 	if name == AWS {
 		return &AwsProvider{
-			region: stackConfig.Region(),
+			region: stackConfig.GetRegion(),
 		}, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("Provider '%s' doesn't exist", name))
 }
 
-// Instantiates a Provider and returns it along with the stack config vars it can
+// Instantiates a Provider and returns it along with the stack Config vars it can
 // load, or an error.
 func New(stackConfig interfaces.IStackConfig) (interfaces.IProvider, error) {
-	providerImpl, err := newProviderImpl(stackConfig.Provider(), stackConfig)
+	providerImpl, err := newProviderImpl(stackConfig.GetProvider(), stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -75,7 +75,7 @@ func GetName(p interfaces.IProvider) string {
 // all the data.
 func GetVarsFromFiles(provider interfaces.IProvider,
 	stackConfig interfaces.IStackConfig) (map[string]interface{}, error) {
-	dirs, err := FindVarsFiles(provider, stackConfig)
+	dirs, err := findVarsFiles(provider, stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -91,15 +91,15 @@ func GetVarsFromFiles(provider interfaces.IProvider,
 }
 
 // Search for paths to provider vars files
-func FindVarsFiles(provider interfaces.IProvider, stackConfig interfaces.IStackConfig) ([]string, error) {
+func findVarsFiles(provider interfaces.IProvider, stackConfig interfaces.IStackConfig) ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.ValuesFile),
-		stackConfig.Provider(),
-		stackConfig.Provisioner(),
-		stackConfig.Account(),
-		stackConfig.Profile(),
-		stackConfig.Cluster(),
-		stackConfig.Region(),
+		stackConfig.GetProvider(),
+		stackConfig.GetProvisioner(),
+		stackConfig.GetAccount(),
+		stackConfig.GetProfile(),
+		stackConfig.GetCluster(),
+		stackConfig.GetRegion(),
 	}
 
 	// append the provider-specific static directory names to search
@@ -107,8 +107,10 @@ func FindVarsFiles(provider interfaces.IProvider, stackConfig interfaces.IStackC
 
 	paths := make([]string, 0)
 
-	for _, searchDir := range stackConfig.ProviderVarsDirs() {
-		searchPath, err := filepath.Abs(filepath.Join(stackConfig.Dir(), searchDir))
+	log.Logger.Debugf("Provider vars dirs are: %s", strings.Join(stackConfig.GetProviderVarsDirs(), ", "))
+
+	for _, searchDir := range stackConfig.GetProviderVarsDirs() {
+		searchPath, err := filepath.Abs(filepath.Join(stackConfig.GetDir(), searchDir))
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

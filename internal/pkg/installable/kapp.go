@@ -256,13 +256,13 @@ func (k Kapp) getVarsFromFiles(stackConfig interfaces.IStackConfig) (map[string]
 func (k Kapp) findVarsFiles(stackConfig interfaces.IStackConfig) ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.ValuesFile),
-		stackConfig.Name(),
-		stackConfig.Provider(),
-		stackConfig.Provisioner(),
-		stackConfig.Account(),
-		stackConfig.Region(),
-		stackConfig.Profile(),
-		stackConfig.Cluster(),
+		stackConfig.GetName(),
+		stackConfig.GetProvider(),
+		stackConfig.GetProvisioner(),
+		stackConfig.GetAccount(),
+		stackConfig.GetRegion(),
+		stackConfig.GetProfile(),
+		stackConfig.GetCluster(),
 		constants.ProfileDir,
 		constants.ClusterDir,
 	}
@@ -293,7 +293,7 @@ func (k Kapp) findVarsFiles(stackConfig interfaces.IStackConfig) ([]string, erro
 	paths := make([]string, 0)
 
 	for _, searchDir := range stackConfig.KappVarsDirs() {
-		searchPath, err := filepath.Abs(filepath.Join(stackConfig.Dir(), searchDir))
+		searchPath, err := filepath.Abs(filepath.Join(stackConfig.GetDir(), searchDir))
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -371,7 +371,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 			if !foundTemplate {
 				// search each template directory defined in the stack config
 				for _, templateDir := range stackConfig.TemplateDirs() {
-					possibleSource := filepath.Join(stackConfig.Dir(), templateDir, templateSource)
+					possibleSource := filepath.Join(stackConfig.GetDir(), templateDir, templateSource)
 					log.Logger.Debugf("Searching for kapp template in '%s'", possibleSource)
 					_, err := os.Stat(possibleSource)
 					if err == nil {

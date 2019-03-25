@@ -206,7 +206,7 @@ func (c *applyCmd) run() error {
 
 			if !isOnline {
 				return errors.New(fmt.Sprintf("Cluster '%s' isn't online. Can't "+
-					"establish a connection to the API server", stackObj.GetConfig().Cluster()))
+					"establish a connection to the API server", stackObj.GetConfig().GetCluster()))
 			}
 		}
 	}

@@ -159,7 +159,7 @@ func (p KopsProvisioner) Create(dryRun bool) error {
 
 	if configExists {
 		log.Logger.Debugf("Kops config already exists for '%s'. Won't recreate it...",
-			p.GetStack().GetConfig().Cluster())
+			p.GetStack().GetConfig().GetCluster())
 		return nil
 	}
 
@@ -712,7 +712,7 @@ func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
 	log.Logger.Debugf("Downloading kubeconfig file for '%s'...",
 		p.kopsConfig.clusterName)
 
-	pattern := fmt.Sprintf("kubeconfig-%s-*", p.GetStack().GetConfig().Cluster())
+	pattern := fmt.Sprintf("kubeconfig-%s-*", p.GetStack().GetConfig().GetCluster())
 
 	tmpfile, err := ioutil.TempFile("", pattern)
 	if err != nil {
@@ -788,11 +788,11 @@ func getBastionHostname(stackConfig interfaces.IStackConfig) (string, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	query := fmt.Sprintf("LoadBalancerDescriptions["+
-		"?starts_with(DNSName, `bastion-%s-`) == `true`].DNSName | [0]", stackConfig.Cluster())
+		"?starts_with(DNSName, `bastion-%s-`) == `true`].DNSName | [0]", stackConfig.GetCluster())
 
 	// get the bastion ELB's hostname
 	err := utils.ExecCommand(awsCliPath, []string{
-		"--region", stackConfig.Region(),
+		"--region", stackConfig.GetRegion(),
 		"elb", "describe-load-balancers",
 		"--query", query,
 		"--output", "text",
@@ -809,7 +809,7 @@ func getBastionHostname(stackConfig interfaces.IStackConfig) (string, error) {
 	}
 
 	if bastionHostname == "" {
-		log.Logger.Infof("No bastion found for cluster '%s'", stackConfig.Cluster())
+		log.Logger.Infof("No bastion found for cluster '%s'", stackConfig.GetCluster())
 	} else {
 		log.Logger.Infof("The bastion hostname is '%s'", bastionHostname)
 	}

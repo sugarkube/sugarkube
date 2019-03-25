@@ -62,7 +62,7 @@ func (s StackConfig) TemplateDirs() []string {
 }
 
 // Returns the configured list of provider vars dirs
-func (s StackConfig) ProviderVarsDirs() []string {
+func (s StackConfig) GetProviderVarsDirs() []string {
 	return s.rawConfig.ProviderVarsDirs
 }
 
@@ -76,35 +76,35 @@ func (s *StackConfig) GetProviderVars() map[string]interface{} {
 	return s.providerVars
 }
 
-func (s StackConfig) Name() string {
+func (s StackConfig) GetName() string {
 	return s.rawConfig.Name
 }
 
-func (s StackConfig) Provider() string {
+func (s StackConfig) GetProvider() string {
 	return s.rawConfig.Provider
 }
 
-func (s StackConfig) Provisioner() string {
+func (s StackConfig) GetProvisioner() string {
 	return s.rawConfig.Provisioner
 }
 
-func (s StackConfig) Account() string {
+func (s StackConfig) GetAccount() string {
 	return s.rawConfig.Account
 }
 
-func (s StackConfig) Profile() string {
+func (s StackConfig) GetProfile() string {
 	return s.rawConfig.Profile
 }
 
-func (s StackConfig) Cluster() string {
+func (s StackConfig) GetCluster() string {
 	return s.rawConfig.Cluster
 }
 
-func (s StackConfig) Region() string {
+func (s StackConfig) GetRegion() string {
 	return s.rawConfig.Region
 }
 
-func (s StackConfig) OnlineTimeout() uint32 {
+func (s StackConfig) GetOnlineTimeout() uint32 {
 	return s.onlineTimeout
 }
 
@@ -127,7 +127,7 @@ func validateStackConfig(stackConfig interfaces.IStackConfig) error {
 
 // Returns the directory the stack config was loaded from, or the current
 // working directory. This can be used to build relative paths.
-func (s *StackConfig) Dir() string {
+func (s *StackConfig) GetDir() string {
 	if s.rawConfig.FilePath != "" {
 		return filepath.Dir(s.rawConfig.FilePath)
 	} else {
@@ -145,13 +145,13 @@ func (s *StackConfig) Dir() string {
 // Returns certain stack data that should be exposed as variables when running kapps
 func (s *StackConfig) GetIntrinsicData() map[string]string {
 	return map[string]string{
-		"name":        s.Name(),
+		"name":        s.GetName(),
 		"filePath":    s.rawConfig.FilePath,
-		"provider":    s.Provider(),
-		"provisioner": s.Provisioner(),
-		"account":     s.Account(),
-		"region":      s.Region(),
-		"profile":     s.Profile(),
-		"cluster":     s.Cluster(),
+		"provider":    s.GetProvider(),
+		"provisioner": s.GetProvisioner(),
+		"account":     s.GetAccount(),
+		"region":      s.GetRegion(),
+		"profile":     s.GetProfile(),
+		"cluster":     s.GetCluster(),
 	}
 }

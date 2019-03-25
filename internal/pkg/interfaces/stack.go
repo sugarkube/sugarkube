@@ -32,20 +32,20 @@ type IClusterStatus interface {
 }
 
 type IStackConfig interface {
-	Name() string
-	Provider() string
-	Provisioner() string
-	Account() string
-	Region() string
-	Profile() string
-	Cluster() string
-	OnlineTimeout() uint32
+	GetName() string
+	GetProvider() string
+	GetProvisioner() string
+	GetAccount() string
+	GetRegion() string
+	GetProfile() string
+	GetCluster() string
+	GetOnlineTimeout() uint32
 	SetReadyTimeout(timeout uint32)
 	SetOnlineTimeout(timeout uint32)
-	ProviderVarsDirs() []string
+	GetProviderVarsDirs() []string
 	KappVarsDirs() []string
 	TemplateDirs() []string
-	Dir() string
+	GetDir() string
 	Manifests() []IManifest
 	GetIntrinsicData() map[string]string
 	GetProviderVars() map[string]interface{}

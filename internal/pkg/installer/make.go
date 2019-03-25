@@ -106,9 +106,9 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 	envVars := map[string]string{
 		"KAPP_ROOT": installable.ObjectCacheDir(),
 		"APPROVED":  fmt.Sprintf("%v", approved),
-		"CLUSTER":   stackConfig.Cluster(),
-		"PROFILE":   stackConfig.Profile(),
-		"PROVIDER":  stackConfig.Provider(),
+		"CLUSTER":   stackConfig.GetCluster(),
+		"PROFILE":   stackConfig.GetProfile(),
+		"PROVIDER":  stackConfig.GetProvider(),
 	}
 
 	// Provider-specific env vars, e.g. the AwsProvider adds REGION

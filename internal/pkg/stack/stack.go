@@ -64,7 +64,7 @@ func newStack(globalConfig *config.Config, config interfaces.IStackConfig,
 		return nil, errors.WithStack(err)
 	}
 
-	provisionerImpl, err := provisioner.New(stack.config.Provisioner(), stack, clusterSot)
+	provisionerImpl, err := provisioner.New(stack.config.GetProvisioner(), stack, clusterSot)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -118,11 +118,11 @@ func (s *Stack) TemplatedVars(installableObj interfaces.IInstallable,
 
 	// store additional runtime values under the "sugarkube" key
 	installerVars["defaultVars"] = []string{
-		stackConfig.Provider(),
-		stackConfig.Account(), // may be blank depending on the provider
-		stackConfig.Profile(),
-		stackConfig.Cluster(),
-		stackConfig.Region(), // may be blank depending on the provider
+		stackConfig.GetProvider(),
+		stackConfig.GetAccount(), // may be blank depending on the provider
+		stackConfig.GetProfile(),
+		stackConfig.GetCluster(),
+		stackConfig.GetRegion(), // may be blank depending on the provider
 	}
 
 	configFragments = append(configFragments, map[string]interface{}{

@@ -14,52 +14,41 @@
  * limitations under the License.
  */
 
-package providertests
-
-import (
-	"github.com/stretchr/testify/assert"
-	"github.com/sugarkube/sugarkube/internal/pkg/config"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
-	"github.com/sugarkube/sugarkube/internal/pkg/stack"
-	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"os"
-	"testing"
-)
+package provider
 
 const testDir = "../../testdata"
 
-func loadStack(t *testing.T) interfaces.IStack {
-	stackObj, err := stack.BuildStack("large", "../../testdata/stacks.yaml",
-		&structs.Stack{}, &config.Config{}, os.Stdout)
-	assert.Nil(t, err)
+//func loadStack(t *testing.T) interfaces.IStack {
+//	stackObj, err := stack.BuildStack("large", "../../testdata/stacks.yaml",
+//		&structs.Stack{}, &config.Config{}, os.Stdout)
+//	assert.Nil(t, err)
+//
+//	return stackObj
+//}
 
-	return stackObj
-}
-
-func TestStackConfigVars(t *testing.T) {
-	stackObj := loadStack(t)
-
-	expected := map[string]interface{}{
-		"provisioner": map[interface{}]interface{}{
-			"binary": "minikube",
-			"params": map[interface{}]interface{}{
-				"start": map[interface{}]interface{}{
-					"disk_size": "120g",
-					"memory":    4096,
-					"cpus":      4,
-				},
-			},
-		},
-	}
-
-	providerImpl, err := provider.New(stackObj.GetConfig())
-	assert.Nil(t, err)
-
-	actual, err := provider.GetVarsFromFiles(providerImpl, stackObj.GetConfig())
-	assert.Nil(t, err)
-	assert.Equal(t, expected, actual, "Mismatching vars")
-}
+//func TestStackConfigVars(t *testing.T) {
+//	stackObj := loadStack(t)
+//
+//	expected := map[string]interface{}{
+//		"provisioner": map[interface{}]interface{}{
+//			"binary": "minikube",
+//			"params": map[interface{}]interface{}{
+//				"start": map[interface{}]interface{}{
+//					"disk_size": "120g",
+//					"memory":    4096,
+//					"cpus":      4,
+//				},
+//			},
+//		},
+//	}
+//
+//	providerImpl, err := New(stackObj.GetConfig())
+//	assert.Nil(t, err)
+//
+//	actual, err := GetVarsFromFiles(providerImpl, stackObj.GetConfig())
+//	assert.Nil(t, err)
+//	assert.Equal(t, expected, actual, "Mismatching vars")
+//}
 
 //func TestNewNonExistentProvider(t *testing.T) {
 //	stackObj := loadStack(t)
@@ -68,7 +57,7 @@ func TestStackConfigVars(t *testing.T) {
 //	assert.NotNil(t, err)
 //	assert.Nil(t, actual)
 //}
-//
+
 //func TestNewProviderError(t *testing.T) {
 //	stackObj := loadStack(t)
 //	actual, err := newProviderImpl("nonsense", stackObj.GetConfig())
@@ -125,7 +114,7 @@ func TestStackConfigVars(t *testing.T) {
 //	providerImpl, err := provider.New(stackConfig)
 //	assert.Nil(t, err)
 //
-//	results, err := FindVarsFiles(providerImpl, &stackConfig)
+//	results, err := findVarsFiles(providerImpl, &stackConfig)
 //	assert.Nil(t, err)
 //
 //	assert.Equal(t, expected, results)
