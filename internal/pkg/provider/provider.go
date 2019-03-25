@@ -75,7 +75,7 @@ func GetName(p interfaces.IProvider) string {
 // all the data.
 func GetVarsFromFiles(provider interfaces.IProvider,
 	stackConfig interfaces.IStackConfig) (map[string]interface{}, error) {
-	dirs, err := findVarsFiles(provider, stackConfig)
+	dirs, err := FindVarsFiles(provider, stackConfig)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -91,7 +91,7 @@ func GetVarsFromFiles(provider interfaces.IProvider,
 }
 
 // Search for paths to provider vars files
-func findVarsFiles(provider interfaces.IProvider, stackConfig interfaces.IStackConfig) ([]string, error) {
+func FindVarsFiles(provider interfaces.IProvider, stackConfig interfaces.IStackConfig) ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.ValuesFile),
 		stackConfig.Provider(),
