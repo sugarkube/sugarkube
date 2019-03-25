@@ -40,7 +40,6 @@ import (
 type Kapp struct {
 	descriptor   structs.KappDescriptor
 	manifestId   string
-	state        string
 	config       structs.KappConfig
 	rootCacheDir string
 }
@@ -56,7 +55,7 @@ func (k Kapp) ManifestId() string {
 }
 
 func (k Kapp) State() string {
-	return k.state
+	return k.descriptor.State
 }
 
 func (k Kapp) PostActions() []string {
@@ -82,21 +81,22 @@ func (k Kapp) GetEnvVars() map[string]interface{} {
 }
 
 // Return CLI args for the Kapp for the given installer and command/target
-func (k Kapp) GetCliArgs(installerName string, command string) map[string]string {
+func (k Kapp) GetCliArgs(installerName string, command string) []string {
 	installerArgs, ok := k.config.Args[installerName]
 	if !ok {
-		return map[string]string{}
+		return []string{}
 	}
 
 	commandArgs, ok := installerArgs[command]
 	if !ok {
-		return map[string]string{}
+		return []string{}
 	}
 
-	cliArgs := make(map[string]string, 0)
+	cliArgs := make([]string, 0)
 
 	for _, arg := range commandArgs {
-		strings.Join([]string{arg["name"], arg["value"]}, "=")
+		joined := strings.Join([]string{arg["name"], arg["value"]}, "=")
+		cliArgs = append(cliArgs, joined)
 	}
 
 	return cliArgs
@@ -338,14 +338,19 @@ func (k Kapp) findVarsFiles(stackConfig interfaces.IStackConfig) ([]string, erro
 func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig interfaces.IStackConfig,
 	dryRun bool) ([]string, error) {
 
+	dryRunPrefix := ""
+	if dryRun {
+		dryRunPrefix = "[Dry run] "
+	}
+
 	renderedPaths := make([]string, 0)
 
 	if len(k.descriptor.Templates) == 0 {
-		log.Logger.Infof("No templates to render for kapp '%s'", k.FullyQualifiedId())
+		log.Logger.Infof("%sNo templates to render for kapp '%s'", dryRunPrefix, k.FullyQualifiedId())
 		return renderedPaths, nil
 	}
 
-	log.Logger.Infof("Rendering templates for kapp '%s'", k.FullyQualifiedId())
+	log.Logger.Infof("%sRendering templates for kapp '%s'", dryRunPrefix, k.FullyQualifiedId())
 
 	for _, templateDefinition := range k.descriptor.Templates {
 		rawTemplateSource := templateDefinition.Source
@@ -398,7 +403,8 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 			}
 		}
 
-		log.Logger.Debugf("Templating file '%s' with vars: %#v", templateSource, templateVars)
+		log.Logger.Debugf("%sTemplating file '%s' with vars: %#v", dryRunPrefix,
+			templateSource, templateVars)
 
 		rawDestPath := templateDefinition.Dest
 		// run the dest path through the templater in case it contains variables
@@ -413,8 +419,8 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 
 		// check whether the dest path exists
 		if _, err := os.Stat(destPath); err == nil {
-			log.Logger.Infof("Template destination path '%s' exists. "+
-				"File will be overwritten by rendered template '%s' for kapp '%s'",
+			log.Logger.Infof("%sTemplate destination path '%s' exists. "+
+				"File will be overwritten by rendered template '%s' for kapp '%s'", dryRunPrefix,
 				destPath, templateSource, k.Id())
 		}
 
@@ -431,13 +437,11 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 			return renderedPaths, errors.WithStack(err)
 		}
 
-		if dryRun {
-			log.Logger.Infof("Dry run. Template '%s' for kapp '%s' which "+
-				"would be written to '%s' rendered as:\n%s", templateSource,
-				k.Id(), destPath, outBuf.String())
-		} else {
-			log.Logger.Infof("Writing rendered template '%s' for kapp "+
-				"'%s' to '%s'", templateSource, k.FullyQualifiedId(), destPath)
+		log.Logger.Infof("%sWriting rendered template '%s' for kapp "+
+			"'%s' to '%s'", dryRunPrefix, templateSource, k.FullyQualifiedId(), destPath)
+		log.Logger.Tracef("%sTemplate rendered as:\n%s", dryRunPrefix, outBuf.String())
+
+		if !dryRun {
 			err := ioutil.WriteFile(destPath, outBuf.Bytes(), 0644)
 			if err != nil {
 				return renderedPaths, errors.WithStack(err)

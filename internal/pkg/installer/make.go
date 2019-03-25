@@ -131,8 +131,8 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 	// todo - move this to a method. Make it pull values from
 	// the overall config depending on the programs the kapp uses
 	targetArgs := installable.GetCliArgs(i.name(), makeTarget)
-	log.Logger.Debugf("Kapp '%s' has args for target '%s' (approved=%v): %#v",
-		installable.FullyQualifiedId(), makeTarget, approved, targetArgs)
+	log.Logger.Debugf("Kapp '%s' has args for %s %s (approved=%v): %#v",
+		installable.FullyQualifiedId(), i.name(), makeTarget, approved, targetArgs)
 
 	for _, targetArg := range targetArgs {
 		cliArgs = append(cliArgs, targetArg)

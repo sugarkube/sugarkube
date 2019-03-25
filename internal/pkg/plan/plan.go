@@ -28,6 +28,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"os"
 	"sort"
+	"strings"
 )
 
 type task struct {
@@ -83,6 +84,13 @@ func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IMa
 	selectedInstallables, err := stack.SelectInstallables(manifests, includeSelector, excludeSelector)
 	if err != nil {
 		return nil, errors.WithStack(err)
+	}
+
+	// if nothing matched, return an error
+	if len(selectedInstallables) == 0 {
+		return nil, errors.New(fmt.Sprintf("No kapps were matched by including '%s' and "+
+			"excluding '%s'", strings.Join(includeSelector, ", "),
+			strings.Join(excludeSelector, ", ")))
 	}
 
 	tranches := make([]tranche, 0)

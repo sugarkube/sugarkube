@@ -34,7 +34,7 @@ type IInstallable interface {
 	ObjectCacheDir() string
 	Acquirers() ([]acquirer.Acquirer, error)
 	RefreshConfig(templateVars map[string]interface{}) error
-	GetCliArgs(installerName string, command string) map[string]string
+	GetCliArgs(installerName string, command string) []string
 	GetEnvVars() map[string]interface{}
 	Vars(stack IStack) (map[string]interface{}, error)
 	RenderTemplates(templateVars map[string]interface{}, stackConfig IStackConfig,
