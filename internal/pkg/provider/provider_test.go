@@ -16,69 +16,64 @@
 
 package provider
 
-const testDir = "../../testdata"
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
-//func loadStack(t *testing.T) interfaces.IStack {
-//	stackObj, err := stack.BuildStack("large", "../../testdata/stacks.yaml",
-//		&structs.Stack{}, &config.Config{}, os.Stdout)
-//	assert.Nil(t, err)
-//
-//	return stackObj
-//}
+func TestStackConfigVars(t *testing.T) {
+	stackObj := getMockStackConfig(t, testDir, "large", "local",
+		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 
-//func TestStackConfigVars(t *testing.T) {
-//	stackObj := loadStack(t)
-//
-//	expected := map[string]interface{}{
-//		"provisioner": map[interface{}]interface{}{
-//			"binary": "minikube",
-//			"params": map[interface{}]interface{}{
-//				"start": map[interface{}]interface{}{
-//					"disk_size": "120g",
-//					"memory":    4096,
-//					"cpus":      4,
-//				},
-//			},
-//		},
-//	}
-//
-//	providerImpl, err := New(stackObj.GetConfig())
-//	assert.Nil(t, err)
-//
-//	actual, err := GetVarsFromFiles(providerImpl, stackObj.GetConfig())
-//	assert.Nil(t, err)
-//	assert.Equal(t, expected, actual, "Mismatching vars")
-//}
+	expected := map[string]interface{}{
+		"provisioner": map[interface{}]interface{}{
+			"binary": "minikube",
+			"params": map[interface{}]interface{}{
+				"start": map[interface{}]interface{}{
+					"disk_size": "120g",
+					"memory":    4096,
+					"cpus":      4,
+				},
+			},
+		},
+	}
 
-//func TestNewNonExistentProvider(t *testing.T) {
-//	stackObj := loadStack(t)
-//
-//	actual, err := newProviderImpl("bananas", stackObj.GetConfig())
-//	assert.NotNil(t, err)
-//	assert.Nil(t, actual)
-//}
+	providerImpl, err := New(stackObj)
+	assert.Nil(t, err)
 
-//func TestNewProviderError(t *testing.T) {
-//	stackObj := loadStack(t)
-//	actual, err := newProviderImpl("nonsense", stackObj.GetConfig())
-//	assert.NotNil(t, err)
-//	assert.Nil(t, actual)
-//}
-//
-//func TestNewLocalProvider(t *testing.T) {
-//	stackObj := loadStack(t)
-//	actual, err := newProviderImpl(LOCAL, stackObj.GetConfig())
-//	assert.Nil(t, err)
-//	assert.Equal(t, &LocalProvider{}, actual)
-//}
-//
-//func TestNewAWSProvider(t *testing.T) {
-//	stackObj := loadStack(t)
-//	actual, err := newProviderImpl(AWS, stackObj.GetConfig())
-//	assert.Nil(t, err)
-//	assert.Equal(t, &AwsProvider{}, actual)
-//}
-//
+	actual, err := GetVarsFromFiles(providerImpl, stackObj)
+	assert.Nil(t, err)
+	assert.Equal(t, expected, actual, "Mismatching vars")
+}
+
+func TestNewNonExistentProvider(t *testing.T) {
+	stackObj := getMockStackConfig(t, testDir, "large", "bananas",
+		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
+
+	actual, err := New(stackObj)
+	assert.NotNil(t, err)
+	assert.Nil(t, actual)
+}
+
+func TestNewLocalProvider(t *testing.T) {
+	stackObj := getMockStackConfig(t, testDir, "large", "local",
+		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
+
+	actual, err := New(stackObj)
+	assert.Nil(t, err)
+	assert.Equal(t, &LocalProvider{}, actual)
+}
+
+func TestNewAWSProvider(t *testing.T) {
+	stackObj := getMockStackConfig(t, testDir, "large", "aws",
+		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
+	actual, err := New(stackObj)
+	assert.Nil(t, err)
+	assert.Equal(t, &AwsProvider{
+		region: "fake-region",
+	}, actual)
+}
+
 //func TestFindProviderVarsFiles(t *testing.T) {
 //
 //	absTestDir, err := filepath.Abs(testDir)

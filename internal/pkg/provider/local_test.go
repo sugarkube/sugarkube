@@ -29,6 +29,8 @@ func init() {
 	log.ConfigureLogger("debug", false)
 }
 
+const testDir = "../../testdata"
+
 func getMockStackConfig(t *testing.T, dir string, name string, provider string, provisioner string,
 	profile string, cluster string, region string, providerVarsDirs []string) interfaces.IStackConfig {
 
@@ -45,13 +47,13 @@ func getMockStackConfig(t *testing.T, dir string, name string, provider string, 
 }
 
 func TestLocalVarsDirs(t *testing.T) {
-	stackObj := getMockStackConfig(t, "../../testdata/", "large", "local",
+	stackObj := getMockStackConfig(t, testDir, "large", "local",
 		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 
 	assert.Equal(t, "local", stackObj.GetProvider())
 	assert.Equal(t, []string{"./stacks/"}, stackObj.GetProviderVarsDirs())
 
-	absTestDir, err := filepath.Abs("../../testdata")
+	absTestDir, err := filepath.Abs(testDir)
 	assert.Nil(t, err)
 
 	expected := []string{
