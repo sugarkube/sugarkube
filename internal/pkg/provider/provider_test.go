@@ -18,11 +18,12 @@ package provider
 
 import (
 	"github.com/stretchr/testify/assert"
+	"path/filepath"
 	"testing"
 )
 
 func TestStackConfigVars(t *testing.T) {
-	stackObj := getMockStackConfig(t, testDir, "large", "local",
+	stackObj := getMockStackConfig(t, testDir, "large", "", "local",
 		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 
 	expected := map[string]interface{}{
@@ -47,7 +48,7 @@ func TestStackConfigVars(t *testing.T) {
 }
 
 func TestNewNonExistentProvider(t *testing.T) {
-	stackObj := getMockStackConfig(t, testDir, "large", "bananas",
+	stackObj := getMockStackConfig(t, testDir, "large", "", "bananas",
 		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 
 	actual, err := New(stackObj)
@@ -56,7 +57,7 @@ func TestNewNonExistentProvider(t *testing.T) {
 }
 
 func TestNewLocalProvider(t *testing.T) {
-	stackObj := getMockStackConfig(t, testDir, "large", "local",
+	stackObj := getMockStackConfig(t, testDir, "large", "", "local",
 		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 
 	actual, err := New(stackObj)
@@ -65,7 +66,7 @@ func TestNewLocalProvider(t *testing.T) {
 }
 
 func TestNewAWSProvider(t *testing.T) {
-	stackObj := getMockStackConfig(t, testDir, "large", "aws",
+	stackObj := getMockStackConfig(t, testDir, "large", "", "aws",
 		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 	actual, err := New(stackObj)
 	assert.Nil(t, err)
@@ -74,43 +75,33 @@ func TestNewAWSProvider(t *testing.T) {
 	}, actual)
 }
 
-//func TestFindProviderVarsFiles(t *testing.T) {
-//
-//	absTestDir, err := filepath.Abs(testDir)
-//	assert.Nil(t, err)
-//
-//	stackConfig := structs.Stack{
-//		Name:        "large",
-//		FilePath:    "../../testdata/stacks.yaml",
-//		Provider:    "aws",
-//		Provisioner: "test-provisioner",
-//		Profile:     "test-profile",
-//		Cluster:     "test-cluster",
-//		Account:     "test-account",
-//		Region:      "region1",
-//		ProviderVarsDirs: []string{
-//			"./providers/",
-//		},
-//	}
-//
-//	expected := []string{
-//		filepath.Join(absTestDir, "providers/values.yaml"),
-//		filepath.Join(absTestDir, "providers/region1.yaml"),
-//		filepath.Join(absTestDir, "providers/aws/accounts/test-account/values.yaml"),
-//		filepath.Join(absTestDir, "providers/aws/accounts/test-account/region1.yaml"),
-//		filepath.Join(absTestDir, "providers/aws/accounts/test-account/profiles/test-profile/clusters/test-cluster/values.yaml"),
-//		filepath.Join(absTestDir, "providers/aws/accounts/test-account/profiles/test-profile/clusters/test-cluster/region1/values.yaml"),
-//		filepath.Join(absTestDir, "providers/test-account/region1.yaml"),
-//		filepath.Join(absTestDir, "providers/test-account/test-cluster/values.yaml"),
-//		filepath.Join(absTestDir, "providers/region1/values.yaml"),
-//		filepath.Join(absTestDir, "providers/region1/test-cluster.yaml"),
-//	}
-//
-//	providerImpl, err := provider.New(stackConfig)
-//	assert.Nil(t, err)
-//
-//	results, err := findVarsFiles(providerImpl, &stackConfig)
-//	assert.Nil(t, err)
-//
-//	assert.Equal(t, expected, results)
-//}
+func TestFindProviderVarsFiles(t *testing.T) {
+
+	absTestDir, err := filepath.Abs(testDir)
+	assert.Nil(t, err)
+
+	stackObj := getMockStackConfig(t, testDir, "large", "test-account", "aws",
+		"test-provisioner", "test-profile", "test-cluster", "region1",
+		[]string{"./providers/"})
+
+	expected := []string{
+		filepath.Join(absTestDir, "providers/values.yaml"),
+		filepath.Join(absTestDir, "providers/region1.yaml"),
+		filepath.Join(absTestDir, "providers/aws/accounts/test-account/values.yaml"),
+		filepath.Join(absTestDir, "providers/aws/accounts/test-account/region1.yaml"),
+		filepath.Join(absTestDir, "providers/aws/accounts/test-account/profiles/test-profile/clusters/test-cluster/values.yaml"),
+		filepath.Join(absTestDir, "providers/aws/accounts/test-account/profiles/test-profile/clusters/test-cluster/region1/values.yaml"),
+		filepath.Join(absTestDir, "providers/test-account/region1.yaml"),
+		filepath.Join(absTestDir, "providers/test-account/test-cluster/values.yaml"),
+		filepath.Join(absTestDir, "providers/region1/values.yaml"),
+		filepath.Join(absTestDir, "providers/region1/test-cluster.yaml"),
+	}
+
+	providerImpl, err := New(stackObj)
+	assert.Nil(t, err)
+
+	results, err := findVarsFiles(providerImpl, stackObj)
+	assert.Nil(t, err)
+
+	assert.Equal(t, expected, results)
+}
