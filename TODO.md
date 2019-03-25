@@ -45,6 +45,23 @@
   so we should acknowledge they're for different phases of the lifecycle. Similarly to install new stuff into that 
   cluster we may need to relaunch the bastion, install stuff then remove it again.
 
+* Stream console output in real-time
+* Get rid of the duplication of mapping variables - we currently do it once in sugarkube.yaml files then
+  again in makefiles. Try to automate the mapping in makefiles
+* Create a single kapp descriptor and allow it to be used in stacks, manifests & kapps. Use the appropriate
+  base directory for relative paths depending on where it's specified
+
+* Fix passing a single flag to helm/tf where the file may not exist
+* Support declaring templates as 'sensitive' - they should be templated just-in-time then deleted
+
+* Support adding YAML/JSON/text output from kapps to the registry under e.g. 'output/<kappId>' where the 
+  kapp ID can be just the name inside a given manifest, or a fully qualified ID if being used across manifests
+* If a kapp uses output from an earlier kapp and it hasn't been run, throw an error
+  
+* Support taking the 'startAt' and 'runUntil' settings in the config file, so e.g. users can by default 
+  start applying kapps from the point where their cluster is set up, but they can still explicitly set that
+  flag to start at the start.
+
 ## Other things to consider
 * Is being focussed on clusters a mistake? 
     * We could help provision other hosted services, e.g. ElastiCache, BigQuery, etc. 

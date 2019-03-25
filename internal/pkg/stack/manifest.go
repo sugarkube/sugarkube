@@ -86,6 +86,8 @@ func parseInstallables(manifestId string, rawManifest structs.Manifest,
 		installables[i] = installableObj
 	}
 
+	log.Logger.Tracef("Parsed installables from manifest '%s' as: %#v", manifestId, installables)
+
 	return installables, nil
 }
 

@@ -49,6 +49,7 @@ type applyCmd struct {
 	account             string
 	cluster             string
 	region              string
+	startFrom           string // todo - implement, and add the same flag to the destroy command
 	runUntil            string // todo - implement, and add the same flag to the destroy command
 	includeSelector     []string
 	excludeSelector     []string
@@ -106,6 +107,8 @@ process before installing the selected kapps.
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
+	f.StringVarP(&c.startFrom, "start-from", "u", "", fmt.Sprintf("apply kapps beginning with and including the selected kapp formatted "+
+		"'manifest-id:kapp-id' or 'manifest-id:%s'", constants.WildcardCharacter))
 	f.StringVarP(&c.runUntil, "until", "u", "", fmt.Sprintf("apply kapps upto and including the selected kapp formatted "+
 		"'manifest-id:kapp-id' or 'manifest-id:%s'", constants.WildcardCharacter))
 	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
