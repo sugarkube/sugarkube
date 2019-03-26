@@ -31,9 +31,9 @@
   we should throw an error and abort in that case)
 
 * Support variables at the manifest level so we can set manifest-wide vars. Use them as defaults for kapp vars (or 
-  just namespace them under "manifest.vars" - decide which is better. The first would require we manually set a 
-  default to the manifest vars ). E.g. this could be helpful for setting manifest-wide tiller-namespaces, etc.
-* The `requires` block in `sugarkube.yaml` is currenntly useless. We should do several things with it:
+  just namespace them under "manifest.vars" - decide which is better. The first would require we manually set 
+  defaults for manifest vars ). E.g. this could be helpful for setting manifest-wide tiller-namespaces, etc.
+* The `requires` block in `sugarkube.yaml` is currently useless. We should do several things with it:
   * Create a 'validate' command to verify that the necessary binary exists
   * Allow each value to have a corresponding config in the sugarkube-conf.yaml file that determines:
     * Default env vars (e.g. a kapp using helm should always take the TILLER_NAMESPACE env var from a certain
@@ -44,6 +44,20 @@
   install some stuff into it, but then want to scale down the bastion IG. That'll require 2 different kops configs
   so we should acknowledge they're for different phases of the lifecycle. Similarly to install new stuff into that 
   cluster we may need to relaunch the bastion, install stuff then remove it again.
+  * Maybe we need to support an extra key (e.g. region/account/cluster - 'config'?) to allow different named yaml files
+    to be merged together for a target cluster. E.g. we could have yaml files called 'bastion.yaml' and 'no-bastion.yaml'
+    which will contain kops fragments for scaling the bastion up and down respectively. Users could then first invoke
+    sugarkube passing this extra flag (e.g. --extra-config=bastion) to make it patch the kops config to bring up the 
+    bastion. Then they could apply their kapps cherry-picking where to start from, what to include/exclude, etc. via
+    selectors. Finally they could run it again with e.g. --extra-config=no-bastion to have sugarkube patch the kops 
+    config again with the YAML to scale down the bastion. Users would then just need to chain those commands together
+    (or invoke them sequentially). Those extra configs may need to be merged in with the highest priority though (i.e.
+    last) to be really useful and to actually override existing configs, but for our use case I think we'd be OK without
+    that.
+  * We could perhaps have extra CLI args to take a list of different extra configs to apply, e.g. 
+    `--extra-configs bastion,,no-bastion` and sugarkube could be run first with the `bastion` extra config, then with
+    no extra config, then again with the `no-bastion` config. This'd effectively chain the invocation for users and
+    would prevent them from forgetting to e.g. tear down a bastion.
 
 * Stream console output in real-time
 * Get rid of the duplication of mapping variables - we currently do it once in sugarkube.yaml files then
@@ -61,6 +75,9 @@
 * Support taking the 'startAt' and 'runUntil' settings in the config file, so e.g. users can by default 
   start applying kapps from the point where their cluster is set up, but they can still explicitly set that
   flag to start at the start.
+
+* EnsureClusterConnectivity should export the kops kubeconfig file if the user doesn't have it already (i.e. it's not
+  listed in `kubectl config get-contexts`)
 
 ## Other things to consider
 * Is being focussed on clusters a mistake? 
