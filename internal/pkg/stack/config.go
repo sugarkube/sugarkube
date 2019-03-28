@@ -47,12 +47,12 @@ func (s StackConfig) KappVarsDirs() []string {
 }
 
 // Sets the ready timeout
-func (s StackConfig) SetReadyTimeout(timeout uint32) {
+func (s *StackConfig) SetReadyTimeout(timeout uint32) {
 	s.readyTimeout = timeout
 }
 
 // Sets the online timeout
-func (s StackConfig) SetOnlineTimeout(timeout uint32) {
+func (s *StackConfig) SetOnlineTimeout(timeout uint32) {
 	s.onlineTimeout = timeout
 }
 
@@ -72,7 +72,7 @@ func (s *StackConfig) SetProviderVars(vars map[string]interface{}) {
 }
 
 // Gets provider vars
-func (s *StackConfig) GetProviderVars() map[string]interface{} {
+func (s StackConfig) GetProviderVars() map[string]interface{} {
 	return s.providerVars
 }
 
