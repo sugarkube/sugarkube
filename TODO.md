@@ -9,6 +9,7 @@
   access to the main config repo). Manifest variables will simplify passing env vars to all kapps in the manifest
   (e.g. for the tiller-namespace, etc.)
   
+* Rename destroy -> delete (update the kapps command and common makefiles as well as installers)
 * Print important info instead of logging it
 * Add support for verifying signed tags
 * More tests 
@@ -22,10 +23,18 @@
   We could have kapps declare the name of a JSON file in their sugarkube.yaml file that should be merged with 
   vars to allow them to dynamically update kapp vars. Or they could specify that stdout should be used, etc.
 
+* use ps (https://github.com/shirou/gopsutil/) to check whether SSH port forwarding is actually set up, and 
+  if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
+* error handling - shut down SSH port forwarding on error instead of leaving it dangling
+
+* Add the `--connect` flag to `kapps destroy`
+
+* document  tf-params vs tf-opts and the same for helm in the makefiles
+
 * Print out the plan before executing it
 * Print details of kapps being executed
 * Don't always display usage if an error is thrown
-* Implement deletion to tear down a stack
+* Implement deleting clusters
 * Fix failing integration test
 * Wordpress site 2 isn't cached when running 'cache create' (probably due to it referring to a non-existent branch - 
   we should throw an error and abort in that case)
@@ -58,6 +67,19 @@
     `--extra-configs bastion,,no-bastion` and sugarkube could be run first with the `bastion` extra config, then with
     no extra config, then again with the `no-bastion` config. This'd effectively chain the invocation for users and
     would prevent them from forgetting to e.g. tear down a bastion.
+  * Actually a more versatile solution would be to use the existing idea of manifests and allow them to be configured
+    with extra file basenames to search for and to merge with the highest priority. That'd mean these 'state manifests' 
+    would
+    * be able to define additional config for provisioners, etc
+    * run (versioned) kapps to do whatever's necessary to generate that extra config, or to put the cluster into a 
+      desired state
+    With this it then just becomes a question of how to select the manifests to run for a stack - state manifests 
+    shouldn't be included in the main stack's list of manifests, but rather be able to be "topped and tailed" into a 
+    run, e.g. to put the cluster into a known state, run the manifests as usual (with whatever selectors are required)
+    and then put the cluster into a different state. If we needed to go through a series of states we could invoke 
+    Sugarkube multiple times but that might complicate populating the registry in certain instances. In that case there's
+    no reason why a stack config couldn't include state manifests in order to transition the cluster. 
+    We could allow states to be run by having extra flags for `--start-state` and `--end-state`
 
 * Stream console output in real-time
 * Get rid of the duplication of mapping variables - we currently do it once in sugarkube.yaml files then
