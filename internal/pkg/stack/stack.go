@@ -119,6 +119,7 @@ func (s *Stack) GetTemplatedVars(installableObj interfaces.IInstallable,
 	// store additional runtime values under the "sugarkube" key
 	installerVars["defaultVars"] = []string{
 		stackConfig.GetProvider(),
+		stackConfig.GetProvisioner(),
 		stackConfig.GetAccount(), // may be blank depending on the provider
 		stackConfig.GetProfile(),
 		stackConfig.GetCluster(),
