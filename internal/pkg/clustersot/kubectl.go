@@ -86,7 +86,7 @@ func (c KubeCtlClusterSot) IsReady() (bool, error) {
 		"-n",
 		"kube-system",
 		"get", "pod",
-		"-o", "go-template=\"{{ range .items }}{{ printf \"%%s\\n\" .status.phase }}{{ end }}\"",
+		"-o", `go-template={{ range .items }}{{ printf "%s\n" .status.phase }}{{ end }}`,
 	}
 
 	envVars := map[string]string{
@@ -101,11 +101,16 @@ func (c KubeCtlClusterSot) IsReady() (bool, error) {
 
 	kubeCtlOutput := stdoutBuf.String()
 
+	log.Logger.Tracef("kubectl readiness check raw output:\n%s", kubeCtlOutput)
+
 	// see whether any statuses apart from "Running" or "Succeeded" were returned
 	kubeCtlOutput = strings.Replace(kubeCtlOutput, "Running", "", -1)
 	kubeCtlOutput = strings.Replace(kubeCtlOutput, "Succeeded", "", -1)
+	kubeCtlOutput = strings.TrimSpace(kubeCtlOutput)
 
-	return strings.TrimSpace(kubeConfig) == "", nil
+	log.Logger.Tracef("kubectl readiness check after replacements:\n'%s'", kubeCtlOutput)
+
+	return kubeCtlOutput == "", nil
 }
 
 func (c KubeCtlClusterSot) Stack() interfaces.IStack {
