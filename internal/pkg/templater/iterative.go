@@ -36,7 +36,7 @@ func IterativelyTemplate(vars map[string]interface{}) (map[string]interface{}, e
 	var renderedYaml string
 
 	for i := 0; i < maxIterations; i++ {
-		log.Logger.Debugf("Templating variables. Iteration %d of max %d", i, maxIterations)
+		log.Logger.Tracef("Templating variables. Iteration %d of max %d", i, maxIterations)
 
 		// convert the input variables to YAML to simplify templating it
 		yamlData, err := yaml.Marshal(&vars)
