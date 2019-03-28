@@ -254,6 +254,7 @@ func (p KopsProvisioner) Update(dryRun bool) error {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	log.Logger.Info("Running Kops rolling update...")
+	// this command might take a long time to complete so don't supply a timeout
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, envVars, &stdoutBuf, &stderrBuf,
 		"", 0, dryRun)
 	if err != nil {
@@ -415,6 +416,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 
 	log.Logger.Info("Updating Kops cluster...")
 
+	// this command might take a long time to complete so don't supply a timeout
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", 0, dryRun)
 	if err != nil {
@@ -620,9 +622,9 @@ func (p KopsProvisioner) needApiAccessViaBastion() bool {
 // If the API server is internal and there's a bastion, set up SSH port forwarding
 func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 
-	if !p.needApiAccessViaBastion() || p.portForwardingActive {
-		log.Logger.Infof("No need to set up SSH port forwarding to access " +
-			"the API server (or it's already set up)")
+	if !p.needApiAccessViaBastion() {
+		log.Logger.Debug("No need to set up SSH port forwarding to access " +
+			"the API server")
 		// no need to do anything
 		return true, nil
 	}
@@ -685,8 +687,6 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 		}
 	}
 
-	// todo - store the kubeconfig path in the registry
-
 	// todo - improve error handling
 	go func() {
 		err = p.setupPortForwarding(p.kopsConfig.SshPrivateKey, p.kopsConfig.BastionUser,
@@ -701,6 +701,8 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 	log.Logger.Infof("Sleeping for %ds while setting up SSH port forwarding",
 		sshPortForwardingDelaySeconds)
 	time.Sleep(sshPortForwardingDelaySeconds * time.Second)
+
+	fmt.Printf("SSH port forwarding established. Use KUBECONFIG=%s", kubeConfigPath)
 
 	return true, nil
 }
@@ -732,7 +734,7 @@ func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
 		return "", errors.WithStack(err)
 	}
 
-	log.Logger.Infof("Kubeconfig file donwloaded to '%s'", kubeConfigPath)
+	log.Logger.Infof("Kubeconfig file downloaded to '%s'", kubeConfigPath)
 
 	return kubeConfigPath, nil
 }
