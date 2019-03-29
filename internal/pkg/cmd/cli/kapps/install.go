@@ -31,13 +31,13 @@ import (
 )
 
 type installCmd struct {
-	out                 io.Writer
-	diffPath            string
-	cacheDir            string
-	dryRun              bool
-	approved            bool
-	oneShot             bool
-	force               bool
+	out io.Writer
+	//diffPath            string
+	cacheDir string
+	dryRun   bool
+	approved bool
+	oneShot  bool
+	//force               bool
 	skipTemplating      bool
 	skipPostActions     bool
 	establishConnection bool
