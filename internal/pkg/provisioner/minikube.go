@@ -168,6 +168,6 @@ func (p MinikubeProvisioner) EnsureClusterConnectivity() (bool, error) {
 }
 
 // Nothing to do for this provisioner
-func (p MinikubeProvisioner) Close(dryRun bool) error {
+func (p MinikubeProvisioner) Close() error {
 	return nil
 }

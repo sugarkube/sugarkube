@@ -19,8 +19,12 @@ package kapps
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	cmd2 "github.com/sugarkube/sugarkube/internal/pkg/cmd"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"io"
 )
+
+var stackObj interfaces.IStack
 
 func NewKappsCmds(out io.Writer) *cobra.Command {
 
@@ -28,6 +32,14 @@ func NewKappsCmds(out io.Writer) *cobra.Command {
 		Use:   "kapps [command]",
 		Short: fmt.Sprintf("Work with kapps"),
 		Long:  `Install and uninstall kapps`,
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			if stackObj != nil {
+				err := stackObj.GetProvisioner().Close()
+				if err != nil {
+					cmd2.CheckError(err)
+				}
+			}
+		},
 	}
 
 	cmd.AddCommand(

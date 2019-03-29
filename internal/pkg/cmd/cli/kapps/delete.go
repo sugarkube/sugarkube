@@ -113,7 +113,7 @@ process before deleting the selected kapps.
 
 func (c *deleteCmd) run() error {
 
-	// todo - pull out the command stuff with apply.go
+	// todo - pull out the stuff common to install.go
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &structs.Stack{
@@ -125,7 +125,9 @@ func (c *deleteCmd) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig,
+	var err error
+
+	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig,
 		config.CurrentConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)

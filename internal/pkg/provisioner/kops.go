@@ -846,7 +846,7 @@ func assertInHostsFile(ip string, domain string) error {
 }
 
 // Shutdown SSH port forwarding if it's been set up
-func (p KopsProvisioner) Close(dryRun bool) error {
+func (p KopsProvisioner) Close() error {
 	if p.sshCommand != nil {
 		log.Logger.Info("Terminating SSH port forwarding...")
 
@@ -856,6 +856,8 @@ func (p KopsProvisioner) Close(dryRun bool) error {
 		}
 
 		log.Logger.Debug("SSH port forwarding terminated")
+	} else {
+		log.Logger.Debug("SSH port forwarding wasn't set up so no need to shut it down.")
 	}
 
 	return nil

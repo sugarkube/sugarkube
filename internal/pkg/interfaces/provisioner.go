@@ -32,5 +32,5 @@ type IProvisioner interface {
 	// might not be necessary to do anything, or it may have already been set up)
 	EnsureClusterConnectivity() (bool, error)
 	// Shutdown any connectivity to the cluster if any was set up
-	Close(dryRun bool) error
+	Close() error
 }

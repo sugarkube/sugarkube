@@ -69,6 +69,6 @@ func (p NoOpProvisioner) EnsureClusterConnectivity() (bool, error) {
 }
 
 // Nothing to do for this provisioner
-func (p NoOpProvisioner) Close(dryRun bool) error {
+func (p NoOpProvisioner) Close() error {
 	return nil
 }
