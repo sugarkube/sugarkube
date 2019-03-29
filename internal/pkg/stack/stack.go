@@ -94,7 +94,7 @@ func (s Stack) GetProvider() interfaces.IProvider {
 	return s.provider
 }
 
-func (s Stack) GetRegistry() *registry.Registry {
+func (s Stack) GetRegistry() interfaces.IRegistry {
 	return s.registry
 }
 

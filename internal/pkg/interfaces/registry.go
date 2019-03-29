@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-package structs
+package interfaces
 
-type Source struct {
-	Id      string
-	Uri     string
-	Options map[string]interface{} // we don't have explicit path/branch fields because this struct must be
-	// generic enough for all acquirers, not be specific to git
-	IncludeValues bool // todo - decide if this is needed and remove if not
+type IRegistry interface {
+	SetString(key string, value string)
+	GetString(key string) (string, bool)
+	AsMap() map[string]interface{}
 }

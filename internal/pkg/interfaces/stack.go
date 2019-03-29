@@ -16,10 +16,6 @@
 
 package interfaces
 
-import (
-	"github.com/sugarkube/sugarkube/internal/pkg/registry"
-)
-
 type IClusterStatus interface {
 	IsOnline() bool
 	SetIsOnline(bool)
@@ -57,7 +53,7 @@ type IStack interface {
 	GetStatus() IClusterStatus
 	GetProvider() IProvider
 	GetProvisioner() IProvisioner
-	GetRegistry() *registry.Registry
+	GetRegistry() IRegistry
 	GetTemplatedVars(installableObj IInstallable,
 		installerVars map[string]interface{}) (map[string]interface{}, error)
 }

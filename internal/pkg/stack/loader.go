@@ -90,7 +90,7 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *structs.Stac
 
 	stackConfig.SetProviderVars(providerVars)
 
-	registryImpl := registry.NewRegistry()
+	registryImpl := registry.New()
 
 	stackObj, err := newStack(globalConfig, stackConfig, providerImpl, &registryImpl)
 	if err != nil {
