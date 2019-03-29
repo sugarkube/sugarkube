@@ -24,7 +24,6 @@
 
 * use ps (https://github.com/shirou/gopsutil/) to check whether SSH port forwarding is actually set up, and 
   if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
-* error handling - shut down SSH port forwarding on error instead of leaving it dangling
 
 * document  tf-params vs tf-opts and the same for helm in the makefiles
 
