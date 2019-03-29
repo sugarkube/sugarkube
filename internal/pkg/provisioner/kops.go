@@ -71,6 +71,7 @@ type KopsProvisioner struct {
 	stack                interfaces.IStack
 	kopsConfig           KopsConfig
 	portForwardingActive bool
+	sshCommand           *exec.Cmd
 }
 
 type KopsConfig struct {
@@ -772,12 +773,14 @@ func (p KopsProvisioner) setupPortForwarding(privateKey string, sshUser string, 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	// todo - make this configurable. Ideally users should push a known host key
 	// onto the bastion via metadata
-	sshCmd := exec.Command(sshPath, "-o", "StrictHostKeyChecking no",
+	sshCommand := exec.Command(sshPath, "-o", "StrictHostKeyChecking no",
 		"-i", privateKey, "-v", "-NL", connectionString, userHost)
-	sshCmd.Stdout = &stdoutBuf
-	sshCmd.Stderr = &stderrBuf
+	sshCommand.Stdout = &stdoutBuf
+	sshCommand.Stderr = &stderrBuf
 
-	err := sshCmd.Start()
+	p.sshCommand = sshCommand
+
+	err := sshCommand.Start()
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -843,6 +846,17 @@ func assertInHostsFile(ip string, domain string) error {
 }
 
 // Shutdown SSH port forwarding if it's been set up
-func (k KopsProvisioner) Close(dryRun bool) error {
-	return nil // todo
+func (p KopsProvisioner) Close(dryRun bool) error {
+	if p.sshCommand != nil {
+		log.Logger.Info("Terminating SSH port forwarding...")
+
+		err := p.sshCommand.Process.Kill()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		log.Logger.Debug("SSH port forwarding terminated")
+	}
+
+	return nil
 }
