@@ -98,9 +98,6 @@
   start applying kapps from the point where their cluster is set up, but they can still explicitly set that
   flag to start at the start.
 
-* EnsureClusterConnectivity should export the kops kubeconfig file if the user doesn't have it already (i.e. it's not
-  listed in `kubectl config get-contexts`)
-
 * We should probably merge structs using mergo.WithAppendSlice and mergo.WithOverride (e.g. 
    mergo.Merge(result, fragment, mergo.WithAppendSlice, mergo.WithOverride)) but whichever we do will cause
    problems for some people. We should probably make it a config option as to whether to enable WithAppendSlice 
