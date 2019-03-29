@@ -22,32 +22,35 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
+	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 )
 
 type destroyCmd struct {
-	out             io.Writer
-	diffPath        string
-	cacheDir        string
-	dryRun          bool
-	approved        bool
-	oneShot         bool
-	force           bool
-	skipTemplating  bool
-	skipPostActions bool
-	stackName       string
-	stackFile       string
-	provider        string
-	provisioner     string
-	profile         string
-	account         string
-	cluster         string
-	region          string
-	includeSelector []string
-	excludeSelector []string
+	out                 io.Writer
+	diffPath            string
+	cacheDir            string
+	dryRun              bool
+	approved            bool
+	oneShot             bool
+	force               bool
+	skipTemplating      bool
+	skipPostActions     bool
+	establishConnection bool
+	stackName           string
+	stackFile           string
+	provider            string
+	provisioner         string
+	profile             string
+	account             string
+	cluster             string
+	region              string
+	includeSelector     []string
+	excludeSelector     []string
 }
 
 func newDestroyCmd(out io.Writer) *cobra.Command {
@@ -58,7 +61,15 @@ func newDestroyCmd(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "destroy [flags] [stack-file] [stack-name] [cache-dir]",
 		Short: fmt.Sprintf("Destroy kapps from a cluster"),
-		Long:  `Destroy cached kapps from a target cluster according to manifests.`,
+		Long: `Destroy cached kapps from a target cluster according to manifests.
+
+For Kubernetes clusters with a non-public API server, the provisioner may need 
+to set up connectivity to make it accessible to Sugarkube (e.g. by setting up 
+SSH port forwarding via a bastion). This happens automatically when a cluster 
+is created or updated by Sugarkube, but if you're destroying individual kapps 
+you may need to pass the '--connect' flag to make Sugarkube go through that
+process before destroying the selected kapps.
+`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")
@@ -83,6 +94,7 @@ func newDestroyCmd(out io.Writer) *cobra.Command {
 		"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before destroying them")
 	f.BoolVar(&c.skipPostActions, "no-post-actions", false, "skip running post actions in kapps - useful to quickly tear down a cluster")
+	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
 	f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to destroy. If not given, a "+
 		"diff will be generated")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
@@ -174,6 +186,22 @@ func (c *destroyCmd) run() error {
 		}
 
 		// todo - print out the plan
+	}
+
+	if c.establishConnection {
+		log.Logger.Infof("%sEstablishing connectivity to the API server",
+			dryRunPrefix)
+		if !c.dryRun {
+			isOnline, err := provisioner.IsAlreadyOnline(stackObj.GetProvisioner(), c.dryRun)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			if !isOnline {
+				return errors.New(fmt.Sprintf("Cluster '%s' isn't online. Can't "+
+					"establish a connection to the API server", stackObj.GetConfig().GetCluster()))
+			}
+		}
 	}
 
 	if !c.oneShot {
