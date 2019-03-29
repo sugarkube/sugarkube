@@ -98,7 +98,7 @@ func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IMa
 	var previousManifest interfaces.IManifest
 
 	for _, installableObj := range selectedInstallables {
-		var installDestroyTask *task
+		var installDeleteTask *task
 
 		// create a new tranche for each new manifest
 		if previousManifest != nil && previousManifest.Id() != installableObj.ManifestId() &&
@@ -115,22 +115,22 @@ func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IMa
 
 		// when creating a forward plan, we can install kapps...
 		if forward && installableObj.State() == constants.PresentKey {
-			installDestroyTask = &task{
+			installDeleteTask = &task{
 				installableObj: installableObj,
 				action:         constants.TaskActionInstall,
 			}
-			// but reverse plans must always destroy them
+			// but reverse plans must always delete them
 		} else if !forward || installableObj.State() == constants.AbsentKey {
-			installDestroyTask = &task{
+			installDeleteTask = &task{
 				installableObj: installableObj,
-				action:         constants.TaskActionDestroy,
+				action:         constants.TaskActionDelete,
 			}
 		}
 
-		if installDestroyTask != nil {
-			log.Logger.Debugf("Adding %s task for kapp '%s'", installDestroyTask.action,
+		if installDeleteTask != nil {
+			log.Logger.Debugf("Adding %s task for kapp '%s'", installDeleteTask.action,
 				installableObj.FullyQualifiedId())
-			tasks = append(tasks, *installDestroyTask)
+			tasks = append(tasks, *installDeleteTask)
 		}
 
 		// when tearing down a cluster users may not want to execute any post-actions
@@ -248,7 +248,7 @@ func reverse(plan *Plan) {
 }
 
 // Run a plan to make a target cluster have the necessary kapps installed/
-// destroyed to match the input manifests. Each tranche is run sequentially,
+// deleted to match the input manifests. Each tranche is run sequentially,
 // and each kapp in each tranche is processed in parallel.
 func (p *Plan) Run(approved bool, dryRun bool) error {
 
@@ -319,7 +319,7 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 	return nil
 }
 
-// Installs or destroys a kapp using the appropriate Installer
+// Installs or deletes a kapp using the appropriate Installer
 func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 
 	for job := range jobs {
@@ -356,10 +356,10 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
 			}
 			break
-		case constants.TaskActionDestroy:
-			err := installer.Destroy(installerImpl, installableObj, stackObj, approved, renderTemplates, dryRun)
+		case constants.TaskActionDelete:
+			err := installer.Delete(installerImpl, installableObj, stackObj, approved, renderTemplates, dryRun)
 			if err != nil {
-				errCh <- errors.Wrapf(err, "Error destroying kapp '%s'", installableObj.Id())
+				errCh <- errors.Wrapf(err, "Error deleting kapp '%s'", installableObj.Id())
 			}
 			break
 		case constants.TaskActionClusterUpdate:

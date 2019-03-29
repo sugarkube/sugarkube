@@ -49,8 +49,8 @@ type installCmd struct {
 	account             string
 	cluster             string
 	region              string
-	startFrom           string // todo - implement, and add the same flag to the destroy command
-	runUntil            string // todo - implement, and add the same flag to the destroy command
+	startFrom           string // todo - implement, and add the same flag to the delete command
+	runUntil            string // todo - implement, and add the same flag to the delete command
 	includeSelector     []string
 	excludeSelector     []string
 	onlineTimeout       uint32
@@ -91,9 +91,9 @@ process before installing the selected kapps.
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVar(&c.approved, "approved", false, "actually install kapps. If false, kapps will be expected to plan "+
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
-	f.BoolVar(&c.oneShot, "one-shot", false, "apply a cluster diff in a single pass by invoking each kapp with "+
-		"'APPROVED=false' then 'APPROVED=true' to install/destroy kapps in a single invocation of sugarkube")
-	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/destroy all the kapps "+
+	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp with 'APPROVED=false' then "+
+		"'APPROVED=true' to install kapps in a single pass")
+	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/delete all the kapps "+
 	//	"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before installing them")
 	f.BoolVar(&c.skipPostActions, "no-post-actions", false, "skip running post actions in kapps")

@@ -87,14 +87,14 @@ process before deleting the selected kapps.
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVar(&c.approved, "approved", false, "actually delete kapps. If false, kapps will be expected to plan "+
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
-	f.BoolVar(&c.oneShot, "one-shot", false, "destroy a cluster diff in a single pass by invoking each kapp with "+
-		"'APPROVED=false' then 'APPROVED=true' to install/destroy kapps in a single invocation of sugarkube")
-	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/destroy all the kapps "+
+	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp with 'APPROVED=false' then "+
+		"'APPROVED=true' to delete kapps in a single pass")
+	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/delete all the kapps "+
 	//	"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
-	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before destroying them")
+	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before deleting them")
 	f.BoolVar(&c.skipPostActions, "no-post-actions", false, "skip running post actions in kapps - useful to quickly tear down a cluster")
 	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
-	//f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to destroy. If not given, a "+
+	//f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to delete. If not given, a "+
 	//	"diff will be generated")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")

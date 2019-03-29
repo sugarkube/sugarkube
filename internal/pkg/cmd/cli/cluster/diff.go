@@ -46,7 +46,7 @@ to the kapps that should be present/absent according to the manifests.
 This command checks the current state of a cluster by consulting the configured 
 Source-of-Truth. It compares that against the list of kapps specified in the 
 manifests to be present or absent and then calculates which kapps should be 
-installed and destroyed.
+installed and deleted.
 
 When run with '--extended' this command will also include the contents of each
 kapp's 'sugarkube.yaml' file (if it exists). This can be used to inform e.g.

@@ -26,7 +26,7 @@ import (
 type Installer interface {
 	install(installableObj interfaces.IInstallable, stack interfaces.IStack, approved bool,
 		renderTemplates bool, dryRun bool) error
-	destroy(installableObj interfaces.IInstallable, stack interfaces.IStack, approved bool,
+	delete(installableObj interfaces.IInstallable, stack interfaces.IStack, approved bool,
 		renderTemplates bool, dryRun bool) error
 	name() string
 }
@@ -52,9 +52,9 @@ func Install(i Installer, installableObj interfaces.IInstallable, stack interfac
 	return i.install(installableObj, stack, approved, renderTemplates, dryRun)
 }
 
-// Destroys a kapp by delegating to an Installer implementation
-func Destroy(i Installer, installableObj interfaces.IInstallable, stack interfaces.IStack,
+// Deletes a kapp by delegating to an Installer implementation
+func Delete(i Installer, installableObj interfaces.IInstallable, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
-	log.Logger.Infof("Destroying kapp '%s'...", installableObj.FullyQualifiedId())
-	return i.destroy(installableObj, stack, approved, renderTemplates, dryRun)
+	log.Logger.Infof("Deleting kapp '%s'...", installableObj.FullyQualifiedId())
+	return i.delete(installableObj, stack, approved, renderTemplates, dryRun)
 }

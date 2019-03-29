@@ -35,7 +35,7 @@ type MakeInstaller struct {
 }
 
 const TargetInstall = "install"
-const TargetDestroy = "destroy"
+const TargetDelete = "delete"
 
 // Return the name of this installer
 func (i MakeInstaller) name() string {
@@ -172,8 +172,8 @@ func (i MakeInstaller) install(installableObj interfaces.IInstallable, stack int
 	return i.run(TargetInstall, installableObj, stack, approved, renderTemplates, dryRun)
 }
 
-// Destroy a kapp
-func (i MakeInstaller) destroy(installableObj interfaces.IInstallable, stack interfaces.IStack,
+// Delete a kapp
+func (i MakeInstaller) delete(installableObj interfaces.IInstallable, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
-	return i.run(TargetDestroy, installableObj, stack, approved, renderTemplates, dryRun)
+	return i.run(TargetDelete, installableObj, stack, approved, renderTemplates, dryRun)
 }

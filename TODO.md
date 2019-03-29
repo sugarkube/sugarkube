@@ -27,8 +27,6 @@
   if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
 * error handling - shut down SSH port forwarding on error instead of leaving it dangling
 
-* Add the `--connect` flag to `kapps destroy`
-
 * document  tf-params vs tf-opts and the same for helm in the makefiles
 
 * Print out the plan before executing it
