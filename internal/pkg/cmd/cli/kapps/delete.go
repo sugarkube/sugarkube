@@ -85,7 +85,7 @@ process before deleting the selected kapps.
 
 	f := cmd.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
-	f.BoolVar(&c.approved, "approved", false, "actually delete kapps. If false, kapps will be expected to plan "+
+	f.BoolVarP(&c.approved, "yes", "y", false, "actually delete kapps. If false, kapps will be expected to plan "+
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
 	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp with 'APPROVED=false' then "+
 		"'APPROVED=true' to delete kapps in a single pass")

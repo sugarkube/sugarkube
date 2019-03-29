@@ -67,6 +67,21 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 		Short: fmt.Sprintf("Install kapps into a cluster"),
 		Long: `Install cached kapps in a target cluster according to manifests.
 
+Kapps are installed using two phases - the first expects kapps to plan their
+changes but not actually perform any. For example, during this phase any
+kapps that use Terraform will run 'terraform plan'. This is the default action for 
+this command. If you're running Sugarkube in a CI/CD system and want to inspect 
+the plan before applying it you could grep stdout after running this pass.
+
+To actually install/apply kapps, rerun the command passing '--yes'.
+
+For convenience if you invoke Sugarkube passing '--one-shot' it will run both 
+phases sequentially.
+
+Dry run mode differs to the planning phase by not actually running kapps at all - 
+Sugarkube will just print out how it would invoke each kapp. Dry run mode is 
+designed to be fast.
+
 For Kubernetes clusters with a non-public API server, the provisioner may need 
 to set up connectivity to make it accessible to Sugarkube (e.g. by setting up 
 SSH port forwarding via a bastion). This happens automatically when a cluster 
@@ -89,7 +104,7 @@ process before installing the selected kapps.
 
 	f := cmd.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
-	f.BoolVar(&c.approved, "approved", false, "actually install kapps. If false, kapps will be expected to plan "+
+	f.BoolVarP(&c.approved, "yes", "y", false, "actually install kapps. If false, kapps will be expected to plan "+
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
 	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp with 'APPROVED=false' then "+
 		"'APPROVED=true' to install kapps in a single pass")
