@@ -138,6 +138,7 @@ func (p KopsProvisioner) clusterConfigExists() (bool, error) {
 					"Check your credentials.")
 		}
 
+		// todo - catch errors due to missing/expired AWS credentials and throw an error
 		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
 			log.Logger.Info("Kops cluster config doesn't exist")
 			return false, nil
@@ -758,7 +759,7 @@ func replaceAllInFile(search string, replacement string, path string) error {
 }
 
 // Sets up SSH port forwarding
-func (p KopsProvisioner) setupPortForwarding(privateKey string, sshUser string, sshHost string,
+func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string, sshHost string,
 	localPort int, remoteAddress string, remotePort int) error {
 
 	connectionString := strings.Join([]string{localhost,
@@ -856,6 +857,8 @@ func (p KopsProvisioner) Close() error {
 		}
 
 		log.Logger.Debug("SSH port forwarding terminated")
+
+		// todo - delete the downloaded kubeconfig file
 	} else {
 		log.Logger.Debug("SSH port forwarding wasn't set up so no need to shut it down.")
 	}

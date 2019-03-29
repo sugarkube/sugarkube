@@ -32,7 +32,8 @@ func New() Registry {
 	return Registry{
 		mapStringString: map[string]string{
 			// todo - find a better way of initialising this. We need to do this
-			//  so `kapp vars` doesn't output '<no value>' which might be confusing
+			//  so `kapp vars` doesn't output '<no value>' which might be confusing.
+			//  Maybe we should try to pull these from env vars?
 			constants.RegistryKeyKubeConfig: "",
 		},
 	}

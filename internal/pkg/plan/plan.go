@@ -351,13 +351,13 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 
 		switch task.action {
 		case constants.TaskActionInstall:
-			err := installer.Install(installerImpl, installableObj, stackObj, approved, renderTemplates, dryRun)
+			err := installerImpl.Install(installableObj, stackObj, approved, renderTemplates, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
 			}
 			break
 		case constants.TaskActionDelete:
-			err := installer.Delete(installerImpl, installableObj, stackObj, approved, renderTemplates, dryRun)
+			err := installerImpl.Delete(installableObj, stackObj, approved, renderTemplates, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error deleting kapp '%s'", installableObj.Id())
 			}

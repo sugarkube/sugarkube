@@ -61,16 +61,6 @@ func New(stackConfig interfaces.IStackConfig) (interfaces.IProvider, error) {
 	return providerImpl, nil
 }
 
-// Return vars loaded from configs that should be passed on to kapps by Installers
-func GetInstallerVars(provider interfaces.IProvider) map[string]interface{} {
-	return provider.GetInstallerVars()
-}
-
-// Returns the name of the provider
-func GetName(p interfaces.IProvider) string {
-	return p.GetName()
-}
-
 // Finds all vars files for the given provider and returns the result of merging
 // all the data.
 func GetVarsFromFiles(provider interfaces.IProvider,

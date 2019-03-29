@@ -34,6 +34,7 @@ func NewKappsCmds(out io.Writer) *cobra.Command {
 		Long:  `Install and uninstall kapps`,
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
 			if stackObj != nil {
+				// todo - run this even if there was an error / Ctrl-C
 				err := stackObj.GetProvisioner().Close()
 				if err != nil {
 					cmd2.CheckError(err)

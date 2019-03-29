@@ -85,7 +85,7 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *structs.Stac
 	if len(providerVars) == 0 {
 		log.Logger.Fatal("No values loaded for provider")
 		return nil, errors.New(fmt.Sprintf("Failed to load variables for provider %s",
-			provider.GetName(providerImpl)))
+			providerImpl.GetName()))
 	}
 
 	stackConfig.SetProviderVars(providerVars)
@@ -105,6 +105,11 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *structs.Stac
 	numKapps := 0
 	for _, manifest := range stackConfig.Manifests() {
 		numKapps += len(manifest.Installables())
+	}
+
+	if stackObj.GetConfig().GetCluster() == "" {
+		return nil, errors.New("No cluster name defined. Rerun your command adding `--cluster=<name>` or " +
+			"define it in your stack.")
 	}
 
 	_, err = fmt.Fprintf(out, "Successfully loaded stack config containing %d "+
