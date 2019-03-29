@@ -841,3 +841,8 @@ func assertInHostsFile(ip string, domain string) error {
 
 	return nil
 }
+
+// Shutdown SSH port forwarding if it's been set up
+func (k KopsProvisioner) Close(dryRun bool) error {
+	return nil // todo
+}

@@ -167,7 +167,7 @@ func UpdateCluster(out io.Writer, stackObj interfaces.IStack, autoCreate bool,
 			return errors.WithStack(err)
 		}
 
-		err = provisioner.Update(stackObj.GetProvisioner(), dryRun)
+		err = stackObj.GetProvisioner().Update(dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

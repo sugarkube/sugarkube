@@ -9,7 +9,6 @@
   access to the main config repo). Manifest variables will simplify passing env vars to all kapps in the manifest
   (e.g. for the tiller-namespace, etc.)
   
-* Rename destroy -> delete (update the kapps command and common makefiles as well as installers)
 * Print important info instead of logging it
 * Add support for verifying signed tags
 * More tests 

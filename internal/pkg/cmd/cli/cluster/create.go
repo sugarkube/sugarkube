@@ -165,7 +165,7 @@ func CreateCluster(out io.Writer, stackObj interfaces.IStack, dryRun bool) error
 		return errors.WithStack(err)
 	}
 
-	err = provisioner.Create(stackObj.GetProvisioner(), dryRun)
+	err = stackObj.GetProvisioner().Create(dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
