@@ -30,7 +30,7 @@ import (
 	"io"
 )
 
-type applyCmd struct {
+type installCmd struct {
 	out                 io.Writer
 	diffPath            string
 	cacheDir            string
@@ -57,20 +57,20 @@ type applyCmd struct {
 	readyTimeout        uint32
 }
 
-func newApplyCmd(out io.Writer) *cobra.Command {
-	c := &applyCmd{
+func newInstallCmd(out io.Writer) *cobra.Command {
+	c := &installCmd{
 		out: out,
 	}
 
 	cmd := &cobra.Command{
-		Use:   "apply [flags] [stack-file] [stack-name] [cache-dir]",
+		Use:   "install [flags] [stack-file] [stack-name] [cache-dir]",
 		Short: fmt.Sprintf("Install kapps into a cluster"),
-		Long: `Apply cached kapps to a target cluster according to manifests.
+		Long: `Install cached kapps in a target cluster according to manifests.
 
 For Kubernetes clusters with a non-public API server, the provisioner may need 
 to set up connectivity to make it accessible to Sugarkube (e.g. by setting up 
 SSH port forwarding via a bastion). This happens automatically when a cluster 
-is created or updated by Sugarkube, but if you're applying individual kapps 
+is created or updated by Sugarkube, but if you're installing individual kapps 
 you may need to pass the '--connect' flag to make Sugarkube go through that
 process before installing the selected kapps.
 `,
@@ -89,27 +89,26 @@ process before installing the selected kapps.
 
 	f := cmd.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
-	f.BoolVar(&c.approved, "approved", false, "actually apply a cluster diff to install/destroy kapps. If false, kapps "+
-		"will be expected to plan their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not "+
-		"apply it).")
+	f.BoolVar(&c.approved, "approved", false, "actually install kapps. If false, kapps will be expected to plan "+
+		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
 	f.BoolVar(&c.oneShot, "one-shot", false, "apply a cluster diff in a single pass by invoking each kapp with "+
 		"'APPROVED=false' then 'APPROVED=true' to install/destroy kapps in a single invocation of sugarkube")
-	f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/destroy all the kapps "+
-		"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
-	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before applying them")
+	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/destroy all the kapps "+
+	//	"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
+	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before installing them")
 	f.BoolVar(&c.skipPostActions, "no-post-actions", false, "skip running post actions in kapps")
 	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
-	f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to apply. If not given, a "+
-		"diff will be generated")
+	//f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to apply. If not given, a "+
+	//	"diff will be generated")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	f.StringVarP(&c.startFrom, "start-from", "f", "", fmt.Sprintf("apply kapps beginning with and including the selected kapp formatted "+
+	f.StringVarP(&c.startFrom, "start-from", "f", "", fmt.Sprintf("install kapps beginning with and including the selected kapp formatted "+
 		"'manifest-id:kapp-id' or 'manifest-id:%s'", constants.WildcardCharacter))
-	f.StringVarP(&c.runUntil, "until", "u", "", fmt.Sprintf("apply kapps upto and including the selected kapp formatted "+
+	f.StringVarP(&c.runUntil, "until", "u", "", fmt.Sprintf("install kapps upto and including the selected kapp formatted "+
 		"'manifest-id:kapp-id' or 'manifest-id:%s'", constants.WildcardCharacter))
 	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
 		fmt.Sprintf("only process specified kapps (can specify multiple, formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all)",
@@ -122,7 +121,7 @@ process before installing the selected kapps.
 	return cmd
 }
 
-func (c *applyCmd) run() error {
+func (c *installCmd) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &structs.Stack{
@@ -150,53 +149,54 @@ func (c *applyCmd) run() error {
 
 	var actionPlan *plan.Plan
 
-	if !c.force {
-		panic("Cluster diffing not implemented. Pass --force")
-
-		if c.diffPath != "" {
-			// todo load a cluster diff from a file
-
-			// todo - validate that the embedded stack config matches the target cluster.
-
-			// in future we may want to be able to work entirely from a cluster
-			// diff, in which case it'd really be a plan for us
-			if len(stackObj.GetConfig().Manifests()) > 0 {
-				// todo - validate that the cluster diff matches the manifests, e.g. that
-				// the versions of kapps in the manifests match the versions in the cluster
-				// diff
-			}
-		} else {
-			// todo - create a cluster diff based on stackConfig.Manifests
-		}
-
-		// todo - diff the cache against the kapps in the cluster diff and abort if
-		// it's out-of-sync (unless flags are set to ignore cache changes), e.g.:
-		//cacheDiff, err := cacher.DiffKappCache(clusterDiff, c.cacheDir)
-		//if err != nil {
-		//	return errors.WithStack(err)
-		//}
-		//if len(diff) != 0 {
-		//	return errors.New("Cache out-of-sync with manifests: %s", diff)
-		//}
-
-		// todo - create an action plan from the validated cluster diff
-		//actionPlan, err := plan.FromDiff(clusterDiff)
-
-	} else {
-		_, err = fmt.Fprintf(c.out, "%sPlanning operations on kapps\n", dryRunPrefix)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		// force mode, so no need to perform validation. Just create a plan
-		actionPlan, err = plan.Create(true, stackObj, stackObj.GetConfig().Manifests(),
-			c.cacheDir, c.includeSelector, c.excludeSelector, !c.skipTemplating, !c.skipPostActions)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		// todo - print out the plan
+	// uncomment this when we implement cluster diffing
+	//if !c.force {
+	//	panic("Cluster diffing not implemented. Pass --force")
+	//
+	//	if c.diffPath != "" {
+	//		// todo load a cluster diff from a file
+	//
+	//		// todo - validate that the embedded stack config matches the target cluster.
+	//
+	//		// in future we may want to be able to work entirely from a cluster
+	//		// diff, in which case it'd really be a plan for us
+	//		if len(stackObj.GetConfig().Manifests()) > 0 {
+	//			// todo - validate that the cluster diff matches the manifests, e.g. that
+	//			// the versions of kapps in the manifests match the versions in the cluster
+	//			// diff
+	//		}
+	//	} else {
+	//		// todo - create a cluster diff based on stackConfig.Manifests
+	//	}
+	//
+	//	// todo - diff the cache against the kapps in the cluster diff and abort if
+	//	// it's out-of-sync (unless flags are set to ignore cache changes), e.g.:
+	//	//cacheDiff, err := cacher.DiffKappCache(clusterDiff, c.cacheDir)
+	//	//if err != nil {
+	//	//	return errors.WithStack(err)
+	//	//}
+	//	//if len(diff) != 0 {
+	//	//	return errors.New("Cache out-of-sync with manifests: %s", diff)
+	//	//}
+	//
+	//	// todo - create an action plan from the validated cluster diff
+	//	//actionPlan, err := plan.FromDiff(clusterDiff)
+	//
+	//} else {
+	_, err = fmt.Fprintf(c.out, "%sPlanning operations on kapps\n", dryRunPrefix)
+	if err != nil {
+		return errors.WithStack(err)
 	}
+
+	// force mode, so no need to perform validation. Just create a plan
+	actionPlan, err = plan.Create(true, stackObj, stackObj.GetConfig().Manifests(),
+		c.cacheDir, c.includeSelector, c.excludeSelector, !c.skipTemplating, !c.skipPostActions)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// todo - print out the plan
+	//}
 
 	if c.establishConnection {
 		log.Logger.Infof("%sEstablishing connectivity to the API server",
@@ -232,7 +232,7 @@ func (c *applyCmd) run() error {
 			return errors.WithStack(err)
 		}
 
-		_, err = fmt.Fprintf(c.out, "%sFirst applying the plan with APPROVED=false for "+
+		_, err = fmt.Fprintf(c.out, "%sFirst running the plan with APPROVED=false for "+
 			"kapps to plan their changes...\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
