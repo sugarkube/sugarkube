@@ -96,6 +96,7 @@ var configFile string
 func NewCommand(name string) *cobra.Command {
 
 	rootCmd.Use = name
+	rootCmd.SilenceUsage = true
 
 	out := rootCmd.OutOrStdout()
 

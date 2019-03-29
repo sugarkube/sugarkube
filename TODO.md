@@ -33,7 +33,6 @@
 
 * Print out the plan before executing it
 * Print details of kapps being executed
-* Don't always display usage if an error is thrown
 * Implement deleting clusters
 * Fix failing integration test
 * Wordpress site 2 isn't cached when running 'cache create' (probably due to it referring to a non-existent branch - 
