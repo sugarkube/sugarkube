@@ -18,6 +18,10 @@ package structs
 
 // Structs to load a stack YAML file
 
+type ManifestDescriptorOverrides struct {
+	KappDescriptor `yaml:",inline"`
+}
+
 // Describes where to find the manifest plus some other data, but isn't the manifest itself
 type ManifestDescriptor struct {
 	Id  string `yaml:"id"` // a default will be used if not explicitly set. Used to namespace cache entries
@@ -26,7 +30,7 @@ type ManifestDescriptor struct {
 	// todo - we should get rid of the Id and Uri fields and just use a Source and acquirers:
 	//Source `yaml:",inline"`
 
-	Overrides map[string]interface{}
+	Overrides ManifestDescriptorOverrides
 }
 
 type Stack struct {

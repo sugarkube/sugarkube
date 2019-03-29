@@ -19,18 +19,19 @@ package structs
 // Structs to load a manifest YAML file
 
 type Template struct {
-	Source string
-	Dest   string
+	Source    string
+	Dest      string
+	Sensitive bool // sensitive templates will be templated just-in-time then deleted immediately after
+	// executing the kapp. This provides a way of passing secrets to kapps while keeping them off
+	// disk as much as possible.
 }
 
 // Describes where to find the kapp plus some other data, but isn't the kapp itself
 type KappDescriptor struct {
-	Id          string
-	State       string
-	Vars        map[string]interface{}
-	PostActions []string `yaml:"post_actions"`
-	Sources     []Source
-	Templates   []Template
+	Id         string
+	State      string
+	FilePath   string // path of the file the descriptor was loaded from (for resolving relative paths)
+	KappConfig `yaml:",inline"`
 }
 
 type ManifestOptions struct {
@@ -38,6 +39,9 @@ type ManifestOptions struct {
 }
 
 type Manifest struct {
+	FilePath       string     // path of the manifest file (for resolving relative paths)
+	Defaults       KappConfig // Defaults that apply to all kapps in the manifest
+	States         []string   // Basenames of files to merge in with the highest priority
 	Options        ManifestOptions
 	KappDescriptor []KappDescriptor `yaml:"kapps"`
 }

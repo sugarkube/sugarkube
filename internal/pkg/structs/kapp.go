@@ -31,4 +31,8 @@ type ProgramConfig struct {
 type KappConfig struct {
 	ProgramConfig `yaml:",inline"`
 	Requires      []string `yaml:"requires"`
+	PostActions   []string `yaml:"post_actions"`
+	Templates     []Template
+	Vars          map[string]interface{}
+	Sources       []Source
 }
