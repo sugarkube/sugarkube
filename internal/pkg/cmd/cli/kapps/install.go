@@ -153,7 +153,7 @@ process before installing the selected kapps.
 func (c *installCmd) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
-	cliStackConfig := &structs.Stack{
+	cliStackConfig := &structs.StackFile{
 		Provider:    c.provider,
 		Provisioner: c.provisioner,
 		Profile:     c.profile,

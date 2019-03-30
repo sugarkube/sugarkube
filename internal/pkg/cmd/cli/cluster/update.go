@@ -96,7 +96,7 @@ Note: Not all providers require all arguments. See documentation for help.
 func (c *updateCmd) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
-	cliStackConfig := &structs.Stack{
+	cliStackConfig := &structs.StackFile{
 		Provider:    c.provider,
 		Provisioner: c.provisioner,
 		Profile:     c.profile,

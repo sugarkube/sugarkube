@@ -29,7 +29,7 @@ import (
 // The populated config for a stack - all object addresses from the raw stack config have been
 // replaced with actual instances
 type StackConfig struct {
-	rawConfig     structs.Stack
+	stackFile     structs.StackFile
 	providerVars  map[string]interface{}
 	manifests     []interfaces.IManifest
 	onlineTimeout uint32
@@ -43,7 +43,7 @@ func (s StackConfig) Manifests() []interfaces.IManifest {
 
 // Returns the configured list of provider vars dirs
 func (s StackConfig) KappVarsDirs() []string {
-	return s.rawConfig.KappVarsDirs
+	return s.stackFile.KappVarsDirs
 }
 
 // Sets the ready timeout
@@ -58,12 +58,12 @@ func (s *StackConfig) SetOnlineTimeout(timeout uint32) {
 
 // Returns the configured list of template dirs
 func (s StackConfig) TemplateDirs() []string {
-	return s.rawConfig.TemplateDirs
+	return s.stackFile.TemplateDirs
 }
 
 // Returns the configured list of provider vars dirs
 func (s StackConfig) GetProviderVarsDirs() []string {
-	return s.rawConfig.ProviderVarsDirs
+	return s.stackFile.ProviderVarsDirs
 }
 
 // Sets provider vars
@@ -77,31 +77,31 @@ func (s StackConfig) GetProviderVars() map[string]interface{} {
 }
 
 func (s StackConfig) GetName() string {
-	return s.rawConfig.Name
+	return s.stackFile.Name
 }
 
 func (s StackConfig) GetProvider() string {
-	return s.rawConfig.Provider
+	return s.stackFile.Provider
 }
 
 func (s StackConfig) GetProvisioner() string {
-	return s.rawConfig.Provisioner
+	return s.stackFile.Provisioner
 }
 
 func (s StackConfig) GetAccount() string {
-	return s.rawConfig.Account
+	return s.stackFile.Account
 }
 
 func (s StackConfig) GetProfile() string {
-	return s.rawConfig.Profile
+	return s.stackFile.Profile
 }
 
 func (s StackConfig) GetCluster() string {
-	return s.rawConfig.Cluster
+	return s.stackFile.Cluster
 }
 
 func (s StackConfig) GetRegion() string {
-	return s.rawConfig.Region
+	return s.stackFile.Region
 }
 
 func (s StackConfig) GetOnlineTimeout() uint32 {
@@ -128,8 +128,8 @@ func validateStackConfig(stackConfig interfaces.IStackConfig) error {
 // Returns the directory the stack config was loaded from, or the current
 // working directory. This can be used to build relative paths.
 func (s *StackConfig) GetDir() string {
-	if s.rawConfig.FilePath != "" {
-		return filepath.Dir(s.rawConfig.FilePath)
+	if s.stackFile.FilePath != "" {
+		return filepath.Dir(s.stackFile.FilePath)
 	} else {
 		// todo - remove this? It's probably unnecessary and will just introduce bugs/unexpected behaviour
 		executable, err := os.Executable()
@@ -146,7 +146,7 @@ func (s *StackConfig) GetDir() string {
 func (s *StackConfig) GetIntrinsicData() map[string]string {
 	return map[string]string{
 		"name":        s.GetName(),
-		"filePath":    s.rawConfig.FilePath,
+		"filePath":    s.stackFile.FilePath,
 		"provider":    s.GetProvider(),
 		"provisioner": s.GetProvisioner(),
 		"account":     s.GetAccount(),

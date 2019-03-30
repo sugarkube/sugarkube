@@ -130,7 +130,7 @@ func (c *deleteCmd) run() error {
 	// todo - pull out the stuff common to install.go
 
 	// CLI overrides - will be merged with any loaded from a stack config file
-	cliStackConfig := &structs.Stack{
+	cliStackConfig := &structs.StackFile{
 		Provider:    c.provider,
 		Provisioner: c.provisioner,
 		Profile:     c.profile,

@@ -37,34 +37,34 @@ import (
 // variables are loaded and set as a property on the stackConfig. So after this step, stackConfig contains
 // all config values for the entire stack (although it won't have been templated yet so any '{{var_name}}'
 // type strings won't have been interpolated yet.
-func BuildStack(stackName string, stackFile string, cliStackConfig *structs.Stack,
+func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.StackFile,
 	globalConfig *config.Config, out io.Writer) (interfaces.IStack, error) {
 
 	if strings.TrimSpace(stackName) == "" {
 		return nil, errors.New("The stack name is required")
 	}
 
-	if strings.TrimSpace(stackFile) == "" {
+	if strings.TrimSpace(stackFilePath) == "" {
 		return nil, errors.New("A stack config file path is required")
 	}
 
-	rawStackConfig, err := loadStackConfigFile(stackName, stackFile)
+	stackFile, err := loadStackFile(stackName, stackFilePath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	log.Logger.Tracef("Merging raw stack config %#v with CLI values: %#v", rawStackConfig,
+	log.Logger.Tracef("Merging raw stack config %#v with CLI values: %#v", stackFile,
 		cliStackConfig)
 
-	err = mergo.Merge(rawStackConfig, cliStackConfig, mergo.WithOverride)
+	err = mergo.Merge(stackFile, cliStackConfig, mergo.WithOverride)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Final raw stack config: %#v", rawStackConfig)
+	log.Logger.Debugf("Final raw stack config: %#v", stackFile)
 
 	// parse the raw config, populating objects and return a stackConfig
-	stackConfig, err := parseRawStackConfig(*rawStackConfig)
+	stackConfig, err := parseStackFile(*stackFile)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -122,7 +122,7 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *structs.Stac
 }
 
 // Loads the config for a stack from a YAML file and returns either it or an error
-func loadStackConfigFile(name string, path string) (*structs.Stack, error) {
+func loadStackFile(name string, path string) (*structs.StackFile, error) {
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, errors.Wrap(err, "Can't load non-existent stack file")
@@ -157,7 +157,7 @@ func loadStackConfigFile(name string, path string) (*structs.Stack, error) {
 
 	log.Logger.Tracef("Stack config bytes:\n%s", stackConfigBytes)
 
-	stackObj := structs.Stack{
+	stackObj := structs.StackFile{
 		Name:     name,
 		FilePath: path,
 	}
@@ -174,14 +174,14 @@ func loadStackConfigFile(name string, path string) (*structs.Stack, error) {
 }
 
 // Takes a raw config struct and populates the manifests and installables
-func parseRawStackConfig(rawStackConfig structs.Stack) (interfaces.IStackConfig, error) {
-	manifests, err := acquireManifests(rawStackConfig)
+func parseStackFile(stackFile structs.StackFile) (interfaces.IStackConfig, error) {
+	manifests, err := acquireManifests(stackFile)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	stackConfig := &StackConfig{
-		rawConfig: rawStackConfig,
+		stackFile: stackFile,
 		manifests: manifests,
 	}
 

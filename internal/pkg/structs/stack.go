@@ -29,7 +29,7 @@ type ManifestDescriptor struct {
 	Overrides map[string]KappDescriptor // the map key is the kappDescriptor ID
 }
 
-type Stack struct {
+type StackFile struct {
 	Name     string // this is in the YAML file, but is the key that the config is under
 	FilePath string // this is immutable too and is intrinsically related to the config so although it's
 	// not directly in the YAML, an exception has been made

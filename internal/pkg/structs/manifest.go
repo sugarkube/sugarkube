@@ -20,9 +20,9 @@ package structs
 
 // Describes where to find the kapp plus some other data, but isn't the kapp itself
 type KappDescriptor struct {
-	Id         string
-	State      string
-	FilePath   string // path of the file the descriptor was loaded from (for resolving relative paths)
+	Id string // the map key is the kappDescriptor ID
+	//FilePath   string // path of the file the descriptor was loaded from (for resolving relative paths, e.g.
+	// for templates)
 	KappConfig `yaml:",inline"`
 }
 
@@ -30,10 +30,10 @@ type ManifestOptions struct {
 	Parallelisation uint16
 }
 
-type Manifest struct {
-	FilePath       string     // path of the manifest file (for resolving relative paths)
-	Defaults       KappConfig // Defaults that apply to all kapps in the manifest
-	States         []string   // Basenames of files to merge in with the highest priority
+type ManifestFile struct {
+	FilePath string     // path of the manifest file (for resolving relative paths)
+	Defaults KappConfig // Defaults that apply to all kapps in the manifest
+	//ClusterStates         []string   // Basenames of files to merge in with the highest priority
 	Options        ManifestOptions
-	KappDescriptor []KappDescriptor `yaml:"kapps"`
+	KappDescriptor map[string]KappDescriptor `yaml:"kapps"`
 }

@@ -54,6 +54,7 @@ type Source struct {
 
 // A struct for an actual sugarkube.yaml file
 type KappConfig struct {
+	State         string
 	ProgramConfig `yaml:",inline"`
 	Requires      []string
 	PostActions   []string `yaml:"post_actions"`

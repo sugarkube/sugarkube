@@ -75,7 +75,7 @@ func (c *createCmd) run() error {
 	log.Logger.Debugf("Got CLI args: %#v", c)
 
 	// CLI args override configured args, so merge them in
-	cliStackConfig := &structs.Stack{}
+	cliStackConfig := &structs.StackFile{}
 
 	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig,
 		config.CurrentConfig, c.out)

@@ -68,7 +68,7 @@ func init() {
 //	registryObj := registry.NewRegistry()
 //
 //	stackConfig := &StackConfig{
-//		rawConfig: structs.Stack{
+//		stackFile: structs.Stack{
 //			Region:  "testRegion",
 //			Account: "testAccount",
 //		},

@@ -98,7 +98,7 @@ Note: Not all providers require all arguments. See documentation for help.
 func (c *connectCmd) run() error {
 
 	// CLI overrides - will be merged with and take precedence over values loaded from the stack config file
-	cliStackConfig := &structs.Stack{
+	cliStackConfig := &structs.StackFile{
 		Provider:    c.provider,
 		Provisioner: c.provisioner,
 		Profile:     c.profile,

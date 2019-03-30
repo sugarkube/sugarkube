@@ -34,7 +34,7 @@ import (
 
 type Manifest struct {
 	descriptor   structs.ManifestDescriptor
-	rawConfig    structs.Manifest
+	manifestFile structs.ManifestFile
 	installables []interfaces.IInstallable
 }
 
@@ -55,11 +55,11 @@ func (m *Manifest) Installables() []interfaces.IInstallable {
 
 // Return the parallelisation if set
 func (m Manifest) Parallelisation() uint16 {
-	return m.rawConfig.Options.Parallelisation
+	return m.manifestFile.Options.Parallelisation
 }
 
 // Parse installables defined in a manifest file
-func parseInstallables(manifestId string, rawManifest structs.Manifest,
+func parseInstallables(manifestId string, rawManifest structs.ManifestFile,
 	manifestOverrides map[string]interface{}) ([]interfaces.IInstallable, error) {
 	installables := make([]interfaces.IInstallable, len(rawManifest.KappDescriptor))
 
@@ -196,25 +196,25 @@ func installableOverrides(manifestOverrides map[string]interface{}, installableI
 }
 
 // Load a single manifest file and parse the kapps it defines
-func parseManifestFile(path string, descriptor structs.ManifestDescriptor) (interfaces.IManifest, error) {
+func parseManifestFile(manifestFilePath string, descriptor structs.ManifestDescriptor) (interfaces.IManifest, error) {
 
-	log.Logger.Infof("Parsing manifest file: %s", path)
+	log.Logger.Infof("Parsing manifest file: %s", manifestFilePath)
 
-	rawManifest := structs.Manifest{}
+	manifestFile := structs.ManifestFile{}
 
-	err := utils.LoadYamlFile(path, &rawManifest)
+	err := utils.LoadYamlFile(manifestFilePath, &manifestFile)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	log.Logger.Tracef("Loaded raw manifest: %#v", rawManifest)
+	log.Logger.Tracef("Loaded raw manifest: %#v", manifestFile)
 
 	manifest := Manifest{
-		descriptor: descriptor,
-		rawConfig:  rawManifest,
+		descriptor:   descriptor,
+		manifestFile: manifestFile,
 	}
 
-	installables, err := parseInstallables(manifest.Id(), rawManifest, descriptor.Overrides)
+	installables, err := parseInstallables(manifest.Id(), manifestFile, descriptor.Overrides)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -350,7 +350,7 @@ func MatchesSelector(installable interfaces.IInstallable, selector string) (bool
 	return false, nil
 }
 
-func acquireManifests(stackObj structs.Stack) ([]interfaces.IManifest, error) {
+func acquireManifests(stackObj structs.StackFile) ([]interfaces.IManifest, error) {
 	log.Logger.Info("Acquiring manifests...")
 
 	manifests := make([]interfaces.IManifest, len(stackObj.ManifestDescriptors))
@@ -380,10 +380,10 @@ func acquireManifest(stackConfigFileDir string, manifestDescriptor structs.Manif
 	// todo - get rid of this once we've switched to an acquirer and can pull the path from a cache manager
 	manifestDescriptor.Uri = uri
 
-	filePath := uri
+	manifestFilePath := uri
 
 	// parse the manifest file we've acquired
-	manifest, err := parseManifestFile(filePath, manifestDescriptor)
+	manifest, err := parseManifestFile(manifestFilePath, manifestDescriptor)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
