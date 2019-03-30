@@ -38,16 +38,15 @@ import (
 )
 
 type Kapp struct {
-	descriptor   structs.KappDescriptorWithLists
-	manifestId   string
-	mergedConfig structs.KappDescriptorWithMaps   // the final config template after merging all the config layers (but not rendering the template)
-	configLayers []structs.KappDescriptorWithMaps // config templates where values from later configs will take precedence over earlier ones
-	rootCacheDir string
+	manifestId       string
+	mergedDescriptor structs.KappDescriptorWithMaps   // the final config template after merging all the config layers (but not rendering the template)
+	descriptorLayers []structs.KappDescriptorWithMaps // config templates where values from later configs will take precedence over earlier ones
+	rootCacheDir     string
 }
 
 // Returns the non-fully qualified ID
 func (k Kapp) Id() string {
-	return k.descriptor.Id
+	return k.mergedDescriptor.Id
 }
 
 // Returns the manifest ID
@@ -56,47 +55,47 @@ func (k Kapp) ManifestId() string {
 }
 
 func (k Kapp) State() string {
-	return k.descriptor.State
+	return k.mergedDescriptor.State
 }
 
 func (k Kapp) PostActions() []string {
-	return k.descriptor.PostActions
+	return k.mergedDescriptor.PostActions
 }
 
-// Every time we add a new config layer remerge the final config
+// Every time we add a new descriptor remerge the descriptor.
 // If `prepend` is true the new layer will be prepended to the list of layers, otherwise it'll be appended.
-// Configs later in the layers array will override values earlier
-func (k Kapp) AddConfigLayer(config structs.KappDescriptorWithMaps, prepend bool) error {
-	configLayers := k.configLayers
+// Descriptors later in the layers array will override earlier values
+func (k Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool) error {
+	configLayers := k.descriptorLayers
 
 	if configLayers == nil {
 		configLayers = []structs.KappDescriptorWithMaps{}
 	}
 
 	if prepend {
-		k.configLayers = append([]structs.KappDescriptorWithMaps{config}, configLayers...)
+		k.descriptorLayers = append([]structs.KappDescriptorWithMaps{config}, configLayers...)
 	} else {
-		k.configLayers = append(configLayers, config)
+		k.descriptorLayers = append(configLayers, config)
 	}
 
-	mergedConfig := structs.KappDescriptorWithMaps{}
+	mergedDescriptor := structs.KappDescriptorWithMaps{}
 
-	for _, layer := range k.configLayers {
+	for _, layer := range k.descriptorLayers {
 		log.Logger.Tracef("Merging config layer %#v into existing map %#v for "+
-			"kapp %s", layer, mergedConfig, k.FullyQualifiedId())
-		err := mergo.Merge(&mergedConfig, layer, mergo.WithOverride)
+			"kapp %s", layer, mergedDescriptor, k.FullyQualifiedId())
+		err := mergo.Merge(&mergedDescriptor, layer, mergo.WithOverride)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
 
-	k.mergedConfig = mergedConfig
+	k.mergedDescriptor = mergedDescriptor
 
 	return nil
 }
 
 func (k Kapp) GetConfig() structs.KappDescriptorWithMaps {
-	return k.mergedConfig
+	return k.mergedDescriptor
 }
 
 // Returns the fully-qualified ID of a kapp
@@ -110,12 +109,12 @@ func (k Kapp) FullyQualifiedId() string {
 
 // Return env vars
 func (k Kapp) GetEnvVars() map[string]interface{} {
-	return k.mergedConfig.EnvVars
+	return k.mergedDescriptor.EnvVars
 }
 
 // Return CLI args for the Kapp for the given installer and command/target
 func (k Kapp) GetCliArgs(installerName string, command string) []string {
-	installerArgs, ok := k.mergedConfig.Args[installerName]
+	installerArgs, ok := k.mergedDescriptor.Args[installerName]
 	if !ok {
 		return []string{}
 	}
@@ -167,7 +166,13 @@ func (k Kapp) ObjectCacheDir() string {
 // Returns an array of acquirers configured for the sources for this kapp. We need to recompute these each time
 // instead of caching them so that any manifest overrides will take effect.
 func (k Kapp) Acquirers() ([]acquirer.Acquirer, error) {
-	acquirers, err := acquirer.GetAcquirersFromSources(k.descriptor.Sources)
+	sources := make([]structs.Source, 0)
+
+	for _, source := range k.mergedDescriptor.Sources {
+		sources = append(sources, source)
+	}
+
+	acquirers, err := acquirer.GetAcquirersFromSources(sources)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -205,7 +210,7 @@ func (k *Kapp) loadConfigFile() error {
 
 	descriptorWithMaps := convert.KappDescriptorWithListsToMap(descriptorWithLists)
 
-	err = k.AddConfigLayer(descriptorWithMaps, true)
+	err = k.AddDescriptor(descriptorWithMaps, true)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -216,7 +221,7 @@ func (k *Kapp) loadConfigFile() error {
 // Templates the kapp's merged config  and saves is at as an attribute on the kapp
 func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
 
-	configTemplate, err := yaml.Marshal(k.mergedConfig)
+	configTemplate, err := yaml.Marshal(k.mergedDescriptor)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -239,7 +244,7 @@ func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
 			constants.KappConfigFileName, outBuf.String())
 	}
 
-	k.mergedConfig = config
+	k.mergedDescriptor = config
 	return nil
 }
 
@@ -256,7 +261,7 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 	kappIntrinsicDataConverted = convert.MapStringStringToMapStringInterface(kappIntrinsicData)
 
 	// merge kapp.Vars with the vars from files so kapp.Vars take precedence. Todo - document the order of precedence
-	err = mergo.Merge(&kappVars, k.descriptor.Vars, mergo.WithOverride)
+	err = mergo.Merge(&kappVars, k.mergedDescriptor.Vars, mergo.WithOverride)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -268,9 +273,9 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 
 	// add placeholders templated paths so kapps that use them work when running
 	// `kapp vars`, etc.
-	templatePlaceholders := make([]string, len(k.descriptor.Templates))
+	templatePlaceholders := make([]string, len(k.mergedDescriptor.Templates))
 
-	for i, _ := range k.descriptor.Templates {
+	for i, _ := range k.mergedDescriptor.Templates {
 		templatePlaceholders[i] = "<generated>"
 	}
 	kappIntrinsicDataConverted["templates"] = templatePlaceholders
@@ -404,14 +409,14 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 
 	renderedPaths := make([]string, 0)
 
-	if len(k.descriptor.Templates) == 0 {
+	if len(k.mergedDescriptor.Templates) == 0 {
 		log.Logger.Infof("%sNo templates to render for kapp '%s'", dryRunPrefix, k.FullyQualifiedId())
 		return renderedPaths, nil
 	}
 
 	log.Logger.Infof("%sRendering templates for kapp '%s'", dryRunPrefix, k.FullyQualifiedId())
 
-	for _, templateDefinition := range k.descriptor.Templates {
+	for _, templateDefinition := range k.mergedDescriptor.Templates {
 		rawTemplateSource := templateDefinition.Source
 
 		// run the source path through the templater in case it contains variables

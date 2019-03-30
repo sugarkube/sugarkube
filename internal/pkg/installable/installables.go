@@ -18,20 +18,16 @@ package installable
 
 import (
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
 
-func New(manifestId string, descriptor structs.KappDescriptorWithLists) (interfaces.IInstallable, error) {
+func New(manifestId string, descriptors []structs.KappDescriptorWithMaps) (interfaces.IInstallable, error) {
 
-	// convert the descriptor to be a KappDescriptorWithMaps and set it as initial config layer
+	// convert the mergedDescriptor to be a KappDescriptorWithMaps and set it as initial config layer
 	kapp := &Kapp{
-		manifestId: manifestId,
-		descriptor: descriptor,
-		configLayers: []structs.KappDescriptorWithMaps{
-			convert.KappDescriptorWithListsToMap(descriptor),
-		},
+		manifestId:       manifestId,
+		descriptorLayers: descriptors,
 	}
 
 	// load the config file if we've cached it

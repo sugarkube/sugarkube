@@ -64,7 +64,7 @@ func TestLoad(t *testing.T) {
 	}
 
 	testKapp := Kapp{
-		descriptor: structs.KappDescriptorWithLists{
+		mergedDescriptor: structs.KappDescriptorWithMaps{
 			Id: "sample-kapp",
 		},
 		manifestId: "sample-manifest",
@@ -74,9 +74,9 @@ func TestLoad(t *testing.T) {
 	err := testKapp.RefreshConfig(templateVars)
 	assert.Nil(t, err)
 
-	assert.Equal(t, expectedEnvVars, testKapp.mergedConfig.EnvVars)
-	assert.Equal(t, []string{"helm"}, testKapp.mergedConfig.Requires)
-	assert.Equal(t, expectedArgs, testKapp.mergedConfig.Args)
+	assert.Equal(t, expectedEnvVars, testKapp.mergedDescriptor.EnvVars)
+	assert.Equal(t, []string{"helm"}, testKapp.mergedDescriptor.Requires)
+	assert.Equal(t, expectedArgs, testKapp.mergedDescriptor.Args)
 }
 
 //func TestMergeProgramConfigs(t *testing.T) {

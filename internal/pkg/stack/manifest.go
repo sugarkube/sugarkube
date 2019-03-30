@@ -59,14 +59,48 @@ func (m Manifest) Parallelisation() uint16 {
 }
 
 // Instantiate installables for kapps defined in manifest files. Note: No overrides are applied at this stage.
-func instantiateInstallables(manifestId string, rawManifest structs.ManifestFile) ([]interfaces.IInstallable, error) {
-	installables := make([]interfaces.IInstallable, len(rawManifest.KappDescriptor))
+func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces.IInstallable, error) {
 
-	for i, kappDescriptor := range rawManifest.KappDescriptor {
+	manifestFile := manifest.manifestFile
+
+	installables := make([]interfaces.IInstallable, len(manifestFile.KappDescriptor))
+
+	manfestDefaults := structs.KappDescriptorWithMaps{
+		KappConfig: manifestFile.Defaults,
+	}
+
+	for i, kappDescriptor := range manifestFile.KappDescriptor {
 		// convert the kappDescriptor to an installable
-		installableObj, err := installable.New(manifestId, kappDescriptor)
+		kappDescriptorAsMap := convert.KappDescriptorWithListsToMap(kappDescriptor)
+
+		// need to merge structs for kapp descriptors (in order of lowest to highest precedence):
+		//   * the kapp's sugarkube.yaml file (if we've acquired the kapp - will be prepended to the list
+		//     of descriptors when it's loaded)
+		//   * values from the sugarkube-conf.yaml file (if any are specified for
+		//     programs the kapp declares in its `requires` block) (todo)
+		//   * defaults in manifest files
+		//   * the kapp descriptor in manifest files
+		//   * overrides in stack files for the kapp
+		//   * command line values (todo)
+
+		descriptors := []structs.KappDescriptorWithMaps{
+			manfestDefaults,
+			kappDescriptorAsMap,
+		}
+
+		installableObj, err := installable.New(manifestId, descriptors)
 		if err != nil {
 			return nil, errors.WithStack(err)
+		}
+
+		// if there were any overrides defined in the stack for this installable, append
+		// the descriptor to the list
+		stackOverrides, ok := manifest.descriptor.Overrides[installableObj.Id()]
+		if ok {
+			err = installableObj.AddDescriptor(stackOverrides, false)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
 		}
 
 		installables[i] = installableObj
@@ -184,7 +218,7 @@ func installableOverrides(manifestOverrides map[string]interface{}, installableI
 }
 
 // Load a single manifest file and parse the kapps it defines
-func parseManifestFile(manifestFilePath string, descriptor structs.ManifestDescriptor) (interfaces.IManifest, error) {
+func parseManifestFile(manifestFilePath string, manifestDescriptor structs.ManifestDescriptor) (interfaces.IManifest, error) {
 
 	log.Logger.Infof("Parsing manifest file: %s", manifestFilePath)
 
@@ -198,11 +232,11 @@ func parseManifestFile(manifestFilePath string, descriptor structs.ManifestDescr
 	log.Logger.Tracef("Loaded raw manifest: %#v", manifestFile)
 
 	manifest := Manifest{
-		descriptor:   descriptor,
+		descriptor:   manifestDescriptor,
 		manifestFile: manifestFile,
 	}
 
-	installables, err := instantiateInstallables(manifest.Id(), manifestFile)
+	installables, err := instantiateInstallables(manifest.Id(), manifest)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -343,8 +377,8 @@ func acquireManifests(stackObj structs.StackFile) ([]interfaces.IManifest, error
 
 	manifests := make([]interfaces.IManifest, len(stackObj.ManifestDescriptors))
 
-	for i, descriptor := range stackObj.ManifestDescriptors {
-		manifest, err := acquireManifest(filepath.Dir(stackObj.FilePath), descriptor)
+	for i, manifestDescriptor := range stackObj.ManifestDescriptors {
+		manifest, err := acquireManifest(filepath.Dir(stackObj.FilePath), manifestDescriptor)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
