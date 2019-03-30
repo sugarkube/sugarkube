@@ -25,7 +25,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cache"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/version"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
@@ -101,7 +100,8 @@ func NewCommand(name string) *cobra.Command {
 	out := rootCmd.OutOrStdout()
 
 	rootCmd.AddCommand(
-		version.NewCommand(),
+		newVersionCommand(),
+		newCompletionsCommand(),
 		cluster.NewClusterCmds(out),
 		kapps.NewKappsCmds(out),
 		cache.NewCacheCmds(out),

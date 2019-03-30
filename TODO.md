@@ -9,8 +9,6 @@
   access to the main config repo). Manifest variables will simplify passing env vars to all kapps in the manifest
   (e.g. for the tiller-namespace, etc.)
   
-* Add a command to generate bash completions (see https://github.com/spf13/cobra/blob/master/bash_completions.md)  
-  
 * Print important info instead of logging it
 * Add support for verifying signed tags
 * More tests 

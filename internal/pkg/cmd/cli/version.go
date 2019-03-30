@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Sugarkube Authors
+ * Copyright 2019 The Sugarkube Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package version
+package cli
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/version"
 )
 
-func NewCommand() *cobra.Command {
+func newVersionCommand() *cobra.Command {
 	c := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version number of sugarkube",
