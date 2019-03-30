@@ -19,8 +19,15 @@ package cluster
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io"
+	"os"
+	"os/signal"
+	"syscall"
 )
+
+var stackObj interfaces.IStack
 
 func NewClusterCmds(out io.Writer) *cobra.Command {
 
@@ -28,6 +35,24 @@ func NewClusterCmds(out io.Writer) *cobra.Command {
 		Use:   "cluster [command]",
 		Short: fmt.Sprintf("Work with clusters"),
 		Long:  `Create and delete clusters`,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			log.Logger.Debug("Setting up signal handler")
+			// catch termination via CTRL-C
+			signals := make(chan os.Signal)
+			signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
+			go func() {
+				<-signals
+				log.Logger.Info("Caught termination signal. Will try to gracefully terminate...")
+				if stackObj != nil {
+					err2 := stackObj.GetProvisioner().Close()
+					if err2 != nil {
+						log.Logger.Fatal(err2)
+					}
+				}
+				log.Logger.Info("Graceful shutdown complete")
+				os.Exit(1)
+			}()
+		},
 	}
 
 	cmd.AddCommand(

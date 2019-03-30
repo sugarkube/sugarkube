@@ -18,7 +18,6 @@ package mock
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
-	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 )
 
 type Config struct {
@@ -122,7 +121,7 @@ func (m MockStack) GetProvisioner() interfaces.IProvisioner {
 	return nil
 }
 
-func (m MockStack) GetRegistry() *registry.Registry {
+func (m MockStack) GetRegistry() interfaces.IRegistry {
 	return nil
 }
 

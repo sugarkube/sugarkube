@@ -25,7 +25,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cache"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/version"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
@@ -96,11 +95,13 @@ var configFile string
 func NewCommand(name string) *cobra.Command {
 
 	rootCmd.Use = name
+	rootCmd.SilenceUsage = true
 
 	out := rootCmd.OutOrStdout()
 
 	rootCmd.AddCommand(
-		version.NewCommand(),
+		newVersionCommand(),
+		newCompletionsCommand(),
 		cluster.NewClusterCmds(out),
 		kapps.NewKappsCmds(out),
 		cache.NewCacheCmds(out),

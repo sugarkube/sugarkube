@@ -27,7 +27,12 @@ programs:
           # cache directory, then files called `values-<provider/account/profile/etc>.yaml`. It takes
           # all files that exists and prepends '-f' to them so they'll be passed as options to helm.
           #
-          - name: helm-opts
+          - name: helm-params
+            value: |-
+              "{{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | uniq | join "-f " }} {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " }}"
+
+        delete:
+          - name: helm-params
             value: |-
               "{{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | uniq | join "-f " }} {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " }}"
 
@@ -49,6 +54,11 @@ programs:
       make:
         install:
         # search for terraform vars files under `terraform_<provider>`
-        - name: tf-opts
+        - name: tf-params
+          value: |-
+            "{{ listString (printf "terraform_%s/.*/defaults.tfvars" .stack.provider) | findFiles .kapp.cacheRoot | uniq | join "-var-file " }} {{ mapPrintF (printf "terraform_%s/.*/%%s.tfvars" .stack.provider) .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " }}"
+
+        delete:
+        - name: tf-params
           value: |-
             "{{ listString (printf "terraform_%s/.*/defaults.tfvars" .stack.provider) | findFiles .kapp.cacheRoot | uniq | join "-var-file " }} {{ mapPrintF (printf "terraform_%s/.*/%%s.tfvars" .stack.provider) .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " }}"

@@ -1,5 +1,5 @@
 package constants
 
 const TaskActionInstall = "install"
-const TaskActionDestroy = "destroy"
+const TaskActionDelete = "delete"
 const TaskActionClusterUpdate = "cluster_update"

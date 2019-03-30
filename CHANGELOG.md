@@ -1,4 +1,10 @@
 # Changelog
+## 0.7.0
+* Renamed the `kapps apply` subcommand to `kapps install` and `kapps destroy` to `kapps delete`
+* Renamed the `destroy` make target and updated the [common makefiles](https://github.com/sugarkube/kapps/tree/master/incubator/common-makefiles)
+* Changed the '--approved' flag to '--yes' to make it more intuitive
+* Add a command `sugarkube completions` to generate a bash completions script
+* SSH port forwarding tunnels are now closed (or an attempt is made to close them) after commands finish, including if errors occur or the program is killed via a signal.
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring

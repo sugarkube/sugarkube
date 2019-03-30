@@ -20,22 +20,13 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
-	"github.com/sugarkube/sugarkube/internal/pkg/log"
 )
-
-type Installer interface {
-	install(installableObj interfaces.IInstallable, stack interfaces.IStack, approved bool,
-		renderTemplates bool, dryRun bool) error
-	destroy(installableObj interfaces.IInstallable, stack interfaces.IStack, approved bool,
-		renderTemplates bool, dryRun bool) error
-	name() string
-}
 
 // implemented installers
 const MAKE = "make"
 
 // Factory that creates installers
-func New(name string, providerImpl interfaces.IProvider) (Installer, error) {
+func New(name string, providerImpl interfaces.IProvider) (interfaces.IInstaller, error) {
 	if name == MAKE {
 		return MakeInstaller{
 			provider: providerImpl,
@@ -43,18 +34,4 @@ func New(name string, providerImpl interfaces.IProvider) (Installer, error) {
 	}
 
 	return nil, errors.New(fmt.Sprintf("Installer '%s' doesn't exist", name))
-}
-
-// Installs a kapp by delegating to an Installer implementation
-func Install(i Installer, installableObj interfaces.IInstallable, stack interfaces.IStack, approved bool,
-	renderTemplates bool, dryRun bool) error {
-	log.Logger.Infof("Installing kapp '%s'...", installableObj.FullyQualifiedId())
-	return i.install(installableObj, stack, approved, renderTemplates, dryRun)
-}
-
-// Destroys a kapp by delegating to an Installer implementation
-func Destroy(i Installer, installableObj interfaces.IInstallable, stack interfaces.IStack,
-	approved bool, renderTemplates bool, dryRun bool) error {
-	log.Logger.Infof("Destroying kapp '%s'...", installableObj.FullyQualifiedId())
-	return i.destroy(installableObj, stack, approved, renderTemplates, dryRun)
 }

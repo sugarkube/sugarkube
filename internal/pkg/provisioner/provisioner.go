@@ -64,16 +64,6 @@ func New(name string, stack interfaces.IStack, clusterSot interfaces.IClusterSot
 	return nil, errors.New(fmt.Sprintf("Provisioner '%s' doesn't exist", name))
 }
 
-// Creates a cluster using an implementation of a Provisioner
-func Create(p interfaces.IProvisioner, dryRun bool) error {
-	return p.Create(dryRun)
-}
-
-// Updates a cluster using an implementation of a Provisioner
-func Update(p interfaces.IProvisioner, dryRun bool) error {
-	return p.Update(dryRun)
-}
-
 // Return whether the cluster is already online
 func IsAlreadyOnline(p interfaces.IProvisioner, dryRun bool) (bool, error) {
 

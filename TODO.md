@@ -9,7 +9,6 @@
   access to the main config repo). Manifest variables will simplify passing env vars to all kapps in the manifest
   (e.g. for the tiller-namespace, etc.)
   
-* Rename destroy -> delete (update the kapps command and common makefiles as well as installers)
 * Print important info instead of logging it
 * Add support for verifying signed tags
 * More tests 
@@ -22,18 +21,16 @@
   to happen when creating a cache.
   We could have kapps declare the name of a JSON file in their sugarkube.yaml file that should be merged with 
   vars to allow them to dynamically update kapp vars. Or they could specify that stdout should be used, etc.
+* We also need to allow access to vars from other kapps. E.g. if one kapp sets a particular variable, 
+  'vars' blocks for other kapps should be able to refer to them (e.g. myvar: "{{ .kapps.somekapp.var.thevar }}")
 
 * use ps (https://github.com/shirou/gopsutil/) to check whether SSH port forwarding is actually set up, and 
   if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
-* error handling - shut down SSH port forwarding on error instead of leaving it dangling
-
-* Add the `--connect` flag to `kapps destroy`
 
 * document  tf-params vs tf-opts and the same for helm in the makefiles
 
 * Print out the plan before executing it
 * Print details of kapps being executed
-* Don't always display usage if an error is thrown
 * Implement deleting clusters
 * Fix failing integration test
 * Wordpress site 2 isn't cached when running 'cache create' (probably due to it referring to a non-existent branch - 
@@ -102,6 +99,15 @@
    mergo.Merge(result, fragment, mergo.WithAppendSlice, mergo.WithOverride)) but whichever we do will cause
    problems for some people. We should probably make it a config option as to whether to enable WithAppendSlice 
    or not. 
+   
+* think about how to deal with downloading the kubeconfig file if the cluster has been configured to authenticate
+  against keycloak - we should probably test whether the cluster is accessible already (i.e. if a vpn provides access
+  into the cluster and the API server is accessible we won't necessarily need an SSH tunnel even if the API server
+  is private)
+
+* Need to use 'override' with params in makefiles. How can we make that simpler?
+* Abort terraform apply if there's no `plan.out`
+* Support passing kapp vars on the command line when only one is selected
 
 ## Other things to consider
 * Is being focussed on clusters a mistake? 

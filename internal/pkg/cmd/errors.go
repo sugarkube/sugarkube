@@ -35,6 +35,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 )
 
@@ -43,7 +45,13 @@ import (
 func CheckError(err error) {
 	if err != nil {
 		if err != context.Canceled {
-			_, err2 := fmt.Fprintf(os.Stderr, fmt.Sprintf("An error occurred: %v\n", err))
+			var err2 error
+			if log.Logger.Level == logrus.DebugLevel {
+				_, err2 = fmt.Fprintf(os.Stderr, fmt.Sprintf("An error occurred: %+v\n", err))
+			} else {
+				_, err2 = fmt.Fprintf(os.Stderr, fmt.Sprintf("An error occurred: %v\n\n"+
+					"Run with `-l debug` for a full stacktrace.\n", err))
+			}
 			if err2 != nil {
 				panic(err2)
 			}

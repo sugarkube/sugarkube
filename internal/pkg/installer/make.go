@@ -23,7 +23,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"path/filepath"
 	"strings"
@@ -35,10 +34,10 @@ type MakeInstaller struct {
 }
 
 const TargetInstall = "install"
-const TargetDestroy = "destroy"
+const TargetDelete = "delete"
 
 // Return the name of this installer
-func (i MakeInstaller) name() string {
+func (i MakeInstaller) Name() string {
 	return "make"
 }
 
@@ -112,7 +111,7 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 	}
 
 	// Provider-specific env vars, e.g. the AwsProvider adds REGION
-	for k, v := range provider.GetInstallerVars(i.provider) {
+	for k, v := range i.provider.GetInstallerVars() {
 		upperKey := strings.ToUpper(k)
 		envVars[upperKey] = fmt.Sprintf("%#v", v)
 	}
@@ -130,9 +129,9 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 
 	// todo - move this to a method. Make it pull values from
 	// the overall config depending on the programs the kapp uses
-	targetArgs := installable.GetCliArgs(i.name(), makeTarget)
+	targetArgs := installable.GetCliArgs(i.Name(), makeTarget)
 	log.Logger.Debugf("Kapp '%s' has args for %s %s (approved=%v): %#v",
-		installable.FullyQualifiedId(), i.name(), makeTarget, approved, targetArgs)
+		installable.FullyQualifiedId(), i.Name(), makeTarget, approved, targetArgs)
 
 	for _, targetArg := range targetArgs {
 		cliArgs = append(cliArgs, targetArg)
@@ -167,13 +166,15 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 }
 
 // Install a kapp
-func (i MakeInstaller) install(installableObj interfaces.IInstallable, stack interfaces.IStack,
+func (i MakeInstaller) Install(installableObj interfaces.IInstallable, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
+	log.Logger.Infof("Installing kapp '%s'...", installableObj.FullyQualifiedId())
 	return i.run(TargetInstall, installableObj, stack, approved, renderTemplates, dryRun)
 }
 
-// Destroy a kapp
-func (i MakeInstaller) destroy(installableObj interfaces.IInstallable, stack interfaces.IStack,
+// Delete a kapp
+func (i MakeInstaller) Delete(installableObj interfaces.IInstallable, stack interfaces.IStack,
 	approved bool, renderTemplates bool, dryRun bool) error {
-	return i.run(TargetDestroy, installableObj, stack, approved, renderTemplates, dryRun)
+	log.Logger.Infof("Deleting kapp '%s'...", installableObj.FullyQualifiedId())
+	return i.run(TargetDelete, installableObj, stack, approved, renderTemplates, dryRun)
 }

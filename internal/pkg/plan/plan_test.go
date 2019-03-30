@@ -98,7 +98,7 @@ func init() {
 //				manifest: *stackConfig.Manifests()[3],
 //				tasks: []task{
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[3].Installables()[0],
 //					},
 //					{
@@ -145,11 +145,11 @@ func init() {
 //				manifest: *stackConfig.Manifests()[3],
 //				tasks: []task{
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[3].Installables()[1],
 //					},
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[3].Installables()[0],
 //					},
 //				},
@@ -158,7 +158,7 @@ func init() {
 //				manifest: *stackConfig.Manifests()[2],
 //				tasks: []task{
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[2].Installables()[1],
 //					},
 //				},
@@ -176,7 +176,7 @@ func init() {
 //				manifest: *stackConfig.Manifests()[2],
 //				tasks: []task{
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[2].Installables()[0],
 //					},
 //				},
@@ -185,19 +185,19 @@ func init() {
 //				manifest: *stackConfig.Manifests()[1],
 //				tasks: []task{
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[1].Installables()[3],
 //					},
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[1].Installables()[2],
 //					},
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[1].Installables()[1],
 //					},
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[1].Installables()[0],
 //					},
 //				},
@@ -206,7 +206,7 @@ func init() {
 //				manifest: *stackConfig.Manifests()[0],
 //				tasks: []task{
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[0].Installables()[0],
 //					},
 //				},
@@ -249,11 +249,11 @@ func init() {
 //				manifest: *stackConfig.Manifests()[3],
 //				tasks: []task{
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[3].Installables()[1],
 //					},
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[3].Installables()[0],
 //					},
 //				},
@@ -262,11 +262,11 @@ func init() {
 //				manifest: *stackConfig.Manifests()[2],
 //				tasks: []task{
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[2].Installables()[1],
 //					},
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[2].Installables()[0],
 //					},
 //				},
@@ -275,19 +275,19 @@ func init() {
 //				manifest: *stackConfig.Manifests()[1],
 //				tasks: []task{
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[1].Installables()[3],
 //					},
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[1].Installables()[2],
 //					},
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[1].Installables()[1],
 //					},
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[1].Installables()[0],
 //					},
 //				},
@@ -296,7 +296,7 @@ func init() {
 //				manifest: *stackConfig.Manifests()[0],
 //				tasks: []task{
 //					{
-//						action:         constants.TaskActionDestroy,
+//						action:         constants.TaskActionDelete,
 //						installableObj: stackConfig.Manifests()[0].Installables()[0],
 //					},
 //				},

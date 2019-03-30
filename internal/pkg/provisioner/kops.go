@@ -71,6 +71,7 @@ type KopsProvisioner struct {
 	stack                interfaces.IStack
 	kopsConfig           KopsConfig
 	portForwardingActive bool
+	sshCommand           *exec.Cmd
 }
 
 type KopsConfig struct {
@@ -137,6 +138,7 @@ func (p KopsProvisioner) clusterConfigExists() (bool, error) {
 					"Check your credentials.")
 		}
 
+		// todo - catch errors due to missing/expired AWS credentials and throw an error
 		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
 			log.Logger.Info("Kops cluster config doesn't exist")
 			return false, nil
@@ -757,7 +759,7 @@ func replaceAllInFile(search string, replacement string, path string) error {
 }
 
 // Sets up SSH port forwarding
-func (p KopsProvisioner) setupPortForwarding(privateKey string, sshUser string, sshHost string,
+func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string, sshHost string,
 	localPort int, remoteAddress string, remotePort int) error {
 
 	connectionString := strings.Join([]string{localhost,
@@ -772,12 +774,14 @@ func (p KopsProvisioner) setupPortForwarding(privateKey string, sshUser string, 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	// todo - make this configurable. Ideally users should push a known host key
 	// onto the bastion via metadata
-	sshCmd := exec.Command(sshPath, "-o", "StrictHostKeyChecking no",
+	sshCommand := exec.Command(sshPath, "-o", "StrictHostKeyChecking no",
 		"-i", privateKey, "-v", "-NL", connectionString, userHost)
-	sshCmd.Stdout = &stdoutBuf
-	sshCmd.Stderr = &stderrBuf
+	sshCommand.Stdout = &stdoutBuf
+	sshCommand.Stderr = &stderrBuf
 
-	err := sshCmd.Start()
+	p.sshCommand = sshCommand
+
+	err := sshCommand.Start()
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -837,6 +841,26 @@ func assertInHostsFile(ip string, domain string) error {
 	if !match {
 		return errors.New(fmt.Sprintf("No entry for '%s %s' in %s",
 			ip, domain, etcHostsPath))
+	}
+
+	return nil
+}
+
+// Shutdown SSH port forwarding if it's been set up
+func (p KopsProvisioner) Close() error {
+	if p.sshCommand != nil {
+		log.Logger.Info("Terminating SSH port forwarding...")
+
+		err := p.sshCommand.Process.Kill()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		log.Logger.Debug("SSH port forwarding terminated")
+
+		// todo - delete the downloaded kubeconfig file
+	} else {
+		log.Logger.Debug("SSH port forwarding wasn't set up so no need to shut it down.")
 	}
 
 	return nil

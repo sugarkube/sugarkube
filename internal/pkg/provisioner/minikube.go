@@ -166,3 +166,8 @@ func parseMinikubeConfig(stack interfaces.IStack) (*MinikubeConfig, error) {
 func (p MinikubeProvisioner) EnsureClusterConnectivity() (bool, error) {
 	return true, nil
 }
+
+// Nothing to do for this provisioner
+func (p MinikubeProvisioner) Close() error {
+	return nil
+}
