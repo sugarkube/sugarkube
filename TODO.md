@@ -4,39 +4,10 @@
 * Code of conduct
 
 ## Code-related tasks
-* Support acquiring manifests with the acquirers - this will help multi-team setups, where the platform team can 
-  maintain the main stack config, pulling in manifests from repos the app teams have access to (so they don't need
-  access to the main config repo). Manifest variables will simplify passing env vars to all kapps in the manifest
-  (e.g. for the tiller-namespace, etc.)
 
-* Standardise on camelCase or snake_case for config values
-  
-* Print important info instead of logging it
-* Add support for verifying signed tags
-* More tests 
-* See if we can suppress warning in overridden makefiles by using the technique
-  by mpb [described here](https://stackoverflow.com/questions/11958626/make-file-warning-overriding-commands-for-target)
-
-* Need a way of dynamically adding variables to the databag. Perhaps if kapps write JSON to a file it could be 
-  merged in? Then it'd be easy for users to control the frequency it runs. This is required to get the KMS key
-  ARN which can then be templated into kapps. For now we can hardcode values because templating was expected
-  to happen when creating a cache.
-  We could have kapps declare the name of a JSON file in their sugarkube.yaml file that should be merged with 
-  vars to allow them to dynamically update kapp vars. Or they could specify that stdout should be used, etc.
-* We also need to allow access to vars from other kapps. E.g. if one kapp sets a particular variable, 
-  'vars' blocks for other kapps should be able to refer to them (e.g. myvar: "{{ .kapps.somekapp.var.thevar }}")
-
-* use ps (https://github.com/shirou/gopsutil/) to check whether SSH port forwarding is actually set up, and 
-  if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
-
-* document  tf-params vs tf-opts and the same for helm in the makefiles
-
-* Print out the plan before executing it
-* Print details of kapps being executed
-* Implement deleting clusters
-* Fix failing integration test
-* Wordpress site 2 isn't cached when running 'cache create' (probably due to it referring to a non-existent branch - 
-  we should throw an error and abort in that case)
+### Merging kapp configs
+* Create a single kapp descriptor and allow it to be used in stacks, manifests & kapps. Use the appropriate
+  base directory for relative paths depending on where it's specified
 
 * Support variables at the manifest level so we can set manifest-wide vars. Use them as defaults for kapp vars (or 
   just namespace them under "manifest.vars" - decide which is better. The first would require we manually set 
@@ -48,7 +19,46 @@
       place, one using kubectl will always need a NAMESPACE from somewhere, etc.). This will obviate the need to keep
       passing the same env vars to similar kapps
     * Depend on the branch of viper in this issue: https://github.com/spf13/viper/pull/635
-      
+
+* We should probably merge structs using mergo.WithAppendSlice and mergo.WithOverride (e.g. 
+   mergo.Merge(result, fragment, mergo.WithAppendSlice, mergo.WithOverride)) but whichever we do will cause
+   problems for some people. We should probably make it a config option as to whether to enable WithAppendSlice 
+   or not. 
+
+* Support passing kapp vars on the command line when only one is selected
+
+### Kapp output
+* Need a way of dynamically adding variables to the databag. Perhaps if kapps write JSON to a file it could be 
+  merged in? Then it'd be easy for users to control the frequency it runs. This is required to get the KMS key
+  ARN which can then be templated into kapps. For now we can hardcode values because templating was expected
+  to happen when creating a cache.
+  We could have kapps declare the name of a JSON file in their sugarkube.yaml file that should be merged with 
+  vars to allow them to dynamically update kapp vars. Or they could specify that stdout should be used, etc.
+* We also need to allow access to vars from other kapps. E.g. if one kapp sets a particular variable, 
+  'vars' blocks for other kapps should be able to refer to them (e.g. myvar: "{{ .kapps.somekapp.var.thevar }}")
+* Support adding YAML/JSON/text output from kapps to the registry under e.g. 'output/<kappId>' where the 
+  kapp ID can be just the name inside a given manifest, or a fully qualified ID if being used across manifests
+* If a kapp uses output from an earlier kapp and it hasn't been run, throw an error
+
+### Makefiles
+* Get rid of the duplication of mapping variables - we currently do it once in sugarkube.yaml files then
+  again in makefiles. Try to automate the mapping in makefiles
+* Need to use 'override' with params in makefiles. How can we make that simpler?
+* Abort terraform apply if there's no `plan.out`
+* See if we can suppress warning in overridden makefiles by using the technique
+  by mpb [described here](https://stackoverflow.com/questions/11958626/make-file-warning-overriding-commands-for-target)
+* document  tf-params vs tf-opts and the same for helm in the makefiles
+
+### Developer experience
+* Standardise on camelCase or snake_case for config values
+* Print important info instead of logging it. Print in different colours with an option to disable coloured output
+* Print out the plan before executing it
+* Print details of kapps being executed
+* Stream console output in real-time
+* use ps (https://github.com/shirou/gopsutil/) to check whether SSH port forwarding is actually set up, and 
+  if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
+  
+### Config phases/states
 * Add support for config phases to provisioners. E.g. we might bring up a private kops cluster with a bastion, 
   install some stuff into it, but then want to scale down the bastion IG. That'll require 2 different kops configs
   so we should acknowledge they're for different phases of the lifecycle. Similarly to install new stuff into that 
@@ -81,36 +91,32 @@
     no reason why a stack config couldn't include state manifests in order to transition the cluster. 
     We could allow states to be run by having extra flags for `--start-state` and `--end-state`
 
-* Stream console output in real-time
-* Get rid of the duplication of mapping variables - we currently do it once in sugarkube.yaml files then
-  again in makefiles. Try to automate the mapping in makefiles
-* Create a single kapp descriptor and allow it to be used in stacks, manifests & kapps. Use the appropriate
-  base directory for relative paths depending on where it's specified
-
-* Fix passing a single flag to helm/tf where the file may not exist
-* Support declaring templates as 'sensitive' - they should be templated just-in-time then deleted
-
-* Support adding YAML/JSON/text output from kapps to the registry under e.g. 'output/<kappId>' where the 
-  kapp ID can be just the name inside a given manifest, or a fully qualified ID if being used across manifests
-* If a kapp uses output from an earlier kapp and it hasn't been run, throw an error
-  
 * Support taking the 'startAt' and 'runUntil' settings in the config file, so e.g. users can by default 
   start applying kapps from the point where their cluster is set up, but they can still explicitly set that
   flag to start at the start.
 
-* We should probably merge structs using mergo.WithAppendSlice and mergo.WithOverride (e.g. 
-   mergo.Merge(result, fragment, mergo.WithAppendSlice, mergo.WithOverride)) but whichever we do will cause
-   problems for some people. We should probably make it a config option as to whether to enable WithAppendSlice 
-   or not. 
-   
+### Everything else
+* Fix passing a single flag to helm/tf where the file may not exist
+* Support declaring templates as 'sensitive' - they should be templated just-in-time then deleted (even on error/interrupts)
 * think about how to deal with downloading the kubeconfig file if the cluster has been configured to authenticate
   against keycloak - we should probably test whether the cluster is accessible already (i.e. if a vpn provides access
   into the cluster and the API server is accessible we won't necessarily need an SSH tunnel even if the API server
   is private)
 
-* Need to use 'override' with params in makefiles. How can we make that simpler?
-* Abort terraform apply if there's no `plan.out`
-* Support passing kapp vars on the command line when only one is selected
+* Implement deleting clusters
+  
+* Support acquiring manifests with the acquirers - this will help multi-team setups, where the platform team can 
+  maintain the main stack config, pulling in manifests from repos the app teams have access to (so they don't need
+  access to the main config repo). Manifest variables will simplify passing env vars to all kapps in the manifest
+  (e.g. for the tiller-namespace, etc.)
+
+* Add support for verifying signed tags
+* More tests 
+* Fix failing integration test
+
+* Update sample project
+* Wordpress site 2 isn't cached when running 'cache create' (probably due to it referring to a non-existent branch - 
+  we should throw an error and abort in that case)
 
 ## Other things to consider
 * Is being focussed on clusters a mistake? 
