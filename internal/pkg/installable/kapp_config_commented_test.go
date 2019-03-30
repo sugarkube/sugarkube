@@ -74,9 +74,9 @@ func TestLoad(t *testing.T) {
 	err := testKapp.RefreshConfig(templateVars)
 	assert.Nil(t, err)
 
-	assert.Equal(t, expectedEnvVars, testKapp.config.EnvVars)
-	assert.Equal(t, []string{"helm"}, testKapp.config.Requires)
-	assert.Equal(t, expectedArgs, testKapp.config.Args)
+	assert.Equal(t, expectedEnvVars, testKapp.mergedConfig.EnvVars)
+	assert.Equal(t, []string{"helm"}, testKapp.mergedConfig.Requires)
+	assert.Equal(t, expectedArgs, testKapp.mergedConfig.Args)
 }
 
 //func TestMergeProgramConfigs(t *testing.T) {

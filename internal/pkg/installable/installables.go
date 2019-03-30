@@ -17,13 +17,28 @@
 package installable
 
 import (
+	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
 
 func New(manifestId string, descriptor structs.KappDescriptorWithLists) (interfaces.IInstallable, error) {
-	return &Kapp{
+
+	// convert the descriptor to be a KappDescriptorWithMaps and set it as initial config layer
+	kapp := &Kapp{
 		manifestId: manifestId,
 		descriptor: descriptor,
-	}, nil
+		configLayers: []structs.KappDescriptorWithMaps{
+			convert.KappDescriptorWithListsToMap(descriptor),
+		},
+	}
+
+	// load the config file if we've cached it
+	err := kapp.loadConfigFile()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return kapp, nil
 }

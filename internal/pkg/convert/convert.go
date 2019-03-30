@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"reflect"
 )
 
@@ -105,3 +106,25 @@ func MapStringStringToMapStringInterface(input map[string]string) map[string]int
 //
 //	return output
 //}
+
+// Converts a KappDescriptorWithLists to a KappDescriptorWithMaps
+func KappDescriptorWithListsToMap(descriptor structs.KappDescriptorWithLists) structs.KappDescriptorWithMaps {
+	// convert the descriptor to be a KappDescriptorWithMaps and set it as initial config layer
+	sources := make(map[string]structs.Source, 0)
+	outputs := make(map[string]structs.Output, 0)
+
+	for _, source := range descriptor.Sources {
+		sources[source.Id] = source
+	}
+
+	for _, output := range descriptor.Outputs {
+		outputs[output.Id] = output
+	}
+
+	return structs.KappDescriptorWithMaps{
+		Id:         descriptor.Id,
+		KappConfig: descriptor.KappConfig,
+		Sources:    sources,
+		Output:     outputs,
+	}
+}

@@ -54,9 +54,14 @@ func TemplateFile(src string, outBuf *bytes.Buffer, vars map[string]interface{})
 		return errors.Wrapf(err, "Error reading source template file %s", src)
 	}
 
+	return TemplateString(string(srcTemplate[:]), outBuf, vars)
+}
+
+// Renders a template into a buffer
+func TemplateString(src string, outBuf *bytes.Buffer, vars map[string]interface{}) error {
 	log.Logger.Tracef("Rendering template in '%s' with vars: %#v", src, vars)
 
-	rendered, err := RenderTemplate(string(srcTemplate[:]), vars)
+	rendered, err := RenderTemplate(src, vars)
 	if err != nil {
 		return errors.WithStack(err)
 	}

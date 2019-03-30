@@ -29,7 +29,7 @@ type IInstallable interface {
 	ManifestId() string
 	State() string
 	PostActions() []string
-	GetConfig() structs.KappConfig
+	GetConfig() structs.KappDescriptorWithMaps
 	SetRootCacheDir(cacheDir string)
 	ObjectCacheDir() string
 	Acquirers() ([]acquirer.Acquirer, error)
@@ -37,6 +37,7 @@ type IInstallable interface {
 	GetCliArgs(installerName string, command string) []string
 	GetEnvVars() map[string]interface{}
 	Vars(stack IStack) (map[string]interface{}, error)
+	AddConfigLayer(config structs.KappDescriptorWithMaps, prepend bool) error
 	RenderTemplates(templateVars map[string]interface{}, stackConfig IStackConfig,
 		dryRun bool) ([]string, error)
 }

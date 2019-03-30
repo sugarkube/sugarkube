@@ -40,7 +40,8 @@ import (
 type Kapp struct {
 	descriptor   structs.KappDescriptorWithLists
 	manifestId   string
-	config       structs.KappConfig
+	mergedConfig structs.KappDescriptorWithMaps   // the final config template after merging all the config layers (but not rendering the template)
+	configLayers []structs.KappDescriptorWithMaps // config templates where values from later configs will take precedence over earlier ones
 	rootCacheDir string
 }
 
@@ -62,8 +63,40 @@ func (k Kapp) PostActions() []string {
 	return k.descriptor.PostActions
 }
 
-func (k Kapp) GetConfig() structs.KappConfig {
-	return k.config
+// Every time we add a new config layer remerge the final config
+// If `prepend` is true the new layer will be prepended to the list of layers, otherwise it'll be appended.
+// Configs later in the layers array will override values earlier
+func (k Kapp) AddConfigLayer(config structs.KappDescriptorWithMaps, prepend bool) error {
+	configLayers := k.configLayers
+
+	if configLayers == nil {
+		configLayers = []structs.KappDescriptorWithMaps{}
+	}
+
+	if prepend {
+		k.configLayers = append([]structs.KappDescriptorWithMaps{config}, configLayers...)
+	} else {
+		k.configLayers = append(configLayers, config)
+	}
+
+	mergedConfig := structs.KappDescriptorWithMaps{}
+
+	for _, layer := range k.configLayers {
+		log.Logger.Tracef("Merging config layer %#v into existing map %#v for "+
+			"kapp %s", layer, mergedConfig, k.FullyQualifiedId())
+		err := mergo.Merge(&mergedConfig, layer, mergo.WithOverride)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	k.mergedConfig = mergedConfig
+
+	return nil
+}
+
+func (k Kapp) GetConfig() structs.KappDescriptorWithMaps {
+	return k.mergedConfig
 }
 
 // Returns the fully-qualified ID of a kapp
@@ -77,12 +110,12 @@ func (k Kapp) FullyQualifiedId() string {
 
 // Return env vars
 func (k Kapp) GetEnvVars() map[string]interface{} {
-	return k.config.EnvVars
+	return k.mergedConfig.EnvVars
 }
 
 // Return CLI args for the Kapp for the given installer and command/target
 func (k Kapp) GetCliArgs(installerName string, command string) []string {
-	installerArgs, ok := k.config.Args[installerName]
+	installerArgs, ok := k.mergedConfig.Args[installerName]
 	if !ok {
 		return []string{}
 	}
@@ -142,9 +175,8 @@ func (k Kapp) Acquirers() ([]acquirer.Acquirer, error) {
 	return acquirers, nil
 }
 
-// (Re)loads the kapp's sugarkube.yaml file, templates it and saves is at as an attribute on the kapp
-func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
-
+// Loads the kapp's sugarkube.yaml file and adds it as a config layer
+func (k *Kapp) loadConfigFile() error {
 	configFilePaths, err := utils.FindFilesByPattern(k.ObjectCacheDir(), constants.KappConfigFileName,
 		true, false)
 	if err != nil {
@@ -164,23 +196,50 @@ func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
 
 	configFilePath := configFilePaths[0]
 
-	var outBuf bytes.Buffer
-	err = templater.TemplateFile(configFilePath, &outBuf, templateVars)
+	descriptorWithLists := structs.KappDescriptorWithLists{}
+
+	err = utils.LoadYamlFile(configFilePath, &descriptorWithLists)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Tracef("Rendered %s file at '%s' to: \n%s", constants.KappConfigFileName,
-		configFilePath, outBuf.String())
+	descriptorWithMaps := convert.KappDescriptorWithListsToMap(descriptorWithLists)
 
-	config := structs.KappConfig{}
+	err = k.AddConfigLayer(descriptorWithMaps, true)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+// Templates the kapp's merged config  and saves is at as an attribute on the kapp
+func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
+
+	configTemplate, err := yaml.Marshal(k.mergedConfig)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	templateString := string(configTemplate[:])
+
+	var outBuf bytes.Buffer
+	err = templater.TemplateString(templateString, &outBuf, templateVars)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	log.Logger.Tracef("Rendered kapp merged config\n%#v\nto:\n%s",
+		templateString, outBuf.String())
+
+	config := structs.KappDescriptorWithMaps{}
 	err = yaml.Unmarshal(outBuf.Bytes(), &config)
 	if err != nil {
 		return errors.Wrapf(err, "Error unmarshalling rendered %s file: %s",
 			constants.KappConfigFileName, outBuf.String())
 	}
 
-	k.config = config
+	k.mergedConfig = config
 	return nil
 }
 
