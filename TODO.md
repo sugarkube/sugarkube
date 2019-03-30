@@ -8,6 +8,8 @@
   maintain the main stack config, pulling in manifests from repos the app teams have access to (so they don't need
   access to the main config repo). Manifest variables will simplify passing env vars to all kapps in the manifest
   (e.g. for the tiller-namespace, etc.)
+
+* Standardise on camelCase or snake_case for config values
   
 * Print important info instead of logging it
 * Add support for verifying signed tags
@@ -45,6 +47,7 @@
     * Default env vars (e.g. a kapp using helm should always take the TILLER_NAMESPACE env var from a certain
       place, one using kubectl will always need a NAMESPACE from somewhere, etc.). This will obviate the need to keep
       passing the same env vars to similar kapps
+    * Depend on the branch of viper in this issue: https://github.com/spf13/viper/pull/635
       
 * Add support for config phases to provisioners. E.g. we might bring up a private kops cluster with a bastion, 
   install some stuff into it, but then want to scale down the bastion IG. That'll require 2 different kops configs

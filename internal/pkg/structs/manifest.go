@@ -18,14 +18,6 @@ package structs
 
 // Structs to load a manifest YAML file
 
-type Template struct {
-	Source    string
-	Dest      string
-	Sensitive bool // sensitive templates will be templated just-in-time then deleted immediately after
-	// executing the kapp. This provides a way of passing secrets to kapps while keeping them off
-	// disk as much as possible.
-}
-
 // Describes where to find the kapp plus some other data, but isn't the kapp itself
 type KappDescriptor struct {
 	Id         string
