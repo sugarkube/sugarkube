@@ -102,7 +102,6 @@ process before installing the selected kapps.
 			err1 := c.run()
 			// shutdown any SSH port forwarding then return the error
 			if stackObj != nil {
-				// todo - run this even if there was a Ctrl-C
 				err2 := stackObj.GetProvisioner().Close()
 				if err2 != nil {
 					return errors.WithStack(err2)
