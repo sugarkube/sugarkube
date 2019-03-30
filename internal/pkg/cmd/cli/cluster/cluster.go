@@ -19,7 +19,6 @@ package cluster
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	cmd2 "github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"io"
 )
@@ -32,14 +31,6 @@ func NewClusterCmds(out io.Writer) *cobra.Command {
 		Use:   "cluster [command]",
 		Short: fmt.Sprintf("Work with clusters"),
 		Long:  `Create and delete clusters`,
-		PersistentPostRun: func(cmd *cobra.Command, args []string) {
-			if stackObj != nil {
-				err := stackObj.GetProvisioner().Close()
-				if err != nil {
-					cmd2.CheckError(err)
-				}
-			}
-		},
 	}
 
 	cmd.AddCommand(

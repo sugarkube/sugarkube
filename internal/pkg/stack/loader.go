@@ -83,7 +83,7 @@ func BuildStack(stackName string, stackFile string, cliStackConfig *structs.Stac
 	log.Logger.Debugf("Provider loaded vars: %#v", providerVars)
 
 	if len(providerVars) == 0 {
-		log.Logger.Fatal("No values loaded for provider")
+		log.Logger.Error("No values loaded for provider")
 		return nil, errors.New(fmt.Sprintf("Failed to load variables for provider %s",
 			providerImpl.GetName()))
 	}

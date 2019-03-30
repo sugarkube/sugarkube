@@ -66,7 +66,21 @@ Note: Not all providers require all arguments. See documentation for help.
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
-			return c.run()
+
+			err1 := c.run()
+			// shutdown any SSH port forwarding then return the error
+			if stackObj != nil {
+				err2 := stackObj.GetProvisioner().Close()
+				if err2 != nil {
+					return errors.WithStack(err2)
+				}
+			}
+
+			if err1 != nil {
+				return errors.WithStack(err1)
+			}
+
+			return nil
 		},
 	}
 
