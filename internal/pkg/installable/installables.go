@@ -21,7 +21,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
 
-func New(manifestId string, descriptor structs.KappDescriptor) (interfaces.IInstallable, error) {
+func New(manifestId string, descriptor structs.KappDescriptorWithLists) (interfaces.IInstallable, error) {
 	return &Kapp{
 		manifestId: manifestId,
 		descriptor: descriptor,

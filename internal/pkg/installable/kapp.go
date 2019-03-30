@@ -38,7 +38,7 @@ import (
 )
 
 type Kapp struct {
-	descriptor   structs.KappDescriptor
+	descriptor   structs.KappDescriptorWithLists
 	manifestId   string
 	config       structs.KappConfig
 	rootCacheDir string

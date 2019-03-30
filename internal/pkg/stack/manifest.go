@@ -50,6 +50,8 @@ func (m *Manifest) Id() string {
 }
 
 func (m *Manifest) Installables() []interfaces.IInstallable {
+	// todo - merge overrides before returning the objects
+
 	return m.installables
 }
 
@@ -58,25 +60,11 @@ func (m Manifest) Parallelisation() uint16 {
 	return m.manifestFile.Options.Parallelisation
 }
 
-// Parse installables defined in a manifest file
-func parseInstallables(manifestId string, rawManifest structs.ManifestFile,
-	manifestOverrides map[string]interface{}) ([]interfaces.IInstallable, error) {
+// Instantiate installables for kapps defined in manifest files. Note: No overrides are applied at this stage.
+func instantiateInstallables(manifestId string, rawManifest structs.ManifestFile) ([]interfaces.IInstallable, error) {
 	installables := make([]interfaces.IInstallable, len(rawManifest.KappDescriptor))
 
 	for i, kappDescriptor := range rawManifest.KappDescriptor {
-		installableId := kappDescriptor.Id
-		overrides, err := installableOverrides(manifestOverrides, installableId)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		if overrides != nil {
-			err = applyOverrides(&kappDescriptor, overrides)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
-		}
-
 		// convert the kappDescriptor to an installable
 		installableObj, err := installable.New(manifestId, kappDescriptor)
 		if err != nil {
@@ -92,7 +80,9 @@ func parseInstallables(manifestId string, rawManifest structs.ManifestFile,
 }
 
 // Updates the kappDescriptor struct with any overrides specified in the manifest file
-func applyOverrides(kappDescriptor *structs.KappDescriptor, overrides map[string]interface{}) error {
+func applyOverrides(kappDescriptor *structs.KappDescriptorWithLists, overrides map[string]interface{}) error {
+	// todo - just create a map where sources are keyed on ID, then merge
+
 	// we can't just unmarshal it to YAML, merge the overrides and marshal it again because overrides
 	// use keys whose values are IDs of e.g. sources instead of referring to sources by index.
 	overriddenState, ok := overrides[constants.StateKey]
@@ -214,7 +204,7 @@ func parseManifestFile(manifestFilePath string, descriptor structs.ManifestDescr
 		manifestFile: manifestFile,
 	}
 
-	installables, err := parseInstallables(manifest.Id(), manifestFile, descriptor.Overrides)
+	installables, err := instantiateInstallables(manifest.Id(), manifestFile)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

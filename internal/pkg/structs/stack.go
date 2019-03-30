@@ -26,7 +26,7 @@ type ManifestDescriptor struct {
 	// todo - we should get rid of the Id and Uri fields and just use a Source and acquirers:
 	//Source `yaml:",inline"`
 
-	Overrides map[string]KappDescriptor // the map key is the kappDescriptor ID
+	Overrides map[string]KappDescriptorWithMaps // the map key is the kappDescriptor ID
 }
 
 type StackFile struct {

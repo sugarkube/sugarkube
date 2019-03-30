@@ -48,8 +48,8 @@ func TestValidateManifest(t *testing.T) {
 			desc: "kapp IDs should be unique",
 			input: Manifest{
 				installables: []interfaces.IInstallable{
-					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptor{Id: "example1"})),
-					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptor{Id: "example2"})),
+					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptorWithLists{Id: "example1"})),
+					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptorWithLists{Id: "example2"})),
 				},
 			},
 		},
@@ -58,9 +58,9 @@ func TestValidateManifest(t *testing.T) {
 			desc: "error when kapp IDs aren't unique",
 			input: Manifest{
 				installables: []interfaces.IInstallable{
-					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptor{Id: "example1"})),
-					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptor{Id: "example2"})),
-					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptor{Id: "example1"})),
+					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptorWithLists{Id: "example1"})),
+					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptorWithLists{Id: "example2"})),
+					discardErrInstallable(installable.New(testManifestId, structs.KappDescriptorWithLists{Id: "example1"})),
 				},
 			},
 		},

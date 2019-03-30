@@ -60,6 +60,23 @@ type KappConfig struct {
 	PostActions   []string `yaml:"post_actions"`
 	Templates     []Template
 	Vars          map[string]interface{}
-	Sources       []Source
-	Output        []Output
+}
+
+// KappDescriptors describe where to find a kapp plus some other data, but isn't the kapp itself.
+// There are two types - one that has certain values declared as lists and one as maps where keys
+// are that element's ID. The list version is more concise and is used in manifest files. The
+// version with maps is used when overriding values (e.g. in stack files)
+
+type KappDescriptorWithLists struct {
+	Id         string
+	KappConfig `yaml:",inline"`
+	Sources    []Source
+	Output     []Output
+}
+
+type KappDescriptorWithMaps struct {
+	Id         string
+	KappConfig `yaml:",inline"`
+	Sources    map[string]Source // keys are object IDs so values for individual objects can be overridden
+	Output     map[string]Output // keys are object IDs so values for individual objects can be overridden
 }

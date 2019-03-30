@@ -64,7 +64,7 @@ func TestLoad(t *testing.T) {
 	}
 
 	testKapp := Kapp{
-		descriptor: structs.KappDescriptor{
+		descriptor: structs.KappDescriptorWithLists{
 			Id: "sample-kapp",
 		},
 		manifestId: "sample-manifest",
