@@ -50,8 +50,6 @@ func (m *Manifest) Id() string {
 }
 
 func (m *Manifest) Installables() []interfaces.IInstallable {
-	// todo - merge overrides before returning the objects
-
 	return m.installables
 }
 

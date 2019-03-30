@@ -9,6 +9,14 @@
 * Create a single kapp descriptor and allow it to be used in stacks, manifests & kapps. Use the appropriate
   base directory for relative paths depending on where it's specified
 
+need to merge structs for kapp descriptors (in order of lowest to highest precedence):
+* the kapp's sugarkube.yaml file (if we've acquired the kapp)
+* values from the sugarkube-conf.yaml file (if any are specified for programs the kapp declares in its `requires` block)
+* defaults in manifest files
+* the kapp descriptor in manifest files
+* overrides in stack files
+* command line values
+
 * Support variables at the manifest level so we can set manifest-wide vars. Use them as defaults for kapp vars (or 
   just namespace them under "manifest.vars" - decide which is better. The first would require we manually set 
   defaults for manifest vars ). E.g. this could be helpful for setting manifest-wide tiller-namespaces, etc.
@@ -117,6 +125,8 @@
 * Update sample project
 * Wordpress site 2 isn't cached when running 'cache create' (probably due to it referring to a non-existent branch - 
   we should throw an error and abort in that case)
+
+* Create a cache manager whose job it is to organise where files are stored in a cache
 
 ## Other things to consider
 * Is being focussed on clusters a mistake? 
