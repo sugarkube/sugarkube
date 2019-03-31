@@ -18,7 +18,6 @@ package stack
 
 import (
 	"fmt"
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
@@ -27,7 +26,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
-	"gopkg.in/yaml.v2"
 	"path/filepath"
 	"strings"
 )
@@ -74,10 +72,11 @@ func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces
 		kappDescriptorAsMap := convert.KappDescriptorWithListsToMap(kappDescriptor)
 
 		// need to merge structs for kapp descriptors (in order of lowest to highest precedence):
+		//   * values from the sugarkube-conf.yaml file (if any are specified for
+		//     programs the kapp declares in its `requires` block. This is a special case because we
+		//     don't want to blindly merge all of these in, just the ones the kapp actually uses) (todo)
 		//   * the kapp's sugarkube.yaml file (if we've acquired the kapp - will be prepended to the list
 		//     of descriptors when it's loaded)
-		//   * values from the sugarkube-conf.yaml file (if any are specified for
-		//     programs the kapp declares in its `requires` block) (todo)
 		//   * defaults in manifest files
 		//   * the kapp descriptor in manifest files
 		//   * overrides in stack files for the kapp
@@ -109,112 +108,6 @@ func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces
 	log.Logger.Tracef("Parsed installables from manifest '%s' as: %#v", manifestId, installables)
 
 	return installables, nil
-}
-
-// Updates the kappDescriptor struct with any overrides specified in the manifest file
-func applyOverrides(kappDescriptor *structs.KappDescriptorWithLists, overrides map[string]interface{}) error {
-	// todo - just create a map where sources are keyed on ID, then merge
-
-	// we can't just unmarshal it to YAML, merge the overrides and marshal it again because overrides
-	// use keys whose values are IDs of e.g. sources instead of referring to sources by index.
-	overriddenState, ok := overrides[constants.StateKey]
-	if ok {
-		kappDescriptor.State = overriddenState.(string)
-	}
-
-	// update any overridden variables
-	overriddenVars, ok := overrides[constants.VarsKey]
-	if ok {
-		overriddenVarsConverted, err := convert.MapInterfaceInterfaceToMapStringInterface(
-			overriddenVars.(map[interface{}]interface{}))
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		err = mergo.Merge(&kappDescriptor.Vars, overriddenVarsConverted, mergo.WithOverride)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-	}
-
-	// update sources
-	overriddenSources, ok := overrides[constants.SourcesKey]
-	if ok {
-		overriddenSourcesConverted, err := convert.MapInterfaceInterfaceToMapStringInterface(
-			overriddenSources.(map[interface{}]interface{}))
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		currentAcquirers := kappDescriptor.Sources
-
-		// sources are overridden by specifying the ID of a source as the key. So we need to iterate through
-		// the overrides and also through the list of sources to update values
-		for sourceId, v := range overriddenSourcesConverted {
-			sourceOverridesMap, err := convert.MapInterfaceInterfaceToMapStringInterface(
-				v.(map[interface{}]interface{}))
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			for i, source := range kappDescriptor.Sources {
-				if sourceId == currentAcquirers[i].Id {
-					sourceYaml, err := yaml.Marshal(source)
-					if err != nil {
-						return errors.WithStack(err)
-					}
-
-					sourceMapInterface := map[string]interface{}{}
-					err = yaml.Unmarshal(sourceYaml, sourceMapInterface)
-					if err != nil {
-						return errors.WithStack(err)
-					}
-
-					// we now have the overridden source values and the original source values as
-					// types compatible for merging
-
-					err = mergo.Merge(&sourceMapInterface, sourceOverridesMap, mergo.WithOverride)
-					if err != nil {
-						return errors.WithStack(err)
-					}
-
-					// convert the merged generic values back to a Source
-					mergedSourceYaml, err := yaml.Marshal(sourceMapInterface)
-					if err != nil {
-						return errors.WithStack(err)
-					}
-
-					mergedSource := structs.Source{}
-					err = yaml.Unmarshal(mergedSourceYaml, &mergedSource)
-					if err != nil {
-						return errors.WithStack(err)
-					}
-
-					log.Logger.Tracef("Updating source at index %d to: %#v", i, mergedSource)
-
-					kappDescriptor.Sources[i] = mergedSource
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-// Return overrides specified in the manifest associated with this kapp if there are any
-func installableOverrides(manifestOverrides map[string]interface{}, installableId string) (map[string]interface{}, error) {
-	rawOverrides, ok := manifestOverrides[installableId]
-	if ok {
-		overrides, err := convert.MapInterfaceInterfaceToMapStringInterface(
-			rawOverrides.(map[interface{}]interface{}))
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		return overrides, nil
-	}
-
-	return nil, nil
 }
 
 // Load a single manifest file and parse the kapps it defines

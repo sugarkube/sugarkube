@@ -94,7 +94,9 @@ func (k Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool)
 	return nil
 }
 
-func (k Kapp) GetConfig() structs.KappDescriptorWithMaps {
+// Returns the merged descriptor, which is the result of merging all descriptors in the
+// list of descriptors
+func (k Kapp) GetDescriptor() structs.KappDescriptorWithMaps {
 	return k.mergedDescriptor
 }
 

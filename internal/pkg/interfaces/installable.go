@@ -29,7 +29,7 @@ type IInstallable interface {
 	ManifestId() string
 	State() string
 	PostActions() []string
-	GetConfig() structs.KappDescriptorWithMaps
+	GetDescriptor() structs.KappDescriptorWithMaps
 	SetRootCacheDir(cacheDir string)
 	ObjectCacheDir() string
 	Acquirers() ([]acquirer.Acquirer, error)
