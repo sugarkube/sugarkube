@@ -487,7 +487,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 			foundTemplate := false
 
 			// see whether the template is in the kapp itself
-			possibleSource := filepath.Join(k.GetCacheDir(), templateSource)
+			possibleSource := filepath.Join(k.GetCacheDir(), k.Id(), templateSource)
 			log.Logger.Debugf("Searching for kapp template in '%s'", possibleSource)
 			_, err := os.Stat(possibleSource)
 			if err == nil {
@@ -536,7 +536,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		}
 
 		if !filepath.IsAbs(destPath) {
-			destPath = filepath.Join(k.GetCacheDir(), destPath)
+			destPath = filepath.Join(k.GetCacheDir(), k.Id(), destPath)
 		}
 
 		// check whether the dest path exists

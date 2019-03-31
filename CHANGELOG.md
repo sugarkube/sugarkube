@@ -5,6 +5,7 @@
 * Changed the '--approved' flag to '--yes' to make it more intuitive
 * Add a command `sugarkube completions` to generate a bash completions script
 * SSH port forwarding tunnels are now closed (or an attempt is made to close them) after commands finish, including if errors occur or the program is killed via a signal.
+* Paths to templates declared in kapps are relative to the directory containing the `sugarkube.yaml` file
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring
