@@ -39,7 +39,7 @@ import (
 
 type Kapp struct {
 	manifestId       string
-	mergedDescriptor structs.KappDescriptorWithMaps   // the final config template after merging all the config layers (but not rendering the template)
+	mergedDescriptor structs.KappDescriptorWithMaps   // the final descriptor after merging all the descriptor layers. This is a template until its rendered by RefreshConfig
 	descriptorLayers []structs.KappDescriptorWithMaps // config templates where values from later configs will take precedence over earlier ones
 	kappCacheDir     string                           // the top-level directory for this kapp in the cache, i.e. the directory containing the kapp's .sugarkube directory
 }
@@ -121,6 +121,11 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 		k.descriptorLayers = append(configLayers, config)
 	}
 
+	return k.mergeDescriptorLayers()
+}
+
+// Merges the descriptor layers to create a new templatable merged descriptor
+func (k *Kapp) mergeDescriptorLayers() error {
 	mergedDescriptor := structs.KappDescriptorWithMaps{}
 
 	for _, layer := range k.descriptorLayers {
@@ -259,8 +264,14 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 	return nil
 }
 
-// Templates the kapp's merged config and saves is at as an attribute on the kapp
+// Templates the kapp's merged descriptor
 func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
+
+	// remerge the layers so we've got a fresh template to render
+	err := k.mergeDescriptorLayers()
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	configTemplate, err := yaml.Marshal(k.mergedDescriptor)
 	if err != nil {
@@ -275,14 +286,14 @@ func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Tracef("Rendered kapp merged config\n%#v\nto:\n%s",
+	log.Logger.Tracef("Rendered merged kapp descriptor\n%#v\nto:\n%s",
 		templateString, outBuf.String())
 
 	config := structs.KappDescriptorWithMaps{}
 	err = yaml.Unmarshal(outBuf.Bytes(), &config)
 	if err != nil {
-		return errors.Wrapf(err, "Error unmarshalling rendered %s file: %s",
-			constants.KappConfigFileName, outBuf.String())
+		return errors.Wrapf(err, "Error unmarshalling rendered merged kapp descriptor: %s",
+			outBuf.String())
 	}
 
 	k.mergedDescriptor = config
