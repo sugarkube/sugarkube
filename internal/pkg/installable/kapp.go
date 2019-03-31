@@ -110,8 +110,8 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 				if currentOutput.Path == "" && previousOutput.Path != "" {
 					currentOutput.Path = previousOutput.Path
 				}
-				if currentOutput.Type == "" && previousOutput.Type != "" {
-					currentOutput.Type = previousOutput.Type
+				if currentOutput.Format == "" && previousOutput.Format != "" {
+					currentOutput.Format = previousOutput.Format
 				}
 
 				config.Outputs[key] = currentOutput
