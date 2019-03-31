@@ -19,6 +19,7 @@ package convert
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"reflect"
@@ -108,13 +109,19 @@ func MapStringStringToMapStringInterface(input map[string]string) map[string]int
 //}
 
 // Converts a KappDescriptorWithLists to a KappDescriptorWithMaps
-func KappDescriptorWithListsToMap(descriptor structs.KappDescriptorWithLists) structs.KappDescriptorWithMaps {
+func KappDescriptorWithListsToMap(descriptor structs.KappDescriptorWithLists) (
+	structs.KappDescriptorWithMaps, error) {
 	// convert the descriptor to be a KappDescriptorWithMaps and set it as initial config layer
 	sources := make(map[string]structs.Source, 0)
 	outputs := make(map[string]structs.Output, 0)
 
+	// we need to get the ID from the acquirer associated with the source
 	for _, source := range descriptor.Sources {
-		sources[source.Id] = source
+		acquirerObj, err := acquirer.New(source)
+		if err != nil {
+			return structs.KappDescriptorWithMaps{}, errors.WithStack(err)
+		}
+		sources[acquirerObj.Id()] = source
 	}
 
 	for _, output := range descriptor.Outputs {
@@ -126,5 +133,5 @@ func KappDescriptorWithListsToMap(descriptor structs.KappDescriptorWithLists) st
 		KappConfig: descriptor.KappConfig,
 		Sources:    sources,
 		Output:     outputs,
-	}
+	}, nil
 }

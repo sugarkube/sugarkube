@@ -33,7 +33,7 @@ func discardErr(acquirer Acquirer, err error) Acquirer {
 
 func TestId(t *testing.T) {
 	// the URI is invalid. It should cause an error
-	invalidUriAcquirer, err := NewGitAcquirer(
+	invalidUriAcquirer, err := newGitAcquirer(
 		structs.Source{
 			Uri: "git@github.com:helm:thing/charts.git//stable/wordpress#master",
 		})
@@ -50,7 +50,7 @@ func TestId(t *testing.T) {
 		{
 			name: "good",
 			desc: "check IDs are generated with expected input",
-			input: discardErr(NewGitAcquirer(
+			input: discardErr(newGitAcquirer(
 				structs.Source{
 					Uri: "git@github.com:helm/charts.git//stable/wordpress#master",
 				})),
@@ -59,7 +59,7 @@ func TestId(t *testing.T) {
 		{
 			name: "good_path_leading_trailing_slash",
 			desc: "check leading/trailing slashes on paths don't affect IDs",
-			input: discardErr(NewGitAcquirer(
+			input: discardErr(newGitAcquirer(
 				structs.Source{
 					Uri: "git@github.com:helm/charts.git///stable/wordpress/#master",
 				})),
@@ -68,7 +68,7 @@ func TestId(t *testing.T) {
 		{
 			name: "good_name_in_id",
 			desc: "check explicit names are put into IDs",
-			input: discardErr(NewGitAcquirer(
+			input: discardErr(newGitAcquirer(
 				structs.Source{
 					Id:  "site1-values",
 					Uri: "git@github.com:sugarkube/sugarkube.git//examples/values/wordpress/site1/#master",

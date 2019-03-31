@@ -30,7 +30,7 @@ func init() {
 }
 
 func TestNewAcquirerError(t *testing.T) {
-	actual, err := newAcquirer(structs.Source{Id: "nonsense"})
+	actual, err := New(structs.Source{Id: "nonsense"})
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
@@ -41,7 +41,7 @@ func TestNewAcquirerFile(t *testing.T) {
 		uri: "file:///tmp/test.txt",
 	}
 
-	actual, err := newAcquirer(structs.Source{Uri: "file:///tmp/test.txt"})
+	actual, err := New(structs.Source{Uri: "file:///tmp/test.txt"})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual)
 	assert.Equal(t, "/tmp/test.txt", actual.Path())
@@ -56,7 +56,7 @@ func TestNewAcquirerGit(t *testing.T) {
 		includeValues: true,
 	}
 
-	actual, err := newAcquirer(structs.Source{
+	actual, err := New(structs.Source{
 		Id:            "",
 		Uri:           GoodGitUri,
 		IncludeValues: true,
@@ -68,7 +68,7 @@ func TestNewAcquirerGit(t *testing.T) {
 
 func TestNewAcquirerGitNoBranch(t *testing.T) {
 
-	actual, err := newAcquirer(structs.Source{
+	actual, err := New(structs.Source{
 		Id:            "",
 		Uri:           "git@github.com:sugarkube/kapps.git//incubator/tiller/",
 		IncludeValues: true,
@@ -86,7 +86,7 @@ func TestNewAcquirerGitWithOptions(t *testing.T) {
 		includeValues: true,
 	}
 
-	actual, err := newAcquirer(structs.Source{
+	actual, err := New(structs.Source{
 		Id:  "",
 		Uri: GoodGitUri,
 		Options: map[string]interface{}{
@@ -108,7 +108,7 @@ func TestNewAcquirerGitWithOptionsNoDefault(t *testing.T) {
 		includeValues: true,
 	}
 
-	actual, err := newAcquirer(structs.Source{
+	actual, err := New(structs.Source{
 		Id: "",
 		// this URI has no branch at all so it must come from the options
 		Uri: "git@github.com:sugarkube/kapps.git//incubator/tiller/",
@@ -131,7 +131,7 @@ func TestNewAcquirerGitExplicitId(t *testing.T) {
 		includeValues: false,
 	}
 
-	actual, err := newAcquirer(structs.Source{Id: "banana", Uri: GoodGitUri})
+	actual, err := New(structs.Source{Id: "banana", Uri: GoodGitUri})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Git acquirer with explicitly set ID incorrectly created")

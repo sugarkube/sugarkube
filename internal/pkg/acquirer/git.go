@@ -46,8 +46,7 @@ const BranchKey = "branch"
 
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
-// todo - this is only public so we can use it in tests. We should find a way to make it private again
-func NewGitAcquirer(source structs.Source) (*GitAcquirer, error) {
+func newGitAcquirer(source structs.Source) (*GitAcquirer, error) {
 
 	branchFromOptions := ""
 

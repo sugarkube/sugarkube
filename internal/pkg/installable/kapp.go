@@ -75,13 +75,56 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 	if prepend {
 		k.descriptorLayers = append([]structs.KappDescriptorWithMaps{config}, configLayers...)
 	} else {
+		// until https://github.com/imdario/mergo/issues/90 is resolved we need to manually propagate
+		// non-empty fields for maps to later layers
+		// todo -  remove this once https://github.com/imdario/mergo/issues/90 is merged
+		if len(k.descriptorLayers) > 0 {
+			previousLayer := k.descriptorLayers[len(k.descriptorLayers)-1]
+
+			for key, previousSource := range previousLayer.Sources {
+				currentSource, ok := config.Sources[key]
+				if !ok {
+					continue
+				}
+
+				if currentSource.Uri == "" && previousSource.Uri != "" {
+					currentSource.Uri = previousSource.Uri
+				}
+
+				if currentSource.Id == "" && previousSource.Id != "" {
+					currentSource.Id = previousSource.Id
+				}
+
+				config.Sources[key] = currentSource
+			}
+
+			for key, previousOutput := range previousLayer.Output {
+				currentOutput, ok := config.Output[key]
+				if !ok {
+					continue
+				}
+
+				if currentOutput.Id == "" && previousOutput.Id != "" {
+					currentOutput.Id = previousOutput.Id
+				}
+				if currentOutput.Path == "" && previousOutput.Path != "" {
+					currentOutput.Path = previousOutput.Path
+				}
+				if currentOutput.Type == "" && previousOutput.Type != "" {
+					currentOutput.Type = previousOutput.Type
+				}
+
+				config.Output[key] = currentOutput
+			}
+		}
+
 		k.descriptorLayers = append(configLayers, config)
 	}
 
 	mergedDescriptor := structs.KappDescriptorWithMaps{}
 
 	for _, layer := range k.descriptorLayers {
-		log.Logger.Tracef("Merging config layer %#v into existing map %#v for "+
+		log.Logger.Debugf("Merging config layer %#v into existing map %#v for "+
 			"kapp %s", layer, mergedDescriptor, k.FullyQualifiedId())
 		err := mergo.Merge(&mergedDescriptor, layer, mergo.WithOverride)
 		if err != nil {
@@ -198,7 +241,10 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 		return errors.WithStack(err)
 	}
 
-	descriptorWithMaps := convert.KappDescriptorWithListsToMap(descriptorWithLists)
+	descriptorWithMaps, err := convert.KappDescriptorWithListsToMap(descriptorWithLists)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	err = k.AddDescriptor(descriptorWithMaps, true)
 	if err != nil {

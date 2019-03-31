@@ -69,7 +69,10 @@ func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces
 
 	for i, kappDescriptor := range manifestFile.KappDescriptor {
 		// convert the kappDescriptor to an installable
-		kappDescriptorAsMap := convert.KappDescriptorWithListsToMap(kappDescriptor)
+		kappDescriptorWithMap, err := convert.KappDescriptorWithListsToMap(kappDescriptor)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
 
 		// need to merge structs for kapp descriptors (in order of lowest to highest precedence):
 		//   * values from the sugarkube-conf.yaml file (if any are specified for
@@ -84,7 +87,7 @@ func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces
 
 		descriptors := []structs.KappDescriptorWithMaps{
 			manfestDefaults,
-			kappDescriptorAsMap,
+			kappDescriptorWithMap,
 		}
 
 		installableObj, err := installable.New(manifestId, descriptors)
@@ -215,8 +218,8 @@ func SelectInstallables(manifests []interfaces.IManifest, includeSelector []stri
 				}
 
 				if !match {
-					log.Logger.Debugf("Kapp '%s' matches selectors and "+
-						"will be included in the results", installableObj.FullyQualifiedId())
+					log.Logger.Debugf("Kapp '%s' matches selector",
+						installableObj.FullyQualifiedId())
 					selectedKapps = append(selectedKapps, installableObj)
 				}
 			}

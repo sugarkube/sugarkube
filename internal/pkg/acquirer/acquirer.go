@@ -33,10 +33,10 @@ type Acquirer interface {
 }
 
 // Instantiates a new acquirer from a source
-func newAcquirer(source structs.Source) (Acquirer, error) {
+func New(source structs.Source) (Acquirer, error) {
 
 	if strings.Contains(source.Uri, ".git") {
-		acquirerObj, err := NewGitAcquirer(source)
+		acquirerObj, err := newGitAcquirer(source)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -63,7 +63,7 @@ func GetAcquirersFromSources(sources []structs.Source) ([]Acquirer, error) {
 	acquirers := make([]Acquirer, len(sources))
 
 	for i, source := range sources {
-		acquirer, err := newAcquirer(source)
+		acquirer, err := New(source)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
