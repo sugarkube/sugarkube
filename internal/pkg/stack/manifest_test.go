@@ -232,7 +232,7 @@ kapps:
 						},
 						Vars: map[string]interface{}{},
 					},
-					Output: map[string]structs.Output{},
+					Outputs: map[string]structs.Output{},
 					Sources: map[string]structs.Source{
 						"pathASpecial": {
 							Id:      "pathASpecial",
@@ -258,7 +258,7 @@ kapps:
 							},
 						},
 					},
-					Output: map[string]structs.Output{},
+					Outputs: map[string]structs.Output{},
 					Sources: map[string]structs.Source{
 						"pathA": {
 							Uri: "git@github.com:exampleA/repoA.git//example/pathA#branchA",
@@ -277,7 +277,7 @@ kapps:
 						},
 						Vars: map[string]interface{}{},
 					},
-					Output: map[string]structs.Output{},
+					Outputs: map[string]structs.Output{},
 					Sources: map[string]structs.Source{
 						"pathA": {
 							Uri:     "git@github.com:exampleA/repoA.git//example/pathA#branchA",
@@ -349,7 +349,7 @@ func TestManifestOverrides(t *testing.T) {
 				IncludeValues: false,
 			},
 		},
-		Output: map[string]structs.Output{},
+		Outputs: map[string]structs.Output{},
 	}
 
 	installableObj := stackConfig.GetConfig().Manifests()[0].Installables()[0]
@@ -404,7 +404,7 @@ func TestManifestOverridesNil(t *testing.T) {
 				IncludeValues: false,
 			},
 		},
-		Output: map[string]structs.Output{},
+		Outputs: map[string]structs.Output{},
 	}
 
 	actualDescriptor := stackConfig.GetConfig().Manifests()[1].Installables()[0].GetDescriptor()

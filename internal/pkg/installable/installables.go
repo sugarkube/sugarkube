@@ -34,8 +34,8 @@ func New(manifestId string, descriptors []structs.KappDescriptorWithMaps) (inter
 	// add each descriptor sequentially. This causes the underlying merged descriptor to be reevaluated
 	for _, descriptor := range descriptors {
 		// make sure map fields are initialised to empty maps or mergo won't be able to merge them
-		if descriptor.Output == nil {
-			descriptor.Output = map[string]structs.Output{}
+		if descriptor.Outputs == nil {
+			descriptor.Outputs = map[string]structs.Output{}
 		}
 
 		if descriptor.Vars == nil {

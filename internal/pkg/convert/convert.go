@@ -132,6 +132,6 @@ func KappDescriptorWithListsToMap(descriptor structs.KappDescriptorWithLists) (
 		Id:         descriptor.Id,
 		KappConfig: descriptor.KappConfig,
 		Sources:    sources,
-		Output:     outputs,
+		Outputs:    outputs,
 	}, nil
 }

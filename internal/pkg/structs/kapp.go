@@ -78,5 +78,5 @@ type KappDescriptorWithMaps struct {
 	Id         string
 	KappConfig `yaml:",inline"`
 	Sources    map[string]Source // keys are object IDs so values for individual objects can be overridden
-	Output     map[string]Output // keys are object IDs so values for individual objects can be overridden
+	Outputs    map[string]Output // keys are object IDs so values for individual objects can be overridden
 }

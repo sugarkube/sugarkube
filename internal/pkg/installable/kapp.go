@@ -98,8 +98,8 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 				config.Sources[key] = currentSource
 			}
 
-			for key, previousOutput := range previousLayer.Output {
-				currentOutput, ok := config.Output[key]
+			for key, previousOutput := range previousLayer.Outputs {
+				currentOutput, ok := config.Outputs[key]
 				if !ok {
 					continue
 				}
@@ -114,7 +114,7 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 					currentOutput.Type = previousOutput.Type
 				}
 
-				config.Output[key] = currentOutput
+				config.Outputs[key] = currentOutput
 			}
 		}
 
