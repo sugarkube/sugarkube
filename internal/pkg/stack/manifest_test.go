@@ -334,6 +334,7 @@ func TestSelectKappsExclusions(t *testing.T) {
 //	assert.NotEqual(t, manifest, Manifest{})
 //}
 
+// Test that overrides defined in a manifest file take effect
 func TestManifestOverrides(t *testing.T) {
 
 	// testing the correctness of this stack is handled elsewhere
@@ -373,39 +374,51 @@ func TestManifestOverrides(t *testing.T) {
 	assert.Equal(t, expectedDescriptor, actualDescriptor)
 }
 
-//func TestManifestOverridesNil(t *testing.T) {
-//
-//	// testing the correctness of this stack is handled elsewhere
-//	stackConfig, err := BuildStack("large", "../../testdata/stacks.yaml",
-//		&structs.StackFile{}, "", &config.Config{}, os.Stdout)
-//	assert.Nil(t, err)
-//	assert.NotNil(t, stackConfig)
-//
-//	expectedDescriptor := structs.KappDescriptorWithMaps{
-//		KappConfig: structs.KappConfig{
-//			State: "absent",
-//			Vars: map[string]interface{}{
-//				"stackVar": "setInOverrides",
-//				"sizeVar":  "mediumOverridden",
-//			},
-//		},
-//		Sources: map[string]structs.Source{
-//
-//		},
-//
-//		"sources": map[interface{}]interface{}{
-//			"pathA": map[interface{}]interface{}{
-//				"options": map[interface{}]interface{}{
-//					"branch": "stable",
-//				},
-//			},
-//		},
-//	}
-//
-//	actualDescriptor := stackConfig.GetConfig().Manifests()[1].Installables()[0].GetDescriptor()
-//	assert.Nil(t, err)
-//	assert.Equal(t, expectedDescriptor, actualDescriptor)
-//}
+// Test that kapps with no overrides are correctly instantiated
+func TestManifestOverridesNil(t *testing.T) {
+
+	// testing the correctness of this stack is handled elsewhere
+	stackConfig, err := BuildStack("large", "../../testdata/stacks.yaml",
+		&structs.StackFile{}, "", &config.Config{}, os.Stdout)
+	assert.Nil(t, err)
+	assert.NotNil(t, stackConfig)
+
+	expectedDescriptor := structs.KappDescriptorWithMaps{
+		Id: "kappC",
+		KappConfig: structs.KappConfig{
+			State: "present",
+			Vars:  map[string]interface{}{},
+		},
+		Sources: map[string]structs.Source{
+			"special": {
+				Id:            "special",
+				Uri:           "git@github.com:sugarkube/kapps-C.git//kappC/some/special-path#kappC-0.3.0",
+				Options:       map[string]interface{}{},
+				IncludeValues: false,
+			},
+			"pathZ": {
+				Uri:           "git@github.com:sugarkube/kapps-C.git//kappC/some/pathZ#kappZ-0.3.0",
+				Options:       map[string]interface{}{},
+				IncludeValues: false,
+			},
+			"pathX": {
+				Uri:           "git@github.com:sugarkube/kapps-C.git//kappC/some/pathX#kappX-0.3.0",
+				Options:       map[string]interface{}{},
+				IncludeValues: false,
+			},
+			"pathY": {
+				Uri:           "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0",
+				Options:       map[string]interface{}{},
+				IncludeValues: false,
+			},
+		},
+		Output: map[string]structs.Output{},
+	}
+
+	actualDescriptor := stackConfig.GetConfig().Manifests()[1].Installables()[0].GetDescriptor()
+	assert.Nil(t, err)
+	assert.Equal(t, expectedDescriptor, actualDescriptor)
+}
 
 //func TestApplyingManifestOverrides(t *testing.T) {
 //

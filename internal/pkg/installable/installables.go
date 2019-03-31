@@ -38,6 +38,10 @@ func New(manifestId string, descriptors []structs.KappDescriptorWithMaps) (inter
 			descriptor.Output = map[string]structs.Output{}
 		}
 
+		if descriptor.Vars == nil {
+			descriptor.Vars = map[string]interface{}{}
+		}
+
 		for k, source := range descriptor.Sources {
 			if source.Options == nil {
 				source.Options = map[string]interface{}{}
