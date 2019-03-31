@@ -24,10 +24,8 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"os"
 	"sort"
-	"strings"
 )
 
 type task struct {
@@ -71,21 +69,7 @@ type job struct {
 // If the `runPostActions` parameter is false, no post actions will be executed.
 // This can be useful to quickly tear down a cluster.
 func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IManifest,
-	includeSelector []string, excludeSelector []string, renderTemplates bool, runPostActions bool) (*Plan, error) {
-
-	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
-	// in selectors
-	selectedInstallables, err := stack.SelectInstallables(manifests, includeSelector, excludeSelector)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	// if nothing matched, return an error
-	if len(selectedInstallables) == 0 {
-		return nil, errors.New(fmt.Sprintf("No kapps were matched by including '%s' and "+
-			"excluding '%s'", strings.Join(includeSelector, ", "),
-			strings.Join(excludeSelector, ", ")))
-	}
+	selectedInstallables []interfaces.IInstallable, renderTemplates bool, runPostActions bool) (*Plan, error) {
 
 	tranches := make([]tranche, 0)
 	tasks := make([]task, 0)

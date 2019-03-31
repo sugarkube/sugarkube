@@ -109,8 +109,7 @@ func (c *connectCmd) run() error {
 
 	var err error
 
-	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, "",
-		config.CurrentConfig, c.out)
+	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, config.CurrentConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}

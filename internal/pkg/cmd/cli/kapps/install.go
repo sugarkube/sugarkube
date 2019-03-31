@@ -164,8 +164,7 @@ func (c *installCmd) run() error {
 
 	var err error
 
-	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.cacheDir,
-		config.CurrentConfig, c.out)
+	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, config.CurrentConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -219,9 +218,23 @@ func (c *installCmd) run() error {
 		return errors.WithStack(err)
 	}
 
+	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
+	// in selectors
+	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
+		c.includeSelector, c.excludeSelector)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// load the configs for the selected installables
+	err = stack.LoadInstallables(selectedInstallables, c.cacheDir)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	// force mode, so no need to perform validation. Just create a plan
 	actionPlan, err = plan.Create(true, stackObj, stackObj.GetConfig().Manifests(),
-		c.includeSelector, c.excludeSelector, !c.skipTemplating, !c.skipPostActions)
+		selectedInstallables, !c.skipTemplating, !c.skipPostActions)
 	if err != nil {
 		return errors.WithStack(err)
 	}

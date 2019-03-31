@@ -39,7 +39,7 @@ import (
 // all config values for the entire stack (although it won't have been templated yet so any '{{var_name}}'
 // type strings won't have been interpolated yet.
 func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.StackFile,
-	cacheDir string, globalConfig *config.Config, out io.Writer) (interfaces.IStack, error) {
+	globalConfig *config.Config, out io.Writer) (interfaces.IStack, error) {
 
 	if strings.TrimSpace(stackName) == "" {
 		return nil, errors.New("The stack name is required")
@@ -68,29 +68,6 @@ func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.
 	stackConfig, err := parseStackFile(*stackFile)
 	if err != nil {
 		return nil, errors.WithStack(err)
-	}
-
-	// set the cache dir on each installable if it's non-empty
-	if cacheDir != "" {
-		absCacheDir, err := filepath.Abs(cacheDir)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		if _, err := os.Stat(absCacheDir); err != nil {
-			log.Logger.Warnf("Cache dir '%s' doesn't exist. This is only acceptable when "+
-				"creating a cache", absCacheDir)
-		}
-
-		for _, manifest := range stackConfig.Manifests() {
-			for _, installableObj := range manifest.Installables() {
-				// load the config file (if we've cached it)
-				err := installableObj.LoadConfigFile(absCacheDir)
-				if err != nil {
-					return nil, errors.WithStack(err)
-				}
-			}
-		}
 	}
 
 	// initialise the provider and load its variables
@@ -210,4 +187,29 @@ func parseStackFile(stackFile structs.StackFile) (interfaces.IStackConfig, error
 	}
 
 	return stackConfig, nil
+}
+
+// Loads the configs for the selected installables
+func LoadInstallables(installables []interfaces.IInstallable, cacheDir string) error {
+	// set the cache dir on each installable if it's non-empty
+	if cacheDir != "" {
+		absCacheDir, err := filepath.Abs(cacheDir)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		if _, err := os.Stat(absCacheDir); err != nil {
+			return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist", absCacheDir))
+		}
+
+		for _, installableObj := range installables {
+			// load the config file (if we've cached it)
+			err := installableObj.LoadConfigFile(absCacheDir)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+	}
+
+	return nil
 }

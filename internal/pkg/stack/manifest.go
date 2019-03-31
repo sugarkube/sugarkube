@@ -233,6 +233,13 @@ func SelectInstallables(manifests []interfaces.IManifest, includeSelector []stri
 
 	log.Logger.Infof("%d kapps selected for processing in total", len(selectedKapps))
 
+	// if nothing matched, return an error
+	if len(selectedKapps) == 0 {
+		return nil, errors.New(fmt.Sprintf("No kapps were matched by including '%s' and "+
+			"excluding '%s'", strings.Join(includeSelector, ", "),
+			strings.Join(excludeSelector, ", ")))
+	}
+
 	return selectedKapps, nil
 }
 

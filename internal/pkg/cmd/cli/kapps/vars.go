@@ -86,23 +86,31 @@ func (c *varsConfig) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.cacheDir,
-		config.CurrentConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, config.CurrentConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(), c.includeSelector, c.excludeSelector)
+	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
+	// in selectors
+	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
+		c.includeSelector, c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "Displaying variables for %d kapps:\n", len(selectedKapps))
+	// load the configs for the selected installables
+	err = stack.LoadInstallables(selectedInstallables, c.cacheDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	for _, kappObj := range selectedKapps {
+	_, err = fmt.Fprintf(c.out, "Displaying variables for %d kapps:\n", len(selectedInstallables))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	for _, kappObj := range selectedInstallables {
 		templatedVars, err := stackObj.GetTemplatedVars(kappObj, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)

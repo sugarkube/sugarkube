@@ -99,24 +99,31 @@ func (c *templateConfig) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.cacheDir,
-		config.CurrentConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, config.CurrentConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	selectedKapps, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(), c.includeSelector,
-		c.excludeSelector)
+	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
+	// in selectors
+	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
+		c.includeSelector, c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "Rendering templates for %d kapps\n", len(selectedKapps))
+	// load the configs for the selected installables
+	err = stack.LoadInstallables(selectedInstallables, c.cacheDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = RenderTemplates(selectedKapps, c.cacheDir, stackObj, c.dryRun)
+	_, err = fmt.Fprintf(c.out, "Rendering templates for %d kapps\n", len(selectedInstallables))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	err = RenderTemplates(selectedInstallables, c.cacheDir, stackObj, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
