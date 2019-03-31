@@ -46,16 +46,16 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 	approved bool, renderTemplates bool, dryRun bool) error {
 
 	// search for the Makefile
-	makefilePaths, err := utils.FindFilesByPattern(installable.ObjectCacheDir(), "Makefile",
+	makefilePaths, err := utils.FindFilesByPattern(installable.TopLevelCacheDir(), "Makefile",
 		true, false)
 	if err != nil {
 		return errors.Wrapf(err, "Error finding Makefile in '%s'",
-			installable.ObjectCacheDir())
+			installable.TopLevelCacheDir())
 	}
 
 	if len(makefilePaths) == 0 {
 		return errors.New(fmt.Sprintf("No makefile found for kapp '%s' "+
-			"in '%s'", installable.Id(), installable.ObjectCacheDir()))
+			"in '%s'", installable.Id(), installable.TopLevelCacheDir()))
 	}
 	if len(makefilePaths) > 1 {
 		// todo - select the right makefile from the installerConfig if it exists,
@@ -103,7 +103,7 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 
 	// populate env vars that are always supplied
 	envVars := map[string]string{
-		"KAPP_ROOT": installable.ObjectCacheDir(),
+		"KAPP_ROOT": installable.TopLevelCacheDir(),
 		"APPROVED":  fmt.Sprintf("%v", approved),
 		"CLUSTER":   stackConfig.GetCluster(),
 		"PROFILE":   stackConfig.GetProfile(),

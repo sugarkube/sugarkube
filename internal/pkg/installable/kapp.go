@@ -41,7 +41,7 @@ type Kapp struct {
 	manifestId       string
 	mergedDescriptor structs.KappDescriptorWithMaps   // the final config template after merging all the config layers (but not rendering the template)
 	descriptorLayers []structs.KappDescriptorWithMaps // config templates where values from later configs will take precedence over earlier ones
-	rootCacheDir     string
+	topLevelCacheDir string                           // the top-level directory for this kapp in the cache, i.e. the directory containing the kapp's .sugarkube directory
 }
 
 // Returns the non-fully qualified ID
@@ -136,33 +136,11 @@ func (k Kapp) GetCliArgs(installerName string, command string) []string {
 	return cliArgs
 }
 
-// Sets the root cache directory the kapp is checked out into
-func (k *Kapp) SetRootCacheDir(cacheDir string) {
-	log.Logger.Debugf("Setting the root cache dir on kapp '%s' to '%s'",
-		k.FullyQualifiedId(), cacheDir)
-	k.rootCacheDir = cacheDir
-}
-
-// todo - this needs a rethink
-// Returns the physical path to this kapp in a cache
-func (k Kapp) ObjectCacheDir() string {
-	cacheDir := filepath.Join(k.rootCacheDir, k.manifestId, k.Id())
-
-	// if no cache dir has been set (e.g. because the user is doing a dry-run),
-	// don't return an absolute path
-	if k.rootCacheDir != "" {
-		absCacheDir, err := filepath.Abs(cacheDir)
-		if err != nil {
-			panic(fmt.Sprintf("Couldn't convert path to absolute path: %#v", err))
-		}
-
-		cacheDir = absCacheDir
-	} else {
-		log.Logger.Debug("No cache dir has been set on kapp. Cache dir will " +
-			"not be converted to an absolute path.")
-	}
-
-	return cacheDir
+// Returns the top-level directory for this kapp in the cache, i.e. the directory containing the kapp's
+// .sugarkube directory. This path may or may not exist depending on whether the cache has actually
+// been created.
+func (k Kapp) TopLevelCacheDir() string {
+	return k.topLevelCacheDir
 }
 
 // Returns an array of acquirers configured for the sources for this kapp. We need to recompute these each time
@@ -185,17 +163,24 @@ func (k Kapp) Acquirers() ([]acquirer.Acquirer, error) {
 // Loads the kapp's sugarkube.yaml file and adds it as a config layer
 // cacheDir - The path to the top-level cache directory. Can be an empty string if the kapp isn't cached
 func (k *Kapp) LoadConfigFile(cacheDir string) error {
-	k.SetRootCacheDir(cacheDir)
-	configFilePaths, err := utils.FindFilesByPattern(k.ObjectCacheDir(), constants.KappConfigFileName,
+
+	// set the top level cache dir as an absolute path
+	absCacheDir, err := filepath.Abs(cacheDir)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	k.topLevelCacheDir = filepath.Join(absCacheDir, k.manifestId, k.Id())
+
+	configFilePaths, err := utils.FindFilesByPattern(k.TopLevelCacheDir(), constants.KappConfigFileName,
 		true, false)
 	if err != nil {
 		return errors.Wrapf(err, "Error finding '%s' in '%s'",
-			constants.KappConfigFileName, k.ObjectCacheDir())
+			constants.KappConfigFileName, k.TopLevelCacheDir())
 	}
 
 	if len(configFilePaths) == 0 {
 		return errors.New(fmt.Sprintf("No '%s' file found for kapp "+
-			"'%s' in %s", constants.KappConfigFileName, k.FullyQualifiedId(), k.ObjectCacheDir()))
+			"'%s' in %s", constants.KappConfigFileName, k.FullyQualifiedId(), k.TopLevelCacheDir()))
 	} else if len(configFilePaths) > 1 {
 		// todo - have a way of declaring the 'right' one in the manifest
 		panic(fmt.Sprintf("Multiple '%s' found for kapp '%s'. Disambiguation "+
@@ -296,7 +281,7 @@ func (k Kapp) getIntrinsicData() map[string]string {
 	return map[string]string{
 		"id":        k.Id(),
 		"state":     k.State(),
-		"cacheRoot": k.ObjectCacheDir(),
+		"cacheRoot": k.TopLevelCacheDir(),
 	}
 }
 
@@ -412,9 +397,9 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 	}
 
 	// make sure the cache dir exists
-	if _, err := os.Stat(k.ObjectCacheDir()); err != nil {
+	if _, err := os.Stat(k.TopLevelCacheDir()); err != nil {
 		return nil, errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
-			k.ObjectCacheDir()))
+			k.TopLevelCacheDir()))
 	}
 
 	renderedPaths := make([]string, 0)
@@ -439,7 +424,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 			foundTemplate := false
 
 			// see whether the template is in the kapp itself
-			possibleSource := filepath.Join(k.ObjectCacheDir(), templateSource)
+			possibleSource := filepath.Join(k.TopLevelCacheDir(), templateSource)
 			log.Logger.Debugf("Searching for kapp template in '%s'", possibleSource)
 			_, err := os.Stat(possibleSource)
 			if err == nil {
@@ -488,7 +473,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		}
 
 		if !filepath.IsAbs(destPath) {
-			destPath = filepath.Join(k.ObjectCacheDir(), destPath)
+			destPath = filepath.Join(k.TopLevelCacheDir(), destPath)
 		}
 
 		// check whether the dest path exists

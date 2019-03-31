@@ -37,22 +37,11 @@ type CacheGrouper interface {
 	Installables() []interfaces.IInstallable
 }
 
-// Returns the path that the group of cacheable objects should be stored under
-func getCacheGroupPath(cacheDir string, cacheGroup Ider) string {
-	return filepath.Join(cacheDir, cacheGroup.Id())
-}
-
-// Returns the path of a kapp's cache dir where the different sources are
-// checked out to
-func getKappCachePath(kappRootPath string) string {
-	return filepath.Join(kappRootPath, CacheDir)
-}
-
 // Cache a group of cacheable objects under a root directory
 func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) error {
 
 	// create a directory to cache all kapps in this cacheGroup in
-	groupCacheDir := getCacheGroupPath(rootCacheDir, cacheGroup)
+	groupCacheDir := filepath.Join(rootCacheDir, cacheGroup.Id())
 
 	err := createDirectoryIfMissing(groupCacheDir)
 	if err != nil {
@@ -64,21 +53,13 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 		log.Logger.Infof("Caching kapp '%s'", installableObj.FullyQualifiedId())
 		log.Logger.Debugf("Kapp to cache: %#v", installableObj)
 
-		// build a directory path for the kapp's .sugarkube cache directory
-		kappHiddenCacheDir := getKappCachePath(installableObj.ObjectCacheDir())
-
-		err := createDirectoryIfMissing(kappHiddenCacheDir)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
 		acquirers, err := installableObj.Acquirers()
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		err = acquireSources(cacheGroup.Id(), acquirers, installableObj.ObjectCacheDir(),
-			kappHiddenCacheDir, dryRun)
+		err = acquireSources(cacheGroup.Id(), acquirers, installableObj.TopLevelCacheDir(),
+			dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -89,8 +70,16 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 
 // Acquires each source and symlinks it to the target path in the cache directory.
 // Runs all acquirers in parallel.
-func acquireSources(manifestId string, acquirers []acquirer.Acquirer, rootDir string,
-	kappHiddenCacheDir string, dryRun bool) error {
+func acquireSources(manifestId string, acquirers []acquirer.Acquirer, kappTopLevelCacheDir string,
+	dryRun bool) error {
+
+	// build a directory path for the kapp's .sugarkube cache directory
+	kappHiddenCacheDir := filepath.Join(kappTopLevelCacheDir, CacheDir)
+
+	err := createDirectoryIfMissing(kappHiddenCacheDir)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	doneCh := make(chan bool)
 	errCh := make(chan error)
@@ -120,10 +109,10 @@ func acquireSources(manifestId string, acquirers []acquirer.Acquirer, rootDir st
 			}
 
 			sourcePath := filepath.Join(sourceDest, a.Path())
-			sourcePath = strings.TrimPrefix(sourcePath, rootDir)
+			sourcePath = strings.TrimPrefix(sourcePath, kappTopLevelCacheDir)
 			sourcePath = strings.TrimPrefix(sourcePath, "/")
 
-			symLinkTarget := filepath.Join(rootDir, a.Id())
+			symLinkTarget := filepath.Join(kappTopLevelCacheDir, a.Id())
 
 			var symLinksExist bool
 
@@ -144,7 +133,7 @@ func acquireSources(manifestId string, acquirers []acquirer.Acquirer, rootDir st
 				if dryRun {
 					log.Logger.Debugf("Dry run. Would symlink cached source %s to %s", sourcePath, symLinkTarget)
 				} else {
-					if _, err := os.Stat(filepath.Join(rootDir, sourcePath)); err != nil {
+					if _, err := os.Stat(filepath.Join(kappTopLevelCacheDir, sourcePath)); err != nil {
 						errCh <- errors.Wrapf(err, "Symlink source '%s' doesn't exist", sourcePath)
 					}
 

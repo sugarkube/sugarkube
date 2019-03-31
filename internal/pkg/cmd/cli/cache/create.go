@@ -113,6 +113,14 @@ func (c *createCmd) run() error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
+
+		// reload each installable now its been cached so we can render templates
+		for _, installableObj := range manifest.Installables() {
+			err := installableObj.LoadConfigFile(absRootCacheDir)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
 	}
 
 	_, err = fmt.Fprintln(c.out, "Kapps successfully cached")

@@ -126,7 +126,7 @@ need to merge structs for kapp descriptors (in order of lowest to highest preced
 * Wordpress site 2 isn't cached when running 'cache create' (probably due to it referring to a non-existent branch - 
   we should throw an error and abort in that case)
 
-* Create a cache manager whose job it is to organise where files are stored in a cache
+* Create a cache manager whose job it is to organise where files are stored in a cache to enable the no-op provisioner to be used
 
 ## Other things to consider
 * Is being focussed on clusters a mistake? 

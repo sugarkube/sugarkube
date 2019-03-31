@@ -20,7 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"path"
 	"testing"
 )
 
@@ -69,7 +68,7 @@ func TestLoad(t *testing.T) {
 		},
 		manifestId: "sample-manifest",
 	}
-	testKapp.SetRootCacheDir(path.Join(testDir, "sample-cache"))
+	//testKapp.setRootCacheDir(path.Join(testDir, "sample-cache"))
 
 	err := testKapp.RefreshConfig(templateVars)
 	assert.Nil(t, err)

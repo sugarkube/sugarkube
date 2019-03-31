@@ -31,8 +31,7 @@ type IInstallable interface {
 	PostActions() []string
 	GetDescriptor() structs.KappDescriptorWithMaps
 	LoadConfigFile(cacheDir string) error
-	SetRootCacheDir(cacheDir string)
-	ObjectCacheDir() string
+	TopLevelCacheDir() string
 	Acquirers() ([]acquirer.Acquirer, error)
 	RefreshConfig(templateVars map[string]interface{}) error
 	GetCliArgs(installerName string, command string) []string
