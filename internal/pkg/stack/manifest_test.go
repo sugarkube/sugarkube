@@ -102,7 +102,7 @@ func TestSelectKapps(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
 	stackConfig, err := BuildStack("kops", "../../testdata/stacks.yaml",
-		&structs.StackFile{}, &config.Config{}, os.Stdout)
+		&structs.StackFile{}, "", &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 	assert.NotNil(t, stackConfig)
 
@@ -132,7 +132,7 @@ func TestSelectKappsExclusions(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
 	stack, err := BuildStack("kops", "../../testdata/stacks.yaml",
-		&structs.StackFile{}, &config.Config{}, os.Stdout)
+		&structs.StackFile{}, "", &config.Config{}, os.Stdout)
 	assert.Nil(t, err)
 	assert.NotNil(t, stack)
 

@@ -30,6 +30,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -38,7 +39,7 @@ import (
 // all config values for the entire stack (although it won't have been templated yet so any '{{var_name}}'
 // type strings won't have been interpolated yet.
 func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.StackFile,
-	globalConfig *config.Config, out io.Writer) (interfaces.IStack, error) {
+	cacheDir string, globalConfig *config.Config, out io.Writer) (interfaces.IStack, error) {
 
 	if strings.TrimSpace(stackName) == "" {
 		return nil, errors.New("The stack name is required")
@@ -67,6 +68,18 @@ func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.
 	stackConfig, err := parseStackFile(*stackFile)
 	if err != nil {
 		return nil, errors.WithStack(err)
+	}
+
+	absCacheDir, err := filepath.Abs(cacheDir)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	// set the cache dir on each installable
+	for i, manifest := range stackConfig.Manifests() {
+		for j, _ := range manifest.Installables() {
+			stackConfig.Manifests()[i].Installables()[j].SetRootCacheDir(absCacheDir)
+		}
 	}
 
 	// initialise the provider and load its variables

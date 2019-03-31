@@ -86,7 +86,7 @@ func (c *varsConfig) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig,
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.cacheDir,
 		config.CurrentConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
@@ -103,10 +103,6 @@ func (c *varsConfig) run() error {
 	}
 
 	for _, kappObj := range selectedKapps {
-		if c.cacheDir != "" {
-			kappObj.SetRootCacheDir(c.cacheDir)
-		}
-
 		templatedVars, err := stackObj.GetTemplatedVars(kappObj, map[string]interface{}{})
 		if err != nil {
 			return errors.WithStack(err)

@@ -164,7 +164,7 @@ func (c *installCmd) run() error {
 
 	var err error
 
-	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig,
+	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.cacheDir,
 		config.CurrentConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
@@ -221,7 +221,7 @@ func (c *installCmd) run() error {
 
 	// force mode, so no need to perform validation. Just create a plan
 	actionPlan, err = plan.Create(true, stackObj, stackObj.GetConfig().Manifests(),
-		c.cacheDir, c.includeSelector, c.excludeSelector, !c.skipTemplating, !c.skipPostActions)
+		c.includeSelector, c.excludeSelector, !c.skipTemplating, !c.skipPostActions)
 	if err != nil {
 		return errors.WithStack(err)
 	}

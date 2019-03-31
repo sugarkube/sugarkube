@@ -48,21 +48,17 @@ type Plan struct {
 	tranches []tranche
 	// contains details of the target cluster
 	stack interfaces.IStack
-	// a cache dir to run the (make) installer over. It should already have
-	// been validated to match the stack config.
-	cacheDir string
 	// whether to write templates for a kapp immediately before applying the kapp
 	renderTemplates bool
 }
 
 // A job to be run by a worker
 type job struct {
-	task             task
-	stack            interfaces.IStack
-	manifestCacheDir string
-	renderTemplates  bool
-	approved         bool
-	dryRun           bool
+	task            task
+	stack           interfaces.IStack
+	renderTemplates bool
+	approved        bool
+	dryRun          bool
 }
 
 // create a plan containing all kapps in the stack, then filter out the
@@ -75,8 +71,7 @@ type job struct {
 // If the `runPostActions` parameter is false, no post actions will be executed.
 // This can be useful to quickly tear down a cluster.
 func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IManifest,
-	cacheDir string, includeSelector []string, excludeSelector []string,
-	renderTemplates bool, runPostActions bool) (*Plan, error) {
+	includeSelector []string, excludeSelector []string, renderTemplates bool, runPostActions bool) (*Plan, error) {
 
 	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
 	// in selectors
@@ -203,7 +198,6 @@ func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IMa
 	plan := Plan{
 		tranches:        tranches,
 		stack:           stackObj,
-		cacheDir:        cacheDir,
 		renderTemplates: renderTemplates,
 	}
 
@@ -276,8 +270,6 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 		}
 
 		for _, task := range tranche.tasks {
-			task.installableObj.SetRootCacheDir(p.cacheDir)
-
 			job := job{
 				approved:        approved,
 				dryRun:          dryRun,

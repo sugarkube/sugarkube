@@ -27,7 +27,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
-	"os"
 	"strings"
 )
 
@@ -100,7 +99,7 @@ func (c *templateConfig) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig,
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.cacheDir,
 		config.CurrentConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
@@ -139,10 +138,10 @@ func RenderTemplates(installables []interfaces.IInstallable, cacheDir string, st
 	}
 
 	// make sure the cache dir exists
-	if _, err := os.Stat(cacheDir); err != nil {
-		return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
-			cacheDir))
-	}
+	//if _, err := os.Stat(cacheDir); err != nil {
+	//	return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
+	//		cacheDir))
+	//}
 
 	candidateKappIds := make([]string, 0)
 	for _, k := range installables {
@@ -156,8 +155,6 @@ func RenderTemplates(installables []interfaces.IInstallable, cacheDir string, st
 		if err != nil {
 			return errors.WithStack(err)
 		}
-
-		kappObj.SetRootCacheDir(cacheDir)
 
 		_, err = kappObj.RenderTemplates(templatedVars, stack.GetConfig(), dryRun)
 		if err != nil {
