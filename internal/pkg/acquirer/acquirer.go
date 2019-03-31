@@ -59,15 +59,15 @@ func Acquire(a Acquirer, dest string) error {
 }
 
 // Takes a list of Sources and returns a list of instantiated acquirers that represent them
-func GetAcquirersFromSources(sources []structs.Source) ([]Acquirer, error) {
-	acquirers := make([]Acquirer, len(sources))
+func GetAcquirersFromSources(sources map[string]structs.Source) (map[string]Acquirer, error) {
+	acquirers := make(map[string]Acquirer, len(sources))
 
-	for i, source := range sources {
+	for key, source := range sources {
 		acquirer, err := New(source)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		acquirers[i] = acquirer
+		acquirers[key] = acquirer
 	}
 
 	return acquirers, nil

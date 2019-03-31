@@ -368,10 +368,18 @@ func TestManifestOverrides(t *testing.T) {
 		Output: map[string]structs.Output{},
 	}
 
-	actualDescriptor := stackConfig.GetConfig().Manifests()[0].Installables()[0].GetDescriptor()
+	installableObj := stackConfig.GetConfig().Manifests()[0].Installables()[0]
+	actualDescriptor := installableObj.GetDescriptor()
 	assert.Nil(t, err)
 
 	assert.Equal(t, expectedDescriptor, actualDescriptor)
+
+	acquirers, err := installableObj.Acquirers()
+	assert.Nil(t, err)
+
+	// make sure the override has been applied to the source
+	assert.Equal(t, "git@github.com:sugarkube/kapps-A.git//some/pathA#stable",
+		acquirers["pathA"].Uri())
 }
 
 // Test that kapps with no overrides are correctly instantiated
@@ -419,27 +427,3 @@ func TestManifestOverridesNil(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expectedDescriptor, actualDescriptor)
 }
-
-//func TestApplyingManifestOverrides(t *testing.T) {
-//
-//	// testing the correctness of this stack is handled elsewhere
-//	stackConfig, err := BuildStack("large", "../../testdata/stacks.yaml",
-//		&structs.StackFile{}, "", &config.Config{}, os.Stdout)
-//	assert.Nil(t, err)
-//	assert.NotNil(t, stackConfig)
-//
-//	// in the actual manifest, the state is set to present but it's overridden
-//	kappObj := stackConfig.GetConfig().Manifests()[0].Installables()[0]
-//	assert.Equal(t, constants.AbsentKey, kappObj.State())
-//	assert.Equal(t, map[string]interface{}{
-//		"sizeVar":  "mediumOverridden",
-//		"stackVar": "setInOverrides",
-//		"colours": []interface{}{
-//			"red",
-//			"black",
-//		}}, kappObj.Vars)
-//
-//	acquirers, err := kappObj.Acquirers()
-//	assert.Nil(t, err)
-//	assert.Equal(t, "git@github.com:sugarkube/kapps-A.git//some/pathA#stable", acquirers[0].Uri())
-//}

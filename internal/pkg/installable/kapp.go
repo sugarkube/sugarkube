@@ -189,14 +189,9 @@ func (k Kapp) TopLevelCacheDir() string {
 
 // Returns an array of acquirers configured for the sources for this kapp. We need to recompute these each time
 // instead of caching them so that any manifest overrides will take effect.
-func (k Kapp) Acquirers() ([]acquirer.Acquirer, error) {
-	sources := make([]structs.Source, 0)
+func (k Kapp) Acquirers() (map[string]acquirer.Acquirer, error) {
 
-	for _, source := range k.mergedDescriptor.Sources {
-		sources = append(sources, source)
-	}
-
-	acquirers, err := acquirer.GetAcquirersFromSources(sources)
+	acquirers, err := acquirer.GetAcquirersFromSources(k.mergedDescriptor.Sources)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

@@ -32,7 +32,7 @@ type IInstallable interface {
 	GetDescriptor() structs.KappDescriptorWithMaps
 	LoadConfigFile(cacheDir string) error
 	TopLevelCacheDir() string
-	Acquirers() ([]acquirer.Acquirer, error)
+	Acquirers() (map[string]acquirer.Acquirer, error)
 	RefreshConfig(templateVars map[string]interface{}) error
 	GetCliArgs(installerName string, command string) []string
 	GetEnvVars() map[string]interface{}

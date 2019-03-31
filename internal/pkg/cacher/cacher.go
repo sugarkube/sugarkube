@@ -70,7 +70,7 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 
 // Acquires each source and symlinks it to the target path in the cache directory.
 // Runs all acquirers in parallel.
-func acquireSources(manifestId string, acquirers []acquirer.Acquirer, kappTopLevelCacheDir string,
+func acquireSources(manifestId string, acquirers map[string]acquirer.Acquirer, kappTopLevelCacheDir string,
 	dryRun bool) error {
 
 	// build a directory path for the kapp's .sugarkube cache directory
