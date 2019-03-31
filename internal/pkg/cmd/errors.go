@@ -46,11 +46,11 @@ func CheckError(err error) {
 	if err != nil {
 		if err != context.Canceled {
 			var err2 error
-			if log.Logger.Level == logrus.DebugLevel {
+			if log.Logger.Level == logrus.DebugLevel || log.Logger.Level == logrus.TraceLevel {
 				_, err2 = fmt.Fprintf(os.Stderr, fmt.Sprintf("An error occurred: %+v\n", err))
 			} else {
 				_, err2 = fmt.Fprintf(os.Stderr, fmt.Sprintf("An error occurred: %v\n\n"+
-					"Run with `-l debug` for a full stacktrace.\n", err))
+					"Run with `-l debug` or `-l trace` for a full stacktrace.\n", err))
 			}
 			if err2 != nil {
 				panic(err2)

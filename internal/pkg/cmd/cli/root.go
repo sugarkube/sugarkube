@@ -141,11 +141,11 @@ func init() {
 				fmt.Fprintf(os.Stderr, "%s\n", cause.Error())
 				log.Logger.Fatalf("No config file found. Aborting.")
 			} else {
-				if log.Logger.Level == logrus.DebugLevel {
+				if log.Logger.Level == logrus.DebugLevel || log.Logger.Level == logrus.TraceLevel {
 					log.Logger.Fatalf("Error loading config: %+v", err)
 				} else {
 					log.Logger.Fatalf("Error loading config: %v\n"+
-						"Run with `-l debug` for a full stacktrace.", err)
+						"Run with `-l debug` or `-l trace` for a full stacktrace.", err)
 				}
 			}
 		}
@@ -172,11 +172,11 @@ func init() {
 	for viperKey, pFlagName := range bindings {
 		err := viperConfig.BindPFlag(viperKey, rootCmd.PersistentFlags().Lookup(pFlagName))
 		if err != nil {
-			if log.Logger.Level == logrus.DebugLevel {
+			if log.Logger.Level == logrus.DebugLevel || log.Logger.Level == logrus.TraceLevel {
 				log.Logger.Fatalf("Error binding to CLI args: %+v", err)
 			} else {
 				log.Logger.Fatalf("Error binding to CLI args: %v\n"+
-					"Run with `-l debug` for a full stacktrace.", err)
+					"Run with `-l debug` or `-l trace` for a full stacktrace.", err)
 			}
 		}
 	}
