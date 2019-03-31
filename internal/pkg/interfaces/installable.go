@@ -30,6 +30,7 @@ type IInstallable interface {
 	State() string
 	PostActions() []string
 	GetDescriptor() structs.KappDescriptorWithMaps
+	LoadConfigFile(cacheDir string) error
 	SetRootCacheDir(cacheDir string)
 	ObjectCacheDir() string
 	Acquirers() ([]acquirer.Acquirer, error)

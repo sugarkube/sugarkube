@@ -17,7 +17,6 @@
 package installable
 
 import (
-	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
@@ -28,12 +27,6 @@ func New(manifestId string, descriptors []structs.KappDescriptorWithMaps) (inter
 	kapp := &Kapp{
 		manifestId:       manifestId,
 		descriptorLayers: descriptors,
-	}
-
-	// load the config file if we've cached it
-	err := kapp.loadConfigFile()
-	if err != nil {
-		return nil, errors.WithStack(err)
 	}
 
 	return kapp, nil

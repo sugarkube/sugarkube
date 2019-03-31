@@ -137,12 +137,6 @@ func RenderTemplates(installables []interfaces.IInstallable, cacheDir string, st
 		return errors.New("No installables supplied to template function")
 	}
 
-	// make sure the cache dir exists
-	//if _, err := os.Stat(cacheDir); err != nil {
-	//	return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
-	//		cacheDir))
-	//}
-
 	candidateKappIds := make([]string, 0)
 	for _, k := range installables {
 		candidateKappIds = append(candidateKappIds, k.FullyQualifiedId())

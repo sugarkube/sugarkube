@@ -61,9 +61,6 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 
 	// acquire each kapp and cache it
 	for _, installableObj := range cacheGroup.Installables() {
-		// build a directory path for the kapp in the cacheGroup cache directory
-		installableObj.SetRootCacheDir(rootCacheDir)
-
 		log.Logger.Infof("Caching kapp '%s'", installableObj.FullyQualifiedId())
 		log.Logger.Debugf("Kapp to cache: %#v", installableObj)
 

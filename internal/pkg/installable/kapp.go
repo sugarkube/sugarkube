@@ -183,7 +183,9 @@ func (k Kapp) Acquirers() ([]acquirer.Acquirer, error) {
 }
 
 // Loads the kapp's sugarkube.yaml file and adds it as a config layer
-func (k *Kapp) loadConfigFile() error {
+// cacheDir - The path to the top-level cache directory. Can be an empty string if the kapp isn't cached
+func (k *Kapp) LoadConfigFile(cacheDir string) error {
+	k.SetRootCacheDir(cacheDir)
 	configFilePaths, err := utils.FindFilesByPattern(k.ObjectCacheDir(), constants.KappConfigFileName,
 		true, false)
 	if err != nil {
@@ -407,6 +409,12 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 	dryRunPrefix := ""
 	if dryRun {
 		dryRunPrefix = "[Dry run] "
+	}
+
+	// make sure the cache dir exists
+	if _, err := os.Stat(k.ObjectCacheDir()); err != nil {
+		return nil, errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
+			k.ObjectCacheDir()))
 	}
 
 	renderedPaths := make([]string, 0)
