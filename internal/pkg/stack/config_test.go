@@ -17,12 +17,16 @@
 package stack
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"gopkg.in/yaml.v2"
 	"path/filepath"
 	"testing"
 )
+
+const testDir = "../../testdata"
 
 func TestLoadStackConfigGarbagePath(t *testing.T) {
 	_, err := loadStackFile("fake-path", "/fake/~/some?/~/garbage")
@@ -35,12 +39,12 @@ func TestLoadStackConfigNonExistentPath(t *testing.T) {
 }
 
 func TestLoadStackConfigDir(t *testing.T) {
-	_, err := loadStackFile("dir-path", "../../testdata")
+	_, err := loadStackFile("dir-path", testDir)
 	assert.Error(t, err)
 }
 
 func GetTestManifestDescriptors() []structs.ManifestDescriptor {
-	manifest1 := structs.ManifestDescriptor{
+	descriptor1 := structs.ManifestDescriptor{
 		Id:  "",
 		Uri: "manifests/manifest1.yaml",
 		Overrides: map[string]structs.KappDescriptorWithMaps{
@@ -63,91 +67,140 @@ func GetTestManifestDescriptors() []structs.ManifestDescriptor {
 		},
 	}
 
-	//manifest1KappDescriptors := []structs.KappDescriptorWithLists{
-	//	{
-	//		Id: "kappA",
-	//		KappConfig: structs.KappConfig{
-	//			State: "present",
-	//			Vars: map[string]interface{}{
-	//				"sizeVar": "big",
-	//				"colours": []interface{}{
-	//					"red",
-	//					"black",
-	//				},
-	//			},
-	//		},
-	//		Sources: []structs.Source{
-	//			{
-	//				Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
-	//			},
-	//		},
-	//	},
-	//}
-	//
-	//manifest1.UnparsedKapps = manifest1UnparsedKapps
-
-	manifest2 := structs.ManifestDescriptor{
+	descriptor2 := structs.ManifestDescriptor{
 		Id:  "exampleManifest2",
 		Uri: "manifests/manifest2.yaml",
-		//Options: ManifestOptions{
-		//	Parallelisation: uint16(1),
-		//},
 	}
 
-	//manifest2KappDescriptors := []structs.KappDescriptorWithLists{
-	//	{
-	//		Id: "kappC",
-	//		KappConfig: structs.KappConfig{
-	//			State: "present",
-	//		},
-	//		Sources: []structs.Source{
-	//			{
-	//				Id:  "special",
-	//				Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/special-path#kappC-0.3.0",
-	//			},
-	//			{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathZ#kappZ-0.3.0"},
-	//			{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathX#kappX-0.3.0"},
-	//			{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0"},
-	//		},
-	//	},
-	//	{
-	//		Id: "kappB",
-	//		KappConfig: structs.KappConfig{
-	//			State: "present",
-	//		},
-	//		Sources: []structs.Source{
-	//			{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
-	//		},
-	//	},
-	//	{
-	//		Id: "kappD",
-	//		KappConfig: structs.KappConfig{
-	//			State: "present",
-	//		},
-	//		Sources: []structs.Source{
-	//			{
-	//				Uri: "git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0",
-	//				Options: map[string]interface{}{
-	//					"branch": "kappDBranch",
-	//				},
-	//			},
-	//		},
-	//	},
-	//	{
-	//		Id: "kappA",
-	//		KappConfig: structs.KappConfig{
-	//			State: "present",
-	//		},
-	//		Sources: []structs.Source{
-	//			{IncludeValues: false,
-	//				Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.2.0"},
-	//		},
-	//	},
-	//}
-	//
-	//manifest2.UnparsedKapps = manifest2UnparsedKapps
+	return []structs.ManifestDescriptor{descriptor1, descriptor2}
+}
 
-	return []structs.ManifestDescriptor{manifest1, manifest2}
+func GetTestManifests(t *testing.T) []interfaces.IManifest {
+	absTestDir, err := filepath.Abs(testDir)
+	assert.Nil(t, err)
+
+	descriptor1 := structs.ManifestDescriptor{
+		Id:  "",
+		Uri: filepath.Join(absTestDir, "manifests/manifest1.yaml"),
+		Overrides: map[string]structs.KappDescriptorWithMaps{
+			"kappA": {
+				KappConfig: structs.KappConfig{
+					State: "absent",
+					Vars: map[string]interface{}{
+						"sizeVar":  "mediumOverridden",
+						"stackVar": "setInOverrides",
+					},
+				},
+				Sources: map[string]structs.Source{
+					"pathA": {
+						// This line isn't in the manifest file but gets copied in because of the
+						// frigging we're doing inside kapp.AddDescriptor to work around an issue
+						// in mergo
+						Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
+						Options: map[string]interface{}{
+							"branch": "stable",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	manifest1KappDescriptors := []structs.KappDescriptorWithLists{
+		{
+			Id: "kappA",
+			KappConfig: structs.KappConfig{
+				State: "present",
+				Vars: map[string]interface{}{
+					"sizeVar": "big",
+					"colours": []interface{}{
+						"red",
+						"black",
+					},
+				},
+			},
+			Sources: []structs.Source{
+				{
+					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
+				},
+			},
+		},
+	}
+
+	manifest1 := Manifest{
+		descriptor: descriptor1,
+		manifestFile: structs.ManifestFile{
+			KappDescriptor: manifest1KappDescriptors,
+		},
+	}
+
+	descriptor2 := structs.ManifestDescriptor{
+		Id:  "exampleManifest2",
+		Uri: filepath.Join(absTestDir, "manifests/manifest2.yaml"),
+	}
+
+	manifest2KappDescriptors := []structs.KappDescriptorWithLists{
+		{
+			Id: "kappC",
+			KappConfig: structs.KappConfig{
+				State: "present",
+			},
+			Sources: []structs.Source{
+				{
+					Id:  "special",
+					Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/special-path#kappC-0.3.0",
+				},
+				{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathZ#kappZ-0.3.0"},
+				{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathX#kappX-0.3.0"},
+				{Uri: "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0"},
+			},
+		},
+		{
+			Id: "kappB",
+			KappConfig: structs.KappConfig{
+				State: "present",
+			},
+			Sources: []structs.Source{
+				{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
+			},
+		},
+		{
+			Id: "kappD",
+			KappConfig: structs.KappConfig{
+				State: "present",
+			},
+			Sources: []structs.Source{
+				{
+					Uri: "git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0",
+					Options: map[string]interface{}{
+						"branch": "kappDBranch",
+					},
+				},
+			},
+		},
+		{
+			Id: "kappA",
+			KappConfig: structs.KappConfig{
+				State: "present",
+			},
+			Sources: []structs.Source{
+				{IncludeValues: false,
+					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.2.0"},
+			},
+		},
+	}
+
+	manifest2 := Manifest{
+		descriptor: descriptor2,
+		manifestFile: structs.ManifestFile{
+			KappDescriptor: manifest2KappDescriptors,
+			Options: structs.ManifestOptions{
+				Parallelisation: uint16(1),
+			},
+		},
+	}
+
+	return []interfaces.IManifest{&manifest1, &manifest2}
 }
 
 func TestLoadStackConfig(t *testing.T) {
@@ -175,9 +228,22 @@ func TestLoadStackConfig(t *testing.T) {
 		},
 	}
 
-	actual, err := loadStackFile("large", "../../testdata/stacks.yaml")
+	stackFile, err := loadStackFile("large", "../../testdata/stacks.yaml")
 	assert.Nil(t, err)
-	assert.Equal(t, expected, actual, "unexpected stack")
+	assert.Equal(t, expected, stackFile, "unexpected stack")
+
+	stackConfig, err := parseStackFile(*stackFile)
+	assert.Nil(t, err)
+
+	expectedManifests := GetTestManifests(t)
+	actualManifests := stackConfig.Manifests()
+
+	for i := 0; i < len(expectedManifests); i++ {
+		// blank the installables - we'll test loading those elsewhere
+		actualManifests[i].(*Manifest).installables = nil
+		assert.Equal(t, expectedManifests[i], actualManifests[i],
+			fmt.Sprintf("Manifest at index %d doesn't match", i))
+	}
 }
 
 func TestLoadStackConfigMissingStackName(t *testing.T) {
