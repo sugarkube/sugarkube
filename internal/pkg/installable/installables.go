@@ -27,6 +27,7 @@ func New(manifestId string, descriptors []structs.KappDescriptorWithMaps) (inter
 	kapp := &Kapp{
 		manifestId:       manifestId,
 		descriptorLayers: descriptors,
+		topLevelCacheDir: "",
 	}
 
 	return kapp, nil

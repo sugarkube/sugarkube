@@ -75,13 +75,15 @@ func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.
 		return nil, errors.WithStack(err)
 	}
 
-	// set the cache dir on each installable
-	for _, manifest := range stackConfig.Manifests() {
-		for _, installableObj := range manifest.Installables() {
-			// load the config file (if we've cached it)
-			err := installableObj.LoadConfigFile(absCacheDir)
-			if err != nil {
-				return nil, errors.WithStack(err)
+	// set the cache dir on each installable if it's non-empty
+	if cacheDir != "" {
+		for _, manifest := range stackConfig.Manifests() {
+			for _, installableObj := range manifest.Installables() {
+				// load the config file (if we've cached it)
+				err := installableObj.LoadConfigFile(absCacheDir)
+				if err != nil {
+					return nil, errors.WithStack(err)
+				}
 			}
 		}
 	}
