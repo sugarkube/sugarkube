@@ -236,6 +236,9 @@ func SelectInstallables(manifests []interfaces.IManifest, includeSelector []stri
 // Returns a boolean indicating whether the installable matches the given selector
 func MatchesSelector(installable interfaces.IInstallable, selector string) (bool, error) {
 
+	log.Logger.Tracef("Testing whether installable '%s' matches the selector '%s'",
+		installable.FullyQualifiedId(), selector)
+
 	selectorParts := strings.Split(selector, constants.NamespaceSeparator)
 	if len(selectorParts) != 2 {
 		return false, errors.New(fmt.Sprintf("Fully-qualified IDs must "+
@@ -258,10 +261,12 @@ func MatchesSelector(installable interfaces.IInstallable, selector string) (bool
 
 	if selectorManifestId == kappManifestId {
 		if selectorId == constants.WildcardCharacter || selectorId == kappId {
+			log.Logger.Tracef("Installable '%s' did match the selector '%s'", installable.FullyQualifiedId(), selector)
 			return true, nil
 		}
 	}
 
+	log.Logger.Tracef("Installable '%s' didn't match the selector '%s'", installable.FullyQualifiedId(), selector)
 	return false, nil
 }
 

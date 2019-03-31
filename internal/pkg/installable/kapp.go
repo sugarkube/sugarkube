@@ -65,7 +65,7 @@ func (k Kapp) PostActions() []string {
 // Every time we add a new descriptor remerge the descriptor.
 // If `prepend` is true the new layer will be prepended to the list of layers, otherwise it'll be appended.
 // Descriptors later in the layers array will override earlier values
-func (k Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool) error {
+func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool) error {
 	configLayers := k.descriptorLayers
 
 	if configLayers == nil {
@@ -90,6 +90,7 @@ func (k Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool)
 	}
 
 	k.mergedDescriptor = mergedDescriptor
+	log.Logger.Debugf("Set new merged descriptor for kapp '%s' to '%+v'", k.FullyQualifiedId(), mergedDescriptor)
 
 	return nil
 }

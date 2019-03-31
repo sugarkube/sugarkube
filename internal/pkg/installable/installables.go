@@ -17,7 +17,9 @@
 package installable
 
 import (
+	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
 
@@ -26,9 +28,18 @@ func New(manifestId string, descriptors []structs.KappDescriptorWithMaps) (inter
 	// convert the mergedDescriptor to be a KappDescriptorWithMaps and set it as initial config layer
 	kapp := &Kapp{
 		manifestId:       manifestId,
-		descriptorLayers: descriptors,
 		topLevelCacheDir: "",
 	}
+
+	// add each descriptor sequentially. This causes the underlying merged descriptor to be reevaluated
+	for _, descriptor := range descriptors {
+		err := kapp.AddDescriptor(descriptor, false)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	log.Logger.Debugf("Instantiated installable: %+v", kapp)
 
 	return kapp, nil
 }
