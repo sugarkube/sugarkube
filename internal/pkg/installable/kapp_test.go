@@ -63,8 +63,8 @@ func init() {
 //		filepath.Join(absTestDir, "sample-kapp-vars/kapp-vars2/kappA.yaml"),
 //	}
 //
-//	kappObj := &stackConfig.Manifests[0].ParsedKapps()[0]
-//	results, err := kappObj.findVarsFiles(&stackConfig)
+//	kappObj := stackObj.GetConfig().Manifests()[0].Installables()[0]
+//	results, err := kappObj.(*Kapp).findVarsFiles(stackObj.GetConfig())
 //	assert.Nil(t, err)
 //
 //	assert.Equal(t, expected, results)
@@ -74,7 +74,7 @@ func init() {
 //
 //	// testing the correctness of this stack is handled in stack_test.go
 //	stackConfig, err := stack.BuildStack("large", "../../testdata/stacks.yaml",
-//		&structs.Stack{}, &config.Config{}, os.Stdout)
+//		&structs.StackFile{}, &config.Config{}, os.Stdout)
 //	assert.Nil(t, err)
 //	assert.NotNil(t, stackConfig)
 //
@@ -85,9 +85,9 @@ func init() {
 //		"location": "kappFile",
 //	}
 //
-//	kappObj := &stackConfig.Manifests[0].Installables()[0]
+//	kappObj := stackConfig.GetConfig().Manifests()[0].Installables()[0]
 //
-//	results, err := kappObj.GetVarsFromFiles(stackConfig)
+//	results, err := kappObj.Vars(stackConfig)
 //	assert.Nil(t, err)
 //
 //	assert.Equal(t, expectedVarsFromFiles, results)
@@ -131,10 +131,10 @@ func init() {
 //		},
 //	}
 //
-//	stack, err := structs.NewStack(stackConfig, nil, nil)
+//	stackObj, err := stack.newStack(stackConfig, nil, nil)
 //	assert.Nil(t, err)
 //
-//	templatedVars, err := stack.TemplatedVars(kappObj,
+//	templatedVars, err := stackObj.GetTemplatedVars(kappObj,
 //		map[string]interface{}{"target": "myTarget", "approved": true})
 //
 //	assert.Equal(t, expectedMergedVars, templatedVars)

@@ -4,7 +4,7 @@ standard:
   profile: local
   cluster: standard
   providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
-  - ./stacks/
+    - ./stacks/
   manifests:
     - uri: manifests/manifest1.yaml
     - uri: manifests/manifest2.yaml
@@ -18,26 +18,26 @@ large:
   profile: local
   cluster: large
   providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
-  - ./stacks/
+    - ./stacks/
   manifests:
-  - uri: manifests/manifest1.yaml
-    overrides:
-      kappA:
-        state: absent
-        sources:
-          pathA:
-            options:
-              branch: stable
-        vars:
-          sizeVar: mediumOverridden
-          stackVar: setInOverrides
-  - uri: manifests/manifest2.yaml
-    id: exampleManifest2
+    - uri: manifests/manifest1.yaml
+      overrides:
+        kappA:
+          state: absent
+          sources:
+            pathA:
+              options:
+                branch: stable
+          vars:
+            sizeVar: mediumOverridden
+            stackVar: setInOverrides
+    - uri: manifests/manifest2.yaml
+      id: exampleManifest2
   templateDirs:
-  - templates1/
-  - templates2/
+    - templates1/
+    - templates2/
   kappVarsDirs:
-  - sample-kapp-vars/
+    - sample-kapp-vars/
 
 kops:
   provider: aws
@@ -46,11 +46,11 @@ kops:
   profile: dev
   cluster: dev
   providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
-  - ./stacks/
+    - ./stacks/
   manifests:
-  - uri: manifests/manifest1.yaml
-  - uri: manifests/manifest2.yaml
-    id: exampleManifest2
+    - uri: manifests/manifest1.yaml
+    - uri: manifests/manifest2.yaml
+      id: exampleManifest2
   templateDirs:
-  - templates1/
-  - templates2/
+    - templates1/
+    - templates2/

@@ -259,7 +259,7 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 	return nil
 }
 
-// Templates the kapp's merged config  and saves is at as an attribute on the kapp
+// Templates the kapp's merged config and saves is at as an attribute on the kapp
 func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
 
 	configTemplate, err := yaml.Marshal(k.mergedDescriptor)
