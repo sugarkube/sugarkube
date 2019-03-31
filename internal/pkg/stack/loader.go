@@ -158,6 +158,12 @@ func loadStackFile(name string, path string) (*structs.StackFile, error) {
 
 	log.Logger.Tracef("Stack config bytes:\n%s", stackConfigBytes)
 
+	// make the path absolute
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	stackObj := structs.StackFile{
 		Name:     name,
 		FilePath: path,

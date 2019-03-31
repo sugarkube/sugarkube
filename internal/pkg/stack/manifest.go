@@ -305,6 +305,7 @@ func acquireManifest(stackConfigFileDir string, manifestDescriptor structs.Manif
 	uri := manifestDescriptor.Uri
 	if !filepath.IsAbs(uri) {
 		uri = filepath.Join(stackConfigFileDir, uri)
+		log.Logger.Debugf("Fiddling manifest URI to '%s' (joined with stack file dir '%s')", uri, stackConfigFileDir)
 	}
 
 	// todo - get rid of this once we've switched to an acquirer and can pull the path from a cache manager

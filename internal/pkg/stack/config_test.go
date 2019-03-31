@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"gopkg.in/yaml.v2"
+	"path/filepath"
 	"testing"
 )
 
@@ -41,7 +42,7 @@ func TestLoadStackConfigDir(t *testing.T) {
 func GetTestManifestDescriptors() []structs.ManifestDescriptor {
 	manifest1 := structs.ManifestDescriptor{
 		Id:  "",
-		Uri: "../../testdata/manifests/manifest1.yaml",
+		Uri: "manifests/manifest1.yaml",
 		Overrides: map[string]structs.KappDescriptorWithMaps{
 			"kappA": {
 				KappConfig: structs.KappConfig{
@@ -87,7 +88,7 @@ func GetTestManifestDescriptors() []structs.ManifestDescriptor {
 
 	manifest2 := structs.ManifestDescriptor{
 		Id:  "exampleManifest2",
-		Uri: "../../testdata/manifests/manifest2.yaml",
+		Uri: "manifests/manifest2.yaml",
 		//Options: ManifestOptions{
 		//	Parallelisation: uint16(1),
 		//},
@@ -151,9 +152,12 @@ func GetTestManifestDescriptors() []structs.ManifestDescriptor {
 
 func TestLoadStackConfig(t *testing.T) {
 
+	absFilePath, err := filepath.Abs("../../testdata/stacks.yaml")
+	assert.Nil(t, err)
+
 	expected := &structs.StackFile{
 		Name:        "large",
-		FilePath:    "../../testdata/stacks.yaml",
+		FilePath:    absFilePath,
 		Provider:    "local",
 		Provisioner: "minikube",
 		Profile:     "local",
@@ -206,9 +210,12 @@ func TestDirBlank(t *testing.T) {
 
 func TestGetKappVarsFromFiles(t *testing.T) {
 
+	absFilePath, err := filepath.Abs("../../testdata/stacks.yaml")
+	assert.Nil(t, err)
+
 	stackFile := structs.StackFile{
 		Name:        "large",
-		FilePath:    "../../testdata/stacks.yaml",
+		FilePath:    absFilePath,
 		Provider:    "test-provider",
 		Provisioner: "test-provisioner",
 		Profile:     "test-profile",
