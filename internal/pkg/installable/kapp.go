@@ -183,7 +183,7 @@ func (k Kapp) GetCliArgs(installerName string, command string) []string {
 // Returns the top-level directory for this kapp in the cache, i.e. the directory containing the kapp's
 // .sugarkube directory. This path may or may not exist depending on whether the cache has actually
 // been created.
-func (k Kapp) TopLevelCacheDir() string {
+func (k Kapp) GetTopLevelCacheDir() string {
 	return k.topLevelCacheDir
 }
 
@@ -199,10 +199,8 @@ func (k Kapp) Acquirers() (map[string]acquirer.Acquirer, error) {
 	return acquirers, nil
 }
 
-// Loads the kapp's sugarkube.yaml file and adds it as a config layer
-// cacheDir - The path to the top-level cache directory. Can be an empty string if the kapp isn't cached
-func (k *Kapp) LoadConfigFile(cacheDir string) error {
-
+// Sets the top-level cache directory, i.e. the one users specify on the command line
+func (k *Kapp) SetTopLevelCacheDir(cacheDir string) error {
 	// set the top level cache dir as an absolute path
 	absCacheDir, err := filepath.Abs(cacheDir)
 	if err != nil {
@@ -210,16 +208,28 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 	}
 	k.topLevelCacheDir = filepath.Join(absCacheDir, k.manifestId, k.Id())
 
-	configFilePaths, err := utils.FindFilesByPattern(k.TopLevelCacheDir(), constants.KappConfigFileName,
+	return nil
+}
+
+// Loads the kapp's sugarkube.yaml file and adds it as a config layer
+// cacheDir - The path to the top-level cache directory. Can be an empty string if the kapp isn't cached
+func (k *Kapp) LoadConfigFile(cacheDir string) error {
+
+	err := k.SetTopLevelCacheDir(cacheDir)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	configFilePaths, err := utils.FindFilesByPattern(k.GetTopLevelCacheDir(), constants.KappConfigFileName,
 		true, false)
 	if err != nil {
 		return errors.Wrapf(err, "Error finding '%s' in '%s'",
-			constants.KappConfigFileName, k.TopLevelCacheDir())
+			constants.KappConfigFileName, k.GetTopLevelCacheDir())
 	}
 
 	if len(configFilePaths) == 0 {
 		return errors.New(fmt.Sprintf("No '%s' file found for kapp "+
-			"'%s' in %s", constants.KappConfigFileName, k.FullyQualifiedId(), k.TopLevelCacheDir()))
+			"'%s' in %s", constants.KappConfigFileName, k.FullyQualifiedId(), k.GetTopLevelCacheDir()))
 	} else if len(configFilePaths) > 1 {
 		// todo - have a way of declaring the 'right' one in the manifest
 		panic(fmt.Sprintf("Multiple '%s' found for kapp '%s'. Disambiguation "+
@@ -323,7 +333,7 @@ func (k Kapp) getIntrinsicData() map[string]string {
 	return map[string]string{
 		"id":        k.Id(),
 		"state":     k.State(),
-		"cacheRoot": k.TopLevelCacheDir(),
+		"cacheRoot": k.GetTopLevelCacheDir(),
 	}
 }
 
@@ -439,9 +449,9 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 	}
 
 	// make sure the cache dir exists
-	if _, err := os.Stat(k.TopLevelCacheDir()); err != nil {
+	if _, err := os.Stat(k.GetTopLevelCacheDir()); err != nil {
 		return nil, errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
-			k.TopLevelCacheDir()))
+			k.GetTopLevelCacheDir()))
 	}
 
 	renderedPaths := make([]string, 0)
@@ -466,7 +476,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 			foundTemplate := false
 
 			// see whether the template is in the kapp itself
-			possibleSource := filepath.Join(k.TopLevelCacheDir(), templateSource)
+			possibleSource := filepath.Join(k.GetTopLevelCacheDir(), templateSource)
 			log.Logger.Debugf("Searching for kapp template in '%s'", possibleSource)
 			_, err := os.Stat(possibleSource)
 			if err == nil {
@@ -515,7 +525,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		}
 
 		if !filepath.IsAbs(destPath) {
-			destPath = filepath.Join(k.TopLevelCacheDir(), destPath)
+			destPath = filepath.Join(k.GetTopLevelCacheDir(), destPath)
 		}
 
 		// check whether the dest path exists

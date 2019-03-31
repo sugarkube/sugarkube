@@ -77,7 +77,8 @@ func (c *createCmd) run() error {
 	// CLI args override configured args, so merge them in
 	cliStackConfig := &structs.StackFile{}
 
-	// don't pass the cache directory to BuildStack because we haven't created the cache yet
+	// don't pass the cache directory to BuildStack because we haven't created the cache on this run
+	// yet so it may not exist
 	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, "",
 		config.CurrentConfig, c.out)
 	if err != nil {
