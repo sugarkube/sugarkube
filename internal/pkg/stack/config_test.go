@@ -131,6 +131,11 @@ func GetTestManifests(t *testing.T) []interfaces.IManifest {
 		descriptor: descriptor1,
 		manifestFile: structs.ManifestFile{
 			KappDescriptor: manifest1KappDescriptors,
+			Defaults: structs.KappConfig{
+				Vars: map[string]interface{}{
+					"namespace": "test-namespace",
+				},
+			},
 		},
 	}
 
@@ -313,6 +318,7 @@ func TestGetKappVarsFromFiles(t *testing.T) {
     kapp: kappA-val
     kappASisterDir: extra-val
     kappOverride: kappA-val-override
+    namespace: test-namespace
     profile: test-profile-val
     region: test-region1-val
     regionOverride: region-val-override

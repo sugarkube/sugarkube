@@ -338,6 +338,7 @@ func TestManifestOverrides(t *testing.T) {
 					"red",
 					"black",
 				},
+				"namespace": "test-namespace", // a manifest default variable
 			},
 		},
 		Sources: map[string]structs.Source{

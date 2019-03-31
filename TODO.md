@@ -6,20 +6,14 @@
 ## Code-related tasks
 
 ### Merging kapp configs
-* Create a single kapp descriptor and allow it to be used in stacks, manifests & kapps. Use the appropriate
-  base directory for relative paths depending on where it's specified
-
 need to merge structs for kapp descriptors (in order of lowest to highest precedence):
 * the kapp's sugarkube.yaml file (if we've acquired the kapp)
 * values from the sugarkube-conf.yaml file (if any are specified for programs the kapp declares in its `requires` block)
-* defaults in manifest files
+* defaults in manifest files (todo - test this)
 * the kapp descriptor in manifest files
 * overrides in stack files
 * command line values
 
-* Support variables at the manifest level so we can set manifest-wide vars. Use them as defaults for kapp vars (or 
-  just namespace them under "manifest.vars" - decide which is better. The first would require we manually set 
-  defaults for manifest vars ). E.g. this could be helpful for setting manifest-wide tiller-namespaces, etc.
 * The `requires` block in `sugarkube.yaml` is currently useless. We should do several things with it:
   * Create a 'validate' command to verify that the necessary binary exists
   * Allow each value to have a corresponding config in the sugarkube-conf.yaml file that determines:

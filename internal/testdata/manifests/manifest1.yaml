@@ -1,3 +1,7 @@
+defaults:
+  vars:
+    namespace: test-namespace
+
 kapps:
   - id: kappA
     state: present
