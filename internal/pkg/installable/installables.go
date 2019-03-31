@@ -27,8 +27,8 @@ func New(manifestId string, descriptors []structs.KappDescriptorWithMaps) (inter
 
 	// convert the mergedDescriptor to be a KappDescriptorWithMaps and set it as initial config layer
 	kapp := &Kapp{
-		manifestId:       manifestId,
-		topLevelCacheDir: "",
+		manifestId:   manifestId,
+		kappCacheDir: "",
 	}
 
 	// add each descriptor sequentially. This causes the underlying merged descriptor to be reevaluated

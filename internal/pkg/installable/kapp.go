@@ -41,7 +41,7 @@ type Kapp struct {
 	manifestId       string
 	mergedDescriptor structs.KappDescriptorWithMaps   // the final config template after merging all the config layers (but not rendering the template)
 	descriptorLayers []structs.KappDescriptorWithMaps // config templates where values from later configs will take precedence over earlier ones
-	topLevelCacheDir string                           // the top-level directory for this kapp in the cache, i.e. the directory containing the kapp's .sugarkube directory
+	kappCacheDir     string                           // the top-level directory for this kapp in the cache, i.e. the directory containing the kapp's .sugarkube directory
 }
 
 // Returns the non-fully qualified ID
@@ -180,11 +180,11 @@ func (k Kapp) GetCliArgs(installerName string, command string) []string {
 	return cliArgs
 }
 
-// Returns the top-level directory for this kapp in the cache, i.e. the directory containing the kapp's
+// Returns the directory for this kapp in the cache, i.e. the directory containing the kapp's
 // .sugarkube directory. This path may or may not exist depending on whether the cache has actually
 // been created.
-func (k Kapp) GetTopLevelCacheDir() string {
-	return k.topLevelCacheDir
+func (k Kapp) GetCacheDir() string {
+	return k.kappCacheDir
 }
 
 // Returns an array of acquirers configured for the sources for this kapp. We need to recompute these each time
@@ -206,7 +206,7 @@ func (k *Kapp) SetTopLevelCacheDir(cacheDir string) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	k.topLevelCacheDir = filepath.Join(absCacheDir, k.manifestId, k.Id())
+	k.kappCacheDir = filepath.Join(absCacheDir, k.manifestId, k.Id())
 
 	return nil
 }
@@ -220,16 +220,16 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 		return errors.WithStack(err)
 	}
 
-	configFilePaths, err := utils.FindFilesByPattern(k.GetTopLevelCacheDir(), constants.KappConfigFileName,
+	configFilePaths, err := utils.FindFilesByPattern(k.GetCacheDir(), constants.KappConfigFileName,
 		true, false)
 	if err != nil {
 		return errors.Wrapf(err, "Error finding '%s' in '%s'",
-			constants.KappConfigFileName, k.GetTopLevelCacheDir())
+			constants.KappConfigFileName, k.GetCacheDir())
 	}
 
 	if len(configFilePaths) == 0 {
 		return errors.New(fmt.Sprintf("No '%s' file found for kapp "+
-			"'%s' in %s", constants.KappConfigFileName, k.FullyQualifiedId(), k.GetTopLevelCacheDir()))
+			"'%s' in %s", constants.KappConfigFileName, k.FullyQualifiedId(), k.GetCacheDir()))
 	} else if len(configFilePaths) > 1 {
 		// todo - have a way of declaring the 'right' one in the manifest
 		panic(fmt.Sprintf("Multiple '%s' found for kapp '%s'. Disambiguation "+
@@ -333,7 +333,7 @@ func (k Kapp) getIntrinsicData() map[string]string {
 	return map[string]string{
 		"id":        k.Id(),
 		"state":     k.State(),
-		"cacheRoot": k.GetTopLevelCacheDir(),
+		"cacheRoot": k.GetCacheDir(),
 	}
 }
 
@@ -449,9 +449,9 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 	}
 
 	// make sure the cache dir exists
-	if _, err := os.Stat(k.GetTopLevelCacheDir()); err != nil {
+	if _, err := os.Stat(k.GetCacheDir()); err != nil {
 		return nil, errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
-			k.GetTopLevelCacheDir()))
+			k.GetCacheDir()))
 	}
 
 	renderedPaths := make([]string, 0)
@@ -476,7 +476,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 			foundTemplate := false
 
 			// see whether the template is in the kapp itself
-			possibleSource := filepath.Join(k.GetTopLevelCacheDir(), templateSource)
+			possibleSource := filepath.Join(k.GetCacheDir(), templateSource)
 			log.Logger.Debugf("Searching for kapp template in '%s'", possibleSource)
 			_, err := os.Stat(possibleSource)
 			if err == nil {
@@ -525,7 +525,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		}
 
 		if !filepath.IsAbs(destPath) {
-			destPath = filepath.Join(k.GetTopLevelCacheDir(), destPath)
+			destPath = filepath.Join(k.GetCacheDir(), destPath)
 		}
 
 		// check whether the dest path exists

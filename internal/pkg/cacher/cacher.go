@@ -60,7 +60,7 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 			return errors.WithStack(err)
 		}
 
-		err = acquireSources(cacheGroup.Id(), acquirers, installableObj.GetTopLevelCacheDir(),
+		err = acquireSources(cacheGroup.Id(), acquirers, installableObj.GetCacheDir(),
 			dryRun)
 		if err != nil {
 			return errors.WithStack(err)
