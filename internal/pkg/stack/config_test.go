@@ -233,14 +233,25 @@ func TestGetKappVarsFromFiles(t *testing.T) {
 		ManifestDescriptors: GetTestManifestDescriptors(),
 	}
 
-	expected := `globals:
-account: test-account-val
-kapp: kappA-val
-kappASisterDir: extra-val
-kappOverride: kappA-val-override
-profile: test-profile-val
-region: test-region1-val
-regionOverride: region-val-override
+	expected := `kapp:
+  cacheRoot: ""
+  id: kappA
+  state: absent
+  templates: []
+  vars:
+    colours:
+    - red
+    - black
+    globals:
+      account: test-account-val
+    kapp: kappA-val
+    kappASisterDir: extra-val
+    kappOverride: kappA-val-override
+    profile: test-profile-val
+    region: test-region1-val
+    regionOverride: region-val-override
+    sizeVar: mediumOverridden
+    stackVar: setInOverrides
 `
 
 	stackConfig, err := parseStackFile(stackFile)
