@@ -147,7 +147,7 @@ func (c *varsConfig) run() error {
 				"'%s'. Provide the path to the cache dir with the --cache-dir "+
 				"option to display it.\n", kappObj.FullyQualifiedId(), constants.KappConfigFileName)
 		} else {
-			err = kappObj.RefreshConfig(templatedVars)
+			err = kappObj.TemplateDescriptor(templatedVars)
 			if err != nil {
 				return errors.WithStack(err)
 			}

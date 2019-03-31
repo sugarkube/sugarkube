@@ -34,7 +34,7 @@ type IInstallable interface {
 	SetTopLevelCacheDir(cacheDir string) error
 	GetCacheDir() string
 	Acquirers() (map[string]acquirer.Acquirer, error)
-	RefreshConfig(templateVars map[string]interface{}) error
+	TemplateDescriptor(templateVars map[string]interface{}) error
 	GetCliArgs(installerName string, command string) []string
 	GetEnvVars() map[string]interface{}
 	Vars(stack IStack) (map[string]interface{}, error)

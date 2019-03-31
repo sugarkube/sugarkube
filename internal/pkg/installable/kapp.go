@@ -39,7 +39,7 @@ import (
 
 type Kapp struct {
 	manifestId       string
-	mergedDescriptor structs.KappDescriptorWithMaps   // the final descriptor after merging all the descriptor layers. This is a template until its rendered by RefreshConfig
+	mergedDescriptor structs.KappDescriptorWithMaps   // the final descriptor after merging all the descriptor layers. This is a template until its rendered by TemplateDescriptor
 	descriptorLayers []structs.KappDescriptorWithMaps // config templates where values from later configs will take precedence over earlier ones
 	kappCacheDir     string                           // the top-level directory for this kapp in the cache, i.e. the directory containing the kapp's .sugarkube directory
 }
@@ -265,7 +265,7 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 }
 
 // Templates the kapp's merged descriptor
-func (k *Kapp) RefreshConfig(templateVars map[string]interface{}) error {
+func (k *Kapp) TemplateDescriptor(templateVars map[string]interface{}) error {
 
 	// remerge the layers so we've got a fresh template to render
 	err := k.mergeDescriptorLayers()

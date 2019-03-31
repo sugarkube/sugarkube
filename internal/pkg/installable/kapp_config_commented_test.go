@@ -67,7 +67,7 @@ func init() {
 //	}
 //	//testKapp.setRootCacheDir(path.Join(testDir, "sample-cache"))
 //
-//	err := testKapp.RefreshConfig(templateVars)
+//	err := testKapp.TemplateDescriptor(templateVars)
 //	assert.Nil(t, err)
 //
 //	assert.Equal(t, expectedEnvVars, testKapp.mergedDescriptor.EnvVars)
