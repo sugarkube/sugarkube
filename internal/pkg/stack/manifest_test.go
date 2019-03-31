@@ -123,6 +123,8 @@ func TestSelectKapps(t *testing.T) {
 	selectedKapps, err := SelectInstallables(stackConfig.GetConfig().Manifests(), includeSelector, excludeSelector)
 	assert.Nil(t, err)
 
+	assert.Equal(t, len(expectedKappIds), len(selectedKapps))
+
 	for i := 0; i < len(expectedKappIds); i++ {
 		assert.Equal(t, expectedKappIds[i], selectedKapps[i].FullyQualifiedId())
 	}

@@ -62,7 +62,7 @@ func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.
 		return nil, errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Final raw stack config: %#v", stackFile)
+	log.Logger.Debugf("Final raw stack file: %#v", stackFile)
 
 	// parse the raw config, populating objects and return a stackConfig
 	stackConfig, err := parseStackFile(*stackFile)

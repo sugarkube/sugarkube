@@ -182,7 +182,7 @@ func applyPrecdence(rootDir string, names []string, precedence []string) []strin
 
 	results := append(files, dirs...)
 
-	log.Logger.Debugf("Sorted input names: %#v by precedence to: %#v",
+	log.Logger.Tracef("Sorted input names: %#v by precedence to: %#v",
 		names, results)
 
 	return results
@@ -196,9 +196,9 @@ func isFile(path string) bool {
 	}
 
 	if stat.IsDir() {
-		log.Logger.Debugf("Path %s is a directory", path)
+		log.Logger.Tracef("Path %s is a directory", path)
 	} else {
-		log.Logger.Debugf("Path %s is a file", path)
+		log.Logger.Tracef("Path %s is a file", path)
 	}
 
 	return !stat.IsDir()
