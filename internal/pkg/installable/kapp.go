@@ -39,6 +39,7 @@ import (
 
 type Kapp struct {
 	manifestId       string
+	configFileDir    string                           // path to the directory containing the kapp's sugarkube.yaml file
 	mergedDescriptor structs.KappDescriptorWithMaps   // the final descriptor after merging all the descriptor layers. This is a template until its rendered by TemplateDescriptor
 	descriptorLayers []structs.KappDescriptorWithMaps // config templates where values from later configs will take precedence over earlier ones
 	kappCacheDir     string                           // the top-level directory for this kapp in the cache, i.e. the directory containing the kapp's .sugarkube directory
@@ -243,6 +244,7 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 	}
 
 	configFilePath := configFilePaths[0]
+	k.configFileDir = filepath.Dir(configFilePath)
 
 	descriptorWithLists := structs.KappDescriptorWithLists{}
 
@@ -487,7 +489,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 			foundTemplate := false
 
 			// see whether the template is in the kapp itself
-			possibleSource := filepath.Join(k.GetCacheDir(), k.Id(), templateSource)
+			possibleSource := filepath.Join(k.configFileDir, templateSource)
 			log.Logger.Debugf("Searching for kapp template in '%s'", possibleSource)
 			_, err := os.Stat(possibleSource)
 			if err == nil {
@@ -536,7 +538,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		}
 
 		if !filepath.IsAbs(destPath) {
-			destPath = filepath.Join(k.GetCacheDir(), k.Id(), destPath)
+			destPath = filepath.Join(k.configFileDir, destPath)
 		}
 
 		// check whether the dest path exists
