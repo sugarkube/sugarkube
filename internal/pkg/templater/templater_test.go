@@ -136,3 +136,12 @@ func TestCustomFunctions(t *testing.T) {
 		assert.Equal(t, test.expected, output)
 	}
 }
+
+// Test that unset values are preserved in outputted templates
+func TestTemplateUnsetValues(t *testing.T) {
+	tpl := "x={{ .x }}, y={{ .y }}"
+	expected := "x=10, y={{ .y }}"
+	actual, err := RenderTemplate(tpl, map[string]interface{}{"x": 10})
+	assert.Nil(t, err)
+	assert.Equal(t, expected, actual)
+}
