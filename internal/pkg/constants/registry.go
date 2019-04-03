@@ -16,4 +16,7 @@
 
 package constants
 
+const RegistryFieldSeparator = "."
+
+const RegistryKeyOutputs = "outputs"
 const RegistryKeyKubeConfig = "kube_config"

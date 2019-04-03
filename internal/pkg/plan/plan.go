@@ -26,6 +26,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"sort"
+	"strings"
 )
 
 type task struct {
@@ -280,6 +281,9 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 					success+1, i+1)
 			}
 		}
+
+		// clean up the registry
+		deleteNonFullyQualifiedOutputs(p.stack.GetRegistry())
 	}
 
 	log.Logger.Infof("Finished applying plan")
@@ -323,11 +327,21 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
 			}
+
+			err = addOutputsToRegistry(installableObj, stackObj.GetRegistry())
+			if err != nil {
+				errCh <- errors.WithStack(err)
+			}
 			break
 		case constants.TaskActionDelete:
 			err := installerImpl.Delete(installableObj, stackObj, approved, renderTemplates, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error deleting kapp '%s'", installableObj.Id())
+			}
+
+			err = addOutputsToRegistry(installableObj, stackObj.GetRegistry())
+			if err != nil {
+				errCh <- errors.WithStack(err)
 			}
 			break
 		case constants.TaskActionClusterUpdate:
@@ -345,5 +359,44 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 		}
 
 		doneCh <- true
+	}
+}
+
+// Adds output from an installable to the registry
+func addOutputsToRegistry(installableObj interfaces.IInstallable, registry interfaces.IRegistry) error {
+	outputs, err := installableObj.GetOutputs()
+	if err != nil {
+		return errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
+	}
+
+	// data under the short key can be used by other kapps in the manifest
+	prefix := strings.Join([]string{constants.RegistryKeyOutputs, installableObj.Id()}, constants.RegistryFieldSeparator)
+	// kapps in different manifests need to use the fully qualified ID
+	fullyQualifiedPrefix := strings.Join([]string{constants.RegistryKeyOutputs,
+		installableObj.FullyQualifiedId()}, constants.RegistryFieldSeparator)
+
+	// store the output under both the kapp's fully-qualified ID and its short, inter-manifest kapp
+	for key, output := range outputs {
+		fullKey := strings.Join([]string{prefix, key}, constants.RegistryFieldSeparator)
+		registry.Set(fullKey, output)
+		fullyQualifiedFullKey := strings.Join([]string{fullyQualifiedPrefix, key}, constants.RegistryFieldSeparator)
+		registry.Set(fullyQualifiedFullKey, output)
+	}
+
+	return nil
+}
+
+// Deletes all outputs from the registry that aren't fully qualified
+func deleteNonFullyQualifiedOutputs(registry interfaces.IRegistry) {
+	outputs, ok := registry.Get(constants.RegistryKeyOutputs)
+	if !ok {
+		return
+	}
+
+	// iterate through all the keys for those that aren't fully qualified and delete them
+	for k, _ := range outputs.(map[string]interface{}) {
+		if !strings.Contains(k, constants.NamespaceSeparator) {
+			registry.Delete(k)
+		}
 	}
 }

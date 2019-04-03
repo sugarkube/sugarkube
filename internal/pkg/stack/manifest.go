@@ -147,12 +147,24 @@ func parseManifestFile(manifestFilePath string, manifestDescriptor structs.Manif
 func ValidateManifest(manifest interfaces.IManifest) error {
 	ids := map[string]bool{}
 
+	reservedCharacters := []string{
+		constants.RegistryFieldSeparator,
+		constants.NamespaceSeparator,
+		constants.WildcardCharacter,
+	}
+
 	for _, kapp := range manifest.Installables() {
 		id := kapp.Id()
 
 		if _, ok := ids[id]; ok {
 			return errors.New(fmt.Sprintf("Multiple kapps exist with "+
 				"the same id: %s", id))
+		}
+
+		// don't permit kapp IDs to contain reserved characters
+		if strings.ContainsAny(id, strings.Join(reservedCharacters, "")) {
+			return errors.New(fmt.Sprintf("Kapp IDs can't contain any of the reserved "+
+				"characters: '%s'", strings.Join(reservedCharacters, "")))
 		}
 
 		acquirers, err := kapp.Acquirers()

@@ -24,8 +24,6 @@ import (
 	"strings"
 )
 
-const fieldSeparator = "."
-
 // A registry so that different parts of the program can set and access values
 type Registry struct {
 	data map[string]interface{}
@@ -46,7 +44,7 @@ func New() Registry {
 // Add data to the registry.
 func (r *Registry) Set(key string, value interface{}) {
 	log.Logger.Tracef("Setting registry key='%s' to value=%+v", key, value)
-	r.data = nestedMap(r.data, strings.Split(key, fieldSeparator), value)
+	r.data = nestedMap(r.data, strings.Split(key, constants.RegistryFieldSeparator), value)
 	log.Logger.Tracef("Set registry data to: %+v", r.data)
 }
 
@@ -70,7 +68,7 @@ func nestedMap(data map[string]interface{}, elements []string, value interface{}
 
 			// if the value is a map, run each key through this function to split dotted keys
 			for k, v := range valueMap {
-				kParts := strings.Split(k, fieldSeparator)
+				kParts := strings.Split(k, constants.RegistryFieldSeparator)
 				log.Logger.Tracef("Branch 1: Running with: itemMap=%v kParts=%v, v=%v", itemMap, kParts, v)
 				data[key] = nestedMap(itemMap, kParts, v)
 
@@ -80,7 +78,6 @@ func nestedMap(data map[string]interface{}, elements []string, value interface{}
 			data[key] = value
 		}
 
-		log.Logger.Tracef("returning data %v", data)
 		return data
 	} else {
 		// if the map exists fetch it, otherwise create it
@@ -101,9 +98,9 @@ func getMapOrNew(data map[string]interface{}, key string) map[string]interface{}
 	}
 }
 
-// Get value from the registry. `fieldSeparator` is used to separate the key into submaps
+// Get value from the registry. `constants.RegistryFieldSeparator` is used to separate the key into submaps
 func (r *Registry) Get(key string) (interface{}, bool) {
-	return nestedLookup(r.data, strings.Split(key, fieldSeparator))
+	return nestedLookup(r.data, strings.Split(key, constants.RegistryFieldSeparator))
 }
 
 // Gets a value from a nested map. Also returns a boolean indicating whether the value was found in
@@ -133,4 +130,29 @@ func nestedLookup(data map[string]interface{}, elements []string) (interface{}, 
 // Return the registry as a map
 func (r Registry) AsMap() map[string]interface{} {
 	return r.data
+}
+
+// Delete a key from the registry. If the key contains `constants.RegistryFieldSeparator`, submaps will
+// be traversed
+func (r *Registry) Delete(key string) {
+	log.Logger.Tracef("Deleting key='%s' from the registry", key)
+	nestedDelete(r.data, strings.Split(key, constants.RegistryFieldSeparator))
+	log.Logger.Tracef("Registry data after deletion is: %+v", r.data)
+}
+
+// Deletes a value from a map, traversing submaps as necessary
+func nestedDelete(data map[string]interface{}, elements []string) {
+	key := elements[0]
+
+	item, ok := data[key]
+	if !ok {
+		return
+	}
+
+	if len(elements) == 1 {
+		delete(data, key)
+	} else {
+		nestedDelete(item.(map[string]interface{}), elements[1:])
+		return
+	}
 }

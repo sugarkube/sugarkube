@@ -118,3 +118,51 @@ func TestNestedMap(t *testing.T) {
 	val, ok = registry.Get("tests.testMap.missing")
 	assert.False(t, ok)
 }
+
+func TestDelete(t *testing.T) {
+	registry := New()
+
+	innerMap := map[string]interface{}{
+		"val": "tst",
+		"num": 2,
+		"dot": map[string]interface{}{
+			"ted": "xyz",
+			"sed": "xxyz",
+		},
+	}
+
+	inputData := map[string]interface{}{
+		"val":     "tst",
+		"num":     2,
+		"dot.ted": "xyz",
+		"dot.sed": "xxyz",
+	}
+
+	registry.Set("tests.testMap", inputData)
+
+	// make sure we get the expected data
+	val, ok := registry.Get("tests.testMap")
+	assert.Equal(t, innerMap, val)
+	assert.True(t, ok)
+
+	// make sure we can delete single values
+	registry.Delete("tests.testMap.dot.sed")
+	val, ok = registry.Get("tests.testMap")
+	assert.Equal(t, map[string]interface{}{
+		"val": "tst",
+		"num": 2,
+		"dot": map[string]interface{}{
+			"ted": "xyz",
+		},
+	}, val)
+	assert.True(t, ok)
+
+	// make sure we can delete entire submaps
+	registry.Delete("tests.testMap.dot")
+	val, ok = registry.Get("tests.testMap")
+	assert.Equal(t, map[string]interface{}{
+		"val": "tst",
+		"num": 2,
+	}, val)
+	assert.True(t, ok)
+}
