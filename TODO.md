@@ -34,6 +34,9 @@
   kapp ID can be just the name inside a given manifest, or a fully qualified ID if being used across manifests
 * If a kapp uses output from an earlier kapp and it hasn't been run, throw an error
 
+* Provide a 'varsTemplate' field to allow for templating before parsing vars. That'll help with things like reassigning
+  a map. Template this block then parse it as yaml and merge it with the other vars.
+
 ### Makefiles
 * Get rid of the duplication of mapping variables - we currently do it once in sugarkube.yaml files then
   again in makefiles. Try to automate the mapping in makefiles

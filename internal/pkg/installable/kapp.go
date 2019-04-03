@@ -577,3 +577,35 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 
 	return renderedPaths, nil
 }
+
+// Returns outputs for the kapp where the map key is the output ID
+func (k Kapp) GetOutputs() (map[string]interface{}, error) {
+	outputs := map[string]interface{}{}
+
+	for id, output := range k.mergedDescriptor.Outputs {
+		// todo - if the output exists, parse it as the declared type and put it in the map
+		//path := ???
+
+		var parsedOutput interface{}
+
+		switch strings.ToLower(output.Format) {
+		case "json":
+			break
+		case "yaml":
+			break
+		case "text":
+			break
+		default:
+			return nil, errors.New(fmt.Sprintf("Unsupported output format '%s' for kapp '%s'",
+				output.Format, k.FullyQualifiedId()))
+		}
+
+		outputs[id] = parsedOutput
+
+		// if it's sensitive, delete it
+		if output.Sensitive {
+			// todo - delete it
+		}
+	}
+	return outputs, nil
+}
