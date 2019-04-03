@@ -241,7 +241,10 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 	log.Logger.Info("Applying plan...")
 	log.Logger.Debugf("Applying plan: %#v", p)
 
+	var previousManifestId string
+
 	for i, tranche := range p.tranches {
+
 		numWorkers := tranche.manifest.Parallelisation()
 		if numWorkers == 0 {
 			numWorkers = uint16(len(tranche.tasks))
@@ -282,9 +285,18 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 			}
 		}
 
-		// clean up the registry
-		deleteNonFullyQualifiedOutputs(p.stack.GetRegistry())
+		// make sure we don't clean up the registry if we're just running multiple tranches for a
+		// manifest (e.g. because post-actions are being executed in their own tranche)
+		if previousManifestId != "" && previousManifestId != tranche.manifest.Id() {
+			// clean up the registry if the manifest ID has changed
+			deleteNonFullyQualifiedOutputs(p.stack.GetRegistry())
+		}
+
+		previousManifestId = tranche.manifest.Id()
 	}
+
+	// clean up the registry after applying the plan to catch stragglers from the final tranche
+	deleteNonFullyQualifiedOutputs(p.stack.GetRegistry())
 
 	log.Logger.Infof("Finished applying plan")
 
