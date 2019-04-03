@@ -248,9 +248,9 @@ func (p KopsProvisioner) Update(dryRun bool) error {
 	args = parameteriseValues(args, p.kopsConfig.Params.Global)
 	args = parameteriseValues(args, p.kopsConfig.Params.RollingUpdate)
 
-	kubeConfig, _ := p.stack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
+	kubeConfig, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
 	envVars := map[string]string{
-		"KUBECONFIG": kubeConfig,
+		"KUBECONFIG": kubeConfig.(string),
 	}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
@@ -669,21 +669,23 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 	localPort := p.kopsConfig.LocalPortForwardingPort
 	apiDomain := fmt.Sprintf("api.%s", p.kopsConfig.clusterName)
 
-	kubeConfigPath, _ := p.stack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
+	var kubeConfigPathStr string
+	kubeConfigPathInterface, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
 
-	if kubeConfigPath != "" {
-		log.Logger.Debugf("Kubeconfig file already downloaded to '%s'", kubeConfigPath)
+	if kubeConfigPathInterface != nil {
+		kubeConfigPathStr = kubeConfigPathInterface.(string)
+		log.Logger.Debugf("Kubeconfig file already downloaded to '%s'", kubeConfigPathStr)
 	} else {
-		kubeConfigPath, err = p.downloadKubeConfigFile()
+		kubeConfigPathStr, err = p.downloadKubeConfigFile()
 		if err != nil {
 			return false, errors.WithStack(err)
 		}
 
-		p.stack.GetRegistry().SetString(constants.RegistryKeyKubeConfig, kubeConfigPath)
+		p.stack.GetRegistry().Set(constants.RegistryKeyKubeConfig, kubeConfigPathStr)
 
 		// modify the host name in the file to point to the local k8s server domain
 		err = replaceAllInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),
-			kubeConfigPath)
+			kubeConfigPathStr)
 		if err != nil {
 			return false, errors.WithStack(err)
 		}
@@ -704,7 +706,7 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 		sshPortForwardingDelaySeconds)
 	time.Sleep(sshPortForwardingDelaySeconds * time.Second)
 
-	fmt.Printf("SSH port forwarding established. Use KUBECONFIG=%s", kubeConfigPath)
+	fmt.Printf("SSH port forwarding established. Use KUBECONFIG=%s", kubeConfigPathStr)
 
 	return true, nil
 }

@@ -47,9 +47,9 @@ func (c KubeCtlClusterSot) IsOnline() (bool, error) {
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	kubeConfig, _ := c.iStack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
+	kubeConfig, _ := c.iStack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
 	envVars := map[string]string{
-		"KUBECONFIG": kubeConfig,
+		"KUBECONFIG": kubeConfig.(string),
 	}
 
 	// poll `kubectl --context {{ kube_context }} get namespace`
@@ -79,7 +79,7 @@ func (c KubeCtlClusterSot) IsReady() (bool, error) {
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	kubeConfig, _ := c.iStack.GetRegistry().GetString(constants.RegistryKeyKubeConfig)
+	kubeConfig, _ := c.iStack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
 
 	args := []string{
 		"--context", context,
@@ -90,7 +90,7 @@ func (c KubeCtlClusterSot) IsReady() (bool, error) {
 	}
 
 	envVars := map[string]string{
-		"KUBECONFIG": kubeConfig,
+		"KUBECONFIG": kubeConfig.(string),
 	}
 
 	err = utils.ExecCommand(kubectlPath, args, envVars, &stdoutBuf, &stderrBuf,

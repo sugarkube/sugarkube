@@ -17,7 +17,7 @@
 package interfaces
 
 type IRegistry interface {
-	SetString(key string, value string)
-	GetString(key string) (string, bool)
+	Set(key string, value interface{})
+	Get(key string) (interface{}, bool)
 	AsMap() map[string]interface{}
 }

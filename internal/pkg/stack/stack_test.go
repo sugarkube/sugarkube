@@ -103,7 +103,7 @@ func TestTemplatedVarsWithRegistry(t *testing.T) {
 	assert.Equal(t, expectedVarsBlankRegistry, templatedVars)
 
 	// update the registry to override a value
-	registryObj.SetString("someKey2", "updatedValue")
+	registryObj.Set("someKey2", "updatedValue")
 	templatedVars, err = stackObj.GetTemplatedVars(nil, map[string]interface{}{})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedVarsUpdatedRegistry, templatedVars)

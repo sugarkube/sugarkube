@@ -18,50 +18,119 @@ package registry
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"os"
+	"reflect"
 	"strings"
 )
 
+const fieldSeparator = "."
+
 // A registry so that different parts of the program can set and access values
 type Registry struct {
-	mapStringString map[string]string
+	data map[string]interface{}
 }
 
 func New() Registry {
+	// todo - find a better way of initialising this. We need to do this
+	//  so `kapp vars` doesn't output '<no value>' which might be confusing.
+	kubeConfig := os.Getenv(strings.ToUpper(constants.RegistryKeyKubeConfig))
+
 	return Registry{
-		mapStringString: map[string]string{
-			// todo - find a better way of initialising this. We need to do this
-			//  so `kapp vars` doesn't output '<no value>' which might be confusing.
-			//  Maybe we should try to pull these from env vars?
-			constants.RegistryKeyKubeConfig: "",
+		data: map[string]interface{}{
+			constants.RegistryKeyKubeConfig: kubeConfig,
 		},
 	}
 }
 
-// Add a string to the registry.
-// *Note* For now there's a limitation where string keys mustn't contain dot
-// characters because they won't be merged with stack config vars correctly
-// (e.g. as a map). So for now to avoid unpredictable behaviour we don't permit
-// keys with dots at all.
-func (r *Registry) SetString(key string, value string) {
-	if strings.Contains(key, ".") {
-		log.Logger.Fatalf("Keys with dots ('.') are not currently merged " +
-			"as a map, Only top-level values can be stored in the registry")
-	}
-	r.mapStringString[key] = value
+// Add data to the registry.
+func (r *Registry) Set(key string, value interface{}) {
+	log.Logger.Tracef("Setting registry key='%s' to value=%+v", key, value)
+	r.data = nestedMap(r.data, strings.Split(key, fieldSeparator), value)
+	log.Logger.Tracef("Set registry data to: %+v", r.data)
 }
 
-// Get a string from the registry
-func (r *Registry) GetString(key string) (string, bool) {
-	val, ok := r.mapStringString[key]
-	if !ok {
-		return "", false
-	}
+// Inserts the given value into the data map. `elements` is a list of map keys - if the map for any
+// particular key doesn't exist a blank map will be created.
+func nestedMap(data map[string]interface{}, elements []string, value interface{}) map[string]interface{} {
 
-	return val, true
+	log.Logger.Tracef("new iteration: data=%v, elements=%v, value=%+v", data, elements, value)
+
+	key := elements[0]
+
+	if len(elements) == 1 {
+		reflected := reflect.ValueOf(value)
+		if reflected.Kind() == reflect.Map {
+			log.Logger.Tracef("Value is a map: %v", value)
+
+			itemMap := getMapOrNew(data, key)
+
+			valueMap := value.(map[string]interface{})
+			log.Logger.Tracef("valueMap=%v", valueMap)
+
+			// if the value is a map, run each key through this function to split dotted keys
+			for k, v := range valueMap {
+				kParts := strings.Split(k, fieldSeparator)
+				log.Logger.Tracef("Branch 1: Running with: itemMap=%v kParts=%v, v=%v", itemMap, kParts, v)
+				data[key] = nestedMap(itemMap, kParts, v)
+
+			}
+		} else {
+			log.Logger.Tracef("Finally setting value of key=%s to '%v' in map %v", key, value, data)
+			data[key] = value
+		}
+
+		log.Logger.Tracef("returning data %v", data)
+		return data
+	} else {
+		// if the map exists fetch it, otherwise create it
+		itemMap := getMapOrNew(data, key)
+		log.Logger.Tracef("Branch 2: elements=%v value=%v", elements[1:], value)
+		data[key] = nestedMap(itemMap, elements[1:], value)
+		return data
+	}
 }
 
+// Gets a submap from a map, or returns a new map if there is no submap
+func getMapOrNew(data map[string]interface{}, key string) map[string]interface{} {
+	_, ok := data[key]
+	if ok {
+		return data[key].(map[string]interface{})
+	} else {
+		return map[string]interface{}{}
+	}
+}
+
+// Get value from the registry. `fieldSeparator` is used to separate the key into submaps
+func (r *Registry) Get(key string) (interface{}, bool) {
+	return nestedLookup(r.data, strings.Split(key, fieldSeparator))
+}
+
+// Gets a value from a nested map. Also returns a boolean indicating whether the value was found in
+// the map
+func nestedLookup(data map[string]interface{}, elements []string) (interface{}, bool) {
+	key := elements[0]
+
+	if len(elements) == 1 {
+		val, ok := data[key]
+		if !ok {
+			return nil, false
+		}
+		return val, true
+	} else {
+		// see if the key is in the map
+		subMap, ok := data[key]
+		if ok {
+			// yes, so recurse into the submap
+			return nestedLookup(subMap.(map[string]interface{}), elements[1:])
+		} else {
+			// not found
+			return nil, false
+		}
+	}
+}
+
+// Return the registry as a map
 func (r Registry) AsMap() map[string]interface{} {
-	return convert.MapStringStringToMapStringInterface(r.mapStringString)
+	return r.data
 }
