@@ -18,6 +18,7 @@ package installable
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
@@ -582,30 +583,62 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 func (k Kapp) GetOutputs() (map[string]interface{}, error) {
 	outputs := map[string]interface{}{}
 
-	for id, output := range k.mergedDescriptor.Outputs {
-		// todo - if the output exists, parse it as the declared type and put it in the map
-		//path := ???
+	for _, output := range k.mergedDescriptor.Outputs {
+		// if the output exists, parse it as the declared type and put it in the map
+		path, err := filepath.Abs(filepath.Join(k.configFileDir, output.Path))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		if _, err = os.Stat(path); err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		log.Logger.Debugf("Loading output '%s' from kapp '%s' at '%s' as %s", output.Id,
+			k.FullyQualifiedId(), path, output.Format)
 
 		var parsedOutput interface{}
 
 		switch strings.ToLower(output.Format) {
 		case "json":
+			rawJson, err := ioutil.ReadFile(path)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+
+			err = json.Unmarshal(rawJson, parsedOutput)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
 			break
 		case "yaml":
+			err = utils.LoadYamlFile(path, parsedOutput)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
 			break
 		case "text":
+			parsedOutput, err = ioutil.ReadFile(path)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
 			break
 		default:
 			return nil, errors.New(fmt.Sprintf("Unsupported output format '%s' for kapp '%s'",
 				output.Format, k.FullyQualifiedId()))
 		}
 
-		outputs[id] = parsedOutput
+		outputs[output.Id] = parsedOutput
 
 		// if it's sensitive, delete it
 		if output.Sensitive {
-			// todo - delete it
+			log.Logger.Infof("Deleting sensitive output file: %s", path)
+			err = os.Remove(path)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
 		}
 	}
+
 	return outputs, nil
 }
