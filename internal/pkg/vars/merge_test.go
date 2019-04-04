@@ -18,6 +18,7 @@ package vars
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"path/filepath"
 	"testing"
@@ -149,4 +150,50 @@ func TestMergePaths(t *testing.T) {
 
 		assert.Equal(t, test.expectValues, result, "unexpected merge result for %s", test.name)
 	}
+}
+
+// Test that merging two lists under the same map key appends values instead of replacing the whole list.
+// We don't instantiate a config.Config struct which proves this is the default behaviour
+func TestMergingListsAppend(t *testing.T) {
+	dest := map[string]interface{}{
+		"list1":  []int{10, 20, 30},
+		"animal": "cat",
+	}
+
+	source := map[string]interface{}{
+		"list1": []int{60, 40},
+	}
+
+	expected := map[string]interface{}{
+		"list1":  []int{10, 20, 30, 60, 40},
+		"animal": "cat",
+	}
+
+	err := MergeWithStrategy(&dest, source)
+	assert.Nil(t, err)
+	assert.Equal(t, dest, expected)
+}
+
+func TestMergingListsReplace(t *testing.T) {
+	dest := map[string]interface{}{
+		"list1":  []int{10, 20, 30},
+		"animal": "cat",
+	}
+
+	source := map[string]interface{}{
+		"list1": []int{60, 40},
+	}
+
+	expected := map[string]interface{}{
+		"list1":  []int{60, 40},
+		"animal": "cat",
+	}
+
+	config.CurrentConfig = &config.Config{
+		OverwriteMergedLists: true,
+	}
+
+	err := MergeWithStrategy(&dest, source)
+	assert.Nil(t, err)
+	assert.Equal(t, dest, expected)
 }

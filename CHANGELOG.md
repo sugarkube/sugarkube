@@ -6,6 +6,11 @@
 * Add a command `sugarkube completions` to generate a bash completions script
 * SSH port forwarding tunnels are now closed (or an attempt is made to close them) after commands finish, including if errors occur or the program is killed via a signal.
 * Paths to templates declared in kapps are relative to the directory containing the `sugarkube.yaml` file
+* The strategy for merging list values under the same map key is now configurable. By default list values under the same map key will be appended. Set the `overwrite-merged-lists` setting to `true` to have higher priority lists completely replace the contents of lower priority lists.
+* Provider vars are re-evaluated for each tranche of a plan allowing for registry values to modify the config
+* Provider vars files now allow limited templating to allow registry values to conditionally affect the provider config (e.g. `{{ if .registry.outputs.<blah> }}...{{ end }}` )
+* Kapp outputs are now parsed and added to the registry after they've finished running
+* Sensitive kapp outputs will be deleted as soon as the output has been parsed and added to the registry
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring

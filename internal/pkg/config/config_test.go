@@ -33,8 +33,9 @@ func init() {
 // Test that registry values override values when returning templated vars
 func TestLoadConfig(t *testing.T) {
 	expectedConfig := &Config{
-		JsonLogs: false,
-		LogLevel: "warn",
+		JsonLogs:             false,
+		LogLevel:             "warn",
+		OverwriteMergedLists: false,
 		Programs: map[string]structs.ProgramConfig{
 			"helm": {
 				EnvVars: map[string]interface{}{

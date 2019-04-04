@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
@@ -133,7 +132,7 @@ func (k *Kapp) mergeDescriptorLayers() error {
 	for _, layer := range k.descriptorLayers {
 		log.Logger.Debugf("Merging config layer %#v into existing map %#v for "+
 			"kapp %s", layer, mergedDescriptor, k.FullyQualifiedId())
-		err := mergo.Merge(&mergedDescriptor, layer, mergo.WithOverride)
+		err := vars.MergeWithStrategy(&mergedDescriptor, layer)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -316,7 +315,7 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 	kappIntrinsicDataConverted = convert.MapStringStringToMapStringInterface(kappIntrinsicData)
 
 	// merge kapp.Vars with the vars from files so kapp.Vars take precedence. Todo - document the order of precedence
-	err = mergo.Merge(&kappVars, k.mergedDescriptor.Vars, mergo.WithOverride)
+	err = vars.MergeWithStrategy(&kappVars, k.mergedDescriptor.Vars)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -586,8 +585,13 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 }
 
 // Returns outputs for the kapp where the map key is the output ID
-func (k Kapp) GetOutputs() (map[string]interface{}, error) {
+func (k Kapp) GetOutputs(dryRun bool) (map[string]interface{}, error) {
 	outputs := map[string]interface{}{}
+
+	dryRunPrefix := ""
+	if dryRun {
+		dryRunPrefix = "[Dry run] "
+	}
 
 	for _, output := range k.mergedDescriptor.Outputs {
 		// if the output exists, parse it as the declared type and put it in the map
@@ -596,44 +600,53 @@ func (k Kapp) GetOutputs() (map[string]interface{}, error) {
 			return nil, errors.WithStack(err)
 		}
 
-		if _, err = os.Stat(path); err != nil {
-			return nil, errors.WithStack(err)
+		if !dryRun {
+			if _, err = os.Stat(path); err != nil {
+				return nil, errors.WithStack(err)
+			}
 		}
 
-		log.Logger.Debugf("Loading output '%s' from kapp '%s' at '%s' as %s", output.Id,
-			k.FullyQualifiedId(), path, output.Format)
+		log.Logger.Debugf("%sLoading output '%s' from kapp '%s' at '%s' as %s", dryRunPrefix,
+			output.Id, k.FullyQualifiedId(), path, output.Format)
 
 		var parsedOutput interface{}
 
 		switch strings.ToLower(output.Format) {
 		case "json":
-			rawJson, err := ioutil.ReadFile(path)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
+			if !dryRun {
+				rawJson, err := ioutil.ReadFile(path)
+				if err != nil {
+					return nil, errors.WithStack(err)
+				}
 
-			err = json.Unmarshal(rawJson, &parsedOutput)
-			if err != nil {
-				return nil, errors.WithStack(err)
+				err = json.Unmarshal(rawJson, &parsedOutput)
+				if err != nil {
+					return nil, errors.WithStack(err)
+				}
 			}
 			break
 		case "yaml":
-			err = utils.LoadYamlFile(path, &parsedOutput)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
+			if !dryRun {
 
-			parsedOutput, err = convert.MapInterfaceInterfaceToMapStringInterface(parsedOutput.(map[interface{}]interface{}))
-			if err != nil {
-				return nil, errors.WithStack(err)
+				err = utils.LoadYamlFile(path, &parsedOutput)
+				if err != nil {
+					return nil, errors.WithStack(err)
+				}
+
+				parsedOutput, err = convert.MapInterfaceInterfaceToMapStringInterface(parsedOutput.(map[interface{}]interface{}))
+				if err != nil {
+					return nil, errors.WithStack(err)
+				}
 			}
 			break
 		case "text":
-			byteOutput, err := ioutil.ReadFile(path)
-			if err != nil {
-				return nil, errors.WithStack(err)
+			if !dryRun {
+				byteOutput, err := ioutil.ReadFile(path)
+				if err != nil {
+					return nil, errors.WithStack(err)
+				}
+				parsedOutput = string(byteOutput)
 			}
-			parsedOutput = string(byteOutput)
 			break
 		default:
 			return nil, errors.New(fmt.Sprintf("Unsupported output format '%s' for kapp '%s'",
@@ -644,10 +657,12 @@ func (k Kapp) GetOutputs() (map[string]interface{}, error) {
 
 		// if it's sensitive, delete it
 		if output.Sensitive {
-			log.Logger.Infof("Deleting sensitive output file: %s", path)
-			err = os.Remove(path)
-			if err != nil {
-				return nil, errors.WithStack(err)
+			log.Logger.Infof("%sDeleting sensitive output file: %s", dryRunPrefix, path)
+			if !dryRun {
+				err = os.Remove(path)
+				if err != nil {
+					return nil, errors.WithStack(err)
+				}
 			}
 		}
 	}

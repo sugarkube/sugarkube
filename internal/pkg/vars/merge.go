@@ -19,6 +19,7 @@ package vars
 import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -45,7 +46,7 @@ func MergePaths(result *map[string]interface{}, paths ...string) error {
 
 		log.Logger.Tracef("Merging %v with %v", result, yamlData)
 
-		err = mergo.Merge(result, yamlData, mergo.WithOverride)
+		err = MergeWithStrategy(result, yamlData)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -61,11 +62,29 @@ func MergeFragments(result *map[string]interface{}, fragments ...map[string]inte
 	for _, fragment := range fragments {
 		log.Logger.Tracef("Merging map %#v into existing map %#v - values "+
 			"will be overridden", fragment, result)
-		err := mergo.Merge(result, fragment, mergo.WithOverride)
+		err := MergeWithStrategy(result, fragment)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
 
+	return nil
+}
+
+// Merge two data structures with the configured strategy
+func MergeWithStrategy(dest interface{}, source interface{}) error {
+	opts := make([]func(*mergo.Config), 0)
+
+	// this is the default behaviour
+	if config.CurrentConfig == nil || !config.CurrentConfig.OverwriteMergedLists {
+		opts = append(opts, mergo.WithAppendSlice)
+	}
+
+	opts = append(opts, mergo.WithOverride)
+
+	err := mergo.Merge(dest, source, opts...)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	return nil
 }
