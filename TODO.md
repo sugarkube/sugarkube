@@ -100,6 +100,11 @@
   into the cluster and the API server is accessible we won't necessarily need an SSH tunnel even if the API server
   is private)
 
+* Support manifest sets and allow the level of parallelism between manifests to be configured. The default
+  set will have a level of 1 so each manifest in the set will be executed separately, but other sets
+  could allow any level of parallelism. This'll solve different app teams having their own manifests but
+  allowing all of them to be installed simultaneously once the base cluster has been bootstrapped.
+
 * Implement deleting clusters
   
 * Support acquiring manifests with the acquirers - this will help multi-team setups, where the platform team can 
