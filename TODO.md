@@ -14,11 +14,6 @@
       passing the same env vars to similar kapps
     * Depend on the branch of viper in this issue: https://github.com/spf13/viper/pull/635
 
-* We should probably merge structs using mergo.WithAppendSlice and mergo.WithOverride (e.g. 
-   mergo.Merge(result, fragment, mergo.WithAppendSlice, mergo.WithOverride)) but whichever we do will cause
-   problems for some people. We should probably make it a config option as to whether to enable WithAppendSlice 
-   or not. 
-
 * Support passing kapp vars on the command line when only one is selected
 
 ### Kapp output

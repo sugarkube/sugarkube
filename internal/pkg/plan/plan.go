@@ -346,9 +346,12 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
 			}
 
-			err = addOutputsToRegistry(installableObj, stackObj.GetRegistry())
-			if err != nil {
-				errCh <- errors.WithStack(err)
+			// only add outputs if we've actually run the kapp
+			if approved {
+				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+				}
 			}
 			break
 		case constants.TaskActionDelete:
@@ -357,9 +360,12 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				errCh <- errors.Wrapf(err, "Error deleting kapp '%s'", installableObj.Id())
 			}
 
-			err = addOutputsToRegistry(installableObj, stackObj.GetRegistry())
-			if err != nil {
-				errCh <- errors.WithStack(err)
+			// only add outputs if we've actually run the kapp
+			if approved {
+				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+				}
 			}
 			break
 		case constants.TaskActionClusterUpdate:
@@ -381,8 +387,8 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 }
 
 // Adds output from an installable to the registry
-func addOutputsToRegistry(installableObj interfaces.IInstallable, registry interfaces.IRegistry) error {
-	outputs, err := installableObj.GetOutputs()
+func addOutputsToRegistry(installableObj interfaces.IInstallable, registry interfaces.IRegistry, dryRun bool) error {
+	outputs, err := installableObj.GetOutputs(dryRun)
 	if err != nil {
 		return errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
 	}
