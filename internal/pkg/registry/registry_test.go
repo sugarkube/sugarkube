@@ -119,6 +119,44 @@ func TestNestedMap(t *testing.T) {
 	assert.False(t, ok)
 }
 
+// Test map[interface{}]interface{} because that's what we get from the yaml parser
+func TestNestedMapInterfaceInterface(t *testing.T) {
+	registry := New()
+
+	// the submap we expect under the 'tests' key
+	expectedTests := map[string]interface{}{
+		"testMap": map[string]interface{}{
+			"val": "tst",
+			"num": 2,
+			"dot": map[string]interface{}{
+				"ted": "xyz",
+				"sed": "xxyz",
+			},
+			"nested": map[string]interface{}{
+				"sub": "abc",
+			},
+		},
+	}
+
+	inputData := map[interface{}]interface{}{
+		"val":     "tst",
+		"num":     2,
+		"dot.ted": "xyz",
+		"dot.sed": "xxyz",
+		"nested": map[interface{}]interface{}{
+			"sub": "abc",
+		},
+	}
+
+	err := registry.Set("tests.testMap", inputData)
+	assert.Nil(t, err)
+
+	// get the whole map
+	val, ok := registry.Get("tests")
+	assert.Equal(t, expectedTests, val)
+	assert.True(t, ok)
+}
+
 func TestDelete(t *testing.T) {
 	registry := New()
 

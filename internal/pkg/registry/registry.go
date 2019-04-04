@@ -17,7 +17,9 @@
 package registry
 
 import (
+	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"reflect"
@@ -42,49 +44,71 @@ func New() Registry {
 }
 
 // Add data to the registry.
-func (r *Registry) Set(key string, value interface{}) {
+func (r *Registry) Set(key string, value interface{}) error {
 	log.Logger.Tracef("Setting registry key='%s' to value=%+v", key, value)
-	r.data = nestedMap(r.data, strings.Split(key, constants.RegistryFieldSeparator), value)
+	data, err := nestedMap(r.data, strings.Split(key, constants.RegistryFieldSeparator), value)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	r.data = data
 	log.Logger.Tracef("Set registry data to: %+v", r.data)
+	return nil
 }
 
 // Inserts the given value into the data map. `elements` is a list of map keys - if the map for any
 // particular key doesn't exist a blank map will be created.
-func nestedMap(data map[string]interface{}, elements []string, value interface{}) map[string]interface{} {
+func nestedMap(data map[string]interface{}, elements []string, value interface{}) (map[string]interface{}, error) {
 
-	log.Logger.Tracef("new iteration: data=%v, elements=%v, value=%+v", data, elements, value)
+	// too verbose even for tracing, so comment it out for now
+	//log.Logger.Tracef("new iteration: data=%v, elements=%v, value=%+v", data, elements, value)
 
 	key := elements[0]
 
 	if len(elements) == 1 {
 		reflected := reflect.ValueOf(value)
 		if reflected.Kind() == reflect.Map {
-			log.Logger.Tracef("Value is a map: %v", value)
+			//log.Logger.Tracef("Value is a map: %v", value)
 
 			itemMap := getMapOrNew(data, key)
 
-			valueMap := value.(map[string]interface{})
-			log.Logger.Tracef("valueMap=%v", valueMap)
+			valueMap, ok := value.(map[string]interface{})
+			if !ok {
+				var err error
+				valueMap, err = convert.MapInterfaceInterfaceToMapStringInterface(
+					value.(map[interface{}]interface{}))
+				if err != nil {
+					return nil, errors.WithStack(err)
+				}
+			}
+			//log.Logger.Tracef("valueMap=%v", valueMap)
 
 			// if the value is a map, run each key through this function to split dotted keys
 			for k, v := range valueMap {
 				kParts := strings.Split(k, constants.RegistryFieldSeparator)
-				log.Logger.Tracef("Branch 1: Running with: itemMap=%v kParts=%v, v=%v", itemMap, kParts, v)
-				data[key] = nestedMap(itemMap, kParts, v)
+				//log.Logger.Tracef("Branch 1: Running with: itemMap=%v kParts=%v, v=%v", itemMap, kParts, v)
+				result, err := nestedMap(itemMap, kParts, v)
+				if err != nil {
+					return nil, errors.WithStack(err)
+				}
+				data[key] = result
 
 			}
 		} else {
-			log.Logger.Tracef("Finally setting value of key=%s to '%v' in map %v", key, value, data)
+			//log.Logger.Tracef("Finally setting value of key=%s to '%v' in map %v", key, value, data)
 			data[key] = value
 		}
 
-		return data
+		return data, nil
 	} else {
 		// if the map exists fetch it, otherwise create it
 		itemMap := getMapOrNew(data, key)
-		log.Logger.Tracef("Branch 2: elements=%v value=%v", elements[1:], value)
-		data[key] = nestedMap(itemMap, elements[1:], value)
-		return data
+		//log.Logger.Tracef("Branch 2: elements=%v value=%v", elements[1:], value)
+		result, err := nestedMap(itemMap, elements[1:], value)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		data[key] = result
+		return data, nil
 	}
 }
 

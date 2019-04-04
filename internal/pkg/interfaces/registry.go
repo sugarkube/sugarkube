@@ -17,7 +17,7 @@
 package interfaces
 
 type IRegistry interface {
-	Set(key string, value interface{})
+	Set(key string, value interface{}) error
 	Get(key string) (interface{}, bool)
 	Delete(key string)
 	AsMap() map[string]interface{}
