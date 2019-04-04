@@ -285,6 +285,12 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 			}
 		}
 
+		// refresh the provider vars after each tranche
+		err := p.stack.RefreshProviderVars()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
 		// make sure we don't clean up the registry if we're just running multiple tranches for a
 		// manifest (e.g. because post-actions are being executed in their own tranche)
 		if previousManifestId != "" && previousManifestId != tranche.manifest.Id() {
@@ -390,9 +396,16 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, registry inter
 	// store the output under both the kapp's fully-qualified ID and its short, inter-manifest kapp
 	for key, output := range outputs {
 		fullKey := strings.Join([]string{prefix, key}, constants.RegistryFieldSeparator)
-		registry.Set(fullKey, output)
+		err = registry.Set(fullKey, output)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
 		fullyQualifiedFullKey := strings.Join([]string{fullyQualifiedPrefix, key}, constants.RegistryFieldSeparator)
-		registry.Set(fullyQualifiedFullKey, output)
+		err = registry.Set(fullyQualifiedFullKey, output)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil

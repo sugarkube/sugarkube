@@ -22,16 +22,8 @@
 * Support passing kapp vars on the command line when only one is selected
 
 ### Kapp output
-* Need a way of dynamically adding variables to the databag. Perhaps if kapps write JSON to a file it could be 
-  merged in? Then it'd be easy for users to control the frequency it runs. This is required to get the KMS key
-  ARN which can then be templated into kapps. For now we can hardcode values because templating was expected
-  to happen when creating a cache.
-  We could have kapps declare the name of a JSON file in their sugarkube.yaml file that should be merged with 
-  vars to allow them to dynamically update kapp vars. Or they could specify that stdout should be used, etc.
 * We also need to allow access to vars from other kapps. E.g. if one kapp sets a particular variable, 
   'vars' blocks for other kapps should be able to refer to them (e.g. myvar: "{{ .kapps.somekapp.var.thevar }}")
-* Support adding YAML/JSON/text output from kapps to the registry under e.g. 'output/<kappId>' where the 
-  kapp ID can be just the name inside a given manifest, or a fully qualified ID if being used across manifests
 * If a kapp uses output from an earlier kapp and it hasn't been run, throw an error
 
 * Provide a 'varsTemplate' field to allow for templating before parsing vars. That'll help with things like reassigning
