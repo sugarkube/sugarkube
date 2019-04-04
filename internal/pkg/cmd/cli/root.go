@@ -28,6 +28,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
+	"path/filepath"
 	"strconv"
 )
 
@@ -131,8 +132,13 @@ func init() {
 
 	cobra.OnInitialize(func() {
 		if configFile != "" {
-			log.Logger.Infof("Loading custom config file '%s'", configFile)
-			config.ViperConfig.SetConfigFile(configFile)
+			absPath, err := filepath.Abs(configFile)
+			if err != nil {
+				log.Logger.Fatalf("Error: %s", err)
+			}
+
+			log.Logger.Infof("Loading custom config file '%s'", absPath)
+			config.ViperConfig.SetConfigFile(absPath)
 		}
 		err := config.Load(config.ViperConfig)
 		if err != nil {
