@@ -235,15 +235,15 @@
     "scrypt",
   ]
   pruneopts = "UT"
-  revision = "a5d413f7728c81fb97d96a2b722368945f651e78"
+  revision = "38d8ce5564a5b71b2e3a00553993f1b9a7ae852f"
 
 [[projects]]
   branch = "master"
-  digest = "1:cd9a35e005d99871df9dc2354bc9dd8f09d186e2efa6affae6593f5ef93876b0"
+  digest = "1:e18c1645adfe83d66f80d3676040e478895669f9456ca8bafa6a7290656c1b48"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "baf5eb976a8cd65845293cd814ea151018552292"
+  revision = "81d4e9dc473e5e8c933f2aaeba2a3d81efb9aed2"
 
 [[projects]]
   digest = "1:8029e9743749d4be5bc9f7d42ea1659471767860f0cdc34d37c3111bd308a295"
@@ -282,6 +282,7 @@
     "github.com/spf13/viper",
     "github.com/stretchr/testify/assert",
     "github.com/sugarkube/texttemplate/text/template",
+    "github.com/sugarkube/viper",
     "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"

@@ -28,9 +28,10 @@
   name = "github.com/sirupsen/logrus"
   version = "1.4.0"
 
+# we need https://github.com/spf13/viper/pull/635 te be merged
 [[constraint]]
   name = "github.com/spf13/viper"
-  version = "1.3.2"    # until https://github.com/spf13/viper/pull/635 is merged in depend directly on it
+  version = "1.3.2"
 
 [[constraint]]
   name = "github.com/spf13/cobra"
