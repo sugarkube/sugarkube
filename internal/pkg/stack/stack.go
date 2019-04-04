@@ -16,12 +16,14 @@
 package stack
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
@@ -57,6 +59,11 @@ func newStack(globalConfig *config.Config, config interfaces.IStackConfig,
 			startedThisRun:        false,
 		},
 		registry: registry,
+	}
+
+	err := stack.RefreshProviderVars()
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	clusterSot, err := clustersot.New(clustersot.KubeCtl, stack)
@@ -163,4 +170,23 @@ func (s *Stack) GetTemplatedVars(installableObj interfaces.IInstallable,
 	log.Logger.Tracef("Vars after merging and templating:\n%s", yamlData)
 
 	return templatedVars, nil
+}
+
+// Reload provider vars
+func (s *Stack) RefreshProviderVars() error {
+	providerVars, err := provider.GetVarsFromFiles(s.GetProvider(), s.GetConfig())
+	if err != nil {
+		log.Logger.Warn("Error loading provider variables")
+		return errors.WithStack(err)
+	}
+	log.Logger.Debugf("Provider loaded vars: %#v", providerVars)
+
+	if len(providerVars) == 0 {
+		log.Logger.Error("No values loaded for provider")
+		return errors.New(fmt.Sprintf("Failed to load variables for provider %s",
+			s.GetProvider().GetName()))
+	}
+
+	s.GetConfig().SetProviderVars(providerVars)
+	return nil
 }

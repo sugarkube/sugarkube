@@ -76,21 +76,6 @@ func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.
 		return nil, errors.WithStack(err)
 	}
 
-	providerVars, err := provider.GetVarsFromFiles(providerImpl, stackConfig)
-	if err != nil {
-		log.Logger.Warn("Error loading provider variables")
-		return nil, errors.WithStack(err)
-	}
-	log.Logger.Debugf("Provider loaded vars: %#v", providerVars)
-
-	if len(providerVars) == 0 {
-		log.Logger.Error("No values loaded for provider")
-		return nil, errors.New(fmt.Sprintf("Failed to load variables for provider %s",
-			providerImpl.GetName()))
-	}
-
-	stackConfig.SetProviderVars(providerVars)
-
 	registryImpl := registry.New()
 
 	stackObj, err := newStack(globalConfig, stackConfig, providerImpl, &registryImpl)

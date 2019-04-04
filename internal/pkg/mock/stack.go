@@ -129,3 +129,7 @@ func (m MockStack) GetTemplatedVars(installableObj interfaces.IInstallable,
 	installerVars map[string]interface{}) (map[string]interface{}, error) {
 	return m.TemplatedVars, nil
 }
+
+func (m *MockStack) RefreshProviderVars() error {
+	return nil
+}

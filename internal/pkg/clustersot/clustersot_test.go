@@ -28,7 +28,7 @@ func init() {
 }
 
 func TestNewClusterSot(t *testing.T) {
-	istack := mock.MockStack{}
+	istack := &mock.MockStack{}
 
 	actual, err := New(KubeCtl, istack)
 	assert.Nil(t, err)

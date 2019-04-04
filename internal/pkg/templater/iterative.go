@@ -35,6 +35,8 @@ func IterativelyTemplate(vars map[string]interface{}) (map[string]interface{}, e
 	var previousBytes []byte
 	var renderedYaml string
 
+	log.Logger.Tracef("Iteratively templating variables: %+v", vars)
+
 	for i := 0; i < maxIterations; i++ {
 		log.Logger.Tracef("Templating variables. Iteration %d of max %d", i, maxIterations)
 

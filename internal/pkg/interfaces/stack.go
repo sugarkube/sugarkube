@@ -56,4 +56,5 @@ type IStack interface {
 	GetRegistry() IRegistry
 	GetTemplatedVars(installableObj IInstallable,
 		installerVars map[string]interface{}) (map[string]interface{}, error)
+	RefreshProviderVars() error
 }

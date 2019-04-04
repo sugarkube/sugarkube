@@ -68,6 +68,7 @@ configured for the region the target cluster is in, generating Helm
 			c.cacheDir = args[2]
 			return c.run()
 		},
+		Aliases: []string{"templates"},
 	}
 
 	f := cmd.Flags()

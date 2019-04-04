@@ -45,6 +45,7 @@ func LoadYamlFile(path string, out interface{}) error {
 
 	err = yaml.Unmarshal(yamlData, out)
 	if err != nil {
+		log.Logger.Tracef("Failed to unmarshal YAML:\n%s", yamlData)
 		return errors.Wrapf(err, "Error loading YAML file %s", path)
 	}
 
