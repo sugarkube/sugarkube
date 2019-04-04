@@ -480,6 +480,12 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 	for _, templateDefinition := range k.mergedDescriptor.Templates {
 		rawTemplateSource := templateDefinition.Source
 
+		if rawTemplateSource == "" {
+			return nil, errors.New(fmt.Sprintf("Template has an empty source: %+v", templateDefinition))
+		}
+
+		log.Logger.Debugf("Template definition: %+v", templateDefinition)
+
 		// run the source path through the templater in case it contains variables
 		templateSource, err := templater.RenderTemplate(rawTemplateSource, templateVars)
 		if err != nil {
@@ -491,7 +497,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 
 			// see whether the template is in the kapp itself
 			possibleSource := filepath.Join(k.configFileDir, templateSource)
-			log.Logger.Debugf("Searching for kapp template in '%s'", possibleSource)
+			log.Logger.Debugf("Searching for kapp template '%s' in '%s'", templateSource, possibleSource)
 			_, err := os.Stat(possibleSource)
 			if err == nil {
 				templateSource = possibleSource
@@ -606,22 +612,28 @@ func (k Kapp) GetOutputs() (map[string]interface{}, error) {
 				return nil, errors.WithStack(err)
 			}
 
-			err = json.Unmarshal(rawJson, parsedOutput)
+			err = json.Unmarshal(rawJson, &parsedOutput)
 			if err != nil {
 				return nil, errors.WithStack(err)
 			}
 			break
 		case "yaml":
-			err = utils.LoadYamlFile(path, parsedOutput)
+			err = utils.LoadYamlFile(path, &parsedOutput)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+
+			parsedOutput, err = convert.MapInterfaceInterfaceToMapStringInterface(parsedOutput.(map[interface{}]interface{}))
 			if err != nil {
 				return nil, errors.WithStack(err)
 			}
 			break
 		case "text":
-			parsedOutput, err = ioutil.ReadFile(path)
+			byteOutput, err := ioutil.ReadFile(path)
 			if err != nil {
 				return nil, errors.WithStack(err)
 			}
+			parsedOutput = string(byteOutput)
 			break
 		default:
 			return nil, errors.New(fmt.Sprintf("Unsupported output format '%s' for kapp '%s'",
