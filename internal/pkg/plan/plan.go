@@ -408,7 +408,9 @@ func deleteNonFullyQualifiedOutputs(registry interfaces.IRegistry) {
 	// iterate through all the keys for those that aren't fully qualified and delete them
 	for k, _ := range outputs.(map[string]interface{}) {
 		if !strings.Contains(k, constants.NamespaceSeparator) {
-			registry.Delete(k)
+			fullKey := strings.Join([]string{
+				constants.RegistryKeyOutputs, k}, constants.RegistryFieldSeparator)
+			registry.Delete(fullKey)
 		}
 	}
 }
