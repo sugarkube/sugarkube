@@ -49,17 +49,15 @@ func TestNewAcquirerFile(t *testing.T) {
 
 func TestNewAcquirerGit(t *testing.T) {
 	var expectedAcquirer = &GitAcquirer{
-		id:            "tiller",
-		uri:           "git@github.com:sugarkube/kapps.git",
-		branch:        "master",
-		path:          "incubator/tiller/",
-		includeValues: true,
+		id:     "tiller",
+		uri:    "git@github.com:sugarkube/kapps.git",
+		branch: "master",
+		path:   "incubator/tiller/",
 	}
 
 	actual, err := New(structs.Source{
-		Id:            "",
-		Uri:           GoodGitUri,
-		IncludeValues: true,
+		Id:  "",
+		Uri: GoodGitUri,
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
@@ -69,9 +67,8 @@ func TestNewAcquirerGit(t *testing.T) {
 func TestNewAcquirerGitNoBranch(t *testing.T) {
 
 	actual, err := New(structs.Source{
-		Id:            "",
-		Uri:           "git@github.com:sugarkube/kapps.git//incubator/tiller/",
-		IncludeValues: true,
+		Id:  "",
+		Uri: "git@github.com:sugarkube/kapps.git//incubator/tiller/",
 	})
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
@@ -79,11 +76,10 @@ func TestNewAcquirerGitNoBranch(t *testing.T) {
 
 func TestNewAcquirerGitWithOptions(t *testing.T) {
 	var expectedAcquirer = &GitAcquirer{
-		id:            "tiller",
-		uri:           "git@github.com:sugarkube/kapps.git",
-		branch:        "my-branch",
-		path:          "incubator/tiller/",
-		includeValues: true,
+		id:     "tiller",
+		uri:    "git@github.com:sugarkube/kapps.git",
+		branch: "my-branch",
+		path:   "incubator/tiller/",
 	}
 
 	actual, err := New(structs.Source{
@@ -92,7 +88,6 @@ func TestNewAcquirerGitWithOptions(t *testing.T) {
 		Options: map[string]interface{}{
 			"branch": "my-branch",
 		},
-		IncludeValues: true,
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
@@ -101,11 +96,10 @@ func TestNewAcquirerGitWithOptions(t *testing.T) {
 
 func TestNewAcquirerGitWithOptionsNoDefault(t *testing.T) {
 	var expectedAcquirer = &GitAcquirer{
-		id:            "tiller",
-		uri:           "git@github.com:sugarkube/kapps.git",
-		branch:        "my-branch",
-		path:          "incubator/tiller/",
-		includeValues: true,
+		id:     "tiller",
+		uri:    "git@github.com:sugarkube/kapps.git",
+		branch: "my-branch",
+		path:   "incubator/tiller/",
 	}
 
 	actual, err := New(structs.Source{
@@ -115,7 +109,6 @@ func TestNewAcquirerGitWithOptionsNoDefault(t *testing.T) {
 		Options: map[string]interface{}{
 			"branch": "my-branch",
 		},
-		IncludeValues: true,
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
@@ -124,11 +117,10 @@ func TestNewAcquirerGitWithOptionsNoDefault(t *testing.T) {
 
 func TestNewAcquirerGitExplicitId(t *testing.T) {
 	var expectedAcquirer = &GitAcquirer{
-		id:            "banana",
-		uri:           "git@github.com:sugarkube/kapps.git",
-		branch:        "master",
-		path:          "incubator/tiller/",
-		includeValues: false,
+		id:     "banana",
+		uri:    "git@github.com:sugarkube/kapps.git",
+		branch: "master",
+		path:   "incubator/tiller/",
 	}
 
 	actual, err := New(structs.Source{Id: "banana", Uri: GoodGitUri})

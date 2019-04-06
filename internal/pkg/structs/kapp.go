@@ -51,7 +51,6 @@ type Source struct {
 	Uri     string
 	Options map[string]interface{} // we don't have explicit path/branch fields because this struct must be
 	// generic enough for all acquirers, not be specific to git
-	IncludeValues bool // todo - decide if this is needed and remove if not
 }
 
 // A struct for an actual sugarkube.yaml file
@@ -62,6 +61,8 @@ type KappConfig struct {
 	PostActions   []string `yaml:"post_actions"`
 	Templates     []Template
 	Vars          map[string]interface{}
+	// todo - implement
+	//VarsTemplate string		// this will be read as a string, templated then converted to YAML and merged with the Vars map
 }
 
 // KappDescriptors describe where to find a kapp plus some other data, but isn't the kapp itself.

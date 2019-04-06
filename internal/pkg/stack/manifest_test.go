@@ -347,7 +347,6 @@ func TestManifestOverrides(t *testing.T) {
 				Options: map[string]interface{}{
 					"branch": "stable",
 				},
-				IncludeValues: false,
 			},
 		},
 		Outputs: map[string]structs.Output{},
@@ -384,25 +383,21 @@ func TestManifestOverridesNil(t *testing.T) {
 		},
 		Sources: map[string]structs.Source{
 			"special": {
-				Id:            "special",
-				Uri:           "git@github.com:sugarkube/kapps-C.git//kappC/some/special-path#kappC-0.3.0",
-				Options:       map[string]interface{}{},
-				IncludeValues: false,
+				Id:      "special",
+				Uri:     "git@github.com:sugarkube/kapps-C.git//kappC/some/special-path#kappC-0.3.0",
+				Options: map[string]interface{}{},
 			},
 			"pathZ": {
-				Uri:           "git@github.com:sugarkube/kapps-C.git//kappC/some/pathZ#kappZ-0.3.0",
-				Options:       map[string]interface{}{},
-				IncludeValues: false,
+				Uri:     "git@github.com:sugarkube/kapps-C.git//kappC/some/pathZ#kappZ-0.3.0",
+				Options: map[string]interface{}{},
 			},
 			"pathX": {
-				Uri:           "git@github.com:sugarkube/kapps-C.git//kappC/some/pathX#kappX-0.3.0",
-				Options:       map[string]interface{}{},
-				IncludeValues: false,
+				Uri:     "git@github.com:sugarkube/kapps-C.git//kappC/some/pathX#kappX-0.3.0",
+				Options: map[string]interface{}{},
 			},
 			"pathY": {
-				Uri:           "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0",
-				Options:       map[string]interface{}{},
-				IncludeValues: false,
+				Uri:     "git@github.com:sugarkube/kapps-C.git//kappC/some/pathY#kappY-0.3.0",
+				Options: map[string]interface{}{},
 			},
 		},
 		Outputs: map[string]structs.Output{},

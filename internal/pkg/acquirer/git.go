@@ -29,11 +29,10 @@ import (
 )
 
 type GitAcquirer struct {
-	id            string
-	uri           string
-	branch        string
-	path          string
-	includeValues bool
+	id     string
+	uri    string
+	branch string
+	path   string
 }
 
 // todo - make configurable, or use go-git
@@ -97,11 +96,10 @@ func newGitAcquirer(source structs.Source) (*GitAcquirer, error) {
 	}
 
 	return &GitAcquirer{
-		id:            id,
-		uri:           uri,
-		branch:        branch,
-		path:          path,
-		includeValues: source.IncludeValues,
+		id:     id,
+		uri:    uri,
+		branch: branch,
+		path:   path,
 	}, nil
 }
 
@@ -132,11 +130,6 @@ func (a GitAcquirer) Path() string {
 // return the uri
 func (a GitAcquirer) Uri() string {
 	return strings.Join([]string{a.uri, PathSeparator, a.path, BranchSeparator, a.branch}, "")
-}
-
-// return whether this source should be searched for values files
-func (a GitAcquirer) IncludeValues() bool {
-	return a.includeValues
 }
 
 // Acquires kapps via git and saves them to `dest`.

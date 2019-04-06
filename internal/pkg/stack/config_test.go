@@ -189,8 +189,7 @@ func GetTestManifests(t *testing.T) []interfaces.IManifest {
 				State: "present",
 			},
 			Sources: []structs.Source{
-				{IncludeValues: false,
-					Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.2.0"},
+				{Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.2.0"},
 			},
 		},
 	}

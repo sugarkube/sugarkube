@@ -29,7 +29,6 @@ type Acquirer interface {
 	Id() string
 	Path() string
 	Uri() string
-	IncludeValues() bool // todo - clarify if this is actually used, and if not, remove it
 }
 
 // Instantiates a new acquirer from a source
