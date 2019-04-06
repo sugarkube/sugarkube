@@ -53,10 +53,6 @@
   name = "github.com/stretchr/testify"
   version = "v1.2.2"
 
-[[constraint]]
-  name = "github.com/sugarkube/texttemplate"
-  branch = "master"
-
 [prune]
   go-tests = true
   unused-packages = true

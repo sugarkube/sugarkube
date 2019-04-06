@@ -217,17 +217,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:adb4b8c2f6bf2560142e93d8b2368f653c81d090e0a66f21ad1ea3c1be30c145"
-  name = "github.com/sugarkube/texttemplate"
-  packages = [
-    "fmtsort",
-    "text/template",
-  ]
-  pruneopts = "UT"
-  revision = "2c1ea3b9f235834f9ef7ffd0eed4fa928495983a"
-
-[[projects]]
-  branch = "master"
   digest = "1:dd658e9008df9e0bea1ddb2caa3df8250e5e42bf54dcb776ed5bef0496395549"
   name = "golang.org/x/crypto"
   packages = [
@@ -281,7 +270,6 @@
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "github.com/stretchr/testify/assert",
-    "github.com/sugarkube/texttemplate/text/template",
     "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
