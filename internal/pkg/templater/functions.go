@@ -83,7 +83,7 @@ func findFiles(root string, patterns []string) ([]string, error) {
 			return nil, errors.New(fmt.Sprintf("Found multiple files matching pattern '%s' in '%s'. Don't "+
 				"know which to choose. Try making your pattern more specific.", pattern, root))
 		} else {
-			log.Logger.Debugf("No files found matching pattern '%s' under dir '%s'",
+			log.Logger.Tracef("No files found matching pattern '%s' under dir '%s'",
 				pattern, root)
 		}
 	}

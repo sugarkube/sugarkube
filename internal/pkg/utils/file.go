@@ -49,7 +49,7 @@ func AppendToFile(filename string, text string) error {
 func FindFilesByPattern(rootDir string, pattern string, recursive bool,
 	preferSymlinks bool) ([]string, error) {
 
-	log.Logger.Debugf("Searching for files matching regex '%s' under dir '%s'",
+	log.Logger.Tracef("Searching for files matching regex '%s' under dir '%s'",
 		pattern, rootDir)
 
 	re := regexp.MustCompile(pattern)
