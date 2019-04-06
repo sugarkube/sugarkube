@@ -179,7 +179,7 @@ func (s *Stack) RefreshProviderVars() error {
 		log.Logger.Warn("Error loading provider variables")
 		return errors.WithStack(err)
 	}
-	log.Logger.Debugf("Provider loaded vars: %#v", providerVars)
+	log.Logger.Tracef("Provider loaded vars: %#v", providerVars)
 
 	if len(providerVars) == 0 {
 		log.Logger.Error("No values loaded for provider")

@@ -606,7 +606,7 @@ func (k Kapp) GetOutputs(dryRun bool) (map[string]interface{}, error) {
 			}
 		}
 
-		log.Logger.Debugf("%sLoading output '%s' from kapp '%s' at '%s' as %s", dryRunPrefix,
+		log.Logger.Infof("%sLoading output '%s' from kapp '%s' at '%s' as %s", dryRunPrefix,
 			output.Id, k.FullyQualifiedId(), path, output.Format)
 
 		var parsedOutput interface{}

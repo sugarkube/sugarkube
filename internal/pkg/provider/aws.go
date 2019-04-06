@@ -21,6 +21,7 @@ import "github.com/sugarkube/sugarkube/internal/pkg/constants"
 type AwsProvider struct {
 	stackConfigVars map[string]interface{}
 	region          string
+	varsPaths       []string
 }
 
 const AwsProviderName = "aws"
@@ -51,4 +52,12 @@ func (p *AwsProvider) CustomVarsDirs() []string {
 		constants.ProfileDir,
 		constants.ClusterDir,
 	}
+}
+
+func (p *AwsProvider) AddVarsPath(path string) {
+	p.varsPaths = append(p.varsPaths, path)
+}
+
+func (p *AwsProvider) VarsFilePaths() []string {
+	return p.varsPaths
 }

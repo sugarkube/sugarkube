@@ -20,6 +20,7 @@ import "github.com/sugarkube/sugarkube/internal/pkg/constants"
 
 type LocalProvider struct {
 	stackConfigVars map[string]interface{}
+	varsPaths       []string
 }
 
 const LocalProviderName = "local"
@@ -46,4 +47,12 @@ func (p *LocalProvider) CustomVarsDirs() []string {
 		constants.ProfileDir,
 		constants.ClusterDir,
 	}
+}
+
+func (p *LocalProvider) AddVarsPath(path string) {
+	p.varsPaths = append(p.varsPaths, path)
+}
+
+func (p *LocalProvider) VarsFilePaths() []string {
+	return p.varsPaths
 }

@@ -103,10 +103,11 @@ type MockStack struct {
 	Config        interfaces.IStackConfig
 	Provider      interfaces.IProvider
 	TemplatedVars map[string]interface{}
+	Registry      interfaces.IRegistry
 }
 
 func (m MockStack) GetConfig() interfaces.IStackConfig {
-	return nil
+	return m.Config
 }
 
 func (m MockStack) GetStatus() interfaces.IClusterStatus {
@@ -114,7 +115,7 @@ func (m MockStack) GetStatus() interfaces.IClusterStatus {
 }
 
 func (m MockStack) GetProvider() interfaces.IProvider {
-	return nil
+	return m.Provider
 }
 
 func (m MockStack) GetProvisioner() interfaces.IProvisioner {
@@ -122,7 +123,7 @@ func (m MockStack) GetProvisioner() interfaces.IProvisioner {
 }
 
 func (m MockStack) GetRegistry() interfaces.IRegistry {
-	return nil
+	return m.Registry
 }
 
 func (m MockStack) GetTemplatedVars(installableObj interfaces.IInstallable,

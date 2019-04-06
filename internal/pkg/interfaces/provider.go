@@ -24,4 +24,9 @@ type IProvider interface {
 	// Returns variables installers should pass on to kapps
 	GetInstallerVars() map[string]interface{}
 	CustomVarsDirs() []string
+	// add a new path to the list of provider vars file paths so we don't need to keep searching
+	// the filesystem
+	AddVarsPath(path string)
+	// get the variable
+	VarsFilePaths() []string
 }

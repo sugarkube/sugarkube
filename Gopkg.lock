@@ -217,14 +217,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1cf5f2c75b6941051e954b3d6f3dbaf0a7ecd800cf63dc6ee43d16e968455676"
+  digest = "1:adb4b8c2f6bf2560142e93d8b2368f653c81d090e0a66f21ad1ea3c1be30c145"
   name = "github.com/sugarkube/texttemplate"
   packages = [
     "fmtsort",
     "text/template",
   ]
   pruneopts = "UT"
-  revision = "748e62febf002c66f4db7fa0d9bd0a96af10cdc7"
+  revision = "2c1ea3b9f235834f9ef7ffd0eed4fa928495983a"
 
 [[projects]]
   branch = "master"
@@ -282,7 +282,6 @@
     "github.com/spf13/viper",
     "github.com/stretchr/testify/assert",
     "github.com/sugarkube/texttemplate/text/template",
-    "github.com/sugarkube/viper",
     "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"

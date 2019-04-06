@@ -38,12 +38,15 @@ func newProviderImpl(name string, stackConfig interfaces.IStackConfig) (interfac
 	log.Logger.Debugf("Instantiating the '%s' provider", name)
 
 	if name == LOCAL {
-		return &LocalProvider{}, nil
+		return &LocalProvider{
+			varsPaths: make([]string, 0),
+		}, nil
 	}
 
 	if name == AWS {
 		return &AwsProvider{
-			region: stackConfig.GetRegion(),
+			region:    stackConfig.GetRegion(),
+			varsPaths: make([]string, 0),
 		}, nil
 	}
 
@@ -65,9 +68,20 @@ func New(stackConfig interfaces.IStackConfig) (interfaces.IProvider, error) {
 // all the data.
 func GetVarsFromFiles(provider interfaces.IProvider,
 	stackConfig interfaces.IStackConfig) (map[string]interface{}, error) {
-	dirs, err := findVarsFiles(provider, stackConfig)
-	if err != nil {
-		return nil, errors.WithStack(err)
+
+	var err error
+
+	// only search the filesystem if we haven't already done so
+	dirs := provider.VarsFilePaths()
+	if len(dirs) == 0 {
+		dirs, err = findVarsFiles(provider, stackConfig)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		for _, dir := range dirs {
+			provider.AddVarsPath(dir)
+		}
 	}
 
 	values := map[string]interface{}{}
@@ -80,7 +94,7 @@ func GetVarsFromFiles(provider interfaces.IProvider,
 	return values, nil
 }
 
-// Search for paths to provider vars files
+// Search for paths to provider vars files.
 func findVarsFiles(provider interfaces.IProvider, stackConfig interfaces.IStackConfig) ([]string, error) {
 	precedence := []string{
 		utils.StripExtension(constants.ValuesFile),

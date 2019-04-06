@@ -18,12 +18,27 @@ package provider
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
+	"github.com/sugarkube/sugarkube/internal/pkg/mock"
+	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"path/filepath"
 	"testing"
 )
 
+func getMockStack(t *testing.T, dir string, name string, account string, provider string,
+	provisioner string, profile string, cluster string, region string, providerVarsDirs []string) interfaces.IStack {
+
+	registryObj := registry.New()
+
+	config := getMockStackConfig(t, dir, name, account, provider, provisioner, profile, cluster, region, providerVarsDirs)
+	return &mock.MockStack{
+		Config:   config,
+		Registry: &registryObj,
+	}
+}
+
 func TestStackConfigVars(t *testing.T) {
-	stackObj := getMockStackConfig(t, testDir, "large", "", "local",
+	stackObj := getMockStack(t, testDir, "large", "", "local",
 		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 
 	expected := map[string]interface{}{
@@ -39,10 +54,10 @@ func TestStackConfigVars(t *testing.T) {
 		},
 	}
 
-	providerImpl, err := New(stackObj)
+	providerImpl, err := New(stackObj.GetConfig())
 	assert.Nil(t, err)
 
-	actual, err := GetVarsFromFiles(providerImpl, stackObj)
+	actual, err := GetVarsFromFiles(providerImpl, stackObj.GetConfig())
 	assert.Nil(t, err)
 	assert.Equal(t, expected, actual, "Mismatching vars")
 }
@@ -62,7 +77,7 @@ func TestNewLocalProvider(t *testing.T) {
 
 	actual, err := New(stackObj)
 	assert.Nil(t, err)
-	assert.Equal(t, &LocalProvider{}, actual)
+	assert.Equal(t, &LocalProvider{varsPaths: []string{}}, actual)
 }
 
 func TestNewAWSProvider(t *testing.T) {
@@ -71,7 +86,8 @@ func TestNewAWSProvider(t *testing.T) {
 	actual, err := New(stackObj)
 	assert.Nil(t, err)
 	assert.Equal(t, &AwsProvider{
-		region: "fake-region",
+		region:    "fake-region",
+		varsPaths: []string{},
 	}, actual)
 }
 
