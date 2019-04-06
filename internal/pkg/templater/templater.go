@@ -21,15 +21,15 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/texttemplate/text/template"
 	"io/ioutil"
 	"os"
+	"text/template"
 )
 
 // Returns a template rendered with the given input variables
 func RenderTemplate(inputTemplate string, vars map[string]interface{}) (string, error) {
 	tpl := template.Must(
-		template.New("gotpl").Option("missingkey=ignore").Funcs(
+		template.New("gotpl").Funcs(
 			sprig.TxtFuncMap()).Funcs(CustomFunctions).Parse(inputTemplate))
 
 	buf := bytes.NewBuffer(nil)
