@@ -18,8 +18,8 @@ package interfaces
 
 type IInstaller interface {
 	Install(installableObj IInstallable, stack IStack, approved bool, renderTemplates bool,
-		dryRun bool) error
+		requireTemplateDestDirs bool, dryRun bool) error
 	Delete(installableObj IInstallable, stack IStack, approved bool, renderTemplates bool,
-		dryRun bool) error
+		requireTemplateDestDirs bool, dryRun bool) error
 	Name() string
 }

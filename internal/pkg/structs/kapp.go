@@ -28,8 +28,10 @@ type ProgramConfig struct {
 }
 
 type Template struct {
-	Source    string
-	Dest      string
+	Source           string
+	Dest             string
+	DestDirMustExist bool `yaml:"dest_dir_must_exist"` // if this is true templating will fail if the destination directory
+	// doesn't exist
 	Sensitive bool // sensitive templates will be templated just-in-time then deleted immediately after
 	// executing the kapp. This provides a way of passing secrets to kapps while keeping them off
 	// disk as much as possible.

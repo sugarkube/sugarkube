@@ -11,6 +11,8 @@
 * Provider vars files now allow limited templating to allow registry values to conditionally affect the provider config (e.g. `{{ if .registry.outputs.<blah> }}...{{ end }}` )
 * Kapp outputs are now parsed and added to the registry after they've finished running
 * Sensitive kapp outputs will be deleted as soon as the output has been parsed and added to the registry
+* By default missing template destination directories won't cause Sugarkube to abort. But it can be made to by setting `dest_dir_must_exist: true` in a template definition.
+* Add an option to CLI commands to fail if template destination directories don't exist
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring

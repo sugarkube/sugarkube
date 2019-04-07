@@ -49,15 +49,18 @@ type Plan struct {
 	stack interfaces.IStack
 	// whether to write templates for a kapp immediately before applying the kapp
 	renderTemplates bool
+	// whether to fail if the destination directory for a template doesn't exist
+	requireTemplateDestDirs bool
 }
 
 // A job to be run by a worker
 type job struct {
-	task            task
-	stack           interfaces.IStack
-	renderTemplates bool
-	approved        bool
-	dryRun          bool
+	task                    task
+	stack                   interfaces.IStack
+	renderTemplates         bool
+	requireTemplateDestDirs bool
+	approved                bool
+	dryRun                  bool
 }
 
 // create a plan containing all kapps in the stack, then filter out the
@@ -70,7 +73,8 @@ type job struct {
 // If the `runPostActions` parameter is false, no post actions will be executed.
 // This can be useful to quickly tear down a cluster.
 func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IManifest,
-	selectedInstallables []interfaces.IInstallable, renderTemplates bool, runPostActions bool) (*Plan, error) {
+	selectedInstallables []interfaces.IInstallable, renderTemplates bool, requireTemplateDestDirs bool,
+	runPostActions bool) (*Plan, error) {
 
 	tranches := make([]tranche, 0)
 	tasks := make([]task, 0)
@@ -181,9 +185,10 @@ func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IMa
 	}
 
 	plan := Plan{
-		tranches:        tranches,
-		stack:           stackObj,
-		renderTemplates: renderTemplates,
+		tranches:                tranches,
+		stack:                   stackObj,
+		renderTemplates:         renderTemplates,
+		requireTemplateDestDirs: requireTemplateDestDirs,
 	}
 
 	if !forward {
@@ -259,11 +264,12 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 
 		for _, task := range tranche.tasks {
 			job := job{
-				approved:        approved,
-				dryRun:          dryRun,
-				task:            task,
-				stack:           p.stack,
-				renderTemplates: p.renderTemplates,
+				approved:                approved,
+				dryRun:                  dryRun,
+				task:                    task,
+				stack:                   p.stack,
+				renderTemplates:         p.renderTemplates,
+				requireTemplateDestDirs: p.requireTemplateDestDirs,
 			}
 
 			jobs <- job
@@ -319,6 +325,7 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 		approved := job.approved
 		dryRun := job.dryRun
 		renderTemplates := job.renderTemplates
+		requireTemplateDestDirs := job.requireTemplateDestDirs
 
 		kappRootDir := installableObj.GetCacheDir()
 		log.Logger.Infof("Processing kapp '%s' in %s", installableObj.FullyQualifiedId(), kappRootDir)
@@ -341,7 +348,7 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 
 		switch task.action {
 		case constants.TaskActionInstall:
-			err := installerImpl.Install(installableObj, stackObj, approved, renderTemplates, dryRun)
+			err := installerImpl.Install(installableObj, stackObj, approved, renderTemplates, requireTemplateDestDirs, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
 			}
@@ -355,7 +362,7 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 			}
 			break
 		case constants.TaskActionDelete:
-			err := installerImpl.Delete(installableObj, stackObj, approved, renderTemplates, dryRun)
+			err := installerImpl.Delete(installableObj, stackObj, approved, renderTemplates, requireTemplateDestDirs, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error deleting kapp '%s'", installableObj.Id())
 			}

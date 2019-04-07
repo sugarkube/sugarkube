@@ -31,19 +31,20 @@ import (
 )
 
 type templateConfig struct {
-	out             io.Writer
-	dryRun          bool
-	cacheDir        string
-	stackName       string
-	stackFile       string
-	provider        string
-	provisioner     string
-	profile         string
-	account         string
-	cluster         string
-	region          string
-	includeSelector []string
-	excludeSelector []string
+	out                     io.Writer
+	dryRun                  bool
+	cacheDir                string
+	stackName               string
+	stackFile               string
+	provider                string
+	provisioner             string
+	profile                 string
+	account                 string
+	cluster                 string
+	region                  string
+	requireTemplateDestDirs bool
+	includeSelector         []string
+	excludeSelector         []string
 }
 
 func newTemplateCmd(out io.Writer) *cobra.Command {
@@ -73,6 +74,7 @@ configured for the region the target cluster is in, generating Helm
 
 	f := cmd.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
+	f.BoolVarP(&c.requireTemplateDestDirs, "require-template-dirs", "d", false, "fail if the destination directory to write a template to doesn't exist")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -124,7 +126,7 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = RenderTemplates(selectedInstallables, c.cacheDir, stackObj, c.dryRun)
+	err = RenderTemplates(selectedInstallables, c.cacheDir, stackObj, c.requireTemplateDestDirs, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -139,7 +141,7 @@ func (c *templateConfig) run() error {
 
 // Render templates for kapps defined in a stack config
 func RenderTemplates(installables []interfaces.IInstallable, cacheDir string, stack interfaces.IStack,
-	dryRun bool) error {
+	requireTemplateDestDirs bool, dryRun bool) error {
 
 	if len(installables) == 0 {
 		return errors.New("No installables supplied to template function")
@@ -158,7 +160,7 @@ func RenderTemplates(installables []interfaces.IInstallable, cacheDir string, st
 			return errors.WithStack(err)
 		}
 
-		_, err = kappObj.RenderTemplates(templatedVars, stack.GetConfig(), dryRun)
+		_, err = kappObj.RenderTemplates(templatedVars, stack.GetConfig(), requireTemplateDestDirs, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

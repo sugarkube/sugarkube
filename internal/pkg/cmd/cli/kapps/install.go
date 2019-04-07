@@ -38,23 +38,24 @@ type installCmd struct {
 	approved bool
 	oneShot  bool
 	//force               bool
-	skipTemplating      bool
-	skipPostActions     bool
-	establishConnection bool
-	stackName           string
-	stackFile           string
-	provider            string
-	provisioner         string
-	profile             string
-	account             string
-	cluster             string
-	region              string
-	startFrom           string // todo - implement, and add the same flag to the delete command
-	runUntil            string // todo - implement, and add the same flag to the delete command
-	includeSelector     []string
-	excludeSelector     []string
-	onlineTimeout       uint32
-	readyTimeout        uint32
+	requireTemplateDestDirs bool
+	skipTemplating          bool
+	skipPostActions         bool
+	establishConnection     bool
+	stackName               string
+	stackFile               string
+	provider                string
+	provisioner             string
+	profile                 string
+	account                 string
+	cluster                 string
+	region                  string
+	startFrom               string // todo - implement, and add the same flag to the delete command
+	runUntil                string // todo - implement, and add the same flag to the delete command
+	includeSelector         []string
+	excludeSelector         []string
+	onlineTimeout           uint32
+	readyTimeout            uint32
 }
 
 func newInstallCmd(out io.Writer) *cobra.Command {
@@ -122,6 +123,7 @@ process before installing the selected kapps.
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
 	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp with 'APPROVED=false' then "+
 		"'APPROVED=true' to install kapps in a single pass")
+	f.BoolVarP(&c.requireTemplateDestDirs, "require-template-dirs", "d", false, "fail if the destination directory to write a template to doesn't exist")
 	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/delete all the kapps "+
 	//	"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before installing them")
@@ -234,7 +236,7 @@ func (c *installCmd) run() error {
 
 	// force mode, so no need to perform validation. Just create a plan
 	actionPlan, err = plan.Create(true, stackObj, stackObj.GetConfig().Manifests(),
-		selectedInstallables, !c.skipTemplating, !c.skipPostActions)
+		selectedInstallables, !c.skipTemplating, c.requireTemplateDestDirs, !c.skipPostActions)
 	if err != nil {
 		return errors.WithStack(err)
 	}

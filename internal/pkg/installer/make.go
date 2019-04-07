@@ -43,7 +43,7 @@ func (i MakeInstaller) Name() string {
 
 // Run the given make target
 func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallable, stack interfaces.IStack,
-	approved bool, renderTemplates bool, dryRun bool) error {
+	approved bool, renderTemplates bool, requireTemplateDestDirs bool, dryRun bool) error {
 
 	// search for the Makefile
 	makefilePaths, err := utils.FindFilesByPattern(installable.GetCacheDir(), "Makefile",
@@ -69,7 +69,8 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 		map[string]interface{}{"target": makeTarget, "approved": approved})
 
 	if renderTemplates {
-		renderedTemplates, err := installable.RenderTemplates(templatedVars, stack.GetConfig(), dryRun)
+		renderedTemplates, err := installable.RenderTemplates(templatedVars, stack.GetConfig(),
+			requireTemplateDestDirs, dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -167,14 +168,14 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 
 // Install a kapp
 func (i MakeInstaller) Install(installableObj interfaces.IInstallable, stack interfaces.IStack,
-	approved bool, renderTemplates bool, dryRun bool) error {
+	approved bool, renderTemplates bool, requireTemplateDestDirs bool, dryRun bool) error {
 	log.Logger.Infof("Installing kapp '%s'...", installableObj.FullyQualifiedId())
-	return i.run(TargetInstall, installableObj, stack, approved, renderTemplates, dryRun)
+	return i.run(TargetInstall, installableObj, stack, approved, renderTemplates, requireTemplateDestDirs, dryRun)
 }
 
 // Delete a kapp
 func (i MakeInstaller) Delete(installableObj interfaces.IInstallable, stack interfaces.IStack,
-	approved bool, renderTemplates bool, dryRun bool) error {
+	approved bool, renderTemplates bool, requireTemplateDestDirs bool, dryRun bool) error {
 	log.Logger.Infof("Deleting kapp '%s'...", installableObj.FullyQualifiedId())
-	return i.run(TargetDelete, installableObj, stack, approved, renderTemplates, dryRun)
+	return i.run(TargetDelete, installableObj, stack, approved, renderTemplates, requireTemplateDestDirs, dryRun)
 }
