@@ -9,9 +9,10 @@ programs:
       release: "{{ .kapp.id }}"
       kube_context: "{{ .kube_context }}"
 
-    envVars:
-      RUN_HELM: |-
-        "{{ if isSet .kapp.vars "run_helm" }}{{ .kapp.vars.run_helm }}{{ else }}true{{ end }}"
+  # todo - uncomment once viper supports not lowercasing all map keys
+#    envVars:
+#      RUN_HELM: |-
+#        "{{ if isSet .kapp.vars "run_helm" }}{{ .kapp.vars.run_helm }}{{ else }}true{{ end }}"
 
     args:
       make:

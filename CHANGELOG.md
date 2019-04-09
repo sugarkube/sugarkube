@@ -16,6 +16,7 @@
 * post_actions is now a list of maps. See documentation.
 * Kapps can now push additional provider vars dirs onto the list that will be merged by a provider. This allows them to modify the provider's config.
 * Kapp templates now get rendered before and after installing/deleting kapps so they can use their own output in templates
+* Default variables can now be defined per program in the global sugarkube-conf.yaml file. Keys map to programs in a kapp's 'requires' block
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring

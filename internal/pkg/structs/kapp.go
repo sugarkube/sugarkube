@@ -18,15 +18,6 @@ package structs
 
 // Structs to load a kapp's sugarkube.yaml file
 
-// A fragment of configuration for a program or kapp. It can be loaded either
-// from a kapp's sugarkube.yaml file or the global sugarkube config file. It
-// allows default env vars and arguments to be configured in one place and reused.
-type ProgramConfig struct {
-	EnvVars map[string]interface{} `yaml:"envVars"`
-	Version string
-	Args    map[string]map[string][]map[string]string
-}
-
 type Template struct {
 	Source           string
 	Dest             string
@@ -62,12 +53,14 @@ type PostAction struct {
 
 // A struct for an actual sugarkube.yaml file
 type KappConfig struct {
-	State         string
-	ProgramConfig `yaml:",inline"`
-	Requires      []string
-	PostActions   []map[string]PostAction `yaml:"post_actions"`
-	Templates     []Template
-	Vars          map[string]interface{}
+	State       string
+	EnvVars     map[string]interface{} `yaml:"envVars"`
+	Version     string
+	Args        map[string]map[string][]map[string]string
+	Requires    []string
+	PostActions []map[string]PostAction `yaml:"post_actions"`
+	Templates   []Template
+	Vars        map[string]interface{}
 	// todo - implement
 	//VarsTemplate string		// this will be read as a string, templated then converted to YAML and merged with the Vars map
 }

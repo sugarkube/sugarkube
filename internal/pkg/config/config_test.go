@@ -36,7 +36,7 @@ func TestLoadConfig(t *testing.T) {
 		JsonLogs:             false,
 		LogLevel:             "warn",
 		OverwriteMergedLists: false,
-		Programs: map[string]structs.ProgramConfig{
+		Programs: map[string]structs.KappConfig{
 			"helm": {
 				EnvVars: map[string]interface{}{
 					"kubeconfig":   "{{ .kubeconfig }}",
