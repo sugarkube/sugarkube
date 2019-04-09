@@ -39,7 +39,7 @@ func TestLoadConfig(t *testing.T) {
 		Programs: map[string]structs.ProgramConfig{
 			"helm": {
 				EnvVars: map[string]interface{}{
-					"kubeconfig":   "{{ .kube_config }}",
+					"kubeconfig":   "{{ .kubeconfig }}",
 					"namespace":    "{{ .kapp.vars.namespace | default .kapp.id }}",
 					"release":      "{{ .kapp.vars.release | default .kapp.id }}",
 					"kube_context": "{{ .kube_context }}",
@@ -57,7 +57,7 @@ func TestLoadConfig(t *testing.T) {
 			},
 			"prog2": {
 				EnvVars: map[string]interface{}{
-					"kubeconfig":   "{{ .kube_config }}",
+					"kubeconfig":   "{{ .kubeconfig }}",
 					"kube_context": "{{ .kube_context }}",
 					"region":       "{{ .stack.region }}",
 				},
