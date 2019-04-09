@@ -113,7 +113,6 @@ func KappDescriptorWithListsToMap(descriptor structs.KappDescriptorWithLists) (
 	structs.KappDescriptorWithMaps, error) {
 	// convert the descriptor to be a KappDescriptorWithMaps and set it as initial config layer
 	sources := make(map[string]structs.Source, 0)
-	outputs := make(map[string]structs.Output, 0)
 
 	// we need to get the ID from the acquirer associated with the source
 	for _, source := range descriptor.Sources {
@@ -123,6 +122,8 @@ func KappDescriptorWithListsToMap(descriptor structs.KappDescriptorWithLists) (
 		}
 		sources[acquirerObj.Id()] = source
 	}
+
+	outputs := make(map[string]structs.Output, 0)
 
 	for _, output := range descriptor.Outputs {
 		outputs[output.Id] = output

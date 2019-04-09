@@ -55,12 +55,17 @@ type Source struct {
 	// generic enough for all acquirers, not be specific to git
 }
 
+type PostAction struct {
+	Id     string
+	Params []string
+}
+
 // A struct for an actual sugarkube.yaml file
 type KappConfig struct {
 	State         string
 	ProgramConfig `yaml:",inline"`
 	Requires      []string
-	PostActions   []string `yaml:"post_actions"`
+	PostActions   []map[string]PostAction `yaml:"post_actions"`
 	Templates     []Template
 	Vars          map[string]interface{}
 	// todo - implement

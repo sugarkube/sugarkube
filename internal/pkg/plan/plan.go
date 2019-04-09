@@ -120,7 +120,7 @@ func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IMa
 		if len(installableObj.PostActions()) > 0 && runPostActions {
 			for _, postAction := range installableObj.PostActions() {
 				var actionTask *task
-				if postAction == constants.TaskActionClusterUpdate {
+				if postAction.Id == constants.TaskActionClusterUpdate {
 					actionTask = &task{
 						installableObj: installableObj,
 						action:         constants.TaskActionClusterUpdate,

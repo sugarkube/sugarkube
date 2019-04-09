@@ -216,7 +216,7 @@ kapps:
   sources:
   - uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
   post_actions:
-  - cluster_update
+  - cluster_update:
 `,
 			expectDescriptor: []structs.KappDescriptorWithMaps{
 				{
@@ -273,8 +273,8 @@ kapps:
 					Id: "example3",
 					KappConfig: structs.KappConfig{
 						State: "absent",
-						PostActions: []string{
-							constants.TaskActionClusterUpdate,
+						PostActions: []map[string]structs.PostAction{
+							{constants.TaskActionClusterUpdate: structs.PostAction{}},
 						},
 						Vars: map[string]interface{}{},
 					},

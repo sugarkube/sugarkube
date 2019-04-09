@@ -59,8 +59,17 @@ func (k Kapp) State() string {
 	return k.mergedDescriptor.State
 }
 
-func (k Kapp) PostActions() []string {
-	return k.mergedDescriptor.PostActions
+func (k Kapp) PostActions() []structs.PostAction {
+	// convert the map to a list
+	postActions := make([]structs.PostAction, 0)
+	for _, actionMap := range k.mergedDescriptor.PostActions {
+		for k, v := range actionMap {
+			v.Id = k
+			postActions = append(postActions, v)
+		}
+	}
+
+	return postActions
 }
 
 // Every time we add a new descriptor remerge the descriptor.
