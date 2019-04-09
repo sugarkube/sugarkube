@@ -14,6 +14,7 @@
 * By default missing template destination directories won't cause Sugarkube to abort. But it can be made to by setting `dest_dir_must_exist: true` in a template definition.
 * Add an option to CLI commands to fail if template destination directories don't exist
 * post_actions is now a list of maps. See documentation.
+* Kapps can now push additional provider vars dirs onto the list that will be merged by a provider. This allows them to modify the provider's config.
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring
