@@ -412,24 +412,24 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, registry inter
 		return errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
 	}
 
-	// data under the short key can be used by other kapps in the manifest
-	prefix := strings.Join([]string{constants.RegistryKeyOutputs, installableObj.Id()}, constants.RegistryFieldSeparator)
-	// kapps in different manifests need to use the fully qualified ID
-	fullyQualifiedPrefix := strings.Join([]string{constants.RegistryKeyOutputs,
-		installableObj.FullyQualifiedId()}, constants.RegistryFieldSeparator)
+	prefixes := []string{
+		// "outputs.this"
+		strings.Join([]string{constants.RegistryKeyOutputs, constants.RegistryKeyThis}, constants.RegistryFieldSeparator),
+		// short prefix - can be used by other kapps in the manifest
+		strings.Join([]string{constants.RegistryKeyOutputs, installableObj.Id()}, constants.RegistryFieldSeparator),
+		// fully-qualified prefix - can be used by kapps in other manifests
+		strings.Join([]string{constants.RegistryKeyOutputs,
+			installableObj.FullyQualifiedId()}, constants.RegistryFieldSeparator),
+	}
 
-	// store the output under both the kapp's fully-qualified ID and its short, inter-manifest kapp
-	for key, output := range outputs {
-		fullKey := strings.Join([]string{prefix, key}, constants.RegistryFieldSeparator)
-		err = registry.Set(fullKey, output)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		fullyQualifiedFullKey := strings.Join([]string{fullyQualifiedPrefix, key}, constants.RegistryFieldSeparator)
-		err = registry.Set(fullyQualifiedFullKey, output)
-		if err != nil {
-			return errors.WithStack(err)
+	// store the output under various keys
+	for outputId, output := range outputs {
+		for _, prefix := range prefixes {
+			key := strings.Join([]string{prefix, outputId}, constants.RegistryFieldSeparator)
+			err = registry.Set(key, output)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
 	}
 
@@ -451,4 +451,8 @@ func deleteNonFullyQualifiedOutputs(registry interfaces.IRegistry) {
 			registry.Delete(fullKey)
 		}
 	}
+
+	// delete the special constant key "this"
+	registry.Delete(strings.Join([]string{constants.RegistryKeyOutputs,
+		constants.RegistryKeyThis}, constants.RegistryFieldSeparator))
 }

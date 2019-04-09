@@ -20,3 +20,4 @@ const RegistryFieldSeparator = "."
 
 const RegistryKeyOutputs = "outputs"
 const RegistryKeyKubeConfig = "kubeconfig"
+const RegistryKeyThis = "this"
