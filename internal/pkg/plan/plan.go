@@ -359,6 +359,12 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				if err != nil {
 					errCh <- errors.WithStack(err)
 				}
+
+				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
+				err = renderKappTemplates(stackObj, installableObj, approved, dryRun)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+				}
 			}
 			break
 		case constants.TaskActionDelete:
@@ -370,6 +376,12 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 			// only add outputs if we've actually run the kapp
 			if approved {
 				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+				}
+
+				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
+				err = renderKappTemplates(stackObj, installableObj, approved, dryRun)
 				if err != nil {
 					errCh <- errors.WithStack(err)
 				}
@@ -387,7 +399,7 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				log.Logger.Info("Skipping cluster update action since approved=false")
 			}
 			break
-		case constants.TaskAddProviderVarsDirs:
+		case constants.TaskAddProviderVarsFiles:
 			if approved {
 				log.Logger.Infof("Running action to add provider vars dirs")
 				// todo - run each path through the templater
@@ -455,4 +467,21 @@ func deleteNonFullyQualifiedOutputs(registry interfaces.IRegistry) {
 	// delete the special constant key "this"
 	registry.Delete(strings.Join([]string{constants.RegistryKeyOutputs,
 		constants.RegistryKeyThis}, constants.RegistryFieldSeparator))
+}
+
+func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.IInstallable,
+	approved bool, dryRun bool) error {
+	templatedVars, err := stackObj.GetTemplatedVars(installableObj,
+		map[string]interface{}{"approved": approved})
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	_, err = installableObj.RenderTemplates(templatedVars, stackObj.GetConfig(),
+		true, dryRun)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 }

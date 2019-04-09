@@ -15,6 +15,7 @@
 * Add an option to CLI commands to fail if template destination directories don't exist
 * post_actions is now a list of maps. See documentation.
 * Kapps can now push additional provider vars dirs onto the list that will be merged by a provider. This allows them to modify the provider's config.
+* Kapp templates now get rendered before and after installing/deleting kapps so they can use their own output in templates
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring
