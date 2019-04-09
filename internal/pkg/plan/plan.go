@@ -31,6 +31,7 @@ import (
 
 type task struct {
 	action         string
+	params         []string
 	installableObj interfaces.IInstallable
 }
 
@@ -120,13 +121,12 @@ func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IMa
 		if len(installableObj.PostActions()) > 0 && runPostActions {
 			for _, postAction := range installableObj.PostActions() {
 				var actionTask *task
-				if postAction.Id == constants.TaskActionClusterUpdate {
+				if postAction.Id != "" {
 					actionTask = &task{
 						installableObj: installableObj,
-						action:         constants.TaskActionClusterUpdate,
+						action:         postAction.Id,
+						params:         postAction.Params,
 					}
-				} else {
-					log.Logger.Errorf("Invalid post_action encountered: %s", postAction)
 				}
 
 				// post action tasks are added to their own tranche to avoid race conditions
@@ -384,7 +384,19 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 						installableObj.Id())
 				}
 			} else {
-				log.Logger.Info("Skipping cluster update action since the approved=false")
+				log.Logger.Info("Skipping cluster update action since approved=false")
+			}
+			break
+		case constants.TaskAddProviderVarsDirs:
+			if approved {
+				log.Logger.Infof("Running action to add provider vars dirs")
+				// todo - run each path through the templater
+				for _, path := range task.params {
+					log.Logger.Debugf("Adding provider vars dir: %s", path)
+					stackObj.GetProvider().AddVarsPath(path)
+				}
+			} else {
+				log.Logger.Info("Skipping action to add extra provider vars dirs since approved=false")
 			}
 			break
 		}
