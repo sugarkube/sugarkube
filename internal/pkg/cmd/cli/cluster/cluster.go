@@ -32,9 +32,10 @@ var stackObj interfaces.IStack
 func NewClusterCmds(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "cluster [command]",
-		Short: fmt.Sprintf("Work with clusters"),
-		Long:  `Create and delete clusters`,
+		Use:     "cluster [command]",
+		Short:   fmt.Sprintf("Work with clusters"),
+		Long:    `Create and delete clusters`,
+		Aliases: []string{"stack", "stacks", "clusters"},
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			log.Logger.Debug("Setting up signal handler")
 			// catch termination via CTRL-C
