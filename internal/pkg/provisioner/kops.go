@@ -672,7 +672,7 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 	var kubeConfigPathStr string
 	kubeConfigPathInterface, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
 
-	if kubeConfigPathInterface != nil {
+	if kubeConfigPathInterface != "" {
 		kubeConfigPathStr = kubeConfigPathInterface.(string)
 		log.Logger.Debugf("Kubeconfig file already downloaded to '%s'", kubeConfigPathStr)
 	} else {
@@ -681,7 +681,10 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 			return false, errors.WithStack(err)
 		}
 
-		p.stack.GetRegistry().Set(constants.RegistryKeyKubeConfig, kubeConfigPathStr)
+		err := p.stack.GetRegistry().Set(constants.RegistryKeyKubeConfig, kubeConfigPathStr)
+		if err != nil {
+			return false, errors.WithStack(err)
+		}
 
 		// modify the host name in the file to point to the local k8s server domain
 		err = replaceAllInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),
