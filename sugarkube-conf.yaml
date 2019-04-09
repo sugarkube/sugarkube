@@ -3,13 +3,15 @@
 
 programs:
   helm:
+    vars:
+      kubeconfig: "{{ .kubeconfig }}"
+      namespace: "{{ .kapp.id }}"
+      release: "{{ .kapp.id }}"
+      kube_context: "{{ .kube_context }}"
+
     envVars:
       RUN_HELM: |-
         "{{ if isSet .kapp.vars "run_helm" }}{{ .kapp.vars.run_helm }}{{ else }}true{{ end }}"
-      KUBECONFIG: "{{ .kube_config }}"
-      NAMESPACE: "{{ .kapp.vars.namespace | default .kapp.id }}"
-      RELEASE: "{{ .kapp.vars.release | default .kapp.id }}"
-      KUBE_CONTEXT: "{{ .kube_context }}"
 
     args:
       make:
@@ -37,17 +39,19 @@ programs:
               "{{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | uniq | join "-f " }} {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " }}"
 
   kubectl:
-    envVars:
-      KUBECONFIG: "{{ .kube_config }}"
-      KUBE_CONTEXT: "{{ .kube_context }}"
+    vars:
+      kubeconfig: "{{ .kubeconfig }}"
+      kube_context: "{{ .kube_context }}"
 
   aws:
-    envVars:
-      REGION: "{{ .stack.region }}"
+    vars:
+      region: "{{ .stack.region }}"
 
   terraform:
+    vars:
+      region: "{{ .stack.region }}"
+
     envVars:
-      REGION: "{{ .stack.region }}"
       RUN_TERRAFORM: |-
         "{{ if isSet .kapp.vars "run_terraform" }}{{ .kapp.vars.run_terraform }}{{ else }}true{{ end }}"
     args:
