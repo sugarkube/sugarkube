@@ -19,7 +19,6 @@ package stack
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/installable"
@@ -101,25 +100,6 @@ func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces
 		stackOverrides, ok := manifest.descriptor.Overrides[installableObj.Id()]
 		if ok {
 			err = installableObj.AddDescriptor(stackOverrides, false)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
-		}
-
-		// prepend the descriptor for each requirement declared by the installable that has an entry
-		// in the config file
-		for i := len(installableObj.GetDescriptor().Requires) - 1; i >= 0; i-- {
-			requirement := installableObj.GetDescriptor().Requires[i]
-			programDescriptor, ok := config.CurrentConfig.Programs[requirement]
-			if !ok {
-				continue
-			}
-
-			descriptor := structs.KappDescriptorWithMaps{
-				KappConfig: programDescriptor,
-			}
-
-			err = installableObj.AddDescriptor(descriptor, true)
 			if err != nil {
 				return nil, errors.WithStack(err)
 			}

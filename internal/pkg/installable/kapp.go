@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
@@ -270,6 +271,25 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 	err = k.AddDescriptor(descriptorWithMaps, true)
 	if err != nil {
 		return errors.WithStack(err)
+	}
+
+	// now we've loaded the kapp's sugarkube.yaml file we can prepend descriptors for each
+	// requirement declared by it that has an entry in the global config file
+	for i := len(k.GetDescriptor().Requires) - 1; i >= 0; i-- {
+		requirement := k.GetDescriptor().Requires[i]
+		programDescriptor, ok := config.CurrentConfig.Programs[requirement]
+		if !ok {
+			continue
+		}
+
+		descriptor := structs.KappDescriptorWithMaps{
+			KappConfig: programDescriptor,
+		}
+
+		err = k.AddDescriptor(descriptor, true)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil
