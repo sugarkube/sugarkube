@@ -17,3 +17,6 @@
 package constants
 
 const KappConfigFileName = "sugarkube.yaml"
+const KappVarsKappKey = "kapp"
+const KappVarsVarsKey = "vars"
+const KappVarsTemplatesKey = "templates"

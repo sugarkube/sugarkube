@@ -25,6 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -353,19 +354,20 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
 			}
 
+			// todo - more logic needed here...
 			// only add outputs if we've actually run the kapp
-			if approved {
-				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
-				if err != nil {
-					errCh <- errors.WithStack(err)
-				}
-
-				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
-				err = renderKappTemplates(stackObj, installableObj, approved, dryRun)
-				if err != nil {
-					errCh <- errors.WithStack(err)
-				}
+			//if approved {
+			err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
+			if err != nil {
+				errCh <- errors.WithStack(err)
 			}
+
+			// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
+			err = renderKappTemplates(stackObj, installableObj, approved, dryRun)
+			if err != nil {
+				errCh <- errors.WithStack(err)
+			}
+			//}
 			break
 		case constants.TaskActionDelete:
 			err := installerImpl.Delete(installableObj, stackObj, approved, renderTemplates, requireTemplateDestDirs, dryRun)
@@ -375,10 +377,11 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 
 			// only add outputs if we've actually run the kapp
 			if approved {
-				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
-				if err != nil {
-					errCh <- errors.WithStack(err)
-				}
+				// todo - add options to control whether to add outputs on installation (default), deletion or both
+				//err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
+				//if err != nil {
+				//	errCh <- errors.WithStack(err)
+				//}
 
 				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
 				err = renderKappTemplates(stackObj, installableObj, approved, dryRun)
@@ -404,6 +407,11 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				log.Logger.Infof("Running action to add provider vars dirs")
 				// todo - run each path through the templater
 				for _, path := range task.params {
+					if !filepath.IsAbs(path) {
+						// convert the relative path to absolute
+						path = filepath.Join(installableObj.GetConfigFileDir(), path)
+					}
+
 					log.Logger.Debugf("Adding provider vars dir: %s", path)
 					stackObj.GetProvider().AddVarsPath(path)
 				}
@@ -424,14 +432,21 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, registry inter
 		return errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
 	}
 
+	// We convert kapp IDs to have underscores because Go's templating library throws its toys out
+	// the pram when it find a map key with a hyphen in. K8s is the opposite, so this seems like
+	// the least worst way of accommodating both
+	underscoredInstallableId := strings.Replace(installableObj.Id(), "-", "_", -1)
+	underscoredInstallableFQId := strings.Replace(installableObj.FullyQualifiedId(), "-", "_", -1)
+
 	prefixes := []string{
 		// "outputs.this"
 		strings.Join([]string{constants.RegistryKeyOutputs, constants.RegistryKeyThis}, constants.RegistryFieldSeparator),
 		// short prefix - can be used by other kapps in the manifest
-		strings.Join([]string{constants.RegistryKeyOutputs, installableObj.Id()}, constants.RegistryFieldSeparator),
+		strings.Join([]string{constants.RegistryKeyOutputs, underscoredInstallableId},
+			constants.RegistryFieldSeparator),
 		// fully-qualified prefix - can be used by kapps in other manifests
 		strings.Join([]string{constants.RegistryKeyOutputs,
-			installableObj.FullyQualifiedId()}, constants.RegistryFieldSeparator),
+			underscoredInstallableFQId}, constants.RegistryFieldSeparator),
 	}
 
 	// store the output under various keys

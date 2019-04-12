@@ -203,6 +203,11 @@ func (k Kapp) GetCacheDir() string {
 	return k.kappCacheDir
 }
 
+// Returs the directory containing the kapp's sugarkube.yaml file
+func (k Kapp) GetConfigFileDir() string {
+	return k.configFileDir
+}
+
 // Returns an array of acquirers configured for the sources for this kapp. We need to recompute these each time
 // instead of caching them so that any manifest overrides will take effect.
 func (k Kapp) Acquirers() (map[string]acquirer.Acquirer, error) {
@@ -352,7 +357,7 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 	// namespace kapp variables. This is safer than letting kapp variables overwrite arbitrary values (e.g.
 	// so they can't change the target stack, whether the kapp's approved, etc.), but may be too restrictive
 	// in certain situations. We'll have to see
-	kappIntrinsicDataConverted["vars"] = kappVars
+	kappIntrinsicDataConverted[constants.KappVarsVarsKey] = kappVars
 
 	// add placeholders templated paths so kapps that use them work when running
 	// `kapp vars`, etc.
@@ -361,10 +366,10 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 	for i, _ := range k.mergedDescriptor.Templates {
 		templatePlaceholders[i] = "<generated>"
 	}
-	kappIntrinsicDataConverted["templates"] = templatePlaceholders
+	kappIntrinsicDataConverted[constants.KappVarsTemplatesKey] = templatePlaceholders
 
 	namespacedKappMap := map[string]interface{}{
-		"kapp": kappIntrinsicDataConverted,
+		constants.KappVarsKappKey: kappIntrinsicDataConverted,
 	}
 
 	return namespacedKappMap, nil

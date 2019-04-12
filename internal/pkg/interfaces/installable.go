@@ -33,6 +33,7 @@ type IInstallable interface {
 	LoadConfigFile(cacheDir string) error
 	SetTopLevelCacheDir(cacheDir string) error
 	GetCacheDir() string
+	GetConfigFileDir() string
 	Acquirers() (map[string]acquirer.Acquirer, error)
 	TemplateDescriptor(templateVars map[string]interface{}) error
 	GetCliArgs(installerName string, command string) []string

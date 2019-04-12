@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
@@ -78,8 +79,8 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 		// merge renderedTemplates into the templatedVars under the "kapp.templates" key. This will
 		// allow us to support writing files to temporary (dynamic) locations later if we like
 		renderedTemplatesMap := map[string]interface{}{
-			"kapp": map[string]interface{}{
-				"templates": renderedTemplates,
+			constants.KappVarsKappKey: map[string]interface{}{
+				constants.KappVarsTemplatesKey: renderedTemplates,
 			},
 		}
 
@@ -117,7 +118,26 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 		envVars[upperKey] = fmt.Sprintf("%#v", v)
 	}
 
-	// add the env vars the kapp needs
+	// add all kapp vars as env vars
+	installableVars, err := installable.Vars(stack)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	kappAllVars, ok := installableVars[constants.KappVarsKappKey]
+	if ok {
+		kappAllVarsMap := kappAllVars.(map[string]interface{})
+		kappVars, stillOk := kappAllVarsMap[constants.KappVarsVarsKey]
+		if stillOk {
+			kappVarsMap := kappVars.(map[string]interface{})
+			for k, v := range kappVarsMap {
+				upperKey := strings.ToUpper(k)
+				envVars[upperKey] = strings.Trim(fmt.Sprintf("%#v", v), "\"")
+			}
+		}
+	}
+
+	// now add explicitly defined env vars
 	for k, v := range installable.GetEnvVars() {
 		upperKey := strings.ToUpper(k)
 		envVars[upperKey] = strings.Trim(fmt.Sprintf("%#v", v), "\"")
