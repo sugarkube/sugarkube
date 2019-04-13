@@ -67,10 +67,11 @@ func New(name string, stack interfaces.IStack, clusterSot interfaces.IClusterSot
 // Return whether the cluster is already online
 func IsAlreadyOnline(p interfaces.IProvisioner, dryRun bool) (bool, error) {
 
-	clusterName := p.GetStack().GetConfig().GetName()
+	stackName := p.GetStack().GetConfig().GetName()
+	clusterConfigName := p.GetStack().GetConfig().GetCluster()
 
-	log.Logger.Infof("Checking whether cluster '%s' is already online...",
-		clusterName)
+	log.Logger.Infof("Checking whether stack '%s' (cluster=%s) is already online...",
+		stackName, clusterConfigName)
 
 	connected, err := p.EnsureClusterConnectivity()
 	if err != nil {
@@ -78,7 +79,8 @@ func IsAlreadyOnline(p interfaces.IProvisioner, dryRun bool) (bool, error) {
 	}
 
 	if !connected {
-		log.Logger.Infof("Couldn't establish a connection to cluster '%s'", clusterName)
+		log.Logger.Infof("Couldn't establish a connection to stack '%s' (cluster=%s)",
+			stackName, clusterConfigName)
 		return false, nil
 	}
 
@@ -88,9 +90,9 @@ func IsAlreadyOnline(p interfaces.IProvisioner, dryRun bool) (bool, error) {
 	}
 
 	if online {
-		log.Logger.Infof("Cluster '%s' is online", clusterName)
+		log.Logger.Infof("Stack '%s' (cluster=%s) is online", stackName, clusterConfigName)
 	} else {
-		log.Logger.Infof("Cluster '%s' is not online", clusterName)
+		log.Logger.Infof("Stack '%s' (cluster=%s) is not online", stackName, clusterConfigName)
 	}
 
 	p.GetStack().GetStatus().SetIsOnline(online)

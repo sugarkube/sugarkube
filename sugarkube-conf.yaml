@@ -51,6 +51,7 @@ programs:
   terraform:
     vars:
       region: "{{ .stack.region }}"
+      project: "{{ .project }}"
 
     envVars:
       RUN_TERRAFORM: |-
