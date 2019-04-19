@@ -30,7 +30,7 @@ func init() {
 
 // Tests that DAGs are created correctly
 func TestBuildDag(t *testing.T) {
-	input := map[string]graphEntry{
+	input := map[string]nodeDescriptor{
 		// this depends on nothing and nothing depends on it
 		"independent":     {"independent", nil, nil},
 		"cluster":         {"cluster", nil, nil},
@@ -45,8 +45,8 @@ func TestBuildDag(t *testing.T) {
 	graphObj, err := BuildDirectedGraph(input)
 	assert.Nil(t, err)
 
-	for _, entry := range input {
-		log.Logger.Debugf("Entry %s has node ID %v", entry.id, *entry.node)
+	for _, descriptor := range input {
+		log.Logger.Debugf("Descriptor %s has node ID %v", descriptor.id, *descriptor.node)
 	}
 
 	nodes := graphObj.Nodes()
@@ -55,14 +55,14 @@ func TestBuildDag(t *testing.T) {
 		log.Logger.Debugf("DAG contains node %+v", node)
 	}
 
-	// assert that each entry has edges from any dependencies to itself
-	for _, entry := range input {
-		node := *entry.node
+	// assert that each descriptor has edges from any dependencies to itself
+	for _, descriptor := range input {
+		node := *descriptor.node
 		to := graphObj.To(node.ID())
 
-		if entry.dependsOn == nil || len(entry.dependsOn) == 0 {
+		if descriptor.dependsOn == nil || len(descriptor.dependsOn) == 0 {
 			assert.Equal(t, 0, to.Len())
-			log.Logger.Debugf("'%s' (node %v) has no dependencies", entry.id, *entry.node)
+			log.Logger.Debugf("'%s' (node %v) has no dependencies", descriptor.id, *descriptor.node)
 		} else {
 			// convert the iterator of nodes to a map of nodes (which are just IDs)
 			actualDependencies := make(map[graph.Node]bool, 0)
@@ -72,18 +72,18 @@ func TestBuildDag(t *testing.T) {
 			}
 
 			log.Logger.Debugf("Actual dependencies for '%s' (node %v) are: %v",
-				entry.id, *entry.node, actualDependencies)
+				descriptor.id, *descriptor.node, actualDependencies)
 
 			// make sure the lists are the same length
-			assert.Equal(t, len(entry.dependsOn), len(actualDependencies))
+			assert.Equal(t, len(descriptor.dependsOn), len(actualDependencies))
 
 			// make sure each dependency is an actual dependency
-			for _, dependencyName := range entry.dependsOn {
+			for _, dependencyName := range descriptor.dependsOn {
 				dependentEntry := input[dependencyName]
 				dn := *dependentEntry.node
 				_, ok := actualDependencies[dn]
 				assert.True(t, ok, fmt.Sprintf("'%s' is missing a dependency: '%+v' not found in "+
-					"in %v", entry.id, *dependentEntry.node, actualDependencies))
+					"in %v", descriptor.id, *dependentEntry.node, actualDependencies))
 			}
 		}
 	}
@@ -93,7 +93,7 @@ func TestBuildDag(t *testing.T) {
 
 // Makes sure an error is returned when trying to create loops
 func TestBuildDagLoops(t *testing.T) {
-	input := map[string]graphEntry{
+	input := map[string]nodeDescriptor{
 		"entry1": {"entry1", []string{"entry1"}, nil},
 	}
 
@@ -103,7 +103,7 @@ func TestBuildDagLoops(t *testing.T) {
 
 // Tests that we can spot a cyclic graph
 func TestIsAcyclic(t *testing.T) {
-	input := map[string]graphEntry{
+	input := map[string]nodeDescriptor{
 		"entry1": {"entry1", []string{"entry2"}, nil},
 		"entry2": {"entry2", []string{"entry1"}, nil},
 		"entry3": {"entry3", nil, nil},
