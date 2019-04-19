@@ -22,6 +22,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
+	"gonum.org/v1/gonum/graph/topo"
 )
 
 // Defines a node that should be created in the graph, along with parent dependencies
@@ -35,8 +36,9 @@ func BuildDirectedGraph(entries map[string]graphEntry) (*simple.DirectedGraph, e
 	graphObj := simple.NewDirectedGraph()
 
 	// add each entry to the graph
-	for i, entry := range entries {
+	for entryId, entry := range entries {
 		addNode(graphObj, entries, &entry)
+		entries[entryId] = entry
 
 		if entry.dependsOn != nil {
 			// add each dependency to the graph if it's not yet in it
@@ -53,13 +55,16 @@ func BuildDirectedGraph(entries map[string]graphEntry) (*simple.DirectedGraph, e
 
 				log.Logger.Debugf("Creating edge from %+v to %+v", dependency, entry)
 
+				// return an error instead of creating a loop
+				if dependency.node == entry.node {
+					return nil, fmt.Errorf("Node %s is not allowed to depend on itself", entry.id)
+				}
+
 				// now we have both nodes in the graph, create a directed edge between them
 				edge := graphObj.NewEdge(*dependency.node, *entry.node)
 				graphObj.SetEdge(edge)
 			}
 		}
-
-		entries[i] = entry
 	}
 
 	return graphObj, nil
@@ -83,6 +88,11 @@ func addNode(graphObj *simple.DirectedGraph, nodes map[string]graphEntry, entry 
 	graphObj.AddNode(node)
 	// associate the node with the entry
 	entry.node = &node
+}
 
-	return
+// Returns a boolean indicating whether the given directed graph is acyclic or not
+func isAcyclic(graphObj *simple.DirectedGraph) bool {
+	// Tarjan's strongly connected components algorithm can only be run on acyclic graphs
+	_, err := topo.Sort(graphObj)
+	return err == nil
 }

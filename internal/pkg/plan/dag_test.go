@@ -28,8 +28,11 @@ func init() {
 	log.ConfigureLogger("debug", false)
 }
 
+// Tests that DAGs are created correctly
 func TestBuildDag(t *testing.T) {
 	input := map[string]graphEntry{
+		// this depends on nothing and nothing depends on it
+		"independent":     {"independent", nil, nil},
 		"cluster":         {"cluster", nil, nil},
 		"tiller":          {"tiller", []string{"cluster"}, nil},
 		"externalIngress": {"externalIngress", []string{"tiller"}, nil},
@@ -39,14 +42,14 @@ func TestBuildDag(t *testing.T) {
 		"varnish":         {"varnish", []string{"wordpress2"}, nil},
 	}
 
-	dag, err := BuildDirectedGraph(input)
+	graphObj, err := BuildDirectedGraph(input)
 	assert.Nil(t, err)
 
 	for _, entry := range input {
 		log.Logger.Debugf("Entry %s has node ID %v", entry.id, *entry.node)
 	}
 
-	nodes := dag.Nodes()
+	nodes := graphObj.Nodes()
 	for nodes.Next() {
 		node := nodes.Node()
 		log.Logger.Debugf("DAG contains node %+v", node)
@@ -55,7 +58,7 @@ func TestBuildDag(t *testing.T) {
 	// assert that each entry has edges from any dependencies to itself
 	for _, entry := range input {
 		node := *entry.node
-		to := dag.To(node.ID())
+		to := graphObj.To(node.ID())
 
 		if entry.dependsOn == nil || len(entry.dependsOn) == 0 {
 			assert.Equal(t, 0, to.Len())
@@ -84,4 +87,30 @@ func TestBuildDag(t *testing.T) {
 			}
 		}
 	}
+
+	assert.True(t, isAcyclic(graphObj))
+}
+
+// Makes sure an error is returned when trying to create loops
+func TestBuildDagLoops(t *testing.T) {
+	input := map[string]graphEntry{
+		"entry1": {"entry1", []string{"entry1"}, nil},
+	}
+
+	_, err := BuildDirectedGraph(input)
+	assert.Error(t, err)
+}
+
+// Tests that we can spot a cyclic graph
+func TestIsAcyclic(t *testing.T) {
+	input := map[string]graphEntry{
+		"entry1": {"entry1", []string{"entry2"}, nil},
+		"entry2": {"entry2", []string{"entry1"}, nil},
+		"entry3": {"entry3", nil, nil},
+	}
+
+	graphObj, err := BuildDirectedGraph(input)
+	assert.Nil(t, err)
+
+	assert.False(t, isAcyclic(graphObj))
 }

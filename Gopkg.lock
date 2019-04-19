@@ -264,7 +264,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8cad7c08e25092fa66a09ccc454e249c49028a0205222897c96e1ec87c770017"
+  digest = "1:6e73ed229ec2585e3f7440d9cab95f867dd7b3dd4bd8e2b92c04a93390cecc5c"
   name = "gonum.org/v1/gonum"
   packages = [
     "blas",
@@ -273,11 +273,14 @@
     "blas/gonum",
     "floats",
     "graph",
+    "graph/internal/linear",
     "graph/internal/ordered",
     "graph/internal/set",
     "graph/internal/uid",
     "graph/iterator",
     "graph/simple",
+    "graph/topo",
+    "graph/traverse",
     "internal/asm/c128",
     "internal/asm/c64",
     "internal/asm/f32",
@@ -316,6 +319,7 @@
     "github.com/stretchr/testify/assert",
     "gonum.org/v1/gonum/graph",
     "gonum.org/v1/gonum/graph/simple",
+    "gonum.org/v1/gonum/graph/topo",
     "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
