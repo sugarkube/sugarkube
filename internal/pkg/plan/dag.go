@@ -26,6 +26,18 @@ import (
 	"time"
 )
 
+const (
+	unprocessed = iota
+	running
+	finished
+)
+
+// Encapsulates both a directed graph and descriptions of the nodes and each one's parents/dependencies
+type dag struct {
+	graph       *simple.DirectedGraph
+	descriptors map[string]nodeDescriptor
+}
+
 // Defines a node that should be created in the graph, along with parent dependencies
 type nodeDescriptor struct {
 	id        string
@@ -33,7 +45,10 @@ type nodeDescriptor struct {
 	node      *graph.Node
 }
 
-func BuildDirectedGraph(descriptors map[string]nodeDescriptor) (*simple.DirectedGraph, error) {
+// Builds a graph from a map of descriptors that contain a string node ID plus a list of
+// IDs of nodes that node depends on (i.e. parents).
+// An error will be returned if the resulting graph is cyclical.
+func BuildDAG(descriptors map[string]nodeDescriptor) (*dag, error) {
 	graphObj := simple.NewDirectedGraph()
 
 	// add each descriptor to the graph
@@ -68,7 +83,16 @@ func BuildDirectedGraph(descriptors map[string]nodeDescriptor) (*simple.Directed
 		}
 	}
 
-	return graphObj, nil
+	if !isAcyclic(graphObj) {
+		return nil, fmt.Errorf("Cyclical dependencies detected")
+	}
+
+	dag := dag{
+		graph:       graphObj,
+		descriptors: descriptors,
+	}
+
+	return &dag, nil
 }
 
 // Adds a node to the graph if the entry isn't already in it. Also adds a reference to the
@@ -99,59 +123,76 @@ func isAcyclic(graphObj *simple.DirectedGraph) bool {
 	return err == nil
 }
 
+// todo - create a method to extract a subtree for specific kapps so we can restrict processing
+//  to a subset of the graph to (un)install specific kapps
+
 // Traverses the graph. Nodes will only be processed if their dependencies have been satisfied.
 // Not having dependencies is a special case of this.
-func traverse(graphObj *simple.DirectedGraph, descriptors map[string]nodeDescriptor,
-	processCh chan<- nodeDescriptor, doneCh <-chan nodeDescriptor) {
+// The size of the processCh buffer determines the level of parallelisation
+func (g *dag) traverse(processCh chan<- nodeDescriptor, doneCh chan nodeDescriptor) {
+
+	log.Logger.Info("Starting DAG traversal...")
 
 	// create a map keyed by node where the boolean indicates whether the node has been processed
-	descriptorStatuses := make(map[graph.Node]bool, 0)
+	descriptorStatuses := make(map[graph.Node]int, 0)
 
 	// build a map of descriptors keyed by node ID
 	descriptorsByNode := make(map[graph.Node]nodeDescriptor, 0)
-	for _, descriptor := range descriptors {
+	for _, descriptor := range g.descriptors {
 		descriptorsByNode[*descriptor.node] = descriptor
 	}
 
 	// mark all nodes as unprocessed
-	nodes := graphObj.Nodes()
+	nodes := g.graph.Nodes()
 	for nodes.Next() {
 		node := nodes.Node()
-		descriptorStatuses[node] = false
+		descriptorStatuses[node] = unprocessed
 	}
+
+	// spawn a goroutine to listen on doneCh to update the statuses of completed nodes
+	go func() {
+		for descriptor := range doneCh {
+			log.Logger.Infof("Finished processing '%s'", descriptor.id)
+			descriptorStatuses[*descriptor.node] = finished
+		}
+	}()
 
 	// loop until there are no descriptors left which haven't been processed
 	for {
-		for node, done := range descriptorStatuses {
-			if done {
+		for node, status := range descriptorStatuses {
+			// only consider unprocessed nodes
+			if status != unprocessed {
 				continue
 			}
 
 			descriptor := descriptorsByNode[node]
 
-			// we have a node that hasn't been done. Check to see if its dependencies have
+			// we have a node that needs to be processed. Check to see if its dependencies have
 			// been satisfied
-			if dependenciesSatisfied(graphObj.To(node.ID()), descriptorStatuses) {
+			if dependenciesSatisfied(g.graph.To(node.ID()), descriptorStatuses) {
+				log.Logger.Debugf("All dependencies satisfied for '%s', adding it to the "+
+					"processing queue", descriptor.id)
 				processCh <- descriptor
 			}
-
-			// todo - somehow select on doneCh and use it to update the statuses
 		}
 
 		if allDone(descriptorStatuses) {
+			log.Logger.Infof("DAG fully processed")
+			close(processCh)
+			close(doneCh)
 			break
 		} else {
+			log.Logger.Tracef("DAG still processing. Sleeping...")
 			// sleep a little bit to give jobs a chance to complete
-			// todo - this is probably wrong. We may need to block on a select instead...
-			time.Sleep(1 * time.Second)
+			time.Sleep(500 * time.Millisecond)
 		}
 	}
 }
 
 // Returns a boolean indicating whether all nodes have been processed
-func allDone(descriptorStatuses map[graph.Node]bool) bool {
-	for _, done := range descriptorStatuses {
-		if !done {
+func allDone(descriptorStatuses map[graph.Node]int) bool {
+	for _, status := range descriptorStatuses {
+		if status != finished {
 			return false
 		}
 	}
@@ -160,13 +201,13 @@ func allDone(descriptorStatuses map[graph.Node]bool) bool {
 }
 
 // Returns a boolean indicating whether all dependencies of a node have been satisfied
-func dependenciesSatisfied(dependencies graph.Nodes, descriptorStatuses map[graph.Node]bool) bool {
+func dependenciesSatisfied(dependencies graph.Nodes, descriptorStatuses map[graph.Node]int) bool {
 
 	for dependencies.Next() {
 		dependency := dependencies.Node()
 
-		done, _ := descriptorStatuses[dependency]
-		if !done {
+		status := descriptorStatuses[dependency]
+		if status != finished {
 			return false
 		}
 	}
