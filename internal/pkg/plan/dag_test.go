@@ -166,3 +166,41 @@ func TestTraverse(t *testing.T) {
 	// make sure the last to be processed is marked as being allowed to be last
 	assert.True(t, utils.InStringArray(possibleLastNodes, lastProcessedId))
 }
+
+// Test we can extract subgraphs of the node
+func TestSubGraph(t *testing.T) {
+	input := getDescriptors()
+	dag, err := BuildDAG(input)
+	assert.Nil(t, err)
+
+	descriptors := []string{"wordpress1", "independent"}
+
+	subGraph, err := dag.subGraph(descriptors)
+	assert.Nil(t, err)
+
+	nodesByName := subGraph.nodesByName()
+
+	for _, nodeName := range descriptors {
+		assertDependencies(t, subGraph, input, nodesByName, nodeName)
+	}
+}
+
+func assertDependencies(t *testing.T, graphObj *dag, descriptors map[string]nodeDescriptor,
+	nodesByName map[string]namedNode, nodeName string) {
+	node := nodesByName[nodeName]
+	parents := graphObj.graph.To(node.ID())
+
+	dependencyNames := descriptors[nodeName].dependsOn
+
+	assert.Equal(t, len(dependencyNames), parents.Len())
+	if parents.Len() > 0 {
+		// make sure the parents are the ones we want
+		for parents.Next() {
+			parent := parents.Node().(namedNode)
+			assert.True(t, utils.InStringArray(dependencyNames, parent.name),
+				"%s is not in %s", parent.name, dependencyNames)
+			assertDependencies(t, graphObj, descriptors, nodesByName, parent.name)
+		}
+
+	}
+}

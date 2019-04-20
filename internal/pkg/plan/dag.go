@@ -142,19 +142,47 @@ func isAcyclic(graphObj *simple.DirectedGraph) bool {
 
 // Returns a new DAG comprising the nodes in the given input descriptors and all their
 // ancestors. The returned graph is guaranteed to be a DAG.
-func (g *dag) subGraph(descriptors map[string]nodeDescriptor) *dag {
-	subGraph := simple.NewDirectedGraph()
+func (g *dag) subGraph(descriptors []string) (*dag, error) {
+	outputGraph := simple.NewDirectedGraph()
 
-	//for descriptorId, descriptor := range descriptors {
-	//
-	//}
+	inputGraphNodesByName := g.nodesByName()
+	ogNodesByName := make(map[string]namedNode, 0)
+
+	// find each named node along with all its ancestors and add them to the sub-graph
+	for _, descriptorId := range descriptors {
+		inputGraphNode, ok := inputGraphNodesByName[descriptorId]
+		if !ok {
+			return nil, fmt.Errorf("Graph doesn't contain a node called '%s'", descriptorId)
+		}
+
+		ogNode := addNode(outputGraph, ogNodesByName, inputGraphNode.Name())
+		addAncestors(g.graph, outputGraph, ogNodesByName, inputGraphNode, ogNode)
+	}
 
 	dag := dag{
-		graph:     subGraph,
+		graph:     outputGraph,
 		sleepTime: 500 * time.Millisecond,
 	}
 
-	return &dag
+	return &dag, nil
+}
+
+func addAncestors(inputGraph *simple.DirectedGraph, outputGraph *simple.DirectedGraph,
+	ogNodes map[string]namedNode, igNode namedNode, ogNode namedNode) {
+	igParents := inputGraph.To(igNode.ID())
+
+	for igParents.Next() {
+		igParentNode := igParents.Node().(namedNode)
+		ogParentNode := addNode(outputGraph, ogNodes, igParentNode.name)
+
+		// now we have parent and child nodes in the output graph , create a directed
+		// edge between them
+		edge := outputGraph.NewEdge(ogParentNode, ogNode)
+		outputGraph.SetEdge(edge)
+
+		// now recurse to the parent of the parent node
+		addAncestors(inputGraph, outputGraph, ogNodes, igParentNode, ogParentNode)
+	}
 }
 
 // Returns a map of nodeStatuses for each node in the graph keyed by node ID
@@ -169,6 +197,20 @@ func (g *dag) nodeStatusesById() map[int64]nodeStatus {
 			node:   node.(namedNode),
 			status: unprocessed,
 		}
+	}
+
+	return nodeMap
+}
+
+// Returns a map of nodes keyed by node name
+func (g *dag) nodesByName() map[string]namedNode {
+	nodeMap := make(map[string]namedNode, 0)
+
+	nodes := g.graph.Nodes()
+
+	for nodes.Next() {
+		node := nodes.Node().(namedNode)
+		nodeMap[node.name] = node
 	}
 
 	return nodeMap
