@@ -35,6 +35,7 @@ const (
 type dag struct {
 	graph       *simple.DirectedGraph
 	descriptors map[string]nodeDescriptor
+	sleepTime   time.Duration
 }
 
 // Defines a node that should be created in the graph, along with parent dependencies
@@ -89,6 +90,7 @@ func BuildDAG(descriptors map[string]nodeDescriptor) (*dag, error) {
 	dag := dag{
 		graph:       graphObj,
 		descriptors: descriptors,
+		sleepTime:   500 * time.Millisecond,
 	}
 
 	return &dag, nil
@@ -181,9 +183,9 @@ func (g *dag) traverse(processCh chan<- nodeDescriptor, doneCh chan nodeDescript
 			close(doneCh)
 			break
 		} else {
-			log.Logger.Tracef("DAG still processing. Sleeping...")
 			// sleep a little bit to give jobs a chance to complete
-			time.Sleep(500 * time.Millisecond)
+			log.Logger.Tracef("DAG still processing. Sleeping for %s...", g.sleepTime)
+			time.Sleep(g.sleepTime)
 		}
 	}
 }
