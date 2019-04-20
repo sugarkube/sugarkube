@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gonum.org/v1/gonum/graph"
+	"sync"
 	"testing"
 )
 
@@ -119,15 +121,49 @@ func TestTraverse(t *testing.T) {
 	dag, err := BuildDAG(input)
 	assert.Nil(t, err)
 
+	// IDs of nodes which could be the first to be run
+	possibleFirstNodes := []string{
+		"independent",
+		"cluster",
+		"sharedRds",
+	}
+
+	// IDs of nodes which could be the last to be run
+	possibleLastNodes := []string{
+		"independent",
+		"varnish",
+		"wordpress1",
+	}
+
 	processCh := make(chan nodeDescriptor)
 	doneCh := make(chan nodeDescriptor)
+
+	mutex := &sync.Mutex{}
+	numProcessed := 0
+	var lastProcessedId string
 
 	go func() {
 		for descriptor := range processCh {
 			log.Logger.Infof("Processing '%s' in goroutine...", descriptor.id)
+
+			// make sure the first node we process is one of those marked as being allowed to
+			// be processed first
+			if numProcessed == 0 {
+				assert.True(t, utils.InStringArray(possibleFirstNodes, descriptor.id))
+			}
+
+			lastProcessedId = descriptor.id
+
+			mutex.Lock()
+			numProcessed++
+			mutex.Unlock()
+
 			doneCh <- descriptor
 		}
 	}()
 
 	dag.traverse(processCh, doneCh)
+
+	// make sure the last to be processed is marked as being allowed to be last
+	assert.True(t, utils.InStringArray(possibleLastNodes, lastProcessedId))
 }

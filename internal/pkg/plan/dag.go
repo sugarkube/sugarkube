@@ -28,7 +28,6 @@ import (
 
 const (
 	unprocessed = iota
-	running
 	finished
 )
 
