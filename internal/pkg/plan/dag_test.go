@@ -142,25 +142,29 @@ func TestTraverse(t *testing.T) {
 	numProcessed := 0
 	var lastProcessedId string
 
-	go func() {
-		for descriptor := range processCh {
-			log.Logger.Infof("Processing '%s' in goroutine...", descriptor.id)
+	parallelisation := 5
 
-			// make sure the first node we process is one of those marked as being allowed to
-			// be processed first
-			if numProcessed == 0 {
-				assert.True(t, utils.InStringArray(possibleFirstNodes, descriptor.id))
+	for i := 0; i < parallelisation; i++ {
+		go func() {
+			for descriptor := range processCh {
+				log.Logger.Infof("Processing '%s' in goroutine...", descriptor.id)
+
+				// make sure the first node we process is one of those marked as being allowed to
+				// be processed first
+				if numProcessed == 0 {
+					assert.True(t, utils.InStringArray(possibleFirstNodes, descriptor.id))
+				}
+
+				lastProcessedId = descriptor.id
+
+				mutex.Lock()
+				numProcessed++
+				mutex.Unlock()
+
+				doneCh <- descriptor
 			}
-
-			lastProcessedId = descriptor.id
-
-			mutex.Lock()
-			numProcessed++
-			mutex.Unlock()
-
-			doneCh <- descriptor
-		}
-	}()
+		}()
+	}
 
 	dag.traverse(processCh, doneCh)
 
