@@ -21,7 +21,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
-	"gonum.org/v1/gonum/graph"
 	"sync"
 	"testing"
 	"time"
@@ -34,14 +33,14 @@ func init() {
 func getDescriptors() map[string]nodeDescriptor {
 	return map[string]nodeDescriptor{
 		// this depends on nothing and nothing depends on it
-		"independent":     {"independent", nil, nil},
-		"cluster":         {"cluster", nil, nil},
-		"tiller":          {"tiller", []string{"cluster"}, nil},
-		"externalIngress": {"externalIngress", []string{"tiller"}, nil},
-		"sharedRds":       {"sharedRds", nil, nil},
-		"wordpress1":      {"wordpress1", []string{"sharedRds", "externalIngress"}, nil},
-		"wordpress2":      {"wordpress2", []string{"sharedRds", "externalIngress"}, nil},
-		"varnish":         {"varnish", []string{"wordpress2"}, nil},
+		"independent":     {nil},
+		"cluster":         {nil},
+		"tiller":          {[]string{"cluster"}},
+		"externalIngress": {[]string{"tiller"}},
+		"sharedRds":       {nil},
+		"wordpress1":      {[]string{"sharedRds", "externalIngress"}},
+		"wordpress2":      {[]string{"sharedRds", "externalIngress"}},
+		"varnish":         {[]string{"wordpress2"}},
 	}
 }
 
@@ -51,45 +50,38 @@ func TestBuildDag(t *testing.T) {
 	dag, err := BuildDAG(input)
 	assert.Nil(t, err)
 
-	for _, descriptor := range input {
-		log.Logger.Debugf("Descriptor %s has node ID %v", descriptor.id, *descriptor.node)
-	}
-
 	nodes := dag.graph.Nodes()
 	for nodes.Next() {
-		node := nodes.Node()
+		node := nodes.Node().(namedNode)
 		log.Logger.Debugf("DAG contains node %+v", node)
-	}
 
-	// assert that each descriptor has edges from any dependencies to itself
-	for _, descriptor := range input {
-		node := *descriptor.node
+		descriptor := input[node.Name()]
+
+		// assert that each node has edges from any dependencies to itself
 		to := dag.graph.To(node.ID())
 
 		if descriptor.dependsOn == nil || len(descriptor.dependsOn) == 0 {
 			assert.Equal(t, 0, to.Len())
-			log.Logger.Debugf("'%s' (node %v) has no dependencies", descriptor.id, *descriptor.node)
+			log.Logger.Debugf("'%s' (node %v) has no dependencies", node.name, node)
 		} else {
-			// convert the iterator of nodes to a map of nodes (which are just IDs)
-			actualDependencies := make(map[graph.Node]bool, 0)
+			// convert the iterator of nodes to a map of nodes keyed by name
+			actualDependencies := make(map[string]namedNode, 0)
 			for to.Next() {
-				dep := to.Node()
-				actualDependencies[dep] = true
+				parent := to.Node().(namedNode)
+				actualDependencies[parent.Name()] = namedNode{}
 			}
 
 			log.Logger.Debugf("Actual dependencies for '%s' (node %v) are: %v",
-				descriptor.id, *descriptor.node, actualDependencies)
+				node.name, node, actualDependencies)
 
 			// make sure the lists are the same length
 			assert.Equal(t, len(descriptor.dependsOn), len(actualDependencies))
 
 			// make sure each dependency is an actual dependency
 			for _, dependencyName := range descriptor.dependsOn {
-				dependentEntry := input[dependencyName]
-				dn := *dependentEntry.node
-				_, ok := actualDependencies[dn]
+				_, ok := actualDependencies[dependencyName]
 				assert.True(t, ok, fmt.Sprintf("'%s' is missing a dependency: '%+v' not found in "+
-					"in %v", descriptor.id, *dependentEntry.node, actualDependencies))
+					"in %v", node.name, dependencyName, actualDependencies))
 			}
 		}
 	}
@@ -98,7 +90,7 @@ func TestBuildDag(t *testing.T) {
 // Makes sure an error is returned when trying to create loops
 func TestBuildDagLoops(t *testing.T) {
 	input := map[string]nodeDescriptor{
-		"entry1": {"entry1", []string{"entry1"}, nil},
+		"entry1": {[]string{"entry1"}},
 	}
 
 	_, err := BuildDAG(input)
@@ -108,9 +100,9 @@ func TestBuildDagLoops(t *testing.T) {
 // Tests that we can spot a cyclic graph
 func TestIsAcyclic(t *testing.T) {
 	input := map[string]nodeDescriptor{
-		"entry1": {"entry1", []string{"entry2"}, nil},
-		"entry2": {"entry2", []string{"entry1"}, nil},
-		"entry3": {"entry3", nil, nil},
+		"entry1": {[]string{"entry2"}},
+		"entry2": {[]string{"entry1"}},
+		"entry3": {nil},
 	}
 
 	_, err := BuildDAG(input)
@@ -136,8 +128,8 @@ func TestTraverse(t *testing.T) {
 		"wordpress1",
 	}
 
-	processCh := make(chan nodeDescriptor)
-	doneCh := make(chan nodeDescriptor)
+	processCh := make(chan namedNode)
+	doneCh := make(chan namedNode)
 
 	mutex := &sync.Mutex{}
 	numProcessed := 0
@@ -149,22 +141,22 @@ func TestTraverse(t *testing.T) {
 
 	for i := 0; i < parallelisation; i++ {
 		go func() {
-			for descriptor := range processCh {
-				log.Logger.Infof("Processing '%s' in goroutine...", descriptor.id)
+			for node := range processCh {
+				log.Logger.Infof("Processing '%s' in goroutine...", node.name)
 
 				// make sure the first node we process is one of those marked as being allowed to
 				// be processed first
 				if numProcessed == 0 {
-					assert.True(t, utils.InStringArray(possibleFirstNodes, descriptor.id))
+					assert.True(t, utils.InStringArray(possibleFirstNodes, node.name))
 				}
 
-				lastProcessedId = descriptor.id
+				lastProcessedId = node.name
 
 				mutex.Lock()
 				numProcessed++
 				mutex.Unlock()
 
-				doneCh <- descriptor
+				doneCh <- node
 			}
 		}()
 	}

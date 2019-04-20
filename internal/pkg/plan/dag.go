@@ -18,7 +18,6 @@ package plan
 
 import (
 	"fmt"
-	"github.com/google/go-cmp/cmp"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
@@ -31,18 +30,36 @@ const (
 	finished
 )
 
-// Encapsulates both a directed graph and descriptions of the nodes and each one's parents/dependencies
+// Wrapper around a directed graph so we can define our own methods on it
 type dag struct {
-	graph       *simple.DirectedGraph
-	descriptors map[string]nodeDescriptor
-	sleepTime   time.Duration
+	graph     *simple.DirectedGraph
+	sleepTime time.Duration
 }
 
-// Defines a node that should be created in the graph, along with parent dependencies
+// Defines a node that should be created in the graph, along with parent dependencies. This is
+// just a descriptor of a node, not an actual graph node
 type nodeDescriptor struct {
-	id        string
 	dependsOn []string
-	node      *graph.Node
+}
+
+// A node in a graph that also has a string name
+type namedNode struct {
+	name string // must be unique across all nodes in the graph
+	node graph.Node
+}
+
+func (n namedNode) Name() string {
+	return n.name
+}
+
+func (n namedNode) ID() int64 {
+	return n.node.ID()
+}
+
+// Used to track whether a node has been processed
+type nodeStatus struct {
+	node   namedNode
+	status int
 }
 
 // Builds a graph from a map of descriptors that contain a string node ID plus a list of
@@ -50,34 +67,33 @@ type nodeDescriptor struct {
 // An error will be returned if the resulting graph is cyclical.
 func BuildDAG(descriptors map[string]nodeDescriptor) (*dag, error) {
 	graphObj := simple.NewDirectedGraph()
+	nodesByName := make(map[string]namedNode, 0)
 
 	// add each descriptor to the graph
 	for descriptorId, descriptor := range descriptors {
-		addNode(graphObj, descriptors, &descriptor)
-		descriptors[descriptorId] = descriptor
+		descriptorNode := addNode(graphObj, nodesByName, descriptorId)
 
 		if descriptor.dependsOn != nil {
 			// add each dependency to the graph if it's not yet in it
 			for _, dependencyId := range descriptor.dependsOn {
-				dependency, ok := descriptors[dependencyId]
+				_, ok := descriptors[dependencyId]
 				if !ok {
 					return nil, fmt.Errorf("descriptor '%s' depends on a graph "+
-						"descriptor that doesn't exist: %s", descriptor.id, dependencyId)
+						"descriptor that doesn't exist: %s", descriptorId, dependencyId)
 				}
 
-				addNode(graphObj, descriptors, &dependency)
-				// update the descriptor in the map since it's a map of objects not pointers
-				descriptors[dependencyId] = dependency
+				parentNode := addNode(graphObj, nodesByName, dependencyId)
 
-				log.Logger.Debugf("Creating edge from %+v to %+v", dependency, descriptor)
+				log.Logger.Debugf("Creating edge from  '%s' to '%s'", dependencyId, descriptorId)
 
 				// return an error instead of creating a loop
-				if dependency.node == descriptor.node {
-					return nil, fmt.Errorf("Node %s is not allowed to depend on itself", descriptor.id)
+				if parentNode.node == descriptorNode.node {
+					return nil, fmt.Errorf("Node %s is not allowed to depend on itself",
+						descriptorNode.name)
 				}
 
 				// now we have both nodes in the graph, create a directed edge between them
-				edge := graphObj.NewEdge(*dependency.node, *descriptor.node)
+				edge := graphObj.NewEdge(parentNode, descriptorNode)
 				graphObj.SetEdge(edge)
 			}
 		}
@@ -88,9 +104,8 @@ func BuildDAG(descriptors map[string]nodeDescriptor) (*dag, error) {
 	}
 
 	dag := dag{
-		graph:       graphObj,
-		descriptors: descriptors,
-		sleepTime:   500 * time.Millisecond,
+		graph:     graphObj,
+		sleepTime: 500 * time.Millisecond,
 	}
 
 	return &dag, nil
@@ -98,22 +113,23 @@ func BuildDAG(descriptors map[string]nodeDescriptor) (*dag, error) {
 
 // Adds a node to the graph if the entry isn't already in it. Also adds a reference to the
 // node on the graph entry instance
-func addNode(graphObj *simple.DirectedGraph, descriptors map[string]nodeDescriptor, descriptor *nodeDescriptor) {
-	existing := descriptors[descriptor.id]
+func addNode(graphObj *simple.DirectedGraph, nodes map[string]namedNode, nodeName string) namedNode {
+	existing, ok := nodes[nodeName]
 
-	if existing.node != nil {
-		if cmp.Equal(existing, *descriptor, cmp.Option(cmp.AllowUnexported(nodeDescriptor{}))) {
-			log.Logger.Debugf("Descriptor '%s' is already in the graph", descriptor.id)
-			return
-		}
+	if ok {
+		log.Logger.Debugf("Node '%s' already exists... won't recreate", nodeName)
+		return existing
 	}
 
-	log.Logger.Debugf("Creating node '%s'", descriptor.id)
+	log.Logger.Debugf("Creating node '%s'", nodeName)
 
-	node := graphObj.NewNode()
-	graphObj.AddNode(node)
-	// associate the node with the descriptor
-	descriptor.node = &node
+	namedNode := namedNode{
+		name: nodeName,
+		node: graphObj.NewNode(),
+	}
+	graphObj.AddNode(namedNode)
+	nodes[nodeName] = namedNode
+	return namedNode
 }
 
 // Returns a boolean indicating whether the given directed graph is acyclic or not
@@ -124,60 +140,79 @@ func isAcyclic(graphObj *simple.DirectedGraph) bool {
 	return err == nil
 }
 
-// todo - create a method to extract a subtree for specific kapps so we can restrict processing
-//  to a subset of the graph to (un)install specific kapps
+// Returns a new DAG comprising the nodes in the given input descriptors and all their
+// ancestors. The returned graph is guaranteed to be a DAG.
+func (g *dag) subGraph(descriptors map[string]nodeDescriptor) *dag {
+	subGraph := simple.NewDirectedGraph()
+
+	//for descriptorId, descriptor := range descriptors {
+	//
+	//}
+
+	dag := dag{
+		graph:     subGraph,
+		sleepTime: 500 * time.Millisecond,
+	}
+
+	return &dag
+}
+
+// Returns a map of nodeStatuses for each node in the graph keyed by node ID
+func (g *dag) nodeStatusesById() map[int64]nodeStatus {
+	nodeMap := make(map[int64]nodeStatus, 0)
+
+	nodes := g.graph.Nodes()
+
+	for nodes.Next() {
+		node := nodes.Node()
+		nodeMap[node.ID()] = nodeStatus{
+			node:   node.(namedNode),
+			status: unprocessed,
+		}
+	}
+
+	return nodeMap
+}
 
 // Traverses the graph. Nodes will only be processed if their dependencies have been satisfied.
 // Not having dependencies is a special case of this.
 // The size of the processCh buffer determines the level of parallelisation
-func (g *dag) traverse(processCh chan<- nodeDescriptor, doneCh chan nodeDescriptor) {
+func (g *dag) traverse(processCh chan<- namedNode, doneCh chan namedNode) {
 
 	log.Logger.Info("Starting DAG traversal...")
 
-	// create a map keyed by node where the boolean indicates whether the node has been processed
-	descriptorStatuses := make(map[graph.Node]int, 0)
-
-	// build a map of descriptors keyed by node ID
-	descriptorsByNode := make(map[graph.Node]nodeDescriptor, 0)
-	for _, descriptor := range g.descriptors {
-		descriptorsByNode[*descriptor.node] = descriptor
-	}
-
-	// mark all nodes as unprocessed
-	nodes := g.graph.Nodes()
-	for nodes.Next() {
-		node := nodes.Node()
-		descriptorStatuses[node] = unprocessed
-	}
+	nodeStatusesById := g.nodeStatusesById()
 
 	// spawn a goroutine to listen on doneCh to update the statuses of completed nodes
 	go func() {
-		for descriptor := range doneCh {
-			log.Logger.Infof("Finished processing '%s'", descriptor.id)
-			descriptorStatuses[*descriptor.node] = finished
+		for namedNode := range doneCh {
+			log.Logger.Infof("Finished processing '%s'", namedNode.name)
+			nodeItem := nodeStatusesById[namedNode.node.ID()]
+			nodeItem.status = finished
+			nodeStatusesById[namedNode.node.ID()] = nodeItem
 		}
 	}()
 
 	// loop until there are no descriptors left which haven't been processed
 	for {
-		for node, status := range descriptorStatuses {
+		for node, nodeStatus := range nodeStatusesById {
 			// only consider unprocessed nodes
-			if status != unprocessed {
+			if nodeStatus.status != unprocessed {
 				continue
 			}
 
-			descriptor := descriptorsByNode[node]
+			namedNode := nodeStatusesById[node]
 
 			// we have a node that needs to be processed. Check to see if its dependencies have
 			// been satisfied
-			if dependenciesSatisfied(g.graph.To(node.ID()), descriptorStatuses) {
+			if dependenciesSatisfied(g.graph.To(nodeStatus.node.ID()), nodeStatusesById) {
 				log.Logger.Debugf("All dependencies satisfied for '%s', adding it to the "+
-					"processing queue", descriptor.id)
-				processCh <- descriptor
+					"processing queue", namedNode.node.name)
+				processCh <- namedNode.node
 			}
 		}
 
-		if allDone(descriptorStatuses) {
+		if allDone(nodeStatusesById) {
 			log.Logger.Infof("DAG fully processed")
 			close(processCh)
 			close(doneCh)
@@ -191,9 +226,9 @@ func (g *dag) traverse(processCh chan<- nodeDescriptor, doneCh chan nodeDescript
 }
 
 // Returns a boolean indicating whether all nodes have been processed
-func allDone(descriptorStatuses map[graph.Node]int) bool {
-	for _, status := range descriptorStatuses {
-		if status != finished {
+func allDone(nodeStatuses map[int64]nodeStatus) bool {
+	for _, nodeStatus := range nodeStatuses {
+		if nodeStatus.status != finished {
 			return false
 		}
 	}
@@ -202,13 +237,13 @@ func allDone(descriptorStatuses map[graph.Node]int) bool {
 }
 
 // Returns a boolean indicating whether all dependencies of a node have been satisfied
-func dependenciesSatisfied(dependencies graph.Nodes, descriptorStatuses map[graph.Node]int) bool {
+func dependenciesSatisfied(dependencies graph.Nodes, nodeStatuses map[int64]nodeStatus) bool {
 
 	for dependencies.Next() {
 		dependency := dependencies.Node()
 
-		status := descriptorStatuses[dependency]
-		if status != finished {
+		nodeStatus := nodeStatuses[dependency.ID()]
+		if nodeStatus.status != finished {
 			return false
 		}
 	}
