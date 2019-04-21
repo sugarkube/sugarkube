@@ -4,13 +4,14 @@
 * Code of conduct
 
 ## Code-related tasks
+* add a 'kapps clean' task to run 'make clean' across kapps
+* Also add a --clean flag to make install/delete to clean kapps before running them
 
 ### DAG algorithm
 * When installing specific kapps, create a DAG for the entire set of manifests, then extract a subgraph for the target
   kapps. Now process the graph from the root: For all nodes which aren't the target nodes, if they declare output try 
   to load it from a previous run. If no previous output exists invoke `make output`, and only `make install/delete`
   on the target kapps, and execute any post actions they define.
-* So, we need to add a new make target 'make output' that non-destructively writes output for the kapp.
 
 ### Merging kapp configs
 * Create a 'validate' command to verify that binaries declared in `requires` blocks exists

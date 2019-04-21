@@ -34,7 +34,7 @@ func getDescriptors() map[string]nodeDescriptor {
 	return map[string]nodeDescriptor{
 		// this depends on nothing and nothing depends on it
 		"independent":     {nil},
-		"cluster":         {nil},
+		"cluster":         {[]string{}},
 		"tiller":          {[]string{"cluster"}},
 		"externalIngress": {[]string{"tiller"}},
 		"sharedRds":       {nil},

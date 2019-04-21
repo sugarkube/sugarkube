@@ -59,6 +59,7 @@ type KappConfig struct {
 	PostActions []map[string]PostAction `yaml:"post_actions"`
 	Templates   []Template
 	Vars        map[string]interface{}
+	DependsOn   []string `yaml:"depends_on"` // fully qualified IDs of other kapps this depends on
 	// todo - implement
 	//VarsTemplate string		// this will be read as a string, templated then converted to YAML and merged with the Vars map
 }

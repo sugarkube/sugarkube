@@ -114,7 +114,7 @@ func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces
 }
 
 // Load a single manifest file and parse the kapps it defines
-func parseManifestFile(manifestFilePath string, manifestDescriptor structs.ManifestDescriptor) (interfaces.IManifest, error) {
+func ParseManifestFile(manifestFilePath string, manifestDescriptor structs.ManifestDescriptor) (interfaces.IManifest, error) {
 
 	log.Logger.Infof("Parsing manifest file: %s", manifestFilePath)
 
@@ -326,7 +326,7 @@ func acquireManifest(stackConfigFileDir string, manifestDescriptor structs.Manif
 	manifestFilePath := uri
 
 	// parse the manifest file we've acquired
-	manifest, err := parseManifestFile(manifestFilePath, manifestDescriptor)
+	manifest, err := ParseManifestFile(manifestFilePath, manifestDescriptor)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
