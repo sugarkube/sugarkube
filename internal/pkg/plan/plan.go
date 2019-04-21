@@ -348,20 +348,24 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
 			}
 
-			// todo - more logic needed here...
 			// only add outputs if we've actually run the kapp
-			//if approved {
-			err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
-			if err != nil {
-				errCh <- errors.WithStack(err)
-			}
+			if approved && installableObj.HasOutputs() {
+				err := installerImpl.Output(installableObj, stackObj, approved, renderTemplates, dryRun)
+				if err != nil {
+					errCh <- errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
+				}
 
-			// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
-			err = renderKappTemplates(stackObj, installableObj, approved, dryRun)
-			if err != nil {
-				errCh <- errors.WithStack(err)
+				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+				}
+
+				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
+				err = renderKappTemplates(stackObj, installableObj, approved, dryRun)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+				}
 			}
-			//}
 			break
 		case constants.TaskActionDelete:
 			err := installerImpl.Delete(installableObj, stackObj, approved, renderTemplates, dryRun)
@@ -370,12 +374,17 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 			}
 
 			// only add outputs if we've actually run the kapp
-			if approved {
+			if approved && installableObj.HasOutputs() {
+				err := installerImpl.Output(installableObj, stackObj, approved, renderTemplates, dryRun)
+				if err != nil {
+					errCh <- errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
+				}
+
 				// todo - add options to control whether to add outputs on installation (default), deletion or both
-				//err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
-				//if err != nil {
-				//	errCh <- errors.WithStack(err)
-				//}
+				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+				}
 
 				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
 				err = renderKappTemplates(stackObj, installableObj, approved, dryRun)

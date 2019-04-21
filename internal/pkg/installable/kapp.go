@@ -300,6 +300,11 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 	return nil
 }
 
+// Returns a boolean indicating whether the kapp declares any outputs
+func (k Kapp) HasOutputs() bool {
+	return len(k.mergedDescriptor.Outputs) > 0
+}
+
 // Templates the kapp's merged descriptor
 func (k *Kapp) TemplateDescriptor(templateVars map[string]interface{}) error {
 

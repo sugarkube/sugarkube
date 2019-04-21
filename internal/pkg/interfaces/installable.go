@@ -43,4 +43,5 @@ type IInstallable interface {
 	RenderTemplates(templateVars map[string]interface{}, stackConfig IStackConfig,
 		dryRun bool) ([]string, error)
 	GetOutputs(dryRun bool) (map[string]interface{}, error)
+	HasOutputs() bool
 }

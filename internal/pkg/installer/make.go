@@ -36,6 +36,7 @@ type MakeInstaller struct {
 
 const TargetInstall = "install"
 const TargetDelete = "delete"
+const TargetOutput = "output"
 
 // Return the name of this installer
 func (i MakeInstaller) Name() string {
@@ -145,11 +146,6 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 
 	cliArgs := []string{makeTarget}
 
-	// todo - merge in values from the global config for each program declared in
-	// the kapp's sugarkube.yaml file. Make sure to respect the registry...
-
-	// todo - move this to a method. Make it pull values from
-	// the overall config depending on the programs the kapp uses
 	targetArgs := installable.GetCliArgs(i.Name(), makeTarget)
 	log.Logger.Debugf("Kapp '%s' has args for %s %s (approved=%v): %#v",
 		installable.FullyQualifiedId(), i.Name(), makeTarget, approved, targetArgs)
@@ -163,11 +159,8 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 		return errors.WithStack(err)
 	}
 
-	if approved {
-		log.Logger.Infof("Installing kapp '%s'...", installable.FullyQualifiedId())
-	} else {
-		log.Logger.Infof("Planning kapp '%s'...", installable.FullyQualifiedId())
-	}
+	log.Logger.Infof("Running 'make %s' on kapp '%s' with APPROVED=%v...", makeTarget,
+		installable.FullyQualifiedId(), approved)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	err = utils.ExecCommand("make", cliArgs, envVars, &stdoutBuf,
@@ -198,4 +191,11 @@ func (i MakeInstaller) Delete(installableObj interfaces.IInstallable, stack inte
 	approved bool, renderTemplates bool, dryRun bool) error {
 	log.Logger.Infof("Deleting kapp '%s'...", installableObj.FullyQualifiedId())
 	return i.run(TargetDelete, installableObj, stack, approved, renderTemplates, dryRun)
+}
+
+// Get a kapp's outputs
+func (i MakeInstaller) Output(installableObj interfaces.IInstallable, stack interfaces.IStack,
+	approved bool, renderTemplates bool, dryRun bool) error {
+	log.Logger.Infof("Getting output for kapp '%s'...", installableObj.FullyQualifiedId())
+	return i.run(TargetOutput, installableObj, stack, approved, renderTemplates, dryRun)
 }

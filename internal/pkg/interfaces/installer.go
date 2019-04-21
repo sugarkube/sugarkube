@@ -21,5 +21,7 @@ type IInstaller interface {
 		dryRun bool) error
 	Delete(installableObj IInstallable, stack IStack, approved bool, renderTemplates bool,
 		dryRun bool) error
+	Output(installableObj IInstallable, stack IStack, approved bool, renderTemplates bool,
+		dryRun bool) error
 	Name() string
 }
