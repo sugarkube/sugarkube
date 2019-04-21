@@ -47,7 +47,8 @@ func FindDependencies(manifests []interfaces.IManifest) map[string]nodeDescripto
 			}
 
 			descriptors[installableObj.FullyQualifiedId()] = nodeDescriptor{
-				dependencies,
+				dependsOn:      dependencies,
+				installableObj: installableObj,
 			}
 
 			previousInstallable = installableObj.FullyQualifiedId()

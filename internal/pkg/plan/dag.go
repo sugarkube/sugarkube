@@ -18,6 +18,7 @@ package plan
 
 import (
 	"fmt"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
@@ -39,13 +40,15 @@ type dag struct {
 // Defines a node that should be created in the graph, along with parent dependencies. This is
 // just a descriptor of a node, not an actual graph node
 type nodeDescriptor struct {
-	dependsOn []string
+	dependsOn      []string
+	installableObj interfaces.IInstallable
 }
 
 // A node in a graph that also has a string name
 type namedNode struct {
-	name string // must be unique across all nodes in the graph
-	node graph.Node
+	name           string // must be unique across all nodes in the graph
+	node           graph.Node
+	installableObj interfaces.IInstallable
 }
 
 func (n namedNode) Name() string {
@@ -71,7 +74,7 @@ func BuildDAG(descriptors map[string]nodeDescriptor) (*dag, error) {
 
 	// add each descriptor to the graph
 	for descriptorId, descriptor := range descriptors {
-		descriptorNode := addNode(graphObj, nodesByName, descriptorId)
+		descriptorNode := addNode(graphObj, nodesByName, descriptorId, descriptor.installableObj)
 
 		if descriptor.dependsOn != nil {
 			// add each dependency to the graph if it's not yet in it
@@ -82,7 +85,8 @@ func BuildDAG(descriptors map[string]nodeDescriptor) (*dag, error) {
 						"descriptor that doesn't exist: %s", descriptorId, dependencyId)
 				}
 
-				parentNode := addNode(graphObj, nodesByName, dependencyId)
+				dependency := descriptors[dependencyId]
+				parentNode := addNode(graphObj, nodesByName, dependencyId, dependency.installableObj)
 
 				log.Logger.Debugf("Creating edge from  '%s' to '%s'", dependencyId, descriptorId)
 
@@ -113,7 +117,8 @@ func BuildDAG(descriptors map[string]nodeDescriptor) (*dag, error) {
 
 // Adds a node to the graph if the entry isn't already in it. Also adds a reference to the
 // node on the graph entry instance
-func addNode(graphObj *simple.DirectedGraph, nodes map[string]namedNode, nodeName string) namedNode {
+func addNode(graphObj *simple.DirectedGraph, nodes map[string]namedNode, nodeName string,
+	installableObj interfaces.IInstallable) namedNode {
 	existing, ok := nodes[nodeName]
 
 	if ok {
@@ -124,8 +129,9 @@ func addNode(graphObj *simple.DirectedGraph, nodes map[string]namedNode, nodeNam
 	log.Logger.Debugf("Creating node '%s'", nodeName)
 
 	namedNode := namedNode{
-		name: nodeName,
-		node: graphObj.NewNode(),
+		name:           nodeName,
+		node:           graphObj.NewNode(),
+		installableObj: installableObj,
 	}
 	graphObj.AddNode(namedNode)
 	nodes[nodeName] = namedNode
@@ -155,7 +161,7 @@ func (g *dag) subGraph(descriptors []string) (*dag, error) {
 			return nil, fmt.Errorf("Graph doesn't contain a node called '%s'", descriptorId)
 		}
 
-		ogNode := addNode(outputGraph, ogNodesByName, inputGraphNode.Name())
+		ogNode := addNode(outputGraph, ogNodesByName, inputGraphNode.Name(), inputGraphNode.installableObj)
 		addAncestors(g.graph, outputGraph, ogNodesByName, inputGraphNode, ogNode)
 	}
 
@@ -173,7 +179,7 @@ func addAncestors(inputGraph *simple.DirectedGraph, outputGraph *simple.Directed
 
 	for igParents.Next() {
 		igParentNode := igParents.Node().(namedNode)
-		ogParentNode := addNode(outputGraph, ogNodes, igParentNode.name)
+		ogParentNode := addNode(outputGraph, ogNodes, igParentNode.name, igParentNode.installableObj)
 
 		// now we have parent and child nodes in the output graph , create a directed
 		// edge between them

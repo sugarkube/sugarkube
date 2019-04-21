@@ -33,14 +33,14 @@ func init() {
 func getDescriptors() map[string]nodeDescriptor {
 	return map[string]nodeDescriptor{
 		// this depends on nothing and nothing depends on it
-		"independent":     {nil},
-		"cluster":         {[]string{}},
-		"tiller":          {[]string{"cluster"}},
-		"externalIngress": {[]string{"tiller"}},
-		"sharedRds":       {nil},
-		"wordpress1":      {[]string{"sharedRds", "externalIngress"}},
-		"wordpress2":      {[]string{"sharedRds", "externalIngress"}},
-		"varnish":         {[]string{"wordpress2"}},
+		"independent":     {dependsOn: nil},
+		"cluster":         {dependsOn: []string{}},
+		"tiller":          {dependsOn: []string{"cluster"}},
+		"externalIngress": {dependsOn: []string{"tiller"}},
+		"sharedRds":       {dependsOn: nil},
+		"wordpress1":      {dependsOn: []string{"sharedRds", "externalIngress"}},
+		"wordpress2":      {dependsOn: []string{"sharedRds", "externalIngress"}},
+		"varnish":         {dependsOn: []string{"wordpress2"}},
 	}
 }
 
@@ -90,7 +90,7 @@ func TestBuildDag(t *testing.T) {
 // Makes sure an error is returned when trying to create loops
 func TestBuildDagLoops(t *testing.T) {
 	input := map[string]nodeDescriptor{
-		"entry1": {[]string{"entry1"}},
+		"entry1": {dependsOn: []string{"entry1"}},
 	}
 
 	_, err := BuildDAG(input)
@@ -100,9 +100,9 @@ func TestBuildDagLoops(t *testing.T) {
 // Tests that we can spot a cyclic graph
 func TestIsAcyclic(t *testing.T) {
 	input := map[string]nodeDescriptor{
-		"entry1": {[]string{"entry2"}},
-		"entry2": {[]string{"entry1"}},
-		"entry3": {nil},
+		"entry1": {dependsOn: []string{"entry2"}},
+		"entry2": {dependsOn: []string{"entry1"}},
+		"entry3": {dependsOn: nil},
 	}
 
 	_, err := BuildDAG(input)

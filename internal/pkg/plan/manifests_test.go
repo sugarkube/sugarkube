@@ -33,15 +33,6 @@ func init() {
 const testDir = "../../testdata"
 
 func TestFindDependencies(t *testing.T) {
-	expected := map[string]nodeDescriptor{
-		"manifest2:kappC": {[]string{}},
-		"manifest2:kappB": {[]string{"manifest2:kappC"}},
-		"manifest2:kappD": {[]string{"manifest2:kappB"}},
-		"manifest2:kappA": {[]string{"manifest2:kappD"}},
-		"manifest3:kappX": {[]string{}},
-		"manifest3:kappY": {[]string{}},
-	}
-
 	absTestDir, err := filepath.Abs(testDir)
 	assert.Nil(t, err)
 
@@ -64,6 +55,15 @@ func TestFindDependencies(t *testing.T) {
 	}
 
 	descriptors := FindDependencies(manifests)
+
+	expected := map[string]nodeDescriptor{
+		"manifest2:kappC": {dependsOn: []string{}, installableObj: manifests[0].Installables()[0]},
+		"manifest2:kappB": {dependsOn: []string{"manifest2:kappC"}, installableObj: manifests[0].Installables()[1]},
+		"manifest2:kappD": {dependsOn: []string{"manifest2:kappB"}, installableObj: manifests[0].Installables()[2]},
+		"manifest2:kappA": {dependsOn: []string{"manifest2:kappD"}, installableObj: manifests[0].Installables()[3]},
+		"manifest3:kappX": {dependsOn: []string{}, installableObj: manifests[1].Installables()[0]},
+		"manifest3:kappY": {dependsOn: []string{}, installableObj: manifests[1].Installables()[1]},
+	}
 
 	assert.Equal(t, expected, descriptors)
 }
