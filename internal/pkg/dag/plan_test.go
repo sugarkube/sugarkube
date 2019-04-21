@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package plan
+package dag
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -113,7 +113,7 @@ func init() {
 //		renderTemplates: true,
 //	}
 //
-//	actionPlan, err := Create(true, stackObj, stackConfig.Manifests(),
+//	actionPlan, err := CreatePlan(true, stackObj, stackConfig.Manifests(),
 //		fakeCacheDir, []string{}, []string{}, true, true)
 //	assert.Nil(t, err)
 //
@@ -217,7 +217,7 @@ func init() {
 //		renderTemplates: true,
 //	}
 //
-//	actionPlan, err := Create(false, stackObj, stackConfig.Manifests(),
+//	actionPlan, err := CreatePlan(false, stackObj, stackConfig.Manifests(),
 //		fakeCacheDir, []string{}, []string{}, true, true)
 //	assert.Nil(t, err)
 //
@@ -307,7 +307,7 @@ func init() {
 //		renderTemplates: true,
 //	}
 //
-//	actionPlan, err := Create(false, stackObj, stackConfig.Manifests(),
+//	actionPlan, err := CreatePlan(false, stackObj, stackConfig.Manifests(),
 //		fakeCacheDir, []string{}, []string{}, true, false)
 //	assert.Nil(t, err)
 //

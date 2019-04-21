@@ -22,8 +22,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/dag"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
@@ -177,8 +177,6 @@ func (c *installCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	var actionPlan *plan.Plan
-
 	// uncomment this when we implement cluster diffing
 	//if !c.force {
 	//	panic("Cluster diffing not implemented. Pass --force")
@@ -218,28 +216,36 @@ func (c *installCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
-	// in selectors
+	// load configs for all installables in the stack
+	err = stackObj.LoadInstallables(c.cacheDir)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// selected kapps will be returned in the order in which they appear in manifests, not the order
+	// they're specified in selectors
 	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
 		c.includeSelector, c.excludeSelector)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	// load the configs for the selected installables
-	err = stack.LoadInstallables(selectedInstallables, c.cacheDir)
+	filteredInstallableIds := make([]string, 0)
+
+	// since we want to install kapps, remove any whose state isn't 'present'
+	for _, installableObj := range selectedInstallables {
+		if installableObj.State() == constants.PresentKey {
+			filteredInstallableIds = append(filteredInstallableIds,
+				installableObj.FullyQualifiedId())
+		}
+	}
+
+	dagObj, err := dag.Create(stackObj.GetConfig().Manifests(), filteredInstallableIds)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	// force mode, so no need to perform validation. Just create a plan
-	actionPlan, err = plan.Create(true, stackObj, stackObj.GetConfig().Manifests(),
-		selectedInstallables, !c.skipTemplating, !c.skipPostActions)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	// todo - print out the plan
+	// todo - print out the DAG
 	//}
 
 	if c.establishConnection {
@@ -258,46 +264,23 @@ func (c *installCmd) run() error {
 		}
 	}
 
-	if !c.oneShot {
-		_, err = fmt.Fprintf(c.out, "%sApplying the plan with APPROVED=%#v...\n",
-			dryRunPrefix, c.approved)
-		if err != nil {
-			return errors.WithStack(err)
-		}
+	plan := false
+	apply := false
 
-		// run the plan either preparing or applying changes
-		err := actionPlan.Run(c.approved, c.dryRun)
-		if err != nil {
-			return errors.WithStack(err)
-		}
+	if c.oneShot {
+		plan = true
+		apply = true
 	} else {
-		_, err = fmt.Fprintf(c.out, "%sApplying the plan in a single pass\n", dryRunPrefix)
-		if err != nil {
-			return errors.WithStack(err)
+		if c.approved {
+			apply = true
+		} else {
+			plan = true
 		}
+	}
 
-		_, err = fmt.Fprintf(c.out, "%sFirst running the plan with APPROVED=false for "+
-			"kapps to plan their changes...\n", dryRunPrefix)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		// one-shot mode, so prepare and apply the plan straight away
-		err = actionPlan.Run(false, c.dryRun)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		_, err = fmt.Fprintf(c.out, "%sNow running with APPROVED=true to "+
-			"actually apply changes...\n", dryRunPrefix)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		err = actionPlan.Run(true, c.dryRun)
-		if err != nil {
-			return errors.WithStack(err)
-		}
+	err = dagObj.Execute(constants.TaskActionInstall, stackObj, plan, apply, c.dryRun)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	_, err = fmt.Fprintf(c.out, "%sKapp change plan successfully applied\n", dryRunPrefix)

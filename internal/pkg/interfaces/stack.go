@@ -57,4 +57,5 @@ type IStack interface {
 	GetTemplatedVars(installableObj IInstallable,
 		installerVars map[string]interface{}) (map[string]interface{}, error)
 	RefreshProviderVars() error
+	LoadInstallables(cacheDir string) error
 }

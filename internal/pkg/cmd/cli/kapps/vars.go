@@ -99,8 +99,8 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	// load the configs for the selected installables
-	err = stack.LoadInstallables(selectedInstallables, c.cacheDir)
+	// load configs for all installables in the stack
+	err = stackObj.LoadInstallables(c.cacheDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -137,7 +137,7 @@ func (c *varsConfig) run() error {
 
 		_, err = fmt.Fprintf(c.out, "\n***** Start variables for kapp '%s' *****\n"+
 			"%s***** End variables for kapp '%s' *****\n",
-			kappObj.FullyQualifiedId(), yamlData, kappObj.FullyQualifiedId())
+			kappObj, yamlData, kappObj)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -145,7 +145,7 @@ func (c *varsConfig) run() error {
 		if c.cacheDir == "" {
 			_, err = fmt.Fprintf(c.out, "Won't display the %s file for "+
 				"'%s'. Provide the path to the cache dir with the --cache-dir "+
-				"option to display it.\n", kappObj.FullyQualifiedId(), constants.KappConfigFileName)
+				"option to display it.\n", kappObj, constants.KappConfigFileName)
 		} else {
 			err = kappObj.TemplateDescriptor(templatedVars)
 			if err != nil {

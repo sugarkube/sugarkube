@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package plan
+package dag
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -54,7 +54,7 @@ func TestFindDependencies(t *testing.T) {
 		manifests = append(manifests, manifest)
 	}
 
-	descriptors := FindDependencies(manifests)
+	descriptors := findDependencies(manifests)
 
 	expected := map[string]nodeDescriptor{
 		"manifest2:kappC": {dependsOn: []string{}, installableObj: manifests[0].Installables()[0]},

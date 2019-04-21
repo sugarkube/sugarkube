@@ -29,6 +29,8 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"gopkg.in/yaml.v2"
+	"os"
+	"path/filepath"
 )
 
 // Top-level struct that holds references to instantiations of other objects
@@ -188,5 +190,40 @@ func (s *Stack) RefreshProviderVars() error {
 	}
 
 	s.GetConfig().SetProviderVars(providerVars)
+	return nil
+}
+
+// Loads the configs for all installables
+func (s *Stack) LoadInstallables(cacheDir string) error {
+	installables := make([]interfaces.IInstallable, 0)
+
+	// load configs for all installables so we can build a DAG and load outputs
+	// for dependencies, etc.
+	for _, manifest := range s.GetConfig().Manifests() {
+		for _, installable := range manifest.Installables() {
+			installables = append(installables, installable)
+		}
+	}
+
+	// set the cache dir on each installable if it's non-empty
+	if cacheDir != "" {
+		absCacheDir, err := filepath.Abs(cacheDir)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		if _, err := os.Stat(absCacheDir); err != nil {
+			return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist", absCacheDir))
+		}
+
+		for _, installableObj := range installables {
+			// load the config file (if we've cached it)
+			err := installableObj.LoadConfigFile(absCacheDir)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+	}
+
 	return nil
 }

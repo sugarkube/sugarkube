@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package plan
+package dag
 
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
-	"path/filepath"
-	"sort"
 	"strings"
 )
 
@@ -71,161 +68,161 @@ type job struct {
 // reversed which will be useful when tearing down a cluster.
 // If the `runPostActions` parameter is false, no post actions will be executed.
 // This can be useful to quickly tear down a cluster.
-func Create(forward bool, stackObj interfaces.IStack, manifests []interfaces.IManifest,
-	selectedInstallables []interfaces.IInstallable, renderTemplates bool,
-	runPostActions bool) (*Plan, error) {
-
-	tranches := make([]tranche, 0)
-	tasks := make([]task, 0)
-	var previousManifest interfaces.IManifest
-
-	for _, installableObj := range selectedInstallables {
-		var installDeleteTask *task
-
-		// create a new tranche for each new manifest
-		if previousManifest != nil && previousManifest.Id() != installableObj.ManifestId() &&
-			len(tasks) > 0 {
-			tranche := tranche{
-				manifest: previousManifest,
-				tasks:    tasks,
-			}
-
-			tranches = append(tranches, tranche)
-			tasks = make([]task, 0)
-			previousManifest = GetManifestById(manifests, installableObj.ManifestId())
-		}
-
-		// when creating a forward plan, we can install kapps...
-		if forward && installableObj.State() == constants.PresentKey {
-			installDeleteTask = &task{
-				installableObj: installableObj,
-				action:         constants.TaskActionInstall,
-			}
-			// but reverse plans must always delete them
-		} else if !forward || installableObj.State() == constants.AbsentKey {
-			installDeleteTask = &task{
-				installableObj: installableObj,
-				action:         constants.TaskActionDelete,
-			}
-		}
-
-		if installDeleteTask != nil {
-			log.Logger.Debugf("Adding %s task for kapp '%s'", installDeleteTask.action,
-				installableObj.FullyQualifiedId())
-			tasks = append(tasks, *installDeleteTask)
-		}
-
-		// when tearing down a cluster users may not want to execute any post-actions
-		if len(installableObj.PostActions()) > 0 && runPostActions {
-			for _, postAction := range installableObj.PostActions() {
-				var actionTask *task
-				if postAction.Id != "" {
-					actionTask = &task{
-						installableObj: installableObj,
-						action:         postAction.Id,
-						params:         postAction.Params,
-					}
-				}
-
-				// post action tasks are added to their own tranche to avoid race conditions
-				if actionTask != nil {
-					log.Logger.Debugf("Kapp '%s' has a post action task to add: %#v",
-						installableObj.FullyQualifiedId(), actionTask)
-					// add any previously queued tasks to a tranche
-					if len(tasks) > 0 {
-						tranche := tranche{
-							manifest: GetManifestById(manifests, installableObj.ManifestId()),
-							tasks:    tasks,
-						}
-
-						tranches = append(tranches, tranche)
-
-						// reset the tasks list for the next iteration
-						tasks = make([]task, 0)
-					}
-
-					log.Logger.Debugf("Adding %s task for kapp '%s'",
-						actionTask.action, installableObj.FullyQualifiedId())
-
-					// create a tranche just for the post action
-					tranche := tranche{
-						manifest: GetManifestById(manifests, installableObj.ManifestId()),
-						tasks:    []task{*actionTask},
-					}
-
-					tranches = append(tranches, tranche)
-				}
-			}
-		}
-
-		if len(tasks) > 0 && previousManifest != nil &&
-			previousManifest.Id() != installableObj.ManifestId() {
-			tranche := tranche{
-				manifest: previousManifest,
-				tasks:    tasks,
-			}
-
-			tranches = append(tranches, tranche)
-			tasks = make([]task, 0)
-		}
-
-		previousManifest = GetManifestById(manifests, installableObj.ManifestId())
-	}
-
-	// add a tranche if there are any tasks for the final manifest
-	if len(tasks) > 0 {
-		tranche := tranche{
-			manifest: previousManifest,
-			tasks:    tasks,
-		}
-
-		tranches = append(tranches, tranche)
-	}
-
-	plan := Plan{
-		tranches:        tranches,
-		stack:           stackObj,
-		renderTemplates: renderTemplates,
-	}
-
-	if !forward {
-		log.Logger.Debugf("Reversing plan...")
-		reverse(&plan)
-	}
-
-	// todo - use Sources of Truth (SOTs) to discover the current set of kapps installed
-	// todo - diff the cluster state with the desired state from the manifests to
-	// create a cluster diff
-
-	return &plan, nil
-}
+//func CreatePlan(forward bool, stackObj interfaces.IStack, manifests []interfaces.IManifest,
+//	selectedInstallables []interfaces.IInstallable, renderTemplates bool,
+//	runPostActions bool) (*Plan, error) {
+//
+//	//tranches := make([]tranche, 0)
+//	//tasks := make([]task, 0)
+//	//var previousManifest interfaces.IManifest
+//	//
+//	//for _, installableObj := range selectedInstallables {
+//	//	var installDeleteTask *task
+//	//
+//	//	// create a new tranche for each new manifest
+//	//	if previousManifest != nil && previousManifest.Id() != installableObj.ManifestId() &&
+//	//		len(tasks) > 0 {
+//	//		tranche := tranche{
+//	//			manifest: previousManifest,
+//	//			tasks:    tasks,
+//	//		}
+//	//
+//	//		tranches = append(tranches, tranche)
+//	//		tasks = make([]task, 0)
+//	//		previousManifest = GetManifestById(manifests, installableObj.ManifestId())
+//	//	}
+//	//
+//	//	// when creating a forward plan, we can install kapps...
+//	//	if forward && installableObj.State() == constants.PresentKey {
+//	//		installDeleteTask = &task{
+//	//			installableObj: installableObj,
+//	//			action:         constants.TaskActionInstall,
+//	//		}
+//	//		// but reverse plans must always delete them
+//	//	} else if !forward || installableObj.State() == constants.AbsentKey {
+//	//		installDeleteTask = &task{
+//	//			installableObj: installableObj,
+//	//			action:         constants.TaskActionDelete,
+//	//		}
+//	//	}
+//	//
+//	//	if installDeleteTask != nil {
+//	//		log.Logger.Debugf("Adding %s task for kapp '%s'", installDeleteTask.action,
+//	//			installableObj.FullyQualifiedId())
+//	//		tasks = append(tasks, *installDeleteTask)
+//	//	}
+//
+//		// when tearing down a cluster users may not want to execute any post-actions
+//		if len(installableObj.PostActions()) > 0 && runPostActions {
+//			for _, postAction := range installableObj.PostActions() {
+//				var actionTask *task
+//				if postAction.Id != "" {
+//					actionTask = &task{
+//						installableObj: installableObj,
+//						action:         postAction.Id,
+//						params:         postAction.Params,
+//					}
+//				}
+//
+//				// post action tasks are added to their own tranche to avoid race conditions
+//				if actionTask != nil {
+//					log.Logger.Debugf("Kapp '%s' has a post action task to add: %#v",
+//						installableObj.FullyQualifiedId(), actionTask)
+//					// add any previously queued tasks to a tranche
+//					if len(tasks) > 0 {
+//						tranche := tranche{
+//							manifest: GetManifestById(manifests, installableObj.ManifestId()),
+//							tasks:    tasks,
+//						}
+//
+//						tranches = append(tranches, tranche)
+//
+//						// reset the tasks list for the next iteration
+//						tasks = make([]task, 0)
+//					}
+//
+//					log.Logger.Debugf("Adding %s task for kapp '%s'",
+//						actionTask.action, installableObj.FullyQualifiedId())
+//
+//					// create a tranche just for the post action
+//					tranche := tranche{
+//						manifest: GetManifestById(manifests, installableObj.ManifestId()),
+//						tasks:    []task{*actionTask},
+//					}
+//
+//					tranches = append(tranches, tranche)
+//				}
+//			}
+//		}
+//
+//		if len(tasks) > 0 && previousManifest != nil &&
+//			previousManifest.Id() != installableObj.ManifestId() {
+//			tranche := tranche{
+//				manifest: previousManifest,
+//				tasks:    tasks,
+//			}
+//
+//			tranches = append(tranches, tranche)
+//			tasks = make([]task, 0)
+//		}
+//
+//		previousManifest = GetManifestById(manifests, installableObj.ManifestId())
+//	}
+//
+//	// add a tranche if there are any tasks for the final manifest
+//	if len(tasks) > 0 {
+//		tranche := tranche{
+//			manifest: previousManifest,
+//			tasks:    tasks,
+//		}
+//
+//		tranches = append(tranches, tranche)
+//	}
+//
+//	plan := Plan{
+//		tranches:        tranches,
+//		stack:           stackObj,
+//		renderTemplates: renderTemplates,
+//	}
+//
+//	if !forward {
+//		log.Logger.Debugf("Reversing plan...")
+//		reverse(&plan)
+//	}
+//
+//	// todo - use Sources of Truth (SOTs) to discover the current set of kapps installed
+//	// todo - diff the cluster state with the desired state from the manifests to
+//	// create a cluster diff
+//
+//	return &plan, nil
+//}
 
 // Returns a manifest by ID. Panics if it doesn't exist (for a simpler interface)
-func GetManifestById(manifests []interfaces.IManifest, manifestId string) interfaces.IManifest {
-	for _, manifest := range manifests {
-		if manifest.Id() == manifestId {
-			return manifest
-		}
-	}
-
-	panic(fmt.Sprintf("No manifest found with ID '%s'", manifestId))
-}
+//func GetManifestById(manifests []interfaces.IManifest, manifestId string) interfaces.IManifest {
+//	for _, manifest := range manifests {
+//		if manifest.Id() == manifestId {
+//			return manifest
+//		}
+//	}
+//
+//	panic(fmt.Sprintf("No manifest found with ID '%s'", manifestId))
+//}
 
 // Reverses the order of all tranches and all tasks within each tranche to reverse
 // the run order of the plan
-func reverse(plan *Plan) {
-	// reverse the tranches
-	sort.SliceStable(plan.tranches, func(i, j int) bool {
-		return true
-	})
-
-	// reverse the tasks within each tranche
-	for i := range plan.tranches {
-		sort.SliceStable(plan.tranches[i].tasks, func(i, j int) bool {
-			return true
-		})
-	}
-}
+//func reverse(plan *Plan) {
+//	// reverse the tranches
+//	sort.SliceStable(plan.tranches, func(i, j int) bool {
+//		return true
+//	})
+//
+//	// reverse the tasks within each tranche
+//	for i := range plan.tranches {
+//		sort.SliceStable(plan.tranches[i].tasks, func(i, j int) bool {
+//			return true
+//		})
+//	}
+//}
 
 // Run a plan to make a target cluster have the necessary kapps installed/
 // deleted to match the input manifests. Each tranche is run sequentially,
@@ -361,7 +358,7 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				}
 
 				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
-				err = renderKappTemplates(stackObj, installableObj, approved, dryRun)
+				err = renderKappTemplates(stackObj, installableObj, dryRun)
 				if err != nil {
 					errCh <- errors.WithStack(err)
 				}
@@ -387,41 +384,41 @@ func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
 				}
 
 				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
-				err = renderKappTemplates(stackObj, installableObj, approved, dryRun)
+				err = renderKappTemplates(stackObj, installableObj, dryRun)
 				if err != nil {
 					errCh <- errors.WithStack(err)
 				}
 			}
 			break
-		case constants.TaskActionClusterUpdate:
-			if approved {
-				log.Logger.Info("Running cluster update action")
-				err := cluster.UpdateCluster(os.Stdout, stackObj, true, dryRun)
-				if err != nil {
-					errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'",
-						installableObj.Id())
-				}
-			} else {
-				log.Logger.Info("Skipping cluster update action since approved=false")
-			}
-			break
-		case constants.TaskAddProviderVarsFiles:
-			if approved {
-				log.Logger.Infof("Running action to add provider vars dirs")
-				// todo - run each path through the templater
-				for _, path := range task.params {
-					if !filepath.IsAbs(path) {
-						// convert the relative path to absolute
-						path = filepath.Join(installableObj.GetConfigFileDir(), path)
-					}
-
-					log.Logger.Debugf("Adding provider vars dir: %s", path)
-					stackObj.GetProvider().AddVarsPath(path)
-				}
-			} else {
-				log.Logger.Info("Skipping action to add extra provider vars dirs since approved=false")
-			}
-			break
+			//case constants.TaskActionClusterUpdate:
+			//	if approved {
+			//		log.Logger.Info("Running cluster update action")
+			//		err := cluster.UpdateCluster(os.Stdout, stackObj, true, dryRun)
+			//		if err != nil {
+			//			errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'",
+			//				installableObj.Id())
+			//		}
+			//	} else {
+			//		log.Logger.Info("Skipping cluster update action since approved=false")
+			//	}
+			//	break
+			//case constants.TaskAddProviderVarsFiles:
+			//	if approved {
+			//		log.Logger.Infof("Running action to add provider vars dirs")
+			//		// todo - run each path through the templater
+			//		for _, path := range task.params {
+			//			if !filepath.IsAbs(path) {
+			//				// convert the relative path to absolute
+			//				path = filepath.Join(installableObj.GetConfigFileDir(), path)
+			//			}
+			//
+			//			log.Logger.Debugf("Adding provider vars dir: %s", path)
+			//			stackObj.GetProvider().AddVarsPath(path)
+			//		}
+			//	} else {
+			//		log.Logger.Info("Skipping action to add extra provider vars dirs since approved=false")
+			//	}
+			//	break
 		}
 
 		doneCh <- true
@@ -489,9 +486,11 @@ func deleteNonFullyQualifiedOutputs(registry interfaces.IRegistry) {
 
 // Renders templates for a kapp
 func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.IInstallable,
-	approved bool, dryRun bool) error {
-	templatedVars, err := stackObj.GetTemplatedVars(installableObj,
-		map[string]interface{}{"approved": approved})
+	dryRun bool) error {
+
+	// todo - this should take a copy of the registry so we don't mutate the global one
+
+	templatedVars, err := stackObj.GetTemplatedVars(installableObj, nil)
 	if err != nil {
 		return errors.WithStack(err)
 	}

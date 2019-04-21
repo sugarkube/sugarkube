@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package plan
+package dag
 
 import (
 	"fmt"
@@ -47,12 +47,12 @@ func getDescriptors() map[string]nodeDescriptor {
 // Tests that DAGs are created correctly
 func TestBuildDag(t *testing.T) {
 	input := getDescriptors()
-	dag, err := BuildDAG(input)
+	dag, err := build(input)
 	assert.Nil(t, err)
 
 	nodes := dag.graph.Nodes()
 	for nodes.Next() {
-		node := nodes.Node().(namedNode)
+		node := nodes.Node().(NamedNode)
 		log.Logger.Debugf("DAG contains node %+v", node)
 
 		descriptor := input[node.Name()]
@@ -65,10 +65,10 @@ func TestBuildDag(t *testing.T) {
 			log.Logger.Debugf("'%s' (node %v) has no dependencies", node.name, node)
 		} else {
 			// convert the iterator of nodes to a map of nodes keyed by name
-			actualDependencies := make(map[string]namedNode, 0)
+			actualDependencies := make(map[string]NamedNode, 0)
 			for to.Next() {
-				parent := to.Node().(namedNode)
-				actualDependencies[parent.Name()] = namedNode{}
+				parent := to.Node().(NamedNode)
+				actualDependencies[parent.Name()] = NamedNode{}
 			}
 
 			log.Logger.Debugf("Actual dependencies for '%s' (node %v) are: %v",
@@ -93,7 +93,7 @@ func TestBuildDagLoops(t *testing.T) {
 		"entry1": {dependsOn: []string{"entry1"}},
 	}
 
-	_, err := BuildDAG(input)
+	_, err := build(input)
 	assert.Error(t, err)
 }
 
@@ -105,13 +105,13 @@ func TestIsAcyclic(t *testing.T) {
 		"entry3": {dependsOn: nil},
 	}
 
-	_, err := BuildDAG(input)
+	_, err := build(input)
 	assert.NotNil(t, err)
 }
 
 func TestTraverse(t *testing.T) {
 	input := getDescriptors()
-	dag, err := BuildDAG(input)
+	dag, err := build(input)
 	assert.Nil(t, err)
 
 	// IDs of nodes which could be the first to be run
@@ -128,8 +128,8 @@ func TestTraverse(t *testing.T) {
 		"wordpress1",
 	}
 
-	processCh := make(chan namedNode)
-	doneCh := make(chan namedNode)
+	processCh := make(chan NamedNode)
+	doneCh := make(chan NamedNode)
 
 	mutex := &sync.Mutex{}
 	numProcessed := 0
@@ -161,7 +161,7 @@ func TestTraverse(t *testing.T) {
 		}()
 	}
 
-	dag.traverse(processCh, doneCh)
+	dag.WalkDown(processCh, doneCh)
 
 	// make sure the last to be processed is marked as being allowed to be last
 	assert.True(t, utils.InStringArray(possibleLastNodes, lastProcessedId))
@@ -170,24 +170,28 @@ func TestTraverse(t *testing.T) {
 // Test we can extract subgraphs of the node
 func TestSubGraph(t *testing.T) {
 	input := getDescriptors()
-	dag, err := BuildDAG(input)
+	dag, err := build(input)
 	assert.Nil(t, err)
 
-	descriptors := []string{"wordpress1", "independent"}
+	nodeNames := []string{"wordpress1", "independent"}
 
-	subGraph, err := dag.subGraph(descriptors)
+	subGraph, err := dag.subGraph(nodeNames)
 	assert.Nil(t, err)
 
 	nodesByName := subGraph.nodesByName()
 
-	for _, nodeName := range descriptors {
-		assertDependencies(t, subGraph, input, nodesByName, nodeName)
+	for _, nodeName := range nodeNames {
+		assertDependencies(t, subGraph, input, nodesByName, nodeName, true)
 	}
 }
 
 func assertDependencies(t *testing.T, graphObj *dag, descriptors map[string]nodeDescriptor,
-	nodesByName map[string]namedNode, nodeName string) {
+	nodesByName map[string]NamedNode, nodeName string, shouldProcess bool) {
 	node := nodesByName[nodeName]
+
+	assert.Equal(t, shouldProcess, node.shouldProcess, "shouldProcess for node '%s' is not %v",
+		nodeName, shouldProcess)
+
 	parents := graphObj.graph.To(node.ID())
 
 	dependencyNames := descriptors[nodeName].dependsOn
@@ -196,10 +200,10 @@ func assertDependencies(t *testing.T, graphObj *dag, descriptors map[string]node
 	if parents.Len() > 0 {
 		// make sure the parents are the ones we want
 		for parents.Next() {
-			parent := parents.Node().(namedNode)
+			parent := parents.Node().(NamedNode)
 			assert.True(t, utils.InStringArray(dependencyNames, parent.name),
 				"%s is not in %s", parent.name, dependencyNames)
-			assertDependencies(t, graphObj, descriptors, nodesByName, parent.name)
+			assertDependencies(t, graphObj, descriptors, nodesByName, parent.name, false)
 		}
 
 	}

@@ -195,7 +195,7 @@ func (i MakeInstaller) Delete(installableObj interfaces.IInstallable, stack inte
 
 // Get a kapp's outputs
 func (i MakeInstaller) Output(installableObj interfaces.IInstallable, stack interfaces.IStack,
-	approved bool, renderTemplates bool, dryRun bool) error {
+	renderTemplates bool, dryRun bool) error {
 	log.Logger.Infof("Getting output for kapp '%s'...", installableObj.FullyQualifiedId())
-	return i.run(TargetOutput, installableObj, stack, approved, renderTemplates, dryRun)
+	return i.run(TargetOutput, installableObj, stack, true, renderTemplates, dryRun)
 }

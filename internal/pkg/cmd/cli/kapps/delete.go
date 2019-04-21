@@ -22,8 +22,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/dag"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
@@ -151,7 +151,7 @@ func (c *deleteCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	var actionPlan *plan.Plan
+	var actionPlan *dag.Plan
 
 	// uncomment this when cluster diffing has been implemented
 	//if !c.force {
@@ -200,14 +200,14 @@ func (c *deleteCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	// load the configs for the selected installables
-	err = stack.LoadInstallables(selectedInstallables, c.cacheDir)
+	// load configs for all installables in the stack
+	err = stackObj.LoadInstallables(c.cacheDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// force mode, so no need to perform validation. Just create a reverse plan
-	actionPlan, err = plan.Create(false, stackObj, stackObj.GetConfig().Manifests(),
+	actionPlan, err = dag.CreatePlan(false, stackObj, stackObj.GetConfig().Manifests(),
 		selectedInstallables, !c.skipTemplating, !c.skipPostActions)
 	if err != nil {
 		return errors.WithStack(err)

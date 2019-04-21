@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package plan
+package dag
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gonum.org/v1/gonum/graph"
@@ -45,36 +46,55 @@ type nodeDescriptor struct {
 }
 
 // A node in a graph that also has a string name
-type namedNode struct {
+type NamedNode struct {
 	name           string // must be unique across all nodes in the graph
 	node           graph.Node
 	installableObj interfaces.IInstallable
+	shouldProcess  bool // indicates whether this node was specifically selected for processing
 }
 
-func (n namedNode) Name() string {
+func (n NamedNode) Name() string {
 	return n.name
 }
 
-func (n namedNode) ID() int64 {
+func (n NamedNode) ID() int64 {
 	return n.node.ID()
 }
 
 // Used to track whether a node has been processed
 type nodeStatus struct {
-	node   namedNode
+	node   NamedNode
 	status int
+}
+
+// Creates a DAG for installables in the given manifests. If a list of selected installable IDs is
+// given a subgraph will be returned containing only those installables and their ancestors.
+func Create(manifests []interfaces.IManifest, selectedInstallableIds []string) (*dag, error) {
+	descriptors := findDependencies(manifests)
+	dag, err := build(descriptors)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	dag, err = dag.subGraph(selectedInstallableIds)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return dag, nil
 }
 
 // Builds a graph from a map of descriptors that contain a string node ID plus a list of
 // IDs of nodes that node depends on (i.e. parents).
 // An error will be returned if the resulting graph is cyclical.
-func BuildDAG(descriptors map[string]nodeDescriptor) (*dag, error) {
+func build(descriptors map[string]nodeDescriptor) (*dag, error) {
 	graphObj := simple.NewDirectedGraph()
-	nodesByName := make(map[string]namedNode, 0)
+	nodesByName := make(map[string]NamedNode, 0)
 
 	// add each descriptor to the graph
 	for descriptorId, descriptor := range descriptors {
-		descriptorNode := addNode(graphObj, nodesByName, descriptorId, descriptor.installableObj)
+		descriptorNode := addNode(graphObj, nodesByName, descriptorId,
+			descriptor.installableObj, true)
 
 		if descriptor.dependsOn != nil {
 			// add each dependency to the graph if it's not yet in it
@@ -86,7 +106,8 @@ func BuildDAG(descriptors map[string]nodeDescriptor) (*dag, error) {
 				}
 
 				dependency := descriptors[dependencyId]
-				parentNode := addNode(graphObj, nodesByName, dependencyId, dependency.installableObj)
+				parentNode := addNode(graphObj, nodesByName, dependencyId,
+					dependency.installableObj, true)
 
 				log.Logger.Debugf("Creating edge from  '%s' to '%s'", dependencyId, descriptorId)
 
@@ -117,21 +138,31 @@ func BuildDAG(descriptors map[string]nodeDescriptor) (*dag, error) {
 
 // Adds a node to the graph if the entry isn't already in it. Also adds a reference to the
 // node on the graph entry instance
-func addNode(graphObj *simple.DirectedGraph, nodes map[string]namedNode, nodeName string,
-	installableObj interfaces.IInstallable) namedNode {
+func addNode(graphObj *simple.DirectedGraph, nodes map[string]NamedNode, nodeName string,
+	installableObj interfaces.IInstallable, shouldProcess bool) NamedNode {
 	existing, ok := nodes[nodeName]
 
 	if ok {
+		// if the existing node was added but wasn't marked for processing, and now
+		// we would create it as a processable node, toggle the flag
+		if !existing.shouldProcess && shouldProcess {
+			existing.shouldProcess = shouldProcess
+			nodes[nodeName] = existing
+		}
+
 		log.Logger.Debugf("Node '%s' already exists... won't recreate", nodeName)
 		return existing
 	}
 
 	log.Logger.Debugf("Creating node '%s'", nodeName)
 
-	namedNode := namedNode{
+	// note - we don't create separate nodes for post actions because whether we actually run them
+	// or not depends on if we're installing or deleting the installable
+	namedNode := NamedNode{
 		name:           nodeName,
 		node:           graphObj.NewNode(),
 		installableObj: installableObj,
+		shouldProcess:  shouldProcess,
 	}
 	graphObj.AddNode(namedNode)
 	nodes[nodeName] = namedNode
@@ -146,22 +177,25 @@ func isAcyclic(graphObj *simple.DirectedGraph) bool {
 	return err == nil
 }
 
-// Returns a new DAG comprising the nodes in the given input descriptors and all their
-// ancestors. The returned graph is guaranteed to be a DAG.
-func (g *dag) subGraph(descriptors []string) (*dag, error) {
+// Returns a new DAG comprising the nodes in the given input list and all their
+// ancestors. The returned graph is guaranteed to be a DAG. All nodes in the input list will be
+// marked for processing in the returned subgraph.
+func (g *dag) subGraph(nodeNames []string) (*dag, error) {
 	outputGraph := simple.NewDirectedGraph()
 
 	inputGraphNodesByName := g.nodesByName()
-	ogNodesByName := make(map[string]namedNode, 0)
+	ogNodesByName := make(map[string]NamedNode, 0)
 
 	// find each named node along with all its ancestors and add them to the sub-graph
-	for _, descriptorId := range descriptors {
-		inputGraphNode, ok := inputGraphNodesByName[descriptorId]
+	for _, nodeName := range nodeNames {
+		inputGraphNode, ok := inputGraphNodesByName[nodeName]
 		if !ok {
-			return nil, fmt.Errorf("Graph doesn't contain a node called '%s'", descriptorId)
+			return nil, fmt.Errorf("Graph doesn't contain a node called '%s'", nodeName)
 		}
 
-		ogNode := addNode(outputGraph, ogNodesByName, inputGraphNode.Name(), inputGraphNode.installableObj)
+		// mark that we should process this node
+		ogNode := addNode(outputGraph, ogNodesByName, inputGraphNode.Name(),
+			inputGraphNode.installableObj, true)
 		addAncestors(g.graph, outputGraph, ogNodesByName, inputGraphNode, ogNode)
 	}
 
@@ -174,12 +208,15 @@ func (g *dag) subGraph(descriptors []string) (*dag, error) {
 }
 
 func addAncestors(inputGraph *simple.DirectedGraph, outputGraph *simple.DirectedGraph,
-	ogNodes map[string]namedNode, igNode namedNode, ogNode namedNode) {
+	ogNodes map[string]NamedNode, igNode NamedNode, ogNode NamedNode) {
 	igParents := inputGraph.To(igNode.ID())
 
 	for igParents.Next() {
-		igParentNode := igParents.Node().(namedNode)
-		ogParentNode := addNode(outputGraph, ogNodes, igParentNode.name, igParentNode.installableObj)
+		igParentNode := igParents.Node().(NamedNode)
+
+		// we don't want to process ancestors, only use them to grab their outputs
+		ogParentNode := addNode(outputGraph, ogNodes, igParentNode.name,
+			igParentNode.installableObj, false)
 
 		// now we have parent and child nodes in the output graph , create a directed
 		// edge between them
@@ -200,7 +237,7 @@ func (g *dag) nodeStatusesById() map[int64]nodeStatus {
 	for nodes.Next() {
 		node := nodes.Node()
 		nodeMap[node.ID()] = nodeStatus{
-			node:   node.(namedNode),
+			node:   node.(NamedNode),
 			status: unprocessed,
 		}
 	}
@@ -209,29 +246,28 @@ func (g *dag) nodeStatusesById() map[int64]nodeStatus {
 }
 
 // Returns a map of nodes keyed by node name
-func (g *dag) nodesByName() map[string]namedNode {
-	nodeMap := make(map[string]namedNode, 0)
+func (g *dag) nodesByName() map[string]NamedNode {
+	nodeMap := make(map[string]NamedNode, 0)
 
 	nodes := g.graph.Nodes()
 
 	for nodes.Next() {
-		node := nodes.Node().(namedNode)
+		node := nodes.Node().(NamedNode)
 		nodeMap[node.name] = node
 	}
 
 	return nodeMap
 }
 
-// Traverses the graph. Nodes will only be processed if their dependencies have been satisfied.
-// Not having dependencies is a special case of this.
+// Traverses the graph from the root to leaves. Nodes will only be processed once their
+// dependencies have been processed. Not having dependencies is a special case of this.
 // The size of the processCh buffer determines the level of parallelisation
-func (g *dag) traverse(processCh chan<- namedNode, doneCh chan namedNode) {
+func (g *dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
 
 	log.Logger.Info("Starting DAG traversal...")
-
 	nodeStatusesById := g.nodeStatusesById()
 
-	// spawn a goroutine to listen on doneCh to update the statuses of completed nodes
+	// spawn a goroutine to listen to the doneCh to update the statuses of completed nodes
 	go func() {
 		for namedNode := range doneCh {
 			log.Logger.Infof("Finished processing '%s'", namedNode.name)
@@ -241,7 +277,7 @@ func (g *dag) traverse(processCh chan<- namedNode, doneCh chan namedNode) {
 		}
 	}()
 
-	// loop until there are no descriptors left which haven't been processed
+	// loop until there are no nodes left which haven't been processed
 	for {
 		for node, nodeStatus := range nodeStatusesById {
 			// only consider unprocessed nodes
@@ -271,6 +307,9 @@ func (g *dag) traverse(processCh chan<- namedNode, doneCh chan namedNode) {
 			time.Sleep(g.sleepTime)
 		}
 	}
+
+	finishedCh := make(chan bool)
+	return finishedCh
 }
 
 // Returns a boolean indicating whether all nodes have been processed

@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package plan
+package dag
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 )
 
 // Determines dependencies between kapps in a set of manifests
-func FindDependencies(manifests []interfaces.IManifest) map[string]nodeDescriptor {
+func findDependencies(manifests []interfaces.IManifest) map[string]nodeDescriptor {
 	descriptors := make(map[string]nodeDescriptor, 0)
 
 	var previousInstallable string

@@ -192,7 +192,7 @@ func SelectInstallables(manifests []interfaces.IManifest, includeSelector []stri
 	var err error
 	var match bool
 
-	selectedKapps := make([]interfaces.IInstallable, 0)
+	selectedInstallables := make([]interfaces.IInstallable, 0)
 
 	for _, manifest := range manifests {
 		for _, installableObj := range manifest.Installables() {
@@ -232,27 +232,27 @@ func SelectInstallables(manifests []interfaces.IManifest, includeSelector []stri
 				if !match {
 					log.Logger.Debugf("Kapp '%s' matches selector",
 						installableObj.FullyQualifiedId())
-					selectedKapps = append(selectedKapps, installableObj)
+					selectedInstallables = append(selectedInstallables, installableObj)
 				}
 			}
 		}
 	}
 
-	log.Logger.Debugf("Selected %d kapps", len(selectedKapps))
-	for _, selectedKapp := range selectedKapps {
-		log.Logger.Debugf("Selected: %s", selectedKapp.FullyQualifiedId())
+	log.Logger.Debugf("Selected %d kapps", len(selectedInstallables))
+	for _, installableObj := range selectedInstallables {
+		log.Logger.Debugf("Selected: %s", installableObj)
 	}
 
-	log.Logger.Infof("%d kapps selected for processing in total", len(selectedKapps))
+	log.Logger.Infof("%d kapps selected for processing in total", len(selectedInstallables))
 
 	// if nothing matched, return an error
-	if len(selectedKapps) == 0 {
-		return nil, errors.New(fmt.Sprintf("No kapps were matched by including '%s' and "+
+	if len(selectedInstallables) == 0 {
+		return nil, errors.New(fmt.Sprintf("Nothing was matched by including '%s' and "+
 			"excluding '%s'", strings.Join(includeSelector, ", "),
 			strings.Join(excludeSelector, ", ")))
 	}
 
-	return selectedKapps, nil
+	return selectedInstallables, nil
 }
 
 // Returns a boolean indicating whether the installable matches the given selector
