@@ -4,6 +4,15 @@
 * Code of conduct
 
 ## Code-related tasks
+* delete the kubeconfig file (only if we downloaded it) after terminating port forwarding
+* replace - with _ in kapp IDs before adding output to the registry
+
+### DAG algorithm
+* When installing specific kapps, create a DAG for the entire set of manifests, then extract a subgraph for the target
+  kapps. Now process the graph from the root: For all nodes which aren't the target nodes, if they declare output try 
+  to load it from a previous run. If no previous output exists invoke `make output`, and only `make install/delete`
+  on the target kapps, and execute any post actions they define.
+* So, we need to add a new make target 'make output' that non-destructively writes output for the kapp.
 
 ### Merging kapp configs
 * The `requires` block in `sugarkube.yaml` is currently useless. We should do several things with it:
@@ -15,6 +24,9 @@
     * Depend on the branch of viper in this issue: https://github.com/spf13/viper/pull/635
 
 * Support passing kapp vars on the command line when only one is selected
+
+* Make manifests templates using texttemplate to simplify overriding vars/templates conditionally
+* Revert the change to ignore missing template output dirs and instead expect conditionals to be used so templates will only be defined where they're required
 
 ### Kapp output
 * We also need to allow access to vars from other kapps. E.g. if one kapp sets a particular variable, 
@@ -28,10 +40,28 @@
 * Get rid of the duplication of mapping variables - we currently do it once in sugarkube.yaml files then
   again in makefiles. Try to automate the mapping in makefiles
 * Need to use 'override' with params in makefiles. How can we make that simpler?
-* Abort terraform apply if there's no `plan.out`
+* Fail terraform apply if there was an error (or document why we don't)
 * See if we can suppress warning in overridden makefiles by using the technique
   by mpb [described here](https://stackoverflow.com/questions/11958626/make-file-warning-overriding-commands-for-target)
 * document  tf-params vs tf-opts and the same for helm in the makefiles
+
+## Registry
+* If kapp A writes output to the registry, and kapp B uses it, what happens if we try to delete kapp B? Since
+  kapp A won't have been run, its outputs won't have been added to the registry. This may affect the ability to
+  delete kapp B. There's a similar issue with only adding output to the registry after installing a kapp - it 
+  stops us from planning later kapps.
+* We should probably change the logic to opportunistically add outputs to the registry even while planning. If 
+  that causes issues we could mark outputs as sensitive, but this'd potentially create unexpected behaviours re
+  the freshness of outputs (imagine one that changes a value on each run).
+* A better approach is probably to go with the unplannable kapp idea. When deleting kappB we could either
+  reinstall kappA first (but what if it produces different output again?), or expect the value to be specified
+  on the command line (but that would be cumbersome if deleting several kapps)...
+* Actually I think a DAG is unavoidable. We'll need to have reversible and irreversible paths so we can
+  e.g. always make something populate the registry. We should assume the output of a kapp is constant since
+  they should be idempotent. That means we should be able to reload the output of a kapp from a file if it
+  exists, or expect to regenerate it by reinstalling the kapp again (kappA) before installing/deleting
+  kappB (and perhaps then deleting kappA as well).
+* A usecase to think about is creating a shared RDS instance and needing to get the hostname from several kapps 
 
 ### Developer experience
 * Standardise on camelCase or snake_case for config values

@@ -484,6 +484,7 @@ func deleteNonFullyQualifiedOutputs(registry interfaces.IRegistry) {
 		constants.RegistryKeyThis}, constants.RegistryFieldSeparator))
 }
 
+// Renders templates for a kapp
 func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.IInstallable,
 	approved bool, dryRun bool) error {
 	templatedVars, err := stackObj.GetTemplatedVars(installableObj,
