@@ -77,7 +77,7 @@ func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces
 		// need to merge structs for kapp descriptors (in order of lowest to highest precedence):
 		//   * values from the sugarkube-conf.yaml file (if any are specified for
 		//     programs the kapp declares in its `requires` block. This is a special case because we
-		//     don't want to blindly merge all of these in, just the ones the kapp actually uses) (todo)
+		//     don't want to blindly merge all of these in, just the ones the kapp actually uses)
 		//   * the kapp's sugarkube.yaml file (if we've acquired the kapp - will be prepended to the list
 		//     of descriptors when it's loaded)
 		//   * defaults in manifest files
