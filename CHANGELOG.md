@@ -17,6 +17,7 @@
 * Kapp templates now get rendered before and after installing/deleting kapps so they can use their own output in templates
 * Default variables can now be defined per program in the global sugarkube-conf.yaml file. Keys map to programs in a kapp's 'requires' block
 * The kubeconfig file donwloaded to access a kops cluster is now terminated once SSH port forwarding is terminated
+* Any kapps that declare outputs now need to implement an extra make target called 'output' to non-destructively write their outputs to a file. 
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring
