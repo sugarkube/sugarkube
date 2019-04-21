@@ -4,8 +4,6 @@
 * Code of conduct
 
 ## Code-related tasks
-* delete the kubeconfig file (only if we downloaded it) after terminating port forwarding
-* replace - with _ in kapp IDs before adding output to the registry
 
 ### DAG algorithm
 * When installing specific kapps, create a DAG for the entire set of manifests, then extract a subgraph for the target
@@ -15,23 +13,18 @@
 * So, we need to add a new make target 'make output' that non-destructively writes output for the kapp.
 
 ### Merging kapp configs
-* The `requires` block in `sugarkube.yaml` is currently useless. We should do several things with it:
-  * Create a 'validate' command to verify that the necessary binary exists
-  * Allow each value to have a corresponding config in the sugarkube-conf.yaml file that determines:
-    * Default env vars (e.g. a kapp using helm should always take the TILLER_NAMESPACE env var from a certain
-      place, one using kubectl will always need a NAMESPACE from somewhere, etc.). This will obviate the need to keep
-      passing the same env vars to similar kapps
-    * Depend on the branch of viper in this issue: https://github.com/spf13/viper/pull/635
+* Create a 'validate' command to verify that binaries declared in `requires` blocks exists
 
 * Support passing kapp vars on the command line when only one is selected
 
-* Make manifests templates using texttemplate to simplify overriding vars/templates conditionally
-* Revert the change to ignore missing template output dirs and instead expect conditionals to be used so templates will only be defined where they're required
+* Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist
+  depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a 
+  kapp with the local provider because it hasn't e.g. written terraform output to a path that it 
+  would do when running with AWS, etc. 
 
 ### Kapp output
 * We also need to allow access to vars from other kapps. E.g. if one kapp sets a particular variable, 
   'vars' blocks for other kapps should be able to refer to them (e.g. myvar: "{{ .kapps.somekapp.var.thevar }}")
-* If a kapp uses output from an earlier kapp and it hasn't been run, throw an error
 
 * Provide a 'varsTemplate' field to allow for templating before parsing vars. That'll help with things like reassigning
   a map. Template this block then parse it as yaml and merge it with the other vars.
@@ -40,7 +33,6 @@
 * Get rid of the duplication of mapping variables - we currently do it once in sugarkube.yaml files then
   again in makefiles. Try to automate the mapping in makefiles
 * Need to use 'override' with params in makefiles. How can we make that simpler?
-* Fail terraform apply if there was an error (or document why we don't)
 * See if we can suppress warning in overridden makefiles by using the technique
   by mpb [described here](https://stackoverflow.com/questions/11958626/make-file-warning-overriding-commands-for-target)
 * document  tf-params vs tf-opts and the same for helm in the makefiles
@@ -73,38 +65,9 @@
   if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
   
 ### Config phases/states
-* Add support for config phases to provisioners. E.g. we might bring up a private kops cluster with a bastion, 
-  install some stuff into it, but then want to scale down the bastion IG. That'll require 2 different kops configs
-  so we should acknowledge they're for different phases of the lifecycle. Similarly to install new stuff into that 
-  cluster we may need to relaunch the bastion, install stuff then remove it again.
-  * Maybe we need to support an extra key (e.g. region/account/cluster - 'config'?) to allow different named yaml files
-    to be merged together for a target cluster. E.g. we could have yaml files called 'bastion.yaml' and 'no-bastion.yaml'
-    which will contain kops fragments for scaling the bastion up and down respectively. Users could then first invoke
-    sugarkube passing this extra flag (e.g. --extra-config=bastion) to make it patch the kops config to bring up the 
-    bastion. Then they could apply their kapps cherry-picking where to start from, what to include/exclude, etc. via
-    selectors. Finally they could run it again with e.g. --extra-config=no-bastion to have sugarkube patch the kops 
-    config again with the YAML to scale down the bastion. Users would then just need to chain those commands together
-    (or invoke them sequentially). Those extra configs may need to be merged in with the highest priority though (i.e.
-    last) to be really useful and to actually override existing configs, but for our use case I think we'd be OK without
-    that.
-  * We could perhaps have extra CLI args to take a list of different extra configs to apply, e.g. 
-    `--extra-configs bastion,,no-bastion` and sugarkube could be run first with the `bastion` extra config, then with
-    no extra config, then again with the `no-bastion` config. This'd effectively chain the invocation for users and
-    would prevent them from forgetting to e.g. tear down a bastion.
-  * Actually a more versatile solution would be to use the existing idea of manifests and allow them to be configured
-    with extra file basenames to search for and to merge with the highest priority. That'd mean these 'state manifests' 
-    would
-    * be able to define additional config for provisioners, etc
-    * run (versioned) kapps to do whatever's necessary to generate that extra config, or to put the cluster into a 
-      desired state
-    With this it then just becomes a question of how to select the manifests to run for a stack - state manifests 
-    shouldn't be included in the main stack's list of manifests, but rather be able to be "topped and tailed" into a 
-    run, e.g. to put the cluster into a known state, run the manifests as usual (with whatever selectors are required)
-    and then put the cluster into a different state. If we needed to go through a series of states we could invoke 
-    Sugarkube multiple times but that might complicate populating the registry in certain instances. In that case there's
-    no reason why a stack config couldn't include state manifests in order to transition the cluster. 
-    We could allow states to be run by having extra flags for `--start-state` and `--end-state`
-
+* Enhance kapp selectors to allow specifying the first and last kapps to run. This'd make it easy to e.g. scale up
+  the bastion ASG, install some stuff then scale it down again... but maybe users should just chain sugarkube 
+  invocations.
 * Support taking the 'startAt' and 'runUntil' settings in the config file, so e.g. users can by default 
   start applying kapps from the point where their cluster is set up, but they can still explicitly set that
   flag to start at the start.

@@ -863,7 +863,16 @@ func (p KopsProvisioner) Close() error {
 
 		log.Logger.Debug("SSH port forwarding terminated")
 
-		// todo - delete the downloaded kubeconfig file
+		// delete the downloaded kubeconfig file
+		kubeConfigPathInterface, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
+		kubeConfigPath := kubeConfigPathInterface.(string)
+		if _, err := os.Stat(kubeConfigPath); err == nil {
+			log.Logger.Infof("Deleting downloaded kubeconfig file from %s", kubeConfigPath)
+			err = os.Remove(kubeConfigPath)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
 	} else {
 		log.Logger.Debug("SSH port forwarding wasn't set up so no need to shut it down.")
 	}

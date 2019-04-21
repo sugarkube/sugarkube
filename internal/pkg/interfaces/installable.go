@@ -41,6 +41,6 @@ type IInstallable interface {
 	Vars(stack IStack) (map[string]interface{}, error)
 	AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool) error
 	RenderTemplates(templateVars map[string]interface{}, stackConfig IStackConfig,
-		requireTemplateDestDirs bool, dryRun bool) ([]string, error)
+		dryRun bool) ([]string, error)
 	GetOutputs(dryRun bool) (map[string]interface{}, error)
 }

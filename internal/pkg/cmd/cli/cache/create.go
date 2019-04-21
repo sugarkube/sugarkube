@@ -32,19 +32,18 @@ import (
 )
 
 type createCmd struct {
-	out                     io.Writer
-	dryRun                  bool
-	stackName               string
-	stackFile               string
-	provider                string
-	provisioner             string
-	profile                 string
-	account                 string
-	cluster                 string
-	region                  string
-	cacheDir                string
-	requireTemplateDestDirs bool
-	skipTemplating          bool
+	out            io.Writer
+	dryRun         bool
+	stackName      string
+	stackFile      string
+	provider       string
+	provisioner    string
+	profile        string
+	account        string
+	cluster        string
+	region         string
+	cacheDir       string
+	skipTemplating bool
 }
 
 func newCreateCmd(out io.Writer) *cobra.Command {
@@ -72,7 +71,6 @@ templates defined by kapps.`,
 
 	f := cmd.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
-	f.BoolVarP(&c.requireTemplateDestDirs, "require-template-dirs", "d", false, "fail if the destination directory to write a template to doesn't exist")
 	f.BoolVar(&c.skipTemplating, "skip-templating", false, "don't render templates for kapps")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
@@ -166,7 +164,7 @@ func (c *createCmd) run() error {
 			}
 		}
 
-		err = kapps.RenderTemplates(candidateKapps, absRootCacheDir, stackObj, c.requireTemplateDestDirs, c.dryRun)
+		err = kapps.RenderTemplates(candidateKapps, absRootCacheDir, stackObj, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

@@ -488,7 +488,7 @@ func (k Kapp) findVarsFiles(stackConfig interfaces.IStackConfig) ([]string, erro
 
 // Renders templates for the kapp and returns the paths they were written to
 func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig interfaces.IStackConfig,
-	requireTemplateDestDirs bool, dryRun bool) ([]string, error) {
+	dryRun bool) ([]string, error) {
 
 	dryRunPrefix := ""
 	if dryRun {
@@ -592,14 +592,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		destDir := filepath.Dir(destPath)
 		if _, err := os.Stat(destDir); os.IsNotExist(err) {
 			log.Logger.Infof("Destination template directory '%s' doesn't exist", destDir)
-
-			if templateDefinition.DestDirMustExist || requireTemplateDestDirs {
-				return renderedPaths, errors.New(fmt.Sprintf("Can't write template to non-existent directory: %s", destDir))
-			} else {
-				log.Logger.Infof("Ignoring missing template directory '%s'. To make Sugarkube fail in this case "+
-					"set `dest_dir_must_exist: true` in the template definition", destDir)
-				return renderedPaths, nil
-			}
+			return renderedPaths, errors.New(fmt.Sprintf("Can't write template to non-existent directory: %s", destDir))
 		}
 
 		var outBuf bytes.Buffer

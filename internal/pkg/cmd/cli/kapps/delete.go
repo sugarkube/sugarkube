@@ -38,20 +38,19 @@ type deleteCmd struct {
 	approved bool
 	oneShot  bool
 	//force               bool
-	requireTemplateDestDirs bool
-	skipTemplating          bool
-	skipPostActions         bool
-	establishConnection     bool
-	stackName               string
-	stackFile               string
-	provider                string
-	provisioner             string
-	profile                 string
-	account                 string
-	cluster                 string
-	region                  string
-	includeSelector         []string
-	excludeSelector         []string
+	skipTemplating      bool
+	skipPostActions     bool
+	establishConnection bool
+	stackName           string
+	stackFile           string
+	provider            string
+	provisioner         string
+	profile             string
+	account             string
+	cluster             string
+	region              string
+	includeSelector     []string
+	excludeSelector     []string
 }
 
 func newDeleteCmd(out io.Writer) *cobra.Command {
@@ -104,7 +103,6 @@ process before deleting the selected kapps.
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
 	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp with 'APPROVED=false' then "+
 		"'APPROVED=true' to delete kapps in a single pass")
-	f.BoolVarP(&c.requireTemplateDestDirs, "require-template-dirs", "d", false, "fail if the destination directory to write a template to doesn't exist")
 	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/delete all the kapps "+
 	//	"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before deleting them")
@@ -210,7 +208,7 @@ func (c *deleteCmd) run() error {
 
 	// force mode, so no need to perform validation. Just create a reverse plan
 	actionPlan, err = plan.Create(false, stackObj, stackObj.GetConfig().Manifests(),
-		selectedInstallables, !c.skipTemplating, c.requireTemplateDestDirs, !c.skipPostActions)
+		selectedInstallables, !c.skipTemplating, !c.skipPostActions)
 	if err != nil {
 		return errors.WithStack(err)
 	}

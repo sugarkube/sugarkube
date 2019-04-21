@@ -228,7 +228,6 @@ kapps:
 								"example/template1.tpl",
 								"example/dest.txt",
 								false,
-								false,
 							},
 						},
 						Vars: map[string]interface{}{},
