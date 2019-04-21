@@ -83,12 +83,6 @@ func (a FileAcquirer) Uri() string {
 	return a.uri
 }
 
-// return whether this source should be searched for values files
-func (a FileAcquirer) IncludeValues() bool {
-	// todo - delete this method if we don't need it
-	return false
-}
-
 // Verifies the file already exists and returns an error if not
 func (a FileAcquirer) acquire(dest string) error {
 
