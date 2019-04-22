@@ -137,7 +137,8 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Infof("Kapp '%s' successfully processed", installable.FullyQualifiedId())
+	log.Logger.Infof("Kapp '%s' successfully processed (approved=%v, dry run=%v)",
+		installable.FullyQualifiedId(), approved, dryRun)
 
 	return nil
 }
@@ -145,14 +146,16 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 // Install a kapp
 func (i MakeInstaller) Install(installableObj interfaces.IInstallable, stack interfaces.IStack,
 	approved bool, dryRun bool) error {
-	log.Logger.Infof("Installing kapp '%s'...", installableObj.FullyQualifiedId())
+	log.Logger.Infof("Installing kapp '%s' (approved=%v, dry run=%v)...",
+		installableObj.FullyQualifiedId(), approved, dryRun)
 	return i.run(TargetInstall, installableObj, stack, approved, dryRun)
 }
 
 // Delete a kapp
 func (i MakeInstaller) Delete(installableObj interfaces.IInstallable, stack interfaces.IStack,
 	approved bool, dryRun bool) error {
-	log.Logger.Infof("Deleting kapp '%s'...", installableObj.FullyQualifiedId())
+	log.Logger.Infof("Deleting kapp '%s' (approved=%v, dry run=%v)...",
+		installableObj.FullyQualifiedId(), approved, dryRun)
 	return i.run(TargetDelete, installableObj, stack, approved, dryRun)
 }
 

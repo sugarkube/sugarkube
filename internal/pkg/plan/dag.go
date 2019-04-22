@@ -308,9 +308,9 @@ func (g *Dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 
 			if allDone(nodeStatusesById) {
 				log.Logger.Infof("DAG fully processed")
-				close(processCh)
-				close(doneCh)
 				close(finishedCh)
+				// closing the other channels seems to make go send a load of empty
+				// instances to the receivers which messes things up
 				break
 			} else {
 				// sleep a little bit to give jobs a chance to complete
@@ -339,29 +339,36 @@ func (g *Dag) Print(writer io.Writer) error {
 
 	processCh := make(chan NamedNode, parallelisation)
 	doneCh := make(chan NamedNode, parallelisation)
-	g.WalkDown(processCh, doneCh)
+	finishedCh := g.WalkDown(processCh, doneCh)
 
 	// temporarily reduce the sleep time
 	originalSleepTime := g.sleepTime
 	g.sleepTime = 1 * time.Millisecond
 
-	for node := range processCh {
-		log.Logger.Debugf("Visited node: %+v", node)
-		parents := g.graph.To(node.ID())
+	go func() {
+		for {
+			select {
+			case node := <-processCh:
+				log.Logger.Debugf("Visited node: %+v", node)
+				parents := g.graph.To(node.ID())
 
-		parentNames := make([]string, 0)
-		for parents.Next() {
-			parent := parents.Node().(NamedNode)
-			parentNames = append(parentNames, parent.name)
-		}
+				parentNames := make([]string, 0)
+				for parents.Next() {
+					parent := parents.Node().(NamedNode)
+					parentNames = append(parentNames, parent.name)
+				}
 
-		_, err := fmt.Fprintf(writer, "%s - depends on: %s\n", node.Name(),
-			strings.Join(parentNames, ", "))
-		if err != nil {
-			return errors.WithStack(err)
+				_, err := fmt.Fprintf(writer, "%s - depends on: %s\n", node.Name(),
+					strings.Join(parentNames, ", "))
+				if err != nil {
+					panic(err)
+				}
+				doneCh <- node
+			}
 		}
-		doneCh <- node
-	}
+	}()
+
+	<-finishedCh
 
 	g.sleepTime = originalSleepTime
 	log.Logger.Debug("DAG printed")
