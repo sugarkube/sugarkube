@@ -49,6 +49,7 @@ func initViper(appName string) *viper.Viper {
 	// global defaults
 	v.SetDefault("json-logs", false)
 	v.SetDefault("log-level", "info")
+	v.SetDefault("parallelisation", "5")
 	v.SetDefault("overwrite-merged-lists", false)
 
 	v.SetConfigName(ConfigFileName)

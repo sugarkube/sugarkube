@@ -20,7 +20,8 @@
 * Any kapps that declare outputs now need to implement an extra make target called 'output' to non-destructively write their outputs to a file. 
 * Rename the 'parallisation' option in manifests to a boolean 'sequential' indicating that each kapp in the manifest depends on the previous one
 * Namespaces are separated from kapps when accessing outputs in templates by '__' instead of ':' because go also doesn't like colons in templates
-* Implement a DAG to manage dependencies between kapps. It's now possible for a kapp to access the output of earlier kapps even when just that one kapp is selected to be installed, deleted, templated, etc. This ensures kapps are installed and deleted in the correct order.  
+* Implement a DAG to manage dependencies between kapps. It's now possible for a kapp to access the output of earlier kapps even when just that one kapp is selected to be installed, deleted, templated, etc. This ensures kapps are installed and deleted in the correct order.
+* Make the number of workers to use to process the DAG configurable via the 'parallelisation' config setting  
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring

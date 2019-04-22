@@ -19,6 +19,7 @@ package plan
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"gonum.org/v1/gonum/graph"
@@ -360,6 +361,8 @@ func (g *Dag) Print(writer io.Writer) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	parallelisation := config.CurrentConfig.Parallelisation
 
 	processCh := make(chan NamedNode, parallelisation)
 	doneCh := make(chan NamedNode, parallelisation)

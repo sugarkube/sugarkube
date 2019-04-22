@@ -21,6 +21,7 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
@@ -32,13 +33,12 @@ import (
 	"strings"
 )
 
-// todo - make this configurable
-const parallelisation = 5
-
 // todo - should we add options to skip templating or running post actions?
 // Traverses the DAG executing the named action on marked/processable nodes depending on the
 // given options
 func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, approved bool, dryRun bool) error {
+	parallelisation := config.CurrentConfig.Parallelisation
+
 	processCh := make(chan NamedNode, parallelisation)
 	doneCh := make(chan NamedNode)
 	errCh := make(chan error)
@@ -47,7 +47,7 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 		approved, dryRun)
 
 	// create the worker pool
-	for w := uint16(0); w < parallelisation; w++ {
+	for w := int(0); w < parallelisation; w++ {
 		go worker(d, processCh, doneCh, errCh, action, stackObj, plan, approved, dryRun)
 	}
 
