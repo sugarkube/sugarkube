@@ -3,11 +3,23 @@
 * CLA (see https://github.com/heptio/ark)
 * Code of conduct
 
-## Code-related tasks
-* add a 'kapps clean' task to run 'make clean' across kapps
-* Also add a --clean flag to make install/delete to clean kapps before running them
+## Top priorities
+* Implement deleting kapps by walking up the DAG. Only delete marked kapps.
+* Fix passing a single flag to helm/tf where the file may not exist
 * Implement deleting clusters
-
+* Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist
+  depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a 
+  kapp with the local provider because it hasn't e.g. written terraform output to a path that it 
+  would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for 
+  remote providers, not the local one
+* add subcommands for 'kapps clean' and 'kapps output' to run them across kapps
+* Also add a --clean flag to make install/delete to clean kapps before running them
+* Add a flag to install all dependencies for a kapp (i.e. mark all nodes in the subgraph)
+* think about how to deal with downloading the kubeconfig file if the cluster has been configured to authenticate
+  against keycloak - we should probably test whether the cluster is accessible already (i.e. if a vpn provides access
+  into the cluster and the API server is accessible we won't necessarily need an SSH tunnel even if the API server
+  is private)
+  
 ## bugs:
 * merging kapp outputs together causes global helm-opts, etc. to grow out of control because each kapp has
   those settings, and we need to append list values when merging, so they keep getting appended together. This is mainly
@@ -25,14 +37,7 @@
 
 ### Merging kapp configs
 * Create a 'validate' command to verify that binaries declared in `requires` blocks exist
-
 * Support passing kapp vars on the command line when only one is selected
-
-* Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist
-  depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a 
-  kapp with the local provider because it hasn't e.g. written terraform output to a path that it 
-  would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for 
-  remote providers, not the local one
 
 ### Kapp output
 * We also need to allow access to vars from other kapps. E.g. if one kapp sets a particular variable, 
@@ -61,18 +66,10 @@
 ### Config phases/states
 * Enhance kapp selectors to allow specifying the first and last kapps to run. This'd make it easy to e.g. scale up
   the bastion ASG, install some stuff then scale it down again... but maybe users should just chain sugarkube 
-  invocations.
-* Support taking the 'startAt' and 'runUntil' settings in the config file, so e.g. users can by default 
-  start applying kapps from the point where their cluster is set up, but they can still explicitly set that
-  flag to start at the start.
+  invocations?
 
 ### Everything else
-* Fix passing a single flag to helm/tf where the file may not exist
 * Support declaring templates as 'sensitive' - they should be templated just-in-time then deleted (even on error/interrupts)
-* think about how to deal with downloading the kubeconfig file if the cluster has been configured to authenticate
-  against keycloak - we should probably test whether the cluster is accessible already (i.e. if a vpn provides access
-  into the cluster and the API server is accessible we won't necessarily need an SSH tunnel even if the API server
-  is private)
 
 * Support acquiring manifests with the acquirers - this will help multi-team setups, where the platform team can 
   maintain the main stack config, pulling in manifests from repos the app teams have access to (so they don't need
