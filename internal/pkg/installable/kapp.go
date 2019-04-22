@@ -315,7 +315,7 @@ func (k Kapp) GetLocalRegistry() interfaces.IRegistry {
 }
 
 // Sets the local registry for the kapp
-func (k Kapp) SetLocalRegistry(registry interfaces.IRegistry) {
+func (k *Kapp) SetLocalRegistry(registry interfaces.IRegistry) {
 	k.localRegistry = registry
 }
 
