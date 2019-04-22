@@ -18,6 +18,7 @@ package dag
 
 import (
 	"fmt"
+	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
@@ -37,16 +38,16 @@ const parallelisation = 5
 // todo - should we add options to skip templating or running post actions?
 // Traverses the DAG executing the named action on marked/processable nodes depending on the
 // given options
-func (d *dag) Execute(action string, stackObj interfaces.IStack, plan bool, apply bool, dryRun bool) error {
+func (d *dag) Execute(action string, stackObj interfaces.IStack, plan bool, approved bool, dryRun bool) error {
 	processCh := make(chan NamedNode, parallelisation)
 	doneCh := make(chan NamedNode)
 	errCh := make(chan error)
 
-	log.Logger.Infof("Executing DAG with plan=%v, apply=%v, dryRun=%v", plan, apply, dryRun)
+	log.Logger.Infof("Executing DAG with plan=%v, approved=%v, dryRun=%v", plan, approved, dryRun)
 
 	// create the worker pool
 	for w := uint16(0); w < parallelisation; w++ {
-		go worker(d, processCh, doneCh, errCh, action, stackObj, plan, apply, dryRun)
+		go worker(d, processCh, doneCh, errCh, action, stackObj, plan, approved, dryRun)
 	}
 
 	var finishedCh <-chan bool
@@ -55,10 +56,9 @@ func (d *dag) Execute(action string, stackObj interfaces.IStack, plan bool, appl
 	case constants.DagActionInstall:
 		finishedCh = d.WalkDown(processCh, doneCh)
 		break
-	// todo - implement
-	//case constants.DagActionDelete:
-	//	finishedCh = d.WalkUp(processCh, doneCh)
-	//	break
+	case constants.DagActionDelete:
+		finishedCh = d.WalkUp(processCh, doneCh)
+		break
 	default:
 		return fmt.Errorf("Invalid action on DAG: %s", action)
 	}
@@ -81,7 +81,7 @@ func (d *dag) Execute(action string, stackObj interfaces.IStack, plan bool, appl
 // Processes an installable, either installing/deleting it, running post actions or
 // loading its outputs, etc.
 func worker(dagObj *dag, processCh <-chan NamedNode, doneCh chan NamedNode, errCh chan error,
-	action string, stackObj interfaces.IStack, plan bool, apply bool, dryRun bool) {
+	action string, stackObj interfaces.IStack, plan bool, approved bool, dryRun bool) {
 
 	for node := range processCh {
 		installableObj := node.installableObj
@@ -109,10 +109,10 @@ func worker(dagObj *dag, processCh <-chan NamedNode, doneCh chan NamedNode, errC
 		//  for each marked kapp
 		switch action {
 		case constants.DagActionInstall:
-			installOrDelete(true, dagObj, node, installerImpl, stackObj, plan, apply, dryRun, errCh)
+			installOrDelete(true, dagObj, node, installerImpl, stackObj, plan, approved, dryRun, errCh)
 			break
 		case constants.DagActionDelete:
-			installOrDelete(false, dagObj, node, installerImpl, stackObj, plan, apply, dryRun, errCh)
+			installOrDelete(false, dagObj, node, installerImpl, stackObj, plan, approved, dryRun, errCh)
 			break
 		}
 
@@ -123,33 +123,44 @@ func worker(dagObj *dag, processCh <-chan NamedNode, doneCh chan NamedNode, errC
 // Implements the install action. Nodes that should be processed are installed. All nodes load any outputs
 // and merge them with their parents' outputs.
 func installOrDelete(install bool, dagObj *dag, node NamedNode, installerImpl interfaces.IInstaller, stackObj interfaces.IStack,
-	plan bool, apply bool, dryRun bool, errCh chan error) {
+	plan bool, approved bool, dryRun bool, errCh chan error) {
 
 	installableObj := node.installableObj
 
-	// only plan or apply kapps that have been flagged for processing
+	actionName := "install"
+	if !install {
+		actionName = "delete"
+	}
+
+	// render templates in case any are used as outputs for some reason
+	err := renderKappTemplates(stackObj, installableObj, installerImpl, actionName, plan, approved, dryRun)
+	if err != nil {
+		errCh <- errors.WithStack(err)
+	}
+
+	// only plan or process kapps that have been flagged for processing
 	if node.shouldProcess && plan {
 		if install {
-			err := installerImpl.Install(installableObj, stackObj, false, true, dryRun)
+			err := installerImpl.Install(installableObj, stackObj, false, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error planning kapp '%s'", installableObj.Id())
 			}
 		} else {
-			err := installerImpl.Delete(installableObj, stackObj, false, true, dryRun)
+			err := installerImpl.Delete(installableObj, stackObj, false, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error planning kapp '%s'", installableObj.Id())
 			}
 		}
 	}
 
-	if node.shouldProcess && apply {
+	if node.shouldProcess && approved {
 		if install {
-			err := installerImpl.Install(installableObj, stackObj, true, true, dryRun)
+			err := installerImpl.Install(installableObj, stackObj, true, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
 			}
 		} else {
-			err := installerImpl.Delete(installableObj, stackObj, true, true, dryRun)
+			err := installerImpl.Delete(installableObj, stackObj, true, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error deleting kapp '%s'", installableObj.Id())
 			}
@@ -161,7 +172,7 @@ func installOrDelete(install bool, dagObj *dag, node NamedNode, installerImpl in
 	// try to load kapp outputs and fail if we can't (assume we only need to do this when installing)
 	if install && installableObj.HasOutputs() {
 		// run the output target to write outputs to files
-		err := installerImpl.Output(installableObj, stackObj, true, dryRun)
+		err := installerImpl.Output(installableObj, stackObj, dryRun)
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error writing output for kapp '%s'", installableObj.Id())
 		}
@@ -177,13 +188,13 @@ func installOrDelete(install bool, dagObj *dag, node NamedNode, installerImpl in
 	buildLocalRegistry(dagObj, node, outputs, errCh)
 
 	// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
-	err := renderKappTemplates(stackObj, installableObj, dryRun)
+	err = renderKappTemplates(stackObj, installableObj, installerImpl, actionName, plan, approved, dryRun)
 	if err != nil {
 		errCh <- errors.WithStack(err)
 	}
 
 	// execute any post actions if we've just actually installed the kapp.
-	if node.shouldProcess && apply && len(installableObj.PostActions()) > 0 {
+	if node.shouldProcess && approved && len(installableObj.PostActions()) > 0 {
 		for _, postAction := range installableObj.PostActions() {
 			executePostAction(postAction, installableObj, stackObj, errCh, dryRun)
 		}
@@ -326,17 +337,38 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, outputs map[st
 
 // Renders templates for a kapp
 func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.IInstallable,
-	dryRun bool) error {
+	installer interfaces.IInstaller, action string, plan bool, approved bool, dryRun bool) error {
 
 	// todo - this should take a copy of the registry so we don't mutate the global one.
 	//  Remember to use the the global registry as the base fragment
 
-	templatedVars, err := stackObj.GetTemplatedVars(installableObj, nil)
+	// merge all the vars required to render the kapp's sugarkube.yaml file
+	templatedVars, err := stackObj.GetTemplatedVars(installableObj, installer.GetVars(action, plan, approved))
+
+	renderedTemplatePaths, err := installableObj.RenderTemplates(templatedVars, stackObj.GetConfig(),
+		dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	_, err = installableObj.RenderTemplates(templatedVars, stackObj.GetConfig(), dryRun)
+	// merge renderedTemplates into the templatedVars under the "kapp.templates" key. This will
+	// allow us to support writing files to temporary (dynamic) locations later if we like
+	renderedTemplatesMap := map[string]interface{}{
+		constants.KappVarsKappKey: map[string]interface{}{
+			constants.KappVarsTemplatesKey: renderedTemplatePaths,
+		},
+	}
+
+	log.Logger.Debugf("Merging rendered template paths into stack config: %#v",
+		renderedTemplatePaths)
+
+	err = mergo.Merge(&templatedVars, renderedTemplatesMap, mergo.WithOverride)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// remerge and template the kapp's descriptor so it can access the paths of any rendered templates
+	err = installableObj.TemplateDescriptor(templatedVars)
 	if err != nil {
 		return errors.WithStack(err)
 	}

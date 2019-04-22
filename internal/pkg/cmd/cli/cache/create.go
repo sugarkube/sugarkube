@@ -21,7 +21,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
@@ -153,21 +155,20 @@ func (c *createCmd) run() error {
 			return errors.WithStack(err)
 		}
 
-		// todo - build a DAG then render all templates from that so we can merge outputs
-
 		// template kapps
-		//candidateKapps := make([]interfaces.IInstallable, 0)
-		//
-		//for _, manifest := range stackObj.GetConfig().Manifests() {
-		//	for _, manifestKapp := range manifest.Installables() {
-		//		candidateKapps = append(candidateKapps, manifestKapp)
-		//	}
-		//}
-		//
-		//err = kapps.RenderTemplates(candidateKapps, absRootCacheDir, stackObj, c.dryRun)
-		//if err != nil {
-		//	return errors.WithStack(err)
-		//}
+		// todo - build a DAG then render all templates from that so we can merge outputs
+		candidateKapps := make([]interfaces.IInstallable, 0)
+
+		for _, manifest := range stackObj.GetConfig().Manifests() {
+			for _, manifestKapp := range manifest.Installables() {
+				candidateKapps = append(candidateKapps, manifestKapp)
+			}
+		}
+
+		err = kapps.RenderTemplates(candidateKapps, absRootCacheDir, stackObj, c.dryRun)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 
 		_, err = fmt.Fprintln(c.out, "Templates successfully rendered")
 		if err != nil {

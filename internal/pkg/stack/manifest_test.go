@@ -133,7 +133,7 @@ func TestSelectKapps(t *testing.T) {
 	assert.Equal(t, len(expectedKappIds), len(selectedKapps))
 
 	for i := 0; i < len(expectedKappIds); i++ {
-		assert.Equal(t, expectedKappIds[i], selectedKapps[i])
+		assert.Equal(t, expectedKappIds[i], selectedKapps[i].FullyQualifiedId())
 	}
 }
 
@@ -165,7 +165,7 @@ func TestSelectKappsExclusions(t *testing.T) {
 	assert.Nil(t, err)
 
 	for i := 0; i < len(expectedKappIds); i++ {
-		assert.Equal(t, expectedKappIds[i], selectedKapps[i])
+		assert.Equal(t, expectedKappIds[i], selectedKapps[i].FullyQualifiedId())
 	}
 }
 

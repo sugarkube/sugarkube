@@ -17,11 +17,9 @@
 package interfaces
 
 type IInstaller interface {
-	Install(installableObj IInstallable, stack IStack, approved bool, renderTemplates bool,
-		dryRun bool) error
-	Delete(installableObj IInstallable, stack IStack, approved bool, renderTemplates bool,
-		dryRun bool) error
-	Output(installableObj IInstallable, stack IStack, renderTemplates bool,
-		dryRun bool) error
+	Install(installableObj IInstallable, stack IStack, approved bool, dryRun bool) error
+	Delete(installableObj IInstallable, stack IStack, approved bool, dryRun bool) error
+	Output(installableObj IInstallable, stack IStack, dryRun bool) error
 	Name() string
+	GetVars(action string, plan bool, approved bool) map[string]interface{}
 }

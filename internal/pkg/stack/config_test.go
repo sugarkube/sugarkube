@@ -199,7 +199,7 @@ func GetTestManifests(t *testing.T) []interfaces.IManifest {
 		manifestFile: structs.ManifestFile{
 			KappDescriptor: manifest2KappDescriptors,
 			Options: structs.ManifestOptions{
-				Parallelisation: uint16(1),
+				IsSequential: true,
 			},
 		},
 	}

@@ -1,5 +1,5 @@
 options:
-  parallelisation: 1       # don't install kapps in this manifest in parallel
+  sequential: true       # each kapp depends on the previous one
 
 kapps:
   - id: kappC

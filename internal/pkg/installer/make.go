@@ -19,7 +19,6 @@ package installer
 import (
 	"bytes"
 	"fmt"
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
@@ -45,7 +44,7 @@ func (i MakeInstaller) Name() string {
 
 // Run the given make target
 func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallable, stack interfaces.IStack,
-	approved bool, renderTemplates bool, dryRun bool) error {
+	approved bool, dryRun bool) error {
 
 	// search for the Makefile
 	makefilePaths, err := utils.FindFilesByPattern(installable.GetCacheDir(), "Makefile",
@@ -64,43 +63,6 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 		// then remove this panic
 		panic(fmt.Sprintf("Multiple Makefiles found. Disambiguation "+
 			"not implemented yet: %s", strings.Join(makefilePaths, ", ")))
-	}
-
-	// merge all the vars required to render the kapp's sugarkube.yaml file
-	templatedVars, err := stack.GetTemplatedVars(installable,
-		map[string]interface{}{"target": makeTarget, "approved": approved})
-
-	// todo - don't render templates here - render them in the executor instead
-	if renderTemplates {
-		renderedTemplates, err := installable.RenderTemplates(templatedVars, stack.GetConfig(),
-			dryRun)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		// merge renderedTemplates into the templatedVars under the "kapp.templates" key. This will
-		// allow us to support writing files to temporary (dynamic) locations later if we like
-		renderedTemplatesMap := map[string]interface{}{
-			constants.KappVarsKappKey: map[string]interface{}{
-				constants.KappVarsTemplatesKey: renderedTemplates,
-			},
-		}
-
-		log.Logger.Debugf("Merging rendered template paths into stack config: %#v",
-			renderedTemplates)
-
-		err = mergo.Merge(&templatedVars, renderedTemplatesMap, mergo.WithOverride)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-	} else {
-		log.Logger.Infof("Skipping writing templates for kapp '%s'", installable.FullyQualifiedId())
-	}
-
-	// remerge and template the kapp's descriptor
-	err = installable.TemplateDescriptor(templatedVars)
-	if err != nil {
-		return errors.WithStack(err)
 	}
 
 	stackConfig := stack.GetConfig()
@@ -182,21 +144,28 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 
 // Install a kapp
 func (i MakeInstaller) Install(installableObj interfaces.IInstallable, stack interfaces.IStack,
-	approved bool, renderTemplates bool, dryRun bool) error {
+	approved bool, dryRun bool) error {
 	log.Logger.Infof("Installing kapp '%s'...", installableObj.FullyQualifiedId())
-	return i.run(TargetInstall, installableObj, stack, approved, renderTemplates, dryRun)
+	return i.run(TargetInstall, installableObj, stack, approved, dryRun)
 }
 
 // Delete a kapp
 func (i MakeInstaller) Delete(installableObj interfaces.IInstallable, stack interfaces.IStack,
-	approved bool, renderTemplates bool, dryRun bool) error {
+	approved bool, dryRun bool) error {
 	log.Logger.Infof("Deleting kapp '%s'...", installableObj.FullyQualifiedId())
-	return i.run(TargetDelete, installableObj, stack, approved, renderTemplates, dryRun)
+	return i.run(TargetDelete, installableObj, stack, approved, dryRun)
 }
 
 // Get a kapp's outputs
 func (i MakeInstaller) Output(installableObj interfaces.IInstallable, stack interfaces.IStack,
-	renderTemplates bool, dryRun bool) error {
+	dryRun bool) error {
 	log.Logger.Infof("Getting output for kapp '%s'...", installableObj.FullyQualifiedId())
-	return i.run(TargetOutput, installableObj, stack, true, renderTemplates, dryRun)
+	return i.run(TargetOutput, installableObj, stack, true, dryRun)
+}
+
+func (i MakeInstaller) GetVars(action string, plan bool, approved bool) map[string]interface{} {
+	return map[string]interface{}{
+		"target":   action,
+		"plan":     fmt.Sprintf("%v", plan),
+		"approved": fmt.Sprintf("%v", approved)}
 }

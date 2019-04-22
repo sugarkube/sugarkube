@@ -312,6 +312,13 @@ func (g *dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 	return finishedCh
 }
 
+// todo - implement
+func (g *dag) WalkUp(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
+	panic("Not implemented")
+	finishedCh := make(chan bool)
+	return finishedCh
+}
+
 // Returns a boolean indicating whether all nodes have been processed
 func allDone(nodeStatuses map[int64]nodeStatus) bool {
 	for _, nodeStatus := range nodeStatuses {
