@@ -277,7 +277,7 @@ func (g *Dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 	// spawn a goroutine to listen to the doneCh to update the statuses of completed nodes
 	go func() {
 		for namedNode := range doneCh {
-			log.Logger.Infof("Finished processing '%s'", namedNode.name)
+			log.Logger.Debugf("Finished processing node '%s'", namedNode.name)
 			nodeItem := nodeStatusesById[namedNode.node.ID()]
 			nodeItem.status = finished
 			nodeStatusesById[namedNode.node.ID()] = nodeItem

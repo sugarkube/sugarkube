@@ -43,7 +43,8 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 	doneCh := make(chan NamedNode)
 	errCh := make(chan error)
 
-	log.Logger.Infof("Executing DAG with plan=%v, approved=%v, dryRun=%v", plan, approved, dryRun)
+	log.Logger.Infof("Executing DAG with action=%s, plan=%v, approved=%v, dryRun=%v", action, plan,
+		approved, dryRun)
 
 	// create the worker pool
 	for w := uint16(0); w < parallelisation; w++ {
@@ -54,15 +55,16 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 
 	switch action {
 	case constants.DagActionTemplate:
+		finishedCh = d.WalkDown(processCh, doneCh)
 	case constants.DagActionInstall:
 		finishedCh = d.WalkDown(processCh, doneCh)
-		break
 	case constants.DagActionDelete:
 		finishedCh = d.WalkUp(processCh, doneCh)
-		break
 	default:
 		return fmt.Errorf("Invalid action on DAG: %s", action)
 	}
+
+	log.Logger.Debug("Blocking waiting for the DAG to finish processing...")
 
 	for {
 		select {
@@ -74,7 +76,7 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 			}
 		case <-finishedCh:
 			log.Logger.Infof("Finished processing kapps")
-			break
+			return nil
 		}
 	}
 }
@@ -111,16 +113,24 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan NamedNode, errC
 		switch action {
 		case constants.DagActionInstall:
 			installOrDelete(true, dagObj, node, installerImpl, stackObj, plan, approved, dryRun, errCh)
-			break
 		case constants.DagActionDelete:
 			installOrDelete(false, dagObj, node, installerImpl, stackObj, plan, approved, dryRun, errCh)
-			break
 		case constants.DagActionTemplate:
-			err = renderKappTemplates(stackObj, installableObj, nil, dryRun)
+			// assume we can load outputs from all kapps that have them
+			outputs, err := getOutputs(installableObj, stackObj, installerImpl, dryRun)
 			if err != nil {
 				errCh <- errors.WithStack(err)
 			}
-			break
+
+			addInstallableLocalRegistry(dagObj, node, outputs, errCh)
+
+			// only template marked nodes
+			if node.marked {
+				err = renderKappTemplates(stackObj, installableObj, nil, dryRun)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+				}
+			}
 		}
 
 		doneCh <- node
@@ -176,25 +186,17 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 		}
 	}
 
+	// get outputs if we've installed the kapp
 	var outputs map[string]interface{}
-
-	// try to load kapp outputs and fail if we can't (assume we only need to do this when installing)
-	if install && installableObj.HasOutputs() {
-		// run the output target to write outputs to files
-		err := installerImpl.Output(installableObj, stackObj, dryRun)
+	if install && approved {
+		outputs, err = getOutputs(installableObj, stackObj, installerImpl, dryRun)
 		if err != nil {
-			errCh <- errors.Wrapf(err, "Error writing output for kapp '%s'", installableObj.Id())
-		}
-
-		// load and parse outputs
-		outputs, err = installableObj.GetOutputs(dryRun)
-		if err != nil {
-			errCh <- errors.Wrapf(err, "Error loading the output of kapp '%s'", installableObj.Id())
+			errCh <- errors.WithStack(err)
 		}
 	}
 
 	// build the kapp's local registry
-	buildLocalRegistry(dagObj, node, outputs, errCh)
+	addInstallableLocalRegistry(dagObj, node, outputs, errCh)
 
 	// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
 	err = renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
@@ -210,11 +212,34 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	}
 }
 
+// Makes a kapp generate its output then loads and returns them
+func getOutputs(installableObj interfaces.IInstallable, stackObj interfaces.IStack,
+	installerImpl interfaces.IInstaller, dryRun bool) (map[string]interface{}, error) {
+	var outputs map[string]interface{}
+
+	// try to load kapp outputs and fail if we can't (assume we only need to do this when installing)
+	if installableObj.HasOutputs() {
+		// run the output target to write outputs to files
+		err := installerImpl.Output(installableObj, stackObj, dryRun)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error writing output for kapp '%s'", installableObj.Id())
+		}
+
+		// load and parse outputs
+		outputs, err = installableObj.GetOutputs(dryRun)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error loading the output of kapp '%s'", installableObj.Id())
+		}
+	}
+
+	return outputs, nil
+}
+
 // Instantiates a new registry local to the installable and populates it with the result of merging
 // each local registry of each parent. If the parent's manifest ID is different to the current node's
 // manifest ID registry keys for non fully-qualified installable IDs will be deleted from the registry
 // before merging. In all cases the special value 'this' will not be merged either.
-func buildLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string]interface{}, errCh chan<- error) {
+func addInstallableLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string]interface{}, errCh chan<- error) {
 	localRegistry := registry.New()
 
 	parents := dagObj.graph.To(node.ID())
