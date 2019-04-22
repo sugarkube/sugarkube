@@ -16,10 +16,11 @@
 * Kapps can now push additional provider vars dirs onto the list that will be merged by a provider. This allows them to modify the provider's config.
 * Kapp templates now get rendered before and after installing/deleting kapps so they can use their own output in templates
 * Default variables can now be defined per program in the global sugarkube-conf.yaml file. Keys map to programs in a kapp's 'requires' block
-* The kubeconfig file donwloaded to access a kops cluster is now terminated once SSH port forwarding is terminated
+* The kubeconfig file downloaded to access a kops cluster is now terminated once SSH port forwarding is terminated
 * Any kapps that declare outputs now need to implement an extra make target called 'output' to non-destructively write their outputs to a file. 
-* Rename the 'parallisation' option in manifests to a boolean 'is_sequential' indicating that each kapp in the manifest depends on the previous one
+* Rename the 'parallisation' option in manifests to a boolean 'sequential' indicating that each kapp in the manifest depends on the previous one
 * Namespaces are separated from kapps when accessing outputs in templates by '__' instead of ':' because go also doesn't like colons in templates
+* Implement a DAG to manage dependencies between kapps. It's now possible for a kapp to access the output of earlier kapps even when just that one kapp is selected to be installed, deleted, templated, etc. This ensures kapps are installed and deleted in the correct order.  
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring
