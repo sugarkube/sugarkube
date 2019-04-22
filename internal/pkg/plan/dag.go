@@ -60,10 +60,6 @@ type NamedNode struct {
 	// installing/deleting, etc. )
 }
 
-func (n NamedNode) Name() string {
-	return n.name
-}
-
 func (n NamedNode) ID() int64 {
 	return n.node.ID()
 }
@@ -213,7 +209,7 @@ func (g *Dag) subGraph(nodeNames []string) (*Dag, error) {
 		}
 
 		// mark that we should process this node
-		ogNode := addNode(outputGraph, ogNodesByName, inputGraphNode.Name(),
+		ogNode := addNode(outputGraph, ogNodesByName, inputGraphNode.name,
 			inputGraphNode.installableObj, true)
 		addAncestors(g.graph, outputGraph, ogNodesByName, inputGraphNode, ogNode)
 	}
@@ -283,7 +279,7 @@ func (g *Dag) nodesByName() map[string]NamedNode {
 // Traverses the graph from the root to leaves. Nodes will only be processed once their
 // dependencies have been processed. Not having dependencies is a special case of this.
 // The size of the processCh buffer determines the level of parallelisation
-func (g *Dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
+func (g *Dag) walkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
 
 	log.Logger.Info("Starting DAG traversal...")
 	nodeStatusesById := g.nodeStatusesById()
@@ -349,7 +345,7 @@ func (g *Dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 }
 
 // todo - implement
-func (g *Dag) WalkUp(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
+func (g *Dag) walkUp(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
 	panic("Not implemented")
 	finishedCh := make(chan bool)
 	return finishedCh
@@ -366,7 +362,7 @@ func (g *Dag) Print(writer io.Writer) error {
 
 	processCh := make(chan NamedNode, parallelisation)
 	doneCh := make(chan NamedNode, parallelisation)
-	finishedCh := g.WalkDown(processCh, doneCh)
+	finishedCh := g.walkDown(processCh, doneCh)
 
 	// temporarily reduce the sleep time
 	originalSleepTime := g.SleepInterval
@@ -385,7 +381,7 @@ func (g *Dag) Print(writer io.Writer) error {
 					parentNames = append(parentNames, parent.name)
 				}
 
-				_, err := fmt.Fprintf(writer, "%s - depends on: %s\n", node.Name(),
+				_, err := fmt.Fprintf(writer, "%s - depends on: %s\n", node.name,
 					strings.Join(parentNames, ", "))
 				if err != nil {
 					panic(err)

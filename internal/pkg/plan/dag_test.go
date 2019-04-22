@@ -55,7 +55,7 @@ func TestBuildDag(t *testing.T) {
 		node := nodes.Node().(NamedNode)
 		log.Logger.Debugf("DAG contains node %+v", node)
 
-		descriptor := input[node.Name()]
+		descriptor := input[node.name]
 
 		// assert that each node has edges from any dependencies to itself
 		to := dag.graph.To(node.ID())
@@ -68,7 +68,7 @@ func TestBuildDag(t *testing.T) {
 			actualDependencies := make(map[string]NamedNode, 0)
 			for to.Next() {
 				parent := to.Node().(NamedNode)
-				actualDependencies[parent.Name()] = NamedNode{}
+				actualDependencies[parent.name] = NamedNode{}
 			}
 
 			log.Logger.Debugf("Actual dependencies for '%s' (node %v) are: %v",
@@ -161,7 +161,7 @@ func TestTraverse(t *testing.T) {
 		}()
 	}
 
-	finishedCh := dag.WalkDown(processCh, doneCh)
+	finishedCh := dag.walkDown(processCh, doneCh)
 
 	// wait for traversal to finish
 	select {

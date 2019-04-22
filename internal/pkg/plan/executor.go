@@ -55,11 +55,11 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 
 	switch action {
 	case constants.DagActionTemplate:
-		finishedCh = d.WalkDown(processCh, doneCh)
+		finishedCh = d.walkDown(processCh, doneCh)
 	case constants.DagActionInstall:
-		finishedCh = d.WalkDown(processCh, doneCh)
+		finishedCh = d.walkDown(processCh, doneCh)
 	case constants.DagActionDelete:
-		finishedCh = d.WalkUp(processCh, doneCh)
+		finishedCh = d.walkUp(processCh, doneCh)
 	default:
 		return fmt.Errorf("Invalid action on DAG: %s", action)
 	}
