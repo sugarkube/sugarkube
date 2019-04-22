@@ -87,7 +87,7 @@ func worker(processCh <-chan NamedNode, doneCh chan NamedNode, errCh chan error,
 		kappRootDir := installableObj.GetCacheDir()
 		log.Logger.Infof("Processing kapp '%s' in %s", installableObj.FullyQualifiedId(), kappRootDir)
 
-		// todo - print (to stdout) details of the kapp being executed in real time
+		// todo - print (to stdout) details of the kapp being executed
 
 		_, err := os.Stat(kappRootDir)
 		if err != nil {
@@ -103,50 +103,11 @@ func worker(processCh <-chan NamedNode, doneCh chan NamedNode, errCh chan error,
 				"kapp '%s'", installableObj.Id())
 		}
 
+		// todo - support installing, deleting, templating and printing out the vars for each
+		//  marked kapp
 		switch action {
 		case constants.TaskActionInstall:
-			// only plan or apply kapps that have been flagged for processing
-			if node.shouldProcess && plan {
-				err := installerImpl.Install(installableObj, stackObj, false, true, dryRun)
-				if err != nil {
-					errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
-				}
-			}
-
-			if node.shouldProcess && apply {
-				err := installerImpl.Install(installableObj, stackObj, true, true, dryRun)
-				if err != nil {
-					errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
-				}
-			}
-
-			// try to load kapp outputs and fail if we can't
-			if installableObj.HasOutputs() {
-				err := installerImpl.Output(installableObj, stackObj, true, dryRun)
-				if err != nil {
-					errCh <- errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
-				}
-
-				// todo - merge the outputs with the parents' outputs and save as a property on the installable
-
-				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
-				if err != nil {
-					errCh <- errors.WithStack(err)
-				}
-
-				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
-				err = renderKappTemplates(stackObj, installableObj, dryRun)
-				if err != nil {
-					errCh <- errors.WithStack(err)
-				}
-			}
-
-			// execute any post actions if we've just actually installed the kapp.
-			if apply && len(installableObj.PostActions()) > 0 {
-				for _, postAction := range installableObj.PostActions() {
-					executePostAction(postAction, installableObj, stackObj, errCh, dryRun)
-				}
-			}
+			install(node, installerImpl, stackObj, plan, apply, dryRun, errCh)
 			break
 		case constants.TaskActionDelete:
 			err := installerImpl.Delete(installableObj, stackObj, approved, true, dryRun)
@@ -177,6 +138,57 @@ func worker(processCh <-chan NamedNode, doneCh chan NamedNode, errCh chan error,
 		}
 
 		doneCh <- node
+	}
+}
+
+// Implements the install action. Nodes that should be processed are installed. All nodes load any outputs
+// and merge them with their parents' outputs.
+func install(node NamedNode, installerImpl interfaces.IInstaller, stackObj interfaces.IStack,
+	plan bool, apply bool, dryRun bool, errCh chan error) {
+
+	installableObj := node.installableObj
+
+	// only plan or apply kapps that have been flagged for processing
+	if node.shouldProcess && plan {
+		err := installerImpl.Install(installableObj, stackObj, false, true, dryRun)
+		if err != nil {
+			errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
+		}
+	}
+
+	if node.shouldProcess && apply {
+		err := installerImpl.Install(installableObj, stackObj, true, true, dryRun)
+		if err != nil {
+			errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
+		}
+	}
+
+	// try to load kapp outputs and fail if we can't
+	if installableObj.HasOutputs() {
+		err := installerImpl.Output(installableObj, stackObj, true, dryRun)
+		if err != nil {
+			errCh <- errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
+		}
+
+		// todo - merge the outputs with the parents' outputs and save as a property on the installable
+
+		err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
+		if err != nil {
+			errCh <- errors.WithStack(err)
+		}
+
+		// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
+		err = renderKappTemplates(stackObj, installableObj, dryRun)
+		if err != nil {
+			errCh <- errors.WithStack(err)
+		}
+	}
+
+	// execute any post actions if we've just actually installed the kapp.
+	if node.shouldProcess && apply && len(installableObj.PostActions()) > 0 {
+		for _, postAction := range installableObj.PostActions() {
+			executePostAction(postAction, installableObj, stackObj, errCh, dryRun)
+		}
 	}
 }
 
