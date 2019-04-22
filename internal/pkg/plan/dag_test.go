@@ -136,7 +136,7 @@ func TestTraverse(t *testing.T) {
 	var lastProcessedId string
 
 	// reduce the sleep time for testing
-	dag.sleepTime = 5 * time.Millisecond
+	dag.SleepInterval = 5 * time.Millisecond
 	parallelisation := 5
 
 	for i := 0; i < parallelisation; i++ {

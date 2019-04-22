@@ -29,6 +29,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 	"path/filepath"
+	"time"
 )
 
 type createCmd struct {
@@ -161,6 +162,9 @@ func (c *createCmd) run() error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
+
+		// this should be a fast action so reduce the sleep interval
+		dagObj.SleepInterval = 5 * time.Millisecond
 
 		err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, c.dryRun)
 		if err != nil {

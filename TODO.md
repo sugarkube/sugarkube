@@ -7,6 +7,12 @@
 * add a 'kapps clean' task to run 'make clean' across kapps
 * Also add a --clean flag to make install/delete to clean kapps before running them
 
+## bugs:
+* merging kapp outputs together causes global helm-opts, etc. to grow out of control because each kapp has
+  those settings, and we need to append list values when merging, so they keep getting appended together
+* Need to merge the global registry with a kapp's local registry before templating to make those values available
+* the registry currently doesn't work correctly when templating files
+
 ### DAG algorithm
 * When installing specific kapps, create a DAG for the entire set of manifests, then extract a subgraph for the target
   kapps. Now process the graph from the root: For all nodes which aren't the target nodes, if they declare output try 

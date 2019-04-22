@@ -19,6 +19,7 @@
 * The kubeconfig file donwloaded to access a kops cluster is now terminated once SSH port forwarding is terminated
 * Any kapps that declare outputs now need to implement an extra make target called 'output' to non-destructively write their outputs to a file. 
 * Rename the 'parallisation' option in manifests to a boolean 'is_sequential' indicating that each kapp in the manifest depends on the previous one
+* Namespaces are separated from kapps when accessing outputs in templates by '__' instead of ':' because go also doesn't like colons in templates
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring

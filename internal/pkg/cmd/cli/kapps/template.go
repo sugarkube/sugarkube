@@ -25,6 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
+	"time"
 )
 
 type templateConfig struct {
@@ -108,6 +109,9 @@ func (c *templateConfig) run() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	// this should be a fast action so reduce the sleep interval
+	dagObj.SleepInterval = 5 * time.Millisecond
 
 	err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, c.dryRun)
 	if err != nil {

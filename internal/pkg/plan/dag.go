@@ -31,13 +31,16 @@ import (
 
 const (
 	unprocessed = iota
+	running
 	finished
 )
 
+const defaultSleepInterval = 5000 // milliseconds
+
 // Wrapper around a directed graph so we can define our own methods on it
 type Dag struct {
-	graph     *simple.DirectedGraph
-	sleepTime time.Duration
+	graph         *simple.DirectedGraph
+	SleepInterval time.Duration // time to wait after reaching the end of the graph before doing another pass
 }
 
 // Defines a node that should be created in the graph, along with parent dependencies. This is
@@ -73,6 +76,13 @@ type nodeStatus struct {
 // Creates a DAG for installables in the given manifests. If a list of selected installable IDs is
 // given a subgraph will be returned containing only those installables and their ancestors.
 func Create(manifests []interfaces.IManifest, selectedInstallableIds []string) (*Dag, error) {
+	manifestIds := make([]string, 0)
+	for _, manifest := range manifests {
+		manifestIds = append(manifestIds, manifest.Id())
+	}
+
+	log.Logger.Debugf("Creating DAG for installables '%s' in manifests %s",
+		strings.Join(selectedInstallableIds, ", "), strings.Join(manifestIds, ", "))
 	descriptors := findDependencies(manifests)
 	dag, err := build(descriptors)
 	if err != nil {
@@ -83,6 +93,8 @@ func Create(manifests []interfaces.IManifest, selectedInstallableIds []string) (
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	log.Logger.Debugf("Finished creating DAG")
 
 	return dag, nil
 }
@@ -132,8 +144,8 @@ func build(descriptors map[string]nodeDescriptor) (*Dag, error) {
 	}
 
 	dag := Dag{
-		graph:     graphObj,
-		sleepTime: 500 * time.Millisecond,
+		graph:         graphObj,
+		SleepInterval: defaultSleepInterval * time.Millisecond,
 	}
 
 	return &dag, nil
@@ -184,6 +196,9 @@ func isAcyclic(graphObj *simple.DirectedGraph) bool {
 // ancestors. The returned graph is guaranteed to be a DAG. All nodes in the input list will be
 // marked for processing in the returned subgraph.
 func (g *Dag) subGraph(nodeNames []string) (*Dag, error) {
+
+	log.Logger.Debugf("Extracting sub-graph for nodes: %s", strings.Join(nodeNames, ", "))
+
 	outputGraph := simple.NewDirectedGraph()
 
 	inputGraphNodesByName := g.nodesByName()
@@ -203,9 +218,11 @@ func (g *Dag) subGraph(nodeNames []string) (*Dag, error) {
 	}
 
 	dag := Dag{
-		graph:     outputGraph,
-		sleepTime: 500 * time.Millisecond,
+		graph:         outputGraph,
+		SleepInterval: defaultSleepInterval * time.Millisecond,
 	}
+
+	log.Logger.Debugf("Finished extracting sub-graph")
 
 	return &dag, nil
 }
@@ -277,7 +294,7 @@ func (g *Dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 	// spawn a goroutine to listen to the doneCh to update the statuses of completed nodes
 	go func() {
 		for namedNode := range doneCh {
-			log.Logger.Debugf("Finished processing node '%s'", namedNode.name)
+			log.Logger.Debugf("Worker informs the DAG it's finished processing node '%s'", namedNode.name)
 			nodeItem := nodeStatusesById[namedNode.node.ID()]
 			nodeItem.status = finished
 			nodeStatusesById[namedNode.node.ID()] = nodeItem
@@ -290,19 +307,26 @@ func (g *Dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 		// loop until there are no nodes left which haven't been processed
 		for {
 			for node, nodeStatus := range nodeStatusesById {
+				namedNode := nodeStatusesById[node]
+
 				// only consider unprocessed nodes
 				if nodeStatus.status != unprocessed {
+					//log.Logger.Tracef("Skipping node '%s' with status '%v' on this pass...",
+					//	namedNode.node.name, nodeStatus.status)
 					continue
 				}
-
-				namedNode := nodeStatusesById[node]
 
 				// we have a node that needs to be processed. Check to see if its dependencies have
 				// been satisfied
 				if dependenciesSatisfied(g.graph.To(nodeStatus.node.ID()), nodeStatusesById) {
 					log.Logger.Debugf("All dependencies satisfied for '%s', adding it to the "+
 						"processing queue", namedNode.node.name)
+					// update the status to running so we don't keep requeuing completed nodes
+					namedNode.status = running
+					nodeStatusesById[node] = namedNode
 					processCh <- namedNode.node
+				} else {
+					log.Logger.Tracef("Dependencies not satisfied for %s", namedNode.node.name)
 				}
 			}
 
@@ -314,8 +338,8 @@ func (g *Dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 				break
 			} else {
 				// sleep a little bit to give jobs a chance to complete
-				log.Logger.Tracef("DAG still processing. Sleeping for %s...", g.sleepTime)
-				time.Sleep(g.sleepTime)
+				log.Logger.Tracef("DAG still processing. Sleeping for %s...", g.SleepInterval)
+				time.Sleep(g.SleepInterval)
 			}
 		}
 	}()
@@ -342,8 +366,8 @@ func (g *Dag) Print(writer io.Writer) error {
 	finishedCh := g.WalkDown(processCh, doneCh)
 
 	// temporarily reduce the sleep time
-	originalSleepTime := g.sleepTime
-	g.sleepTime = 1 * time.Millisecond
+	originalSleepTime := g.SleepInterval
+	g.SleepInterval = 5 * time.Millisecond
 
 	go func() {
 		for {
@@ -370,7 +394,7 @@ func (g *Dag) Print(writer io.Writer) error {
 
 	<-finishedCh
 
-	g.sleepTime = originalSleepTime
+	g.SleepInterval = originalSleepTime
 	log.Logger.Debug("DAG printed")
 
 	return nil
@@ -391,10 +415,11 @@ func allDone(nodeStatuses map[int64]nodeStatus) bool {
 func dependenciesSatisfied(dependencies graph.Nodes, nodeStatuses map[int64]nodeStatus) bool {
 
 	for dependencies.Next() {
-		dependency := dependencies.Node()
-
+		dependency := dependencies.Node().(NamedNode)
 		nodeStatus := nodeStatuses[dependency.ID()]
 		if nodeStatus.status != finished {
+			log.Logger.Tracef("Dependent node '%s' hasn't finished (status=%+v)", dependency.name,
+				nodeStatus.status)
 			return false
 		}
 	}

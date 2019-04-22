@@ -85,6 +85,9 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 		configLayers = []structs.KappDescriptorWithMaps{}
 	}
 
+	log.Logger.Tracef("Adding new descriptor for kapp '%s' (prepend=%v): %+v", k.FullyQualifiedId(),
+		prepend, config)
+
 	if prepend {
 		k.descriptorLayers = append([]structs.KappDescriptorWithMaps{config}, configLayers...)
 	} else {
@@ -142,8 +145,8 @@ func (k *Kapp) mergeDescriptorLayers() error {
 	mergedDescriptor := structs.KappDescriptorWithMaps{}
 
 	for _, layer := range k.descriptorLayers {
-		log.Logger.Debugf("Merging config layer %#v into existing map %#v for "+
-			"kapp %s", layer, mergedDescriptor, k.FullyQualifiedId())
+		log.Logger.Debugf("Merging config layer for kapp '%s' - layer %#v into existing map %#v",
+			k.FullyQualifiedId(), layer, mergedDescriptor)
 		err := vars.MergeWithStrategy(&mergedDescriptor, layer)
 		if err != nil {
 			return errors.WithStack(err)
@@ -275,6 +278,9 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 		return errors.WithStack(err)
 	}
 
+	log.Logger.Tracef("Adding descriptor to kapp '%s' for its %s file", k.FullyQualifiedId(),
+		constants.KappConfigFileName)
+
 	err = k.AddDescriptor(descriptorWithMaps, true)
 	if err != nil {
 		return errors.WithStack(err)
@@ -292,6 +298,9 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 		descriptor := structs.KappDescriptorWithMaps{
 			KappConfig: programDescriptor,
 		}
+
+		log.Logger.Tracef("Adding descriptor to kapp '%s' for requirement '%s'",
+			k.FullyQualifiedId(), requirement)
 
 		err = k.AddDescriptor(descriptor, true)
 		if err != nil {

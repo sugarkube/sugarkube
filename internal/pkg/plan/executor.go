@@ -67,13 +67,11 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 	log.Logger.Debug("Blocking waiting for the DAG to finish processing...")
 
 	for {
+		// Note: Do NOT add a case for doneCh or it'll introduce a race that prevents the DAG from
+		// updating the status of each node
 		select {
 		case err := <-errCh:
 			return errors.Wrapf(err, "Error processing kapp")
-		case node := <-doneCh:
-			if node.marked {
-				log.Logger.Infof("Kapp '%s' processed", node.Name())
-			}
 		case <-finishedCh:
 			log.Logger.Infof("Finished processing kapps")
 			return nil
@@ -83,14 +81,14 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 
 // Processes an installable, either installing/deleting it, running post actions or
 // loading its outputs, etc.
-func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan NamedNode, errCh chan error,
+func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, errCh chan error,
 	action string, stackObj interfaces.IStack, plan bool, approved bool, dryRun bool) {
 
 	for node := range processCh {
 		installableObj := node.installableObj
 
 		kappRootDir := installableObj.GetCacheDir()
-		log.Logger.Infof("Processing kapp '%s' in %s", installableObj.FullyQualifiedId(), kappRootDir)
+		log.Logger.Infof("Worker received kapp '%s' in %s for processing", installableObj.FullyQualifiedId(), kappRootDir)
 
 		// todo - print (to stdout) details of the kapp being executed
 
@@ -126,14 +124,17 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan NamedNode, errC
 
 			// only template marked nodes
 			if node.marked {
-				err = renderKappTemplates(stackObj, installableObj, nil, dryRun)
+				err = renderKappTemplates(stackObj, installableObj, map[string]interface{}{}, dryRun)
 				if err != nil {
 					errCh <- errors.WithStack(err)
 				}
 			}
 		}
 
+		log.Logger.Tracef("Worker finished processing kapp '%s' (node=%#v)", installableObj.FullyQualifiedId(),
+			node)
 		doneCh <- node
+		log.Logger.Tracef("Worker end of loop for kapp '%s'", installableObj.FullyQualifiedId())
 	}
 }
 
@@ -320,7 +321,7 @@ func deleteNonFullyQualifiedOutputs(registry interfaces.IRegistry) {
 
 	// iterate through all the keys for those that aren't fully qualified and delete them
 	for k, _ := range outputs.(map[string]interface{}) {
-		if !strings.Contains(k, constants.NamespaceSeparator) {
+		if !strings.Contains(k, constants.TemplateNamespaceSeparator) {
 			fullKey := strings.Join([]string{
 				constants.RegistryKeyOutputs, k}, constants.RegistryFieldSeparator)
 			registry.Delete(fullKey)
@@ -343,6 +344,8 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, outputs map[st
 	// the least worst way of accommodating both
 	underscoredInstallableId := strings.Replace(installableObj.Id(), "-", "_", -1)
 	underscoredInstallableFQId := strings.Replace(installableObj.FullyQualifiedId(), "-", "_", -1)
+	underscoredInstallableFQId = strings.Replace(underscoredInstallableFQId, constants.NamespaceSeparator,
+		constants.TemplateNamespaceSeparator, -1)
 
 	prefixes := []string{
 		// "outputs.this"

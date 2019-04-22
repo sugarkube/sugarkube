@@ -17,6 +17,9 @@
 package constants
 
 const NamespaceSeparator = ":"
+
+// separates namespaces from kapps in templates
+const TemplateNamespaceSeparator = "__"
 const WildcardCharacter = "*"
 
 const PresentKey = "present"
