@@ -24,9 +24,11 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // todo - make this configurable
@@ -44,7 +46,7 @@ func (d *dag) Execute(action string, stackObj interfaces.IStack, plan bool, appl
 
 	// create the worker pool
 	for w := uint16(0); w < parallelisation; w++ {
-		go worker(processCh, doneCh, errCh, action, stackObj, plan, apply, dryRun)
+		go worker(d, processCh, doneCh, errCh, action, stackObj, plan, apply, dryRun)
 	}
 
 	var finishedCh <-chan bool
@@ -78,7 +80,7 @@ func (d *dag) Execute(action string, stackObj interfaces.IStack, plan bool, appl
 
 // Processes an installable, either installing/deleting it, running post actions or
 // loading its outputs, etc.
-func worker(processCh <-chan NamedNode, doneCh chan NamedNode, errCh chan error,
+func worker(dagObj *dag, processCh <-chan NamedNode, doneCh chan NamedNode, errCh chan error,
 	action string, stackObj interfaces.IStack, plan bool, apply bool, dryRun bool) {
 
 	for node := range processCh {
@@ -103,11 +105,11 @@ func worker(processCh <-chan NamedNode, doneCh chan NamedNode, errCh chan error,
 				"kapp '%s'", installableObj.Id())
 		}
 
-		// todo - support installing, deleting, templating and printing out the vars for each
-		//  marked kapp
+		// todo - support installing, deleting, running 'make clean', templating and printing out the vars
+		//  for each marked kapp
 		switch action {
 		case constants.TaskActionInstall:
-			install(node, installerImpl, stackObj, plan, apply, dryRun, errCh)
+			install(dagObj, node, installerImpl, stackObj, plan, apply, dryRun, errCh)
 			break
 		case constants.TaskActionDelete:
 			err := installerImpl.Delete(installableObj, stackObj, approved, true, dryRun)
@@ -143,7 +145,7 @@ func worker(processCh <-chan NamedNode, doneCh chan NamedNode, errCh chan error,
 
 // Implements the install action. Nodes that should be processed are installed. All nodes load any outputs
 // and merge them with their parents' outputs.
-func install(node NamedNode, installerImpl interfaces.IInstaller, stackObj interfaces.IStack,
+func install(dagObj *dag, node NamedNode, installerImpl interfaces.IInstaller, stackObj interfaces.IStack,
 	plan bool, apply bool, dryRun bool, errCh chan error) {
 
 	installableObj := node.installableObj
@@ -165,17 +167,13 @@ func install(node NamedNode, installerImpl interfaces.IInstaller, stackObj inter
 
 	// try to load kapp outputs and fail if we can't
 	if installableObj.HasOutputs() {
+		// run the output target to write outputs to files
 		err := installerImpl.Output(installableObj, stackObj, true, dryRun)
 		if err != nil {
-			errCh <- errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
+			errCh <- errors.Wrapf(err, "Error writing output for kapp '%s'", installableObj.Id())
 		}
 
-		// todo - merge the outputs with the parents' outputs and save as a property on the installable
-
-		err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
-		if err != nil {
-			errCh <- errors.WithStack(err)
-		}
+		buildLocalRegistry(dagObj, node, errCh, dryRun)
 
 		// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
 		err = renderKappTemplates(stackObj, installableObj, dryRun)
@@ -190,6 +188,45 @@ func install(node NamedNode, installerImpl interfaces.IInstaller, stackObj inter
 			executePostAction(postAction, installableObj, stackObj, errCh, dryRun)
 		}
 	}
+}
+
+// Instantiates a new registry local to the installable and populates it with the result of merging
+// each local registry of each parent. If the parent's manifest ID is different to the current node's
+// manifest ID registry keys for non fully-qualified installable IDs will be deleted from the registry
+// before merging. In all cases the special value 'this' will not be merged either.
+func buildLocalRegistry(dagObj *dag, node NamedNode, errCh chan<- error, dryRun bool) {
+	localRegistry := registry.New()
+
+	parents := dagObj.graph.To(node.ID())
+
+	for parents.Next() {
+		parent := parents.Node().(NamedNode)
+
+		parentRegistry := parent.installableObj.GetLocalRegistry()
+
+		// if the parent was in a different manifest, strip out all non fully-qualified registry
+		// entries
+		if parent.installableObj.ManifestId() != node.installableObj.ManifestId() {
+			deleteNonFullyQualifiedOutputs(parentRegistry)
+		}
+
+		// always delete the special key 'this'
+		deleteSpecialThisOutput(parentRegistry)
+
+		for k, v := range parentRegistry.AsMap() {
+			err := localRegistry.Set(k, v)
+			if err != nil {
+				errCh <- errors.WithStack(err)
+			}
+		}
+	}
+
+	err := addOutputsToRegistry(node.installableObj, localRegistry, dryRun)
+	if err != nil {
+		errCh <- errors.WithStack(err)
+	}
+
+	node.installableObj.SetLocalRegistry(localRegistry)
 }
 
 // Executes post actions
@@ -218,4 +255,65 @@ func executePostAction(postAction structs.PostAction, installableObj interfaces.
 		}
 		break
 	}
+}
+
+// Deletes all outputs from the registry that aren't fully qualified
+func deleteNonFullyQualifiedOutputs(registry interfaces.IRegistry) {
+	outputs, ok := registry.Get(constants.RegistryKeyOutputs)
+	if !ok {
+		return
+	}
+
+	// iterate through all the keys for those that aren't fully qualified and delete them
+	for k, _ := range outputs.(map[string]interface{}) {
+		if !strings.Contains(k, constants.NamespaceSeparator) {
+			fullKey := strings.Join([]string{
+				constants.RegistryKeyOutputs, k}, constants.RegistryFieldSeparator)
+			registry.Delete(fullKey)
+		}
+	}
+}
+
+// deletes the special constant key "this" from the registry
+func deleteSpecialThisOutput(registry interfaces.IRegistry) {
+	registry.Delete(strings.Join([]string{constants.RegistryKeyOutputs,
+		constants.RegistryKeyThis}, constants.RegistryFieldSeparator))
+}
+
+// Adds output from an installable to the registry
+func addOutputsToRegistry(installableObj interfaces.IInstallable, registry interfaces.IRegistry, dryRun bool) error {
+	outputs, err := installableObj.GetOutputs(dryRun)
+	if err != nil {
+		return errors.Wrapf(err, "Error loading the output of kapp '%s'", installableObj.Id())
+	}
+
+	// We convert kapp IDs to have underscores because Go's templating library throws its toys out
+	// the pram when it find a map key with a hyphen in. K8s is the opposite, so this seems like
+	// the least worst way of accommodating both
+	underscoredInstallableId := strings.Replace(installableObj.Id(), "-", "_", -1)
+	underscoredInstallableFQId := strings.Replace(installableObj.FullyQualifiedId(), "-", "_", -1)
+
+	prefixes := []string{
+		// "outputs.this"
+		strings.Join([]string{constants.RegistryKeyOutputs, constants.RegistryKeyThis}, constants.RegistryFieldSeparator),
+		// short prefix - can be used by other kapps in the manifest
+		strings.Join([]string{constants.RegistryKeyOutputs, underscoredInstallableId},
+			constants.RegistryFieldSeparator),
+		// fully-qualified prefix - can be used by kapps in other manifests
+		strings.Join([]string{constants.RegistryKeyOutputs,
+			underscoredInstallableFQId}, constants.RegistryFieldSeparator),
+	}
+
+	// store the output under various keys
+	for outputId, output := range outputs {
+		for _, prefix := range prefixes {
+			key := strings.Join([]string{prefix, outputId}, constants.RegistryFieldSeparator)
+			err = registry.Set(key, output)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+	}
+
+	return nil
 }

@@ -17,14 +17,9 @@
 package dag
 
 import (
-	"fmt"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"os"
-	"strings"
 )
 
 type task struct {
@@ -244,7 +239,7 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 
 	for i, tranche := range p.tranches {
 
-		numWorkers := tranche.manifest.Parallelisation()
+		numWorkers := tranche.manifest.IsSequential()
 		if numWorkers == 0 {
 			numWorkers = uint16(len(tranche.tasks))
 		}
@@ -309,186 +304,128 @@ func (p *Plan) Run(approved bool, dryRun bool) error {
 }
 
 // Installs or deletes a kapp using the appropriate Installer
-func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
-
-	for job := range jobs {
-		task := job.task
-		installableObj := task.installableObj
-		stackObj := job.stack
-		approved := job.approved
-		dryRun := job.dryRun
-		renderTemplates := job.renderTemplates
-
-		kappRootDir := installableObj.GetCacheDir()
-		log.Logger.Infof("Processing kapp '%s' in %s", installableObj.FullyQualifiedId(), kappRootDir)
-
-		// todo - print (to stdout) detais of the kapp being executed
-
-		_, err := os.Stat(kappRootDir)
-		if err != nil {
-			msg := fmt.Sprintf("Kapp '%s' doesn't exist in the cache at '%s'", installableObj.Id(), kappRootDir)
-			log.Logger.Warn(msg)
-			errCh <- errors.Wrap(err, msg)
-		}
-
-		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a Make installer)
-		installerImpl, err := installer.New(installer.MAKE, stackObj.GetProvider())
-		if err != nil {
-			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
-				"kapp '%s'", installableObj.Id())
-		}
-
-		switch task.action {
-		case constants.TaskActionInstall:
-			err := installerImpl.Install(installableObj, stackObj, approved, renderTemplates, dryRun)
-			if err != nil {
-				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
-			}
-
-			// only add outputs if we've actually run the kapp
-			if approved && installableObj.HasOutputs() {
-				err := installerImpl.Output(installableObj, stackObj, approved, renderTemplates, dryRun)
-				if err != nil {
-					errCh <- errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
-				}
-
-				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
-				if err != nil {
-					errCh <- errors.WithStack(err)
-				}
-
-				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
-				err = renderKappTemplates(stackObj, installableObj, dryRun)
-				if err != nil {
-					errCh <- errors.WithStack(err)
-				}
-			}
-			break
-		case constants.TaskActionDelete:
-			err := installerImpl.Delete(installableObj, stackObj, approved, renderTemplates, dryRun)
-			if err != nil {
-				errCh <- errors.Wrapf(err, "Error deleting kapp '%s'", installableObj.Id())
-			}
-
-			// only add outputs if we've actually run the kapp
-			if approved && installableObj.HasOutputs() {
-				err := installerImpl.Output(installableObj, stackObj, approved, renderTemplates, dryRun)
-				if err != nil {
-					errCh <- errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
-				}
-
-				// todo - add options to control whether to add outputs on installation (default), deletion or both
-				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
-				if err != nil {
-					errCh <- errors.WithStack(err)
-				}
-
-				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
-				err = renderKappTemplates(stackObj, installableObj, dryRun)
-				if err != nil {
-					errCh <- errors.WithStack(err)
-				}
-			}
-			break
-			//case constants.TaskActionClusterUpdate:
-			//	if approved {
-			//		log.Logger.Info("Running cluster update action")
-			//		err := cluster.UpdateCluster(os.Stdout, stackObj, true, dryRun)
-			//		if err != nil {
-			//			errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'",
-			//				installableObj.Id())
-			//		}
-			//	} else {
-			//		log.Logger.Info("Skipping cluster update action since approved=false")
-			//	}
-			//	break
-			//case constants.TaskAddProviderVarsFiles:
-			//	if approved {
-			//		log.Logger.Infof("Running action to add provider vars dirs")
-			//		// todo - run each path through the templater
-			//		for _, path := range task.params {
-			//			if !filepath.IsAbs(path) {
-			//				// convert the relative path to absolute
-			//				path = filepath.Join(installableObj.GetConfigFileDir(), path)
-			//			}
-			//
-			//			log.Logger.Debugf("Adding provider vars dir: %s", path)
-			//			stackObj.GetProvider().AddVarsPath(path)
-			//		}
-			//	} else {
-			//		log.Logger.Info("Skipping action to add extra provider vars dirs since approved=false")
-			//	}
-			//	break
-		}
-
-		doneCh <- true
-	}
-}
-
-// Adds output from an installable to the registry
-func addOutputsToRegistry(installableObj interfaces.IInstallable, registry interfaces.IRegistry, dryRun bool) error {
-	outputs, err := installableObj.GetOutputs(dryRun)
-	if err != nil {
-		return errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
-	}
-
-	// We convert kapp IDs to have underscores because Go's templating library throws its toys out
-	// the pram when it find a map key with a hyphen in. K8s is the opposite, so this seems like
-	// the least worst way of accommodating both
-	underscoredInstallableId := strings.Replace(installableObj.Id(), "-", "_", -1)
-	underscoredInstallableFQId := strings.Replace(installableObj.FullyQualifiedId(), "-", "_", -1)
-
-	prefixes := []string{
-		// "outputs.this"
-		strings.Join([]string{constants.RegistryKeyOutputs, constants.RegistryKeyThis}, constants.RegistryFieldSeparator),
-		// short prefix - can be used by other kapps in the manifest
-		strings.Join([]string{constants.RegistryKeyOutputs, underscoredInstallableId},
-			constants.RegistryFieldSeparator),
-		// fully-qualified prefix - can be used by kapps in other manifests
-		strings.Join([]string{constants.RegistryKeyOutputs,
-			underscoredInstallableFQId}, constants.RegistryFieldSeparator),
-	}
-
-	// store the output under various keys
-	for outputId, output := range outputs {
-		for _, prefix := range prefixes {
-			key := strings.Join([]string{prefix, outputId}, constants.RegistryFieldSeparator)
-			err = registry.Set(key, output)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-		}
-	}
-
-	return nil
-}
-
-// Deletes all outputs from the registry that aren't fully qualified
-func deleteNonFullyQualifiedOutputs(registry interfaces.IRegistry) {
-	outputs, ok := registry.Get(constants.RegistryKeyOutputs)
-	if !ok {
-		return
-	}
-
-	// iterate through all the keys for those that aren't fully qualified and delete them
-	for k, _ := range outputs.(map[string]interface{}) {
-		if !strings.Contains(k, constants.NamespaceSeparator) {
-			fullKey := strings.Join([]string{
-				constants.RegistryKeyOutputs, k}, constants.RegistryFieldSeparator)
-			registry.Delete(fullKey)
-		}
-	}
-
-	// delete the special constant key "this"
-	registry.Delete(strings.Join([]string{constants.RegistryKeyOutputs,
-		constants.RegistryKeyThis}, constants.RegistryFieldSeparator))
-}
+//func processKapp(jobs <-chan job, doneCh chan bool, errCh chan error) {
+//
+//	for job := range jobs {
+//		task := job.task
+//		installableObj := task.installableObj
+//		stackObj := job.stack
+//		approved := job.approved
+//		dryRun := job.dryRun
+//		renderTemplates := job.renderTemplates
+//
+//		kappRootDir := installableObj.GetCacheDir()
+//		log.Logger.Infof("Processing kapp '%s' in %s", installableObj.FullyQualifiedId(), kappRootDir)
+//
+//		// todo - print (to stdout) detais of the kapp being executed
+//
+//		_, err := os.Stat(kappRootDir)
+//		if err != nil {
+//			msg := fmt.Sprintf("Kapp '%s' doesn't exist in the cache at '%s'", installableObj.Id(), kappRootDir)
+//			log.Logger.Warn(msg)
+//			errCh <- errors.Wrap(err, msg)
+//		}
+//
+//		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a Make installer)
+//		installerImpl, err := installer.New(installer.MAKE, stackObj.GetProvider())
+//		if err != nil {
+//			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
+//				"kapp '%s'", installableObj.Id())
+//		}
+//
+//		switch task.action {
+//		case constants.TaskActionInstall:
+//			err := installerImpl.Install(installableObj, stackObj, approved, renderTemplates, dryRun)
+//			if err != nil {
+//				errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
+//			}
+//
+//			// only add outputs if we've actually run the kapp
+//			if approved && installableObj.HasOutputs() {
+//				err := installerImpl.Output(installableObj, stackObj, approved, renderTemplates, dryRun)
+//				if err != nil {
+//					errCh <- errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
+//				}
+//
+//				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
+//				if err != nil {
+//					errCh <- errors.WithStack(err)
+//				}
+//
+//				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
+//				err = renderKappTemplates(stackObj, installableObj, dryRun)
+//				if err != nil {
+//					errCh <- errors.WithStack(err)
+//				}
+//			}
+//			break
+//		case constants.TaskActionDelete:
+//			err := installerImpl.Delete(installableObj, stackObj, approved, renderTemplates, dryRun)
+//			if err != nil {
+//				errCh <- errors.Wrapf(err, "Error deleting kapp '%s'", installableObj.Id())
+//			}
+//
+//			// only add outputs if we've actually run the kapp
+//			if approved && installableObj.HasOutputs() {
+//				err := installerImpl.Output(installableObj, stackObj, approved, renderTemplates, dryRun)
+//				if err != nil {
+//					errCh <- errors.Wrapf(err, "Error getting output for kapp '%s'", installableObj.Id())
+//				}
+//
+//				// todo - add options to control whether to add outputs on installation (default), deletion or both
+//				err = addOutputsToRegistry(installableObj, stackObj.GetRegistry(), dryRun)
+//				if err != nil {
+//					errCh <- errors.WithStack(err)
+//				}
+//
+//				// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
+//				err = renderKappTemplates(stackObj, installableObj, dryRun)
+//				if err != nil {
+//					errCh <- errors.WithStack(err)
+//				}
+//			}
+//			break
+//case constants.TaskActionClusterUpdate:
+//	if approved {
+//		log.Logger.Info("Running cluster update action")
+//		err := cluster.UpdateCluster(os.Stdout, stackObj, true, dryRun)
+//		if err != nil {
+//			errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'",
+//				installableObj.Id())
+//		}
+//	} else {
+//		log.Logger.Info("Skipping cluster update action since approved=false")
+//	}
+//	break
+//case constants.TaskAddProviderVarsFiles:
+//	if approved {
+//		log.Logger.Infof("Running action to add provider vars dirs")
+//		// todo - run each path through the templater
+//		for _, path := range task.params {
+//			if !filepath.IsAbs(path) {
+//				// convert the relative path to absolute
+//				path = filepath.Join(installableObj.GetConfigFileDir(), path)
+//			}
+//
+//			log.Logger.Debugf("Adding provider vars dir: %s", path)
+//			stackObj.GetProvider().AddVarsPath(path)
+//		}
+//	} else {
+//		log.Logger.Info("Skipping action to add extra provider vars dirs since approved=false")
+//	}
+//	break
+//}
+//
+//		doneCh <- true
+//	}
+//}
 
 // Renders templates for a kapp
 func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.IInstallable,
 	dryRun bool) error {
 
-	// todo - this should take a copy of the registry so we don't mutate the global one
+	// todo - this should take a copy of the registry so we don't mutate the global one.
+	//  Remember to use the the global registry as the base fragment
 
 	templatedVars, err := stackObj.GetTemplatedVars(installableObj, nil)
 	if err != nil {

@@ -19,7 +19,7 @@ package structs
 // Structs to load a manifest YAML file
 
 type ManifestOptions struct {
-	Parallelisation uint16
+	IsSequential bool `yaml:"is_sequential"` // if true, each kapp in a manifest will have a dependency on the previous one
 }
 
 type ManifestFile struct {

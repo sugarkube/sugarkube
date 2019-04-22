@@ -51,9 +51,9 @@ func (m *Manifest) Installables() []interfaces.IInstallable {
 	return m.installables
 }
 
-// Return the parallelisation if set
-func (m Manifest) Parallelisation() uint16 {
-	return m.manifestFile.Options.Parallelisation
+// Return whether the manifest is sequential, i.e. whether each kapp in the manifest depends on the previous one
+func (m Manifest) IsSequential() bool {
+	return m.manifestFile.Options.IsSequential
 }
 
 // Instantiate installables for kapps defined in manifest files. Note: No overrides are applied at this stage.

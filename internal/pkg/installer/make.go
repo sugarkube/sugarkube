@@ -70,6 +70,7 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 	templatedVars, err := stack.GetTemplatedVars(installable,
 		map[string]interface{}{"target": makeTarget, "approved": approved})
 
+	// todo - don't render templates here - render them in the executor instead
 	if renderTemplates {
 		renderedTemplates, err := installable.RenderTemplates(templatedVars, stack.GetConfig(),
 			dryRun)
@@ -96,7 +97,7 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 		log.Logger.Infof("Skipping writing templates for kapp '%s'", installable.FullyQualifiedId())
 	}
 
-	// load the kapp's own config
+	// remerge and template the kapp's descriptor
 	err = installable.TemplateDescriptor(templatedVars)
 	if err != nil {
 		return errors.WithStack(err)

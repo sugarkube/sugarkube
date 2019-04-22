@@ -95,7 +95,7 @@ func TestTemplatedVarsWithRegistry(t *testing.T) {
 			sleepBeforeReadyCheck: 0,
 			startedThisRun:        false,
 		},
-		registry: &registryObj,
+		registry: registryObj,
 	}
 
 	templatedVars, err := stackObj.GetTemplatedVars(nil, map[string]interface{}{})

@@ -44,4 +44,6 @@ type IInstallable interface {
 		dryRun bool) ([]string, error)
 	GetOutputs(dryRun bool) (map[string]interface{}, error)
 	HasOutputs() bool
+	GetLocalRegistry() IRegistry
+	SetLocalRegistry(registry IRegistry)
 }

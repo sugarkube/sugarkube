@@ -25,7 +25,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
-	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"gopkg.in/yaml.v2"
@@ -42,12 +41,12 @@ type Stack struct {
 	provider     interfaces.IProvider
 	provisioner  interfaces.IProvisioner
 	status       *ClusterStatus
-	registry     *registry.Registry
+	registry     interfaces.IRegistry
 }
 
 // Creates a new Stack
 func newStack(globalConfig *config.Config, config interfaces.IStackConfig,
-	provider interfaces.IProvider, registry *registry.Registry) (interfaces.IStack, error) {
+	provider interfaces.IProvider, registry interfaces.IRegistry) (interfaces.IStack, error) {
 
 	stack := &Stack{
 		globalConfig: globalConfig,

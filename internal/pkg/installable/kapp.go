@@ -44,6 +44,8 @@ type Kapp struct {
 	mergedDescriptor structs.KappDescriptorWithMaps   // the final descriptor after merging all the descriptor layers. This is a template until its rendered by TemplateDescriptor
 	descriptorLayers []structs.KappDescriptorWithMaps // config templates where values from later configs will take precedence over earlier ones
 	kappCacheDir     string                           // the top-level directory for this kapp in the cache, i.e. the directory containing the kapp's .sugarkube directory
+	localRegistry    interfaces.IRegistry             // a registry local to the kapp that contains the results of merging
+	// each of its parents' registries, tailored depending on whether parent was in the same manifest
 }
 
 // Returns the non-fully qualified ID
@@ -305,6 +307,18 @@ func (k Kapp) HasOutputs() bool {
 	return len(k.mergedDescriptor.Outputs) > 0
 }
 
+// Returns the kapps local registry, which is the result of merging all its parents' local registries,
+// cleaned up to account for parents possibly being in different manifests. It doesn't include the
+// global registry though.
+func (k Kapp) GetLocalRegistry() interfaces.IRegistry {
+	return k.localRegistry
+}
+
+// Sets the local registry for the kapp
+func (k Kapp) SetLocalRegistry(registry interfaces.IRegistry) {
+	k.localRegistry = registry
+}
+
 // Templates the kapp's merged descriptor
 func (k *Kapp) TemplateDescriptor(templateVars map[string]interface{}) error {
 
@@ -330,14 +344,14 @@ func (k *Kapp) TemplateDescriptor(templateVars map[string]interface{}) error {
 	log.Logger.Tracef("Rendered merged kapp descriptor\n%#v\nto:\n%s",
 		templateString, outBuf.String())
 
-	config := structs.KappDescriptorWithMaps{}
-	err = yaml.Unmarshal(outBuf.Bytes(), &config)
+	configObj := structs.KappDescriptorWithMaps{}
+	err = yaml.Unmarshal(outBuf.Bytes(), &configObj)
 	if err != nil {
 		return errors.Wrapf(err, "Error unmarshalling rendered merged kapp descriptor: %s",
 			outBuf.String())
 	}
 
-	k.mergedDescriptor = config
+	k.mergedDescriptor = configObj
 	return nil
 }
 
@@ -624,7 +638,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 	return renderedPaths, nil
 }
 
-// Returns outputs for the kapp where the map key is the output ID
+// Loads outputs for the kapp, parses and returns them
 func (k Kapp) GetOutputs(dryRun bool) (map[string]interface{}, error) {
 	outputs := map[string]interface{}{}
 

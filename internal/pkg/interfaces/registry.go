@@ -21,4 +21,5 @@ type IRegistry interface {
 	Get(key string) (interface{}, bool)
 	Delete(key string)
 	AsMap() map[string]interface{}
+	Copy() (IRegistry, error)
 }

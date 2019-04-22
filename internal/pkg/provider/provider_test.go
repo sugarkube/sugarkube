@@ -33,7 +33,7 @@ func getMockStack(t *testing.T, dir string, name string, account string, provide
 	config := getMockStackConfig(t, dir, name, account, provider, provisioner, profile, cluster, region, providerVarsDirs)
 	return &mock.MockStack{
 		Config:   config,
-		Registry: &registryObj,
+		Registry: registryObj,
 	}
 }
 

@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"reflect"
@@ -31,16 +32,29 @@ type Registry struct {
 	data map[string]interface{}
 }
 
-func New() Registry {
+func New() interfaces.IRegistry {
 	// todo - find a better way of initialising this. We need to do this
 	//  so `kapp vars` doesn't output '<no value>' which might be confusing.
 	kubeConfig := os.Getenv(strings.ToUpper(constants.RegistryKeyKubeConfig))
 
-	return Registry{
+	return &Registry{
 		data: map[string]interface{}{
 			constants.RegistryKeyKubeConfig: kubeConfig,
 		},
 	}
+}
+
+// Returns a copy of the registry
+func (r *Registry) Copy() (interfaces.IRegistry, error) {
+	newRegistry := New()
+	for k, v := range r.AsMap() {
+		err := newRegistry.Set(k, v)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
+	return newRegistry, nil
 }
 
 // Add data to the registry.

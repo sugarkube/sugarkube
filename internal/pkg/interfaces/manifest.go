@@ -19,5 +19,5 @@ package interfaces
 type IManifest interface {
 	Id() string
 	Installables() []IInstallable
-	Parallelisation() uint16
+	IsSequential() bool
 }

@@ -78,7 +78,7 @@ func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.
 
 	registryImpl := registry.New()
 
-	stackObj, err := newStack(globalConfig, stackConfig, providerImpl, &registryImpl)
+	stackObj, err := newStack(globalConfig, stackConfig, providerImpl, registryImpl)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

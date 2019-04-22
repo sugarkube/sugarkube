@@ -30,9 +30,8 @@ func findDependencies(manifests []interfaces.IManifest) map[string]nodeDescripto
 		for _, installableObj := range manifest.Installables() {
 			dependencies := make([]string, 0)
 
-			// if parallelisation is disabled, each kapp implicitly depends on the previous one
-			// for convenience
-			if manifest.Parallelisation() == 1 {
+			// if a manifest is marked as being sequential, each kapp depends on the previous one
+			if manifest.IsSequential() {
 				if previousInstallable != "" {
 					dependencies = append(dependencies, previousInstallable)
 				}
