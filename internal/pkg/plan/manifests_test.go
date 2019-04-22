@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dag
+package plan
 
 import (
 	"github.com/stretchr/testify/assert"

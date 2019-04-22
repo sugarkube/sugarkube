@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dag
+package plan
 
 import (
 	"fmt"
@@ -185,7 +185,7 @@ func TestSubGraph(t *testing.T) {
 	}
 }
 
-func assertDependencies(t *testing.T, graphObj *dag, descriptors map[string]nodeDescriptor,
+func assertDependencies(t *testing.T, graphObj *Dag, descriptors map[string]nodeDescriptor,
 	nodesByName map[string]NamedNode, nodeName string, shouldProcess bool) {
 	node := nodesByName[nodeName]
 

@@ -22,9 +22,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/dag"
-	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
@@ -127,8 +124,6 @@ process before deleting the selected kapps.
 
 func (c *deleteCmd) run() error {
 
-	// todo - pull out the stuff common to install.go
-
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &structs.StackFile{
 		Provider:    c.provider,
@@ -150,8 +145,6 @@ func (c *deleteCmd) run() error {
 	if c.dryRun {
 		dryRunPrefix = "[Dry run] "
 	}
-
-	var actionPlan *dag.Plan
 
 	// uncomment this when cluster diffing has been implemented
 	//if !c.force {
@@ -192,85 +185,38 @@ func (c *deleteCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
-	// in selectors
-	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
-		c.includeSelector, c.excludeSelector)
+	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector, "")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	// load configs for all installables in the stack
-	err = stackObj.LoadInstallables(c.cacheDir)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	// force mode, so no need to perform validation. Just create a reverse plan
-	actionPlan, err = dag.CreatePlan(false, stackObj, stackObj.GetConfig().Manifests(),
-		selectedInstallables, !c.skipTemplating, !c.skipPostActions)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	// todo - print out the plan
+	// todo - print out the DAG
 	//}
 
 	if c.establishConnection {
-		log.Logger.Infof("%sEstablishing connectivity to the API server",
-			dryRunPrefix)
-		if !c.dryRun {
-			isOnline, err := provisioner.IsAlreadyOnline(stackObj.GetProvisioner(), c.dryRun)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			if !isOnline {
-				return errors.New(fmt.Sprintf("Cluster '%s' isn't online. Can't "+
-					"establish a connection to the API server", stackObj.GetConfig().GetCluster()))
-			}
+		err = establishConnection(c.dryRun, dryRunPrefix)
+		if err != nil {
+			return errors.WithStack(err)
 		}
 	}
 
-	if !c.oneShot {
-		_, err = fmt.Fprintf(c.out, "%sApplying the plan to delete kapps with APPROVED=%#v...\n",
-			dryRunPrefix, c.approved)
-		if err != nil {
-			return errors.WithStack(err)
-		}
+	shouldPlan := false
+	approved := false
 
-		err := actionPlan.Run(c.approved, c.dryRun)
-		if err != nil {
-			return errors.WithStack(err)
-		}
+	if c.oneShot {
+		shouldPlan = true
+		approved = true
 	} else {
-		_, err = fmt.Fprintf(c.out, "%sApplying the plan in a single pass\n", dryRunPrefix)
-		if err != nil {
-			return errors.WithStack(err)
+		if c.approved {
+			approved = true
+		} else {
+			shouldPlan = true
 		}
+	}
 
-		_, err = fmt.Fprint(c.out, "%sFirst applying the plan with APPROVED=false for "+
-			"kapps to plan their changes...\n", dryRunPrefix)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		// one-shot mode, so prepare and run the plan straight away
-		err = actionPlan.Run(false, c.dryRun)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		_, err = fmt.Fprintf(c.out, "%sNow running with APPROVED=true to "+
-			"actually delete kapps...\n", dryRunPrefix)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		err = actionPlan.Run(true, c.dryRun)
-		if err != nil {
-			return errors.WithStack(err)
-		}
+	err = dagObj.Execute(constants.DagActionDelete, stackObj, shouldPlan, approved, c.dryRun)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	_, err = fmt.Fprintf(c.out, "%sKapp change plan successfully applied\n", dryRunPrefix)

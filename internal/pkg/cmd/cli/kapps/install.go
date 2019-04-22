@@ -22,8 +22,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/dag"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
@@ -216,31 +217,7 @@ func (c *installCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	// load configs for all installables in the stack
-	err = stackObj.LoadInstallables(c.cacheDir)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	// selected kapps will be returned in the order in which they appear in manifests, not the order
-	// they're specified in selectors
-	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
-		c.includeSelector, c.excludeSelector)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	filteredInstallableIds := make([]string, 0)
-
-	// since we want to install kapps, remove any whose state isn't 'present'
-	for _, installableObj := range selectedInstallables {
-		if installableObj.State() == constants.PresentKey {
-			filteredInstallableIds = append(filteredInstallableIds,
-				installableObj.FullyQualifiedId())
-		}
-	}
-
-	dagObj, err := dag.Create(stackObj.GetConfig().Manifests(), filteredInstallableIds)
+	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector, constants.PresentKey)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -249,36 +226,27 @@ func (c *installCmd) run() error {
 	//}
 
 	if c.establishConnection {
-		log.Logger.Infof("%sEstablishing connectivity to the API server",
-			dryRunPrefix)
-		if !c.dryRun {
-			isOnline, err := provisioner.IsAlreadyOnline(stackObj.GetProvisioner(), c.dryRun)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			if !isOnline {
-				return errors.New(fmt.Sprintf("Cluster '%s' isn't online. Can't "+
-					"establish a connection to the API server", stackObj.GetConfig().GetCluster()))
-			}
+		err = establishConnection(c.dryRun, dryRunPrefix)
+		if err != nil {
+			return errors.WithStack(err)
 		}
 	}
 
-	plan := false
-	apply := false
+	shouldPlan := false
+	approved := false
 
 	if c.oneShot {
-		plan = true
-		apply = true
+		shouldPlan = true
+		approved = true
 	} else {
 		if c.approved {
-			apply = true
+			approved = true
 		} else {
-			plan = true
+			shouldPlan = true
 		}
 	}
 
-	err = dagObj.Execute(constants.DagActionInstall, stackObj, plan, apply, c.dryRun)
+	err = dagObj.Execute(constants.DagActionInstall, stackObj, shouldPlan, approved, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -286,6 +254,65 @@ func (c *installCmd) run() error {
 	_, err = fmt.Fprintf(c.out, "%sKapp change plan successfully applied\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+// Creates a DAG for installables matched by selectors. If an optional state (e.g. present, absent, etc.) is
+// provided, only installables with the same state will be included in the returned DAG
+func BuildDagForSelected(stackObj interfaces.IStack, cacheDir string, includeSelector []string,
+	excludeSelector []string, stateFilter string) (*plan.Dag, error) {
+	// load configs for all installables in the stack
+	err := stackObj.LoadInstallables(cacheDir)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	// selected kapps will be returned in the order in which they appear in manifests, not the order
+	// they're specified in selectors
+	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
+		includeSelector, excludeSelector)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	filteredInstallableIds := make([]string, 0)
+
+	// since we want to install kapps, remove any whose state isn't 'present'
+	for _, installableObj := range selectedInstallables {
+		if stateFilter != "" && installableObj.State() == stateFilter {
+			filteredInstallableIds = append(filteredInstallableIds,
+				installableObj.FullyQualifiedId())
+		} else {
+			// no filtering so add all instances
+			filteredInstallableIds = append(filteredInstallableIds,
+				installableObj.FullyQualifiedId())
+		}
+	}
+
+	dagObj, err := plan.Create(stackObj.GetConfig().Manifests(), filteredInstallableIds)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return dagObj, nil
+}
+
+// Establish a connection to the cluster if necessary
+func establishConnection(dryRun bool, dryRunPrefix string) error {
+	log.Logger.Infof("%sEstablishing connectivity to the API server",
+		dryRunPrefix)
+	if !dryRun {
+		isOnline, err := provisioner.IsAlreadyOnline(stackObj.GetProvisioner(), c.dryRun)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		if !isOnline {
+			return errors.New(fmt.Sprintf("Cluster '%s' isn't online. Can't "+
+				"establish a connection to the API server", stackObj.GetConfig().GetCluster()))
+		}
 	}
 
 	return nil

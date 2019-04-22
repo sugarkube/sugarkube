@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dag
+package plan
 
 import (
 	"fmt"
@@ -33,7 +33,7 @@ const (
 )
 
 // Wrapper around a directed graph so we can define our own methods on it
-type dag struct {
+type Dag struct {
 	graph     *simple.DirectedGraph
 	sleepTime time.Duration
 }
@@ -69,7 +69,7 @@ type nodeStatus struct {
 
 // Creates a DAG for installables in the given manifests. If a list of selected installable IDs is
 // given a subgraph will be returned containing only those installables and their ancestors.
-func Create(manifests []interfaces.IManifest, selectedInstallableIds []string) (*dag, error) {
+func Create(manifests []interfaces.IManifest, selectedInstallableIds []string) (*Dag, error) {
 	descriptors := findDependencies(manifests)
 	dag, err := build(descriptors)
 	if err != nil {
@@ -87,7 +87,7 @@ func Create(manifests []interfaces.IManifest, selectedInstallableIds []string) (
 // Builds a graph from a map of descriptors that contain a string node ID plus a list of
 // IDs of nodes that node depends on (i.e. parents).
 // An error will be returned if the resulting graph is cyclical.
-func build(descriptors map[string]nodeDescriptor) (*dag, error) {
+func build(descriptors map[string]nodeDescriptor) (*Dag, error) {
 	graphObj := simple.NewDirectedGraph()
 	nodesByName := make(map[string]NamedNode, 0)
 
@@ -128,7 +128,7 @@ func build(descriptors map[string]nodeDescriptor) (*dag, error) {
 		return nil, fmt.Errorf("Cyclical dependencies detected")
 	}
 
-	dag := dag{
+	dag := Dag{
 		graph:     graphObj,
 		sleepTime: 500 * time.Millisecond,
 	}
@@ -180,7 +180,7 @@ func isAcyclic(graphObj *simple.DirectedGraph) bool {
 // Returns a new DAG comprising the nodes in the given input list and all their
 // ancestors. The returned graph is guaranteed to be a DAG. All nodes in the input list will be
 // marked for processing in the returned subgraph.
-func (g *dag) subGraph(nodeNames []string) (*dag, error) {
+func (g *Dag) subGraph(nodeNames []string) (*Dag, error) {
 	outputGraph := simple.NewDirectedGraph()
 
 	inputGraphNodesByName := g.nodesByName()
@@ -199,7 +199,7 @@ func (g *dag) subGraph(nodeNames []string) (*dag, error) {
 		addAncestors(g.graph, outputGraph, ogNodesByName, inputGraphNode, ogNode)
 	}
 
-	dag := dag{
+	dag := Dag{
 		graph:     outputGraph,
 		sleepTime: 500 * time.Millisecond,
 	}
@@ -229,7 +229,7 @@ func addAncestors(inputGraph *simple.DirectedGraph, outputGraph *simple.Directed
 }
 
 // Returns a map of nodeStatuses for each node in the graph keyed by node ID
-func (g *dag) nodeStatusesById() map[int64]nodeStatus {
+func (g *Dag) nodeStatusesById() map[int64]nodeStatus {
 	nodeMap := make(map[int64]nodeStatus, 0)
 
 	nodes := g.graph.Nodes()
@@ -246,7 +246,7 @@ func (g *dag) nodeStatusesById() map[int64]nodeStatus {
 }
 
 // Returns a map of nodes keyed by node name
-func (g *dag) nodesByName() map[string]NamedNode {
+func (g *Dag) nodesByName() map[string]NamedNode {
 	nodeMap := make(map[string]NamedNode, 0)
 
 	nodes := g.graph.Nodes()
@@ -262,7 +262,7 @@ func (g *dag) nodesByName() map[string]NamedNode {
 // Traverses the graph from the root to leaves. Nodes will only be processed once their
 // dependencies have been processed. Not having dependencies is a special case of this.
 // The size of the processCh buffer determines the level of parallelisation
-func (g *dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
+func (g *Dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
 
 	log.Logger.Info("Starting DAG traversal...")
 	nodeStatusesById := g.nodeStatusesById()
@@ -313,7 +313,7 @@ func (g *dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 }
 
 // todo - implement
-func (g *dag) WalkUp(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
+func (g *Dag) WalkUp(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
 	panic("Not implemented")
 	finishedCh := make(chan bool)
 	return finishedCh

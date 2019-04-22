@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dag
+package plan
 
 import (
 	"fmt"
@@ -38,7 +38,7 @@ const parallelisation = 5
 // todo - should we add options to skip templating or running post actions?
 // Traverses the DAG executing the named action on marked/processable nodes depending on the
 // given options
-func (d *dag) Execute(action string, stackObj interfaces.IStack, plan bool, approved bool, dryRun bool) error {
+func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, approved bool, dryRun bool) error {
 	processCh := make(chan NamedNode, parallelisation)
 	doneCh := make(chan NamedNode)
 	errCh := make(chan error)
@@ -80,7 +80,7 @@ func (d *dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 
 // Processes an installable, either installing/deleting it, running post actions or
 // loading its outputs, etc.
-func worker(dagObj *dag, processCh <-chan NamedNode, doneCh chan NamedNode, errCh chan error,
+func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan NamedNode, errCh chan error,
 	action string, stackObj interfaces.IStack, plan bool, approved bool, dryRun bool) {
 
 	for node := range processCh {
@@ -122,7 +122,7 @@ func worker(dagObj *dag, processCh <-chan NamedNode, doneCh chan NamedNode, errC
 
 // Implements the install action. Nodes that should be processed are installed. All nodes load any outputs
 // and merge them with their parents' outputs.
-func installOrDelete(install bool, dagObj *dag, node NamedNode, installerImpl interfaces.IInstaller, stackObj interfaces.IStack,
+func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl interfaces.IInstaller, stackObj interfaces.IStack,
 	plan bool, approved bool, dryRun bool, errCh chan error) {
 
 	installableObj := node.installableObj
@@ -132,8 +132,10 @@ func installOrDelete(install bool, dagObj *dag, node NamedNode, installerImpl in
 		actionName = "delete"
 	}
 
+	installerVars := installerImpl.GetVars(actionName, plan, approved)
+
 	// render templates in case any are used as outputs for some reason
-	err := renderKappTemplates(stackObj, installableObj, installerImpl, actionName, plan, approved, dryRun)
+	err := renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
 	if err != nil {
 		errCh <- errors.WithStack(err)
 	}
@@ -188,7 +190,7 @@ func installOrDelete(install bool, dagObj *dag, node NamedNode, installerImpl in
 	buildLocalRegistry(dagObj, node, outputs, errCh)
 
 	// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
-	err = renderKappTemplates(stackObj, installableObj, installerImpl, actionName, plan, approved, dryRun)
+	err = renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
 	if err != nil {
 		errCh <- errors.WithStack(err)
 	}
@@ -205,7 +207,7 @@ func installOrDelete(install bool, dagObj *dag, node NamedNode, installerImpl in
 // each local registry of each parent. If the parent's manifest ID is different to the current node's
 // manifest ID registry keys for non fully-qualified installable IDs will be deleted from the registry
 // before merging. In all cases the special value 'this' will not be merged either.
-func buildLocalRegistry(dagObj *dag, node NamedNode, outputs map[string]interface{}, errCh chan<- error) {
+func buildLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string]interface{}, errCh chan<- error) {
 	localRegistry := registry.New()
 
 	parents := dagObj.graph.To(node.ID())
@@ -337,13 +339,13 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, outputs map[st
 
 // Renders templates for a kapp
 func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.IInstallable,
-	installer interfaces.IInstaller, action string, plan bool, approved bool, dryRun bool) error {
+	installerVars map[string]interface{}, dryRun bool) error {
 
 	// todo - this should take a copy of the registry so we don't mutate the global one.
 	//  Remember to use the the global registry as the base fragment
 
 	// merge all the vars required to render the kapp's sugarkube.yaml file
-	templatedVars, err := stackObj.GetTemplatedVars(installableObj, installer.GetVars(action, plan, approved))
+	templatedVars, err := stackObj.GetTemplatedVars(installableObj, installerVars)
 
 	renderedTemplatePaths, err := installableObj.RenderTemplates(templatedVars, stackObj.GetConfig(),
 		dryRun)
