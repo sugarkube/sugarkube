@@ -10,14 +10,16 @@
 ## bugs:
 * merging kapp outputs together causes global helm-opts, etc. to grow out of control because each kapp has
   those settings, and we need to append list values when merging, so they keep getting appended together
-* Need to merge the global registry with a kapp's local registry before templating to make those values available
-* the registry currently doesn't work correctly when templating files
 
 ### DAG algorithm
 * When installing specific kapps, create a DAG for the entire set of manifests, then extract a subgraph for the target
   kapps. Now process the graph from the root: For all nodes which aren't the target nodes, if they declare output try 
   to load it from a previous run. If no previous output exists invoke `make output`, and only `make install/delete`
   on the target kapps, and execute any post actions they define.
+* To delete a kapp, build a DAG for the whole set of manifests then extract a subgraph for the target kapp(s). Next 
+  traverse the DAG loading outputs as above, then walk up the dag from leaves to children, deleting kapps along the 
+  way. Marked kapps can only be deleted if all their children have been deleted (maybe add a force flag to allow 
+  knocking out a kapp, punching a hole in the DAG)
 
 ### Merging kapp configs
 * Create a 'validate' command to verify that binaries declared in `requires` blocks exists

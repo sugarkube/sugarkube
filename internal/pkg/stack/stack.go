@@ -141,7 +141,7 @@ func (s *Stack) GetTemplatedVars(installableObj interfaces.IInstallable,
 	configFragments = append(configFragments, stackConfig.GetProviderVars())
 
 	// merge in values from the registry
-	log.Logger.Tracef("Merging stack vars with registry: %v", s.registry)
+	log.Logger.Tracef("Merging stack vars with global registry: %v", s.registry)
 	configFragments = append(configFragments, s.registry.AsMap())
 
 	if installableObj != nil {

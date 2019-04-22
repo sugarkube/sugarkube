@@ -523,6 +523,15 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		dryRunPrefix = "[Dry run] "
 	}
 
+	// merge the local registry with the template vars so outputs are available to templates
+	log.Logger.Tracef("Merging local registry for kapp '%s' with template vars. Local registry is: %#v",
+		k.FullyQualifiedId(), k.localRegistry)
+
+	err := vars.MergeWithStrategy(&templateVars, k.localRegistry.AsMap())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	// make sure the cache dir exists
 	if _, err := os.Stat(k.GetCacheDir()); err != nil {
 		return nil, errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
