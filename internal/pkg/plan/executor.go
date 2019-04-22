@@ -53,6 +53,7 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 	var finishedCh <-chan bool
 
 	switch action {
+	case constants.DagActionTemplate:
 	case constants.DagActionInstall:
 		finishedCh = d.WalkDown(processCh, doneCh)
 		break
@@ -113,6 +114,12 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan NamedNode, errC
 			break
 		case constants.DagActionDelete:
 			installOrDelete(false, dagObj, node, installerImpl, stackObj, plan, approved, dryRun, errCh)
+			break
+		case constants.DagActionTemplate:
+			err = renderKappTemplates(stackObj, installableObj, nil, dryRun)
+			if err != nil {
+				errCh <- errors.WithStack(err)
+			}
 			break
 		}
 

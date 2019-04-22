@@ -22,12 +22,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
-	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
-	"strings"
 )
 
 type templateConfig struct {
@@ -105,26 +102,13 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
-	// in selectors
-	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
-		c.includeSelector, c.excludeSelector)
+	// create a DAG to template all the kapps
+	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector, "")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	// load configs for all installables in the stack
-	err = stackObj.LoadInstallables(c.cacheDir)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	_, err = fmt.Fprintf(c.out, "Rendering templates for %d kapps\n", len(selectedInstallables))
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	err = RenderTemplates(selectedInstallables, c.cacheDir, stackObj, c.dryRun)
+	err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -132,36 +116,6 @@ func (c *templateConfig) run() error {
 	_, err = fmt.Fprintln(c.out, "Templates successfully rendered")
 	if err != nil {
 		return errors.WithStack(err)
-	}
-
-	return nil
-}
-
-// Render templates for kapps defined in a stack config
-func RenderTemplates(installables []interfaces.IInstallable, cacheDir string, stack interfaces.IStack,
-	dryRun bool) error {
-
-	if len(installables) == 0 {
-		return errors.New("No installables supplied to template function")
-	}
-
-	candidateKappIds := make([]string, 0)
-	for _, k := range installables {
-		candidateKappIds = append(candidateKappIds, k.FullyQualifiedId())
-	}
-
-	log.Logger.Debugf("Rendering templates for installables: %s", strings.Join(candidateKappIds, ", "))
-
-	for _, kappObj := range installables {
-		templatedVars, err := stack.GetTemplatedVars(kappObj, map[string]interface{}{})
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		_, err = kappObj.RenderTemplates(templatedVars, stack.GetConfig(), dryRun)
-		if err != nil {
-			return errors.WithStack(err)
-		}
 	}
 
 	return nil

@@ -23,7 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
@@ -155,17 +155,13 @@ func (c *createCmd) run() error {
 			return errors.WithStack(err)
 		}
 
-		// template kapps
-		// todo - build a DAG then render all templates from that so we can merge outputs
-		candidateKapps := make([]interfaces.IInstallable, 0)
-
-		for _, manifest := range stackObj.GetConfig().Manifests() {
-			for _, manifestKapp := range manifest.Installables() {
-				candidateKapps = append(candidateKapps, manifestKapp)
-			}
+		// create a DAG to template all the kapps
+		dagObj, err := kapps.BuildDagForSelected(stackObj, c.cacheDir, []string{}, []string{}, "")
+		if err != nil {
+			return errors.WithStack(err)
 		}
 
-		err = kapps.RenderTemplates(candidateKapps, absRootCacheDir, stackObj, c.dryRun)
+		err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

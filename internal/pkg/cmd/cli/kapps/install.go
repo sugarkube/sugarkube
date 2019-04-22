@@ -304,7 +304,7 @@ func establishConnection(dryRun bool, dryRunPrefix string) error {
 	log.Logger.Infof("%sEstablishing connectivity to the API server",
 		dryRunPrefix)
 	if !dryRun {
-		isOnline, err := provisioner.IsAlreadyOnline(stackObj.GetProvisioner(), c.dryRun)
+		isOnline, err := provisioner.IsAlreadyOnline(stackObj.GetProvisioner(), dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
