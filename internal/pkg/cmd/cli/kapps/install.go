@@ -217,13 +217,11 @@ func (c *installCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector, constants.PresentKey)
+	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
+		constants.PresentKey, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-
-	// todo - print out the DAG
-	//}
 
 	if c.establishConnection {
 		err = establishConnection(c.dryRun, dryRunPrefix)
@@ -262,7 +260,7 @@ func (c *installCmd) run() error {
 // Creates a DAG for installables matched by selectors. If an optional state (e.g. present, absent, etc.) is
 // provided, only installables with the same state will be included in the returned DAG
 func BuildDagForSelected(stackObj interfaces.IStack, cacheDir string, includeSelector []string,
-	excludeSelector []string, stateFilter string) (*plan.Dag, error) {
+	excludeSelector []string, stateFilter string, out io.Writer) (*plan.Dag, error) {
 	// load configs for all installables in the stack
 	err := stackObj.LoadInstallables(cacheDir)
 	if err != nil {
@@ -292,6 +290,11 @@ func BuildDagForSelected(stackObj interfaces.IStack, cacheDir string, includeSel
 	}
 
 	dagObj, err := plan.Create(stackObj.GetConfig().Manifests(), filteredInstallableIds)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	err = dagObj.Print(out)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

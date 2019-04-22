@@ -185,12 +185,12 @@ func (c *deleteCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector, "")
+	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
+		"", c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	// todo - print out the DAG
 	//}
 
 	if c.establishConnection {

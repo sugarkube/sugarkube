@@ -24,6 +24,8 @@ import (
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
+	"io"
+	"strings"
 	"time"
 )
 
@@ -50,7 +52,8 @@ type NamedNode struct {
 	name           string // must be unique across all nodes in the graph
 	node           graph.Node
 	installableObj interfaces.IInstallable
-	shouldProcess  bool // indicates whether this node was specifically selected for processing
+	marked         bool // indicates whether this node was specifically marked for processing (e.g.
+	// installing/deleting, etc. )
 }
 
 func (n NamedNode) Name() string {
@@ -145,8 +148,8 @@ func addNode(graphObj *simple.DirectedGraph, nodes map[string]NamedNode, nodeNam
 	if ok {
 		// if the existing node was added but wasn't marked for processing, and now
 		// we would create it as a processable node, toggle the flag
-		if !existing.shouldProcess && shouldProcess {
-			existing.shouldProcess = shouldProcess
+		if !existing.marked && shouldProcess {
+			existing.marked = shouldProcess
 			nodes[nodeName] = existing
 		}
 
@@ -162,7 +165,7 @@ func addNode(graphObj *simple.DirectedGraph, nodes map[string]NamedNode, nodeNam
 		name:           nodeName,
 		node:           graphObj.NewNode(),
 		installableObj: installableObj,
-		shouldProcess:  shouldProcess,
+		marked:         shouldProcess,
 	}
 	graphObj.AddNode(namedNode)
 	nodes[nodeName] = namedNode
@@ -266,6 +269,10 @@ func (g *Dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 
 	log.Logger.Info("Starting DAG traversal...")
 	nodeStatusesById := g.nodeStatusesById()
+	log.Logger.Tracef("Node statuses by ID: %+v", nodeStatusesById)
+
+	numNodes := g.graph.Nodes().Len()
+	log.Logger.Debugf("Graph has %d nodes", numNodes)
 
 	// spawn a goroutine to listen to the doneCh to update the statuses of completed nodes
 	go func() {
@@ -277,38 +284,42 @@ func (g *Dag) WalkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 		}
 	}()
 
-	// loop until there are no nodes left which haven't been processed
-	for {
-		for node, nodeStatus := range nodeStatusesById {
-			// only consider unprocessed nodes
-			if nodeStatus.status != unprocessed {
-				continue
-			}
-
-			namedNode := nodeStatusesById[node]
-
-			// we have a node that needs to be processed. Check to see if its dependencies have
-			// been satisfied
-			if dependenciesSatisfied(g.graph.To(nodeStatus.node.ID()), nodeStatusesById) {
-				log.Logger.Debugf("All dependencies satisfied for '%s', adding it to the "+
-					"processing queue", namedNode.node.name)
-				processCh <- namedNode.node
-			}
-		}
-
-		if allDone(nodeStatusesById) {
-			log.Logger.Infof("DAG fully processed")
-			close(processCh)
-			close(doneCh)
-			break
-		} else {
-			// sleep a little bit to give jobs a chance to complete
-			log.Logger.Tracef("DAG still processing. Sleeping for %s...", g.sleepTime)
-			time.Sleep(g.sleepTime)
-		}
-	}
-
 	finishedCh := make(chan bool)
+
+	go func() {
+		// loop until there are no nodes left which haven't been processed
+		for {
+			for node, nodeStatus := range nodeStatusesById {
+				// only consider unprocessed nodes
+				if nodeStatus.status != unprocessed {
+					continue
+				}
+
+				namedNode := nodeStatusesById[node]
+
+				// we have a node that needs to be processed. Check to see if its dependencies have
+				// been satisfied
+				if dependenciesSatisfied(g.graph.To(nodeStatus.node.ID()), nodeStatusesById) {
+					log.Logger.Debugf("All dependencies satisfied for '%s', adding it to the "+
+						"processing queue", namedNode.node.name)
+					processCh <- namedNode.node
+				}
+			}
+
+			if allDone(nodeStatusesById) {
+				log.Logger.Infof("DAG fully processed")
+				close(processCh)
+				close(doneCh)
+				close(finishedCh)
+				break
+			} else {
+				// sleep a little bit to give jobs a chance to complete
+				log.Logger.Tracef("DAG still processing. Sleeping for %s...", g.sleepTime)
+				time.Sleep(g.sleepTime)
+			}
+		}
+	}()
+
 	return finishedCh
 }
 
@@ -317,6 +328,45 @@ func (g *Dag) WalkUp(processCh chan<- NamedNode, doneCh chan NamedNode) chan boo
 	panic("Not implemented")
 	finishedCh := make(chan bool)
 	return finishedCh
+}
+
+// Prints out the DAG to the writer
+func (g *Dag) Print(writer io.Writer) error {
+	_, err := fmt.Fprintf(writer, "Created the DAG: \n")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	processCh := make(chan NamedNode, parallelisation)
+	doneCh := make(chan NamedNode, parallelisation)
+	g.WalkDown(processCh, doneCh)
+
+	// temporarily reduce the sleep time
+	originalSleepTime := g.sleepTime
+	g.sleepTime = 1 * time.Millisecond
+
+	for node := range processCh {
+		log.Logger.Debugf("Visited node: %+v", node)
+		parents := g.graph.To(node.ID())
+
+		parentNames := make([]string, 0)
+		for parents.Next() {
+			parent := parents.Node().(NamedNode)
+			parentNames = append(parentNames, parent.name)
+		}
+
+		_, err := fmt.Fprintf(writer, "%s - depends on: %s\n", node.Name(),
+			strings.Join(parentNames, ", "))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		doneCh <- node
+	}
+
+	g.sleepTime = originalSleepTime
+	log.Logger.Debug("DAG printed")
+
+	return nil
 }
 
 // Returns a boolean indicating whether all nodes have been processed

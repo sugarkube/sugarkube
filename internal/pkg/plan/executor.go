@@ -69,7 +69,7 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 		case err := <-errCh:
 			return errors.Wrapf(err, "Error processing kapp")
 		case node := <-doneCh:
-			if node.shouldProcess {
+			if node.marked {
 				log.Logger.Infof("Kapp '%s' processed", node.Name())
 			}
 		case <-finishedCh:
@@ -148,7 +148,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	}
 
 	// only plan or process kapps that have been flagged for processing
-	if node.shouldProcess && plan {
+	if node.marked && plan {
 		if install {
 			err := installerImpl.Install(installableObj, stackObj, false, dryRun)
 			if err != nil {
@@ -162,7 +162,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 		}
 	}
 
-	if node.shouldProcess && approved {
+	if node.marked && approved {
 		if install {
 			err := installerImpl.Install(installableObj, stackObj, true, dryRun)
 			if err != nil {
@@ -203,7 +203,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	}
 
 	// execute any post actions if we've just actually installed the kapp.
-	if node.shouldProcess && approved && len(installableObj.PostActions()) > 0 {
+	if node.marked && approved && len(installableObj.PostActions()) > 0 {
 		for _, postAction := range installableObj.PostActions() {
 			executePostAction(postAction, installableObj, stackObj, errCh, dryRun)
 		}

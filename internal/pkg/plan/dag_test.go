@@ -161,7 +161,13 @@ func TestTraverse(t *testing.T) {
 		}()
 	}
 
-	dag.WalkDown(processCh, doneCh)
+	finishedCh := dag.WalkDown(processCh, doneCh)
+
+	// wait for traversal to finish
+	select {
+	case <-finishedCh:
+		break
+	}
 
 	// make sure the last to be processed is marked as being allowed to be last
 	assert.True(t, utils.InStringArray(possibleLastNodes, lastProcessedId))
@@ -189,7 +195,7 @@ func assertDependencies(t *testing.T, graphObj *Dag, descriptors map[string]node
 	nodesByName map[string]NamedNode, nodeName string, shouldProcess bool) {
 	node := nodesByName[nodeName]
 
-	assert.Equal(t, shouldProcess, node.shouldProcess, "shouldProcess for node '%s' is not %v",
+	assert.Equal(t, shouldProcess, node.marked, "marked for node '%s' is not %v",
 		nodeName, shouldProcess)
 
 	parents := graphObj.graph.To(node.ID())
