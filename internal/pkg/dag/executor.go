@@ -52,11 +52,11 @@ func (d *dag) Execute(action string, stackObj interfaces.IStack, plan bool, appl
 	var finishedCh <-chan bool
 
 	switch action {
-	case constants.TaskActionInstall:
+	case constants.DagActionInstall:
 		finishedCh = d.WalkDown(processCh, doneCh)
 		break
 	// todo - implement
-	//case constants.TaskActionDelete:
+	//case constants.DagActionDelete:
 	//	finishedCh = d.WalkUp(processCh, doneCh)
 	//	break
 	default:
@@ -108,10 +108,10 @@ func worker(dagObj *dag, processCh <-chan NamedNode, doneCh chan NamedNode, errC
 		// todo - support installing, deleting, running 'make clean', templating and printing out the vars
 		//  for each marked kapp
 		switch action {
-		case constants.TaskActionInstall:
+		case constants.DagActionInstall:
 			install(dagObj, node, installerImpl, stackObj, plan, apply, dryRun, errCh)
 			break
-		case constants.TaskActionDelete:
+		case constants.DagActionDelete:
 			err := installerImpl.Delete(installableObj, stackObj, approved, true, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error deleting kapp '%s'", installableObj.Id())
@@ -154,7 +154,7 @@ func install(dagObj *dag, node NamedNode, installerImpl interfaces.IInstaller, s
 	if node.shouldProcess && plan {
 		err := installerImpl.Install(installableObj, stackObj, false, true, dryRun)
 		if err != nil {
-			errCh <- errors.Wrapf(err, "Error installing kapp '%s'", installableObj.Id())
+			errCh <- errors.Wrapf(err, "Error planning kapp '%s'", installableObj.Id())
 		}
 	}
 
@@ -173,7 +173,13 @@ func install(dagObj *dag, node NamedNode, installerImpl interfaces.IInstaller, s
 			errCh <- errors.Wrapf(err, "Error writing output for kapp '%s'", installableObj.Id())
 		}
 
-		buildLocalRegistry(dagObj, node, errCh, dryRun)
+		// load and parse outputs
+		outputs, err := installableObj.GetOutputs(dryRun)
+		if err != nil {
+			errCh <- errors.Wrapf(err, "Error loading the output of kapp '%s'", installableObj.Id())
+		}
+
+		buildLocalRegistry(dagObj, node, outputs, errCh)
 
 		// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
 		err = renderKappTemplates(stackObj, installableObj, dryRun)
@@ -194,7 +200,7 @@ func install(dagObj *dag, node NamedNode, installerImpl interfaces.IInstaller, s
 // each local registry of each parent. If the parent's manifest ID is different to the current node's
 // manifest ID registry keys for non fully-qualified installable IDs will be deleted from the registry
 // before merging. In all cases the special value 'this' will not be merged either.
-func buildLocalRegistry(dagObj *dag, node NamedNode, errCh chan<- error, dryRun bool) {
+func buildLocalRegistry(dagObj *dag, node NamedNode, outputs map[string]interface{}, errCh chan<- error) {
 	localRegistry := registry.New()
 
 	parents := dagObj.graph.To(node.ID())
@@ -221,9 +227,12 @@ func buildLocalRegistry(dagObj *dag, node NamedNode, errCh chan<- error, dryRun 
 		}
 	}
 
-	err := addOutputsToRegistry(node.installableObj, localRegistry, dryRun)
-	if err != nil {
-		errCh <- errors.WithStack(err)
+	// only add outputs if any were passed in
+	if outputs != nil && len(outputs) > 0 {
+		err := addOutputsToRegistry(node.installableObj, outputs, localRegistry)
+		if err != nil {
+			errCh <- errors.WithStack(err)
+		}
 	}
 
 	node.installableObj.SetLocalRegistry(localRegistry)
@@ -233,7 +242,7 @@ func buildLocalRegistry(dagObj *dag, node NamedNode, errCh chan<- error, dryRun 
 func executePostAction(postAction structs.PostAction, installableObj interfaces.IInstallable,
 	stackObj interfaces.IStack, errCh chan error, dryRun bool) {
 	switch postAction.Id {
-	case constants.TaskActionClusterUpdate:
+	case constants.PostActionClusterUpdate:
 		log.Logger.Info("Running cluster update action")
 		err := cluster.UpdateCluster(os.Stdout, stackObj, true, dryRun)
 		if err != nil {
@@ -241,7 +250,7 @@ func executePostAction(postAction structs.PostAction, installableObj interfaces.
 				installableObj.Id())
 		}
 		break
-	case constants.TaskAddProviderVarsFiles:
+	case constants.PostActionAddProviderVarsFiles:
 		log.Logger.Infof("Running action to add provider vars dirs")
 		// todo - run each path through the templater
 		for _, path := range postAction.Params {
@@ -252,6 +261,12 @@ func executePostAction(postAction structs.PostAction, installableObj interfaces.
 
 			log.Logger.Debugf("Adding provider vars dir: %s", path)
 			stackObj.GetProvider().AddVarsPath(path)
+		}
+
+		// refresh the provider vars so the extra vars files we've just added are loaded
+		err := stackObj.RefreshProviderVars()
+		if err != nil {
+			errCh <- errors.WithStack(err)
 		}
 		break
 	}
@@ -281,11 +296,8 @@ func deleteSpecialThisOutput(registry interfaces.IRegistry) {
 }
 
 // Adds output from an installable to the registry
-func addOutputsToRegistry(installableObj interfaces.IInstallable, registry interfaces.IRegistry, dryRun bool) error {
-	outputs, err := installableObj.GetOutputs(dryRun)
-	if err != nil {
-		return errors.Wrapf(err, "Error loading the output of kapp '%s'", installableObj.Id())
-	}
+func addOutputsToRegistry(installableObj interfaces.IInstallable, outputs map[string]interface{},
+	registry interfaces.IRegistry) error {
 
 	// We convert kapp IDs to have underscores because Go's templating library throws its toys out
 	// the pram when it find a map key with a hyphen in. K8s is the opposite, so this seems like
@@ -308,11 +320,31 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, registry inter
 	for outputId, output := range outputs {
 		for _, prefix := range prefixes {
 			key := strings.Join([]string{prefix, outputId}, constants.RegistryFieldSeparator)
-			err = registry.Set(key, output)
+			err := registry.Set(key, output)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 		}
+	}
+
+	return nil
+}
+
+// Renders templates for a kapp
+func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.IInstallable,
+	dryRun bool) error {
+
+	// todo - this should take a copy of the registry so we don't mutate the global one.
+	//  Remember to use the the global registry as the base fragment
+
+	templatedVars, err := stackObj.GetTemplatedVars(installableObj, nil)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	_, err = installableObj.RenderTemplates(templatedVars, stackObj.GetConfig(), dryRun)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	return nil
