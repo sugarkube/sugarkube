@@ -59,6 +59,8 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 	case constants.DagActionInstall:
 		finishedCh = d.walkDown(processCh, doneCh)
 	case constants.DagActionDelete:
+		// todo - first we need to walk down the DAG to load outputs and build local registries for the
+		//  kapps. Then we need to walk up executing the marked ones
 		finishedCh = d.walkUp(processCh, doneCh)
 	default:
 		return fmt.Errorf("Invalid action on DAG: %s", action)
