@@ -6,6 +6,8 @@
 ## Top priorities
 * Implement deleting kapps by walking up the DAG. Only delete marked kapps.
 * Update the 'kapp vars' command
+* Think about how to deal with loading the output of kapps on dry runs - currently no output will be loaded from
+  parent kapps which means child kapps may not have the correct data in the registry to avoid parsing errors, etc.
 * Fix passing a single flag to helm/tf where the file may not exist
 * Implement deleting clusters
 * Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist
