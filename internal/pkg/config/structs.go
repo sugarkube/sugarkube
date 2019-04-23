@@ -19,9 +19,9 @@ package config
 import "github.com/sugarkube/sugarkube/internal/pkg/structs"
 
 type Config struct {
-	JsonLogs        bool   `mapstructure:"json-logs"`
-	LogLevel        string `mapstructure:"log-level"`
-	Parallelisation int
+	JsonLogs   bool   `mapstructure:"json-logs"`
+	LogLevel   string `mapstructure:"log-level"`
+	NumWorkers int    `mapstructure:"num-workers"` // an uncontroversial name that avoids British/American spelling differences (vs 'parallelisation', etc)
 	// if true, merging lists under the same map key will replace the existing list entirely. If false,
 	// values from lists being merged in will be appended to the existing list
 	OverwriteMergedLists bool                          `mapstructure:"overwrite-merged-lists"`

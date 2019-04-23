@@ -37,9 +37,9 @@ import (
 // Traverses the DAG executing the named action on marked/processable nodes depending on the
 // given options
 func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, approved bool, dryRun bool) error {
-	parallelisation := config.CurrentConfig.Parallelisation
+	numWorkers := config.CurrentConfig.NumWorkers
 
-	processCh := make(chan NamedNode, parallelisation)
+	processCh := make(chan NamedNode, numWorkers)
 	doneCh := make(chan NamedNode)
 	errCh := make(chan error)
 
@@ -47,7 +47,7 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 		approved, dryRun)
 
 	// create the worker pool
-	for w := int(0); w < parallelisation; w++ {
+	for w := int(0); w < numWorkers; w++ {
 		go worker(d, processCh, doneCh, errCh, action, stackObj, plan, approved, dryRun)
 	}
 

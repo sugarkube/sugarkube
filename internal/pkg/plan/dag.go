@@ -358,10 +358,10 @@ func (g *Dag) Print(writer io.Writer) error {
 		return errors.WithStack(err)
 	}
 
-	parallelisation := config.CurrentConfig.Parallelisation
+	numWorkers := config.CurrentConfig.NumWorkers
 
-	processCh := make(chan NamedNode, parallelisation)
-	doneCh := make(chan NamedNode, parallelisation)
+	processCh := make(chan NamedNode, numWorkers)
+	doneCh := make(chan NamedNode, numWorkers)
 	finishedCh := g.walkDown(processCh, doneCh)
 
 	// temporarily reduce the sleep time

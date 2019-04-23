@@ -137,9 +137,9 @@ func TestTraverse(t *testing.T) {
 
 	// reduce the sleep time for testing
 	dag.SleepInterval = 5 * time.Millisecond
-	parallelisation := 5
+	numWorkers := 5
 
-	for i := 0; i < parallelisation; i++ {
+	for i := 0; i < numWorkers; i++ {
 		go func() {
 			for node := range processCh {
 				log.Logger.Infof("Processing '%s' in goroutine...", node.name)

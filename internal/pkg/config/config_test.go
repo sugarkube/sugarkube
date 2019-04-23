@@ -35,7 +35,7 @@ func TestLoadConfig(t *testing.T) {
 	expectedConfig := &Config{
 		JsonLogs:             false,
 		LogLevel:             "warn",
-		Parallelisation:      5,
+		NumWorkers:           5,
 		OverwriteMergedLists: false,
 		Programs: map[string]structs.KappConfig{
 			"helm": {

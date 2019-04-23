@@ -28,8 +28,7 @@ import (
 )
 
 type deleteCmd struct {
-	out io.Writer
-	//diffPath string
+	out      io.Writer
 	cacheDir string
 	dryRun   bool
 	approved bool
@@ -105,8 +104,6 @@ process before deleting the selected kapps.
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before deleting them")
 	f.BoolVar(&c.skipPostActions, "no-post-actions", false, "skip running post actions in kapps - useful to quickly tear down a cluster")
 	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
-	//f.StringVarP(&c.diffPath, "diff-path", "d", "", "Path to the cluster diff to delete. If not given, a "+
-	//	"diff will be generated")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -146,11 +143,6 @@ func (c *deleteCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	_, err = fmt.Fprintf(c.out, "%sPlanning operations on kapps\n", dryRunPrefix)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
 		"", c.out)
 	if err != nil {
@@ -183,7 +175,7 @@ func (c *deleteCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "%sKapp change plan successfully applied\n", dryRunPrefix)
+	_, err = fmt.Fprintf(c.out, "%sKapp changes successfully applied\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}
