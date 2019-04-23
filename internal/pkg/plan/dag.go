@@ -278,10 +278,28 @@ func (g *Dag) nodesByName() map[string]NamedNode {
 
 // Traverses the graph from the root to leaves. Nodes will only be processed once their
 // dependencies have been processed. Not having dependencies is a special case of this.
-// The size of the processCh buffer determines the level of parallelisation
 func (g *Dag) walkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
+	return g.walk(true, processCh, doneCh)
 
-	log.Logger.Info("Starting DAG traversal...")
+}
+
+// Walks the DAG from leaves to root. A node will only be processed once all of its child nodes have been
+// processed. A leaf node is a special case of this that has no children.
+func (g *Dag) walkUp(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
+	return g.walk(false, processCh, doneCh)
+}
+
+// Walks the DAG in the given direction. If down==true nodes will only be processed if all parents have
+// been processed. If down==false it will walk up the DAG from leaves to root, only processing nodes if
+// all children have been processed.
+func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
+
+	if down {
+		log.Logger.Info("Starting walking down the DAG...")
+	} else {
+		log.Logger.Info("Starting walking up the DAG...")
+	}
+
 	nodeStatusesById := g.nodeStatusesById()
 	log.Logger.Tracef("Node statuses by ID: %+v", nodeStatusesById)
 
@@ -313,9 +331,14 @@ func (g *Dag) walkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 					continue
 				}
 
+				dependencies := g.graph.To(nodeStatus.node.ID())
+				if !down {
+					g.graph.From(nodeStatus.node.ID())
+				}
+
 				// we have a node that needs to be processed. Check to see if its dependencies have
 				// been satisfied
-				if dependenciesSatisfied(g.graph.To(nodeStatus.node.ID()), nodeStatusesById) {
+				if dependenciesSatisfied(dependencies, nodeStatusesById) {
 					log.Logger.Debugf("All dependencies satisfied for '%s', adding it to the "+
 						"processing queue", namedNode.node.name)
 					// update the status to running so we don't keep requeuing completed nodes
@@ -341,13 +364,6 @@ func (g *Dag) walkDown(processCh chan<- NamedNode, doneCh chan NamedNode) chan b
 		}
 	}()
 
-	return finishedCh
-}
-
-// todo - implement
-func (g *Dag) walkUp(processCh chan<- NamedNode, doneCh chan NamedNode) chan bool {
-	panic("Not implemented")
-	finishedCh := make(chan bool)
 	return finishedCh
 }
 

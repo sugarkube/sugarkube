@@ -5,6 +5,8 @@
 
 ## Top priorities
 * Implement deleting kapps by walking up the DAG. Only delete marked kapps.
+* merging kapp outputs together causes global helm-opts, etc. to grow out of control because each kapp has
+  those settings, and we need to append list values when merging, so they keep getting appended together. 
 * Update the 'kapp vars' command
 * Think about how to deal with loading the output of kapps on dry runs - currently no output will be loaded from
   parent kapps which means child kapps may not have the correct data in the registry to avoid parsing errors, etc.
@@ -23,11 +25,6 @@
   into the cluster and the API server is accessible we won't necessarily need an SSH tunnel even if the API server
   is private)
   
-## bugs:
-* merging kapp outputs together causes global helm-opts, etc. to grow out of control because each kapp has
-  those settings, and we need to append list values when merging, so they keep getting appended together. This is mainly
-  inefficient rather than a functional bug
-
 ### DAG algorithm
 * When installing specific kapps, create a DAG for the entire set of manifests, then extract a subgraph for the target
   kapps. Now process the graph from the root: For all nodes which aren't the target nodes, if they declare output try 
