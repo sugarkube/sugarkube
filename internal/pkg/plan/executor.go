@@ -376,9 +376,6 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, outputs map[st
 func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.IInstallable,
 	installerVars map[string]interface{}, dryRun bool) error {
 
-	// todo - this should take a copy of the registry so we don't mutate the global one.
-	//  Remember to use the the global registry as the base fragment
-
 	// merge all the vars required to render the kapp's sugarkube.yaml file
 	templatedVars, err := stackObj.GetTemplatedVars(installableObj, installerVars)
 
