@@ -85,6 +85,8 @@
 * Wordpress site 2 isn't cached when running 'cache create' (probably due to it referring to a non-existent branch - 
   we should throw an error and abort in that case)
 
+* Consider adding a cache so we can do cluster diffing to only install kapps that have changed to speed up
+  deploying changes. Use a ClusterSOT for that.
 * Create a cache manager whose job it is to organise where files are stored in a cache to enable the no-op provisioner to be used
 
 ## Other things to consider

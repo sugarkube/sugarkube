@@ -146,40 +146,6 @@ func (c *deleteCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	// uncomment this when cluster diffing has been implemented
-	//if !c.force {
-	//	panic("Cluster diffing not implemented. Pass --force")
-	//
-	//	if c.diffPath != "" {
-	//		// todo load a cluster diff from a file
-	//
-	//		// todo - validate that the embedded stack config matches the target cluster.
-	//
-	//		// in future we may want to be able to work entirely from a cluster
-	//		// diff, in which case it'd really be a plan for us
-	//		if len(stackObj.GetConfig().Manifests()) > 0 {
-	//			// todo - validate that the cluster diff matches the manifests, e.g. that
-	//			// the versions of kapps in the manifests match the versions in the cluster
-	//			// diff
-	//		}
-	//	} else {
-	//		// todo - create a cluster diff based on stackConfig.Manifests
-	//	}
-	//
-	//	// todo - diff the cache against the kapps in the cluster diff and abort if
-	//	// it's out-of-sync (unless flags are set to ignore cache changes), e.g.:
-	//	//cacheDiff, err := cacher.DiffKappCache(clusterDiff, c.cacheDir)
-	//	//if err != nil {
-	//	//	return errors.WithStack(err)
-	//	//}
-	//	//if len(diff) != 0 {
-	//	//	return errors.New("Cache out-of-sync with manifests: %s", diff)
-	//	//}
-	//
-	//	// todo - create an action plan from the validated cluster diff
-	//	//actionPlan, err := plan.FromDiff(clusterDiff)
-	//
-	//} else {
 	_, err = fmt.Fprintf(c.out, "%sPlanning operations on kapps\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
@@ -190,8 +156,6 @@ func (c *deleteCmd) run() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-
-	//}
 
 	if c.establishConnection {
 		err = establishConnection(c.dryRun, dryRunPrefix)
