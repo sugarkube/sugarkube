@@ -400,6 +400,17 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 		constants.KappVarsKappKey: kappIntrinsicDataConverted,
 	}
 
+	if k.localRegistry != nil {
+		// merge the local registry with the template vars so outputs are available to templates
+		log.Logger.Tracef("Merging local registry for kapp '%s' with kapp vars. Local registry is: %#v",
+			k.FullyQualifiedId(), k.localRegistry)
+
+		err = vars.MergeWithStrategy(&namespacedKappMap, k.localRegistry.AsMap())
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
+
 	return namespacedKappMap, nil
 }
 
@@ -521,15 +532,6 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 	dryRunPrefix := ""
 	if dryRun {
 		dryRunPrefix = "[Dry run] "
-	}
-
-	// merge the local registry with the template vars so outputs are available to templates
-	log.Logger.Tracef("Merging local registry for kapp '%s' with template vars. Local registry is: %#v",
-		k.FullyQualifiedId(), k.localRegistry)
-
-	err := vars.MergeWithStrategy(&templateVars, k.localRegistry.AsMap())
-	if err != nil {
-		return nil, errors.WithStack(err)
 	}
 
 	// make sure the cache dir exists
