@@ -2,18 +2,13 @@ package kapps
 
 import (
 	"fmt"
-	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	datautils "github.com/sugarkube/sugarkube/internal/pkg/utils"
-	"gopkg.in/yaml.v2"
 	"io"
-	"strings"
 )
 
 type varsConfig struct {
@@ -91,77 +86,67 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	// selected kapps will be returned in the order in which they appear in manifests, not the order they're specified
-	// in selectors
-	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
-		c.includeSelector, c.excludeSelector)
+	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
+		"", c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	// load configs for all installables in the stack
-	err = stackObj.LoadInstallables(c.cacheDir)
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	// todo - delete this and update the dag executor to display variables
+	dagObj = dagObj
 
-	_, err = fmt.Fprintf(c.out, "Displaying variables for %d kapps:\n", len(selectedInstallables))
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	for _, kappObj := range selectedInstallables {
-		templatedVars, err := stackObj.GetTemplatedVars(kappObj, map[string]interface{}{})
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		if len(c.suppress) > 0 {
-			for _, exclusion := range c.suppress {
-				// trim any leading zeroes for compatibility with how variables are referred to in templates
-				exclusion = strings.TrimPrefix(exclusion, ".")
-				blanked := datautils.BlankNestedMap(map[string]interface{}{}, strings.Split(exclusion, "."))
-				log.Logger.Debugf("blanked=%#v", blanked)
-
-				err = mergo.Merge(&templatedVars, blanked, mergo.WithOverride)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-			}
-		}
-
-		yamlData, err := yaml.Marshal(&templatedVars)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		_, err = fmt.Fprintf(c.out, "\n***** Start variables for kapp '%s' *****\n"+
-			"%s***** End variables for kapp '%s' *****\n",
-			kappObj, yamlData, kappObj)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		if c.cacheDir == "" {
-			_, err = fmt.Fprintf(c.out, "Won't display the %s file for "+
-				"'%s'. Provide the path to the cache dir with the --cache-dir "+
-				"option to display it.\n", kappObj, constants.KappConfigFileName)
-		} else {
-			err = kappObj.TemplateDescriptor(templatedVars)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			kappConfig, err := yaml.Marshal(kappObj.GetDescriptor())
-			if err != nil {
-				return errors.WithStack(err)
-			}
-
-			_, err = fmt.Fprintf(c.out, "\n***** Start config for kapp '%s' *****\n"+
-				"%s***** End config for kapp '%s' *****\n",
-				kappObj.FullyQualifiedId(), kappConfig, kappObj.FullyQualifiedId())
-		}
-	}
+	//for _, kappObj := range selectedInstallables {
+	//	templatedVars, err := stackObj.GetTemplatedVars(kappObj, map[string]interface{}{})
+	//	if err != nil {
+	//		return errors.WithStack(err)
+	//	}
+	//
+	//	if len(c.suppress) > 0 {
+	//		for _, exclusion := range c.suppress {
+	//			// trim any leading zeroes for compatibility with how variables are referred to in templates
+	//			exclusion = strings.TrimPrefix(exclusion, ".")
+	//			blanked := datautils.BlankNestedMap(map[string]interface{}{}, strings.Split(exclusion, "."))
+	//			log.Logger.Debugf("blanked=%#v", blanked)
+	//
+	//			err = mergo.Merge(&templatedVars, blanked, mergo.WithOverride)
+	//			if err != nil {
+	//				return errors.WithStack(err)
+	//			}
+	//		}
+	//	}
+	//
+	//	yamlData, err := yaml.Marshal(&templatedVars)
+	//	if err != nil {
+	//		return errors.WithStack(err)
+	//	}
+	//
+	//	_, err = fmt.Fprintf(c.out, "\n***** Start variables for kapp '%s' *****\n"+
+	//		"%s***** End variables for kapp '%s' *****\n",
+	//		kappObj, yamlData, kappObj)
+	//	if err != nil {
+	//		return errors.WithStack(err)
+	//	}
+	//
+	//	if c.cacheDir == "" {
+	//		_, err = fmt.Fprintf(c.out, "Won't display the %s file for "+
+	//			"'%s'. Provide the path to the cache dir with the --cache-dir "+
+	//			"option to display it.\n", kappObj, constants.KappConfigFileName)
+	//	} else {
+	//		err = kappObj.TemplateDescriptor(templatedVars)
+	//		if err != nil {
+	//			return errors.WithStack(err)
+	//		}
+	//
+	//		kappConfig, err := yaml.Marshal(kappObj.GetDescriptor())
+	//		if err != nil {
+	//			return errors.WithStack(err)
+	//		}
+	//
+	//		_, err = fmt.Fprintf(c.out, "\n***** Start config for kapp '%s' *****\n"+
+	//			"%s***** End config for kapp '%s' *****\n",
+	//			kappObj.FullyQualifiedId(), kappConfig, kappObj.FullyQualifiedId())
+	//	}
+	//}
 
 	return nil
 }
