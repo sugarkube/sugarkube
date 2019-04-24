@@ -18,6 +18,7 @@ package plan
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 )
 
 // Determines dependencies between kapps in a set of manifests
@@ -27,19 +28,31 @@ func findDependencies(manifests []interfaces.IManifest) map[string]nodeDescripto
 	var previousInstallable string
 
 	for _, manifest := range manifests {
+		previousInstallable = ""
 		for _, installableObj := range manifest.Installables() {
 			dependencies := make([]string, 0)
 
 			// if a manifest is marked as being sequential, each kapp depends on the previous one
 			if manifest.IsSequential() {
+				log.Logger.Debugf("Manifest '%s' is sequential", manifest.Id())
 				if previousInstallable != "" {
+					log.Logger.Tracef("Adding previous installable '%s' as a dependency",
+						previousInstallable)
 					dependencies = append(dependencies, previousInstallable)
+				} else if len(installableObj.GetDescriptor().DependsOn) > 0 {
+					log.Logger.Tracef("Installable '%s' depends on %v", installableObj.FullyQualifiedId(),
+						installableObj.GetDescriptor().DependsOn)
+					for _, dependency := range installableObj.GetDescriptor().DependsOn {
+						dependencies = append(dependencies, dependency)
+					}
 				}
 			} else {
 				// otherwise look for explicitly declared dependencies
 				// todo - in search for implicit dependencies, e.g. if a kapp uses output from
 				//  another kapp, we know there's an implicit dependency between them. The question
 				//  is whether that extends to all intermediate kapps - probably yes
+				log.Logger.Tracef("Installable '%s' depends on %v", installableObj.FullyQualifiedId(),
+					installableObj.GetDescriptor().DependsOn)
 				for _, dependency := range installableObj.GetDescriptor().DependsOn {
 					dependencies = append(dependencies, dependency)
 				}
