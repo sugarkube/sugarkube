@@ -659,7 +659,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 }
 
 // Loads outputs for the kapp, parses and returns them
-func (k Kapp) GetOutputs(dryRun bool) (map[string]interface{}, error) {
+func (k Kapp) GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{}, error) {
 	outputs := map[string]interface{}{}
 
 	dryRunPrefix := ""
@@ -676,7 +676,13 @@ func (k Kapp) GetOutputs(dryRun bool) (map[string]interface{}, error) {
 
 		if !dryRun {
 			if _, err = os.Stat(path); err != nil {
-				return nil, errors.WithStack(err)
+				if ignoreMissing {
+					log.Logger.Infof("Ignoring missing output '%s'", path)
+					outputs[output.Id] = nil
+					continue
+				} else {
+					return nil, errors.WithStack(err)
+				}
 			}
 		}
 

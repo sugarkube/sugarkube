@@ -166,9 +166,8 @@ func (i MakeInstaller) Output(installableObj interfaces.IInstallable, stack inte
 	return i.run(TargetOutput, installableObj, stack, true, dryRun)
 }
 
-func (i MakeInstaller) GetVars(action string, plan bool, approved bool) map[string]interface{} {
+func (i MakeInstaller) GetVars(action string, approved bool) map[string]interface{} {
 	return map[string]interface{}{
 		"target":   action,
-		"plan":     fmt.Sprintf("%v", plan),
 		"approved": fmt.Sprintf("%v", approved)}
 }

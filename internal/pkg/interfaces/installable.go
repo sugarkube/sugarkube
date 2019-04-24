@@ -42,7 +42,7 @@ type IInstallable interface {
 	AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool) error
 	RenderTemplates(templateVars map[string]interface{}, stackConfig IStackConfig,
 		dryRun bool) ([]string, error)
-	GetOutputs(dryRun bool) (map[string]interface{}, error)
+	GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{}, error)
 	HasOutputs() bool
 	GetLocalRegistry() IRegistry
 	SetLocalRegistry(registry IRegistry)

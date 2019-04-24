@@ -21,5 +21,5 @@ type IInstaller interface {
 	Delete(installableObj IInstallable, stack IStack, approved bool, dryRun bool) error
 	Output(installableObj IInstallable, stack IStack, dryRun bool) error
 	Name() string
-	GetVars(action string, plan bool, approved bool) map[string]interface{}
+	GetVars(action string, approved bool) map[string]interface{}
 }
