@@ -36,7 +36,7 @@ const (
 	finished
 )
 
-const defaultSleepInterval = 5000 // milliseconds
+const defaultSleepInterval = 500 // milliseconds
 
 // Wrapper around a directed graph so we can define our own methods on it
 type Dag struct {
@@ -331,9 +331,11 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 					continue
 				}
 
-				dependencies := g.graph.To(nodeStatus.node.ID())
-				if !down {
-					g.graph.From(nodeStatus.node.ID())
+				var dependencies graph.Nodes
+				if down {
+					dependencies = g.graph.To(nodeStatus.node.ID())
+				} else {
+					dependencies = g.graph.From(nodeStatus.node.ID())
 				}
 
 				// we have a node that needs to be processed. Check to see if its dependencies have
@@ -353,8 +355,8 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 			if allDone(nodeStatusesById) {
 				log.Logger.Infof("DAG fully processed")
 				close(finishedCh)
-				// closing the other channels seems to make go send a load of empty
-				// instances to the receivers which messes things up
+				close(doneCh)
+				close(processCh)
 				break
 			} else {
 				// sleep a little bit to give jobs a chance to complete
@@ -385,25 +387,22 @@ func (g *Dag) Print(writer io.Writer) error {
 	g.SleepInterval = 5 * time.Millisecond
 
 	go func() {
-		for {
-			select {
-			case node := <-processCh:
-				log.Logger.Debugf("Visited node: %+v", node)
-				parents := g.graph.To(node.ID())
+		for node := range processCh {
+			log.Logger.Debugf("Visited node: %+v", node)
+			parents := g.graph.To(node.ID())
 
-				parentNames := make([]string, 0)
-				for parents.Next() {
-					parent := parents.Node().(NamedNode)
-					parentNames = append(parentNames, parent.name)
-				}
-
-				_, err := fmt.Fprintf(writer, "%s - depends on: %s\n", node.name,
-					strings.Join(parentNames, ", "))
-				if err != nil {
-					panic(err)
-				}
-				doneCh <- node
+			parentNames := make([]string, 0)
+			for parents.Next() {
+				parent := parents.Node().(NamedNode)
+				parentNames = append(parentNames, parent.name)
 			}
+
+			_, err := fmt.Fprintf(writer, "%s - depends on: %s\n", node.name,
+				strings.Join(parentNames, ", "))
+			if err != nil {
+				panic(err)
+			}
+			doneCh <- node
 		}
 	}()
 
