@@ -867,6 +867,7 @@ func (p KopsProvisioner) Close() error {
 		kubeConfigPathInterface, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
 		kubeConfigPath := kubeConfigPathInterface.(string)
 		if _, err := os.Stat(kubeConfigPath); err == nil {
+			// todo - make this configurable based on a CLI flag
 			log.Logger.Infof("Deleting downloaded kubeconfig file from %s", kubeConfigPath)
 			err = os.Remove(kubeConfigPath)
 			if err != nil {

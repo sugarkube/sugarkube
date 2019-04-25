@@ -265,8 +265,8 @@ func establishConnection(dryRun bool, dryRunPrefix string) error {
 		}
 
 		if !isOnline {
-			return errors.New(fmt.Sprintf("Cluster '%s' isn't online. Can't "+
-				"establish a connection to the API server", stackObj.GetConfig().GetCluster()))
+			log.Logger.Warnf("Cluster '%s' isn't online. Won't try to establish connectivity its "+
+				"API server", stackObj.GetConfig().GetCluster())
 		}
 	}
 
