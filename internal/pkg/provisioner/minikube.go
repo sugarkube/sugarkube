@@ -126,7 +126,7 @@ func (p MinikubeProvisioner) Delete(approved bool, dryRun bool) error {
 		return errors.Wrap(err, "Failed to delete the Minikube cluster")
 	}
 
-	log.Logger.Infof("%sMinikube cluster successfully deleted")
+	log.Logger.Infof("%sMinikube cluster successfully deleted", dryRunPrefix)
 
 	return nil
 }

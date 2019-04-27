@@ -83,6 +83,7 @@ type KopsConfig struct {
 	Params                  struct {
 		Global            map[string]string
 		CreateCluster     map[string]string `yaml:"create_cluster"`
+		DeleteCluster     map[string]string `yaml:"delete_cluster"`
 		UpdateCluster     map[string]string `yaml:"update_cluster"`
 		GetClusters       map[string]string `yaml:"get_clusters"`
 		GetInstanceGroups map[string]string `yaml:"get_instance_groups"`
@@ -197,6 +198,59 @@ func (p KopsProvisioner) Create(dryRun bool) error {
 	p.stack.GetStatus().SetStartedThisRun(true)
 	// only sleep before checking the cluster fo readiness if we started it
 	p.stack.GetStatus().SetSleepBeforeReadyCheck(kopsSleepSecondsBeforeReadyCheck)
+
+	return nil
+}
+
+// Deletes a cluster
+func (p KopsProvisioner) Delete(approved bool, dryRun bool) error {
+	dryRunPrefix := ""
+	if dryRun {
+		dryRunPrefix = "[Dry run] "
+	}
+
+	configExists, err := p.clusterConfigExists()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if !configExists {
+		return errors.New("No kops cluster config exists to delete")
+	}
+
+	templatedVars, err := p.stack.GetTemplatedVars(nil, map[string]interface{}{})
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	log.Logger.Debugf("Templated stack config vars: %#v", templatedVars)
+
+	args := []string{"delete", "cluster"}
+	args = parameteriseValues(args, p.kopsConfig.Params.Global)
+	args = parameteriseValues(args, p.kopsConfig.Params.DeleteCluster)
+
+	if approved {
+		args = append(args, "--yes")
+	}
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+
+	if approved {
+		log.Logger.Infof("%sDeleting Kops cluster...", dryRunPrefix)
+	} else {
+		log.Logger.Infof("%sTesting deleting Kops cluster. Pass --yes to actually delete it", dryRunPrefix)
+	}
+	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
+		&stderrBuf, "", kopsCommandTimeoutSecondsLong, dryRun)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if approved {
+		log.Logger.Infof("%sKops cluster deleted...", dryRunPrefix)
+	} else {
+		log.Logger.Infof("%sKops deletion test succeeded. Run with --yes to actually delete "+
+			"the kops cluster", dryRunPrefix)
+	}
 
 	return nil
 }

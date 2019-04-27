@@ -28,12 +28,12 @@ import (
 )
 
 type deleteCmd struct {
-	out      io.Writer
-	cacheDir string
-	dryRun   bool
-	approved bool
-	oneShot  bool
-	//force               bool
+	out                 io.Writer
+	cacheDir            string
+	dryRun              bool
+	approved            bool
+	oneShot             bool
+	ignoreErrors        bool
 	skipTemplating      bool
 	skipPostActions     bool
 	establishConnection bool
@@ -99,8 +99,7 @@ process before deleting the selected kapps.
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
 	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp with 'APPROVED=false' then "+
 		"'APPROVED=true' to delete kapps in a single pass")
-	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/delete all the kapps "+
-	//	"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
+	f.BoolVar(&c.ignoreErrors, "ignore-errors", false, "ignore errors deleting kapps")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before deleting them")
 	f.BoolVar(&c.skipPostActions, "no-post-actions", false, "skip running post actions in kapps - useful to quickly tear down a cluster")
 	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
@@ -170,7 +169,8 @@ func (c *deleteCmd) run() error {
 		}
 	}
 
-	err = dagObj.Execute(constants.DagActionDelete, stackObj, shouldPlan, approved, c.dryRun)
+	err = dagObj.Execute(constants.DagActionDelete, stackObj, shouldPlan, approved, c.skipPostActions,
+		c.ignoreErrors, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

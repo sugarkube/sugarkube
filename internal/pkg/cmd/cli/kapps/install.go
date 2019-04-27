@@ -196,7 +196,8 @@ func (c *installCmd) run() error {
 		}
 	}
 
-	err = dagObj.Execute(constants.DagActionInstall, stackObj, shouldPlan, approved, c.dryRun)
+	err = dagObj.Execute(constants.DagActionInstall, stackObj, shouldPlan, approved, false,
+		false, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

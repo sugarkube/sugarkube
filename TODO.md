@@ -4,14 +4,10 @@
 * Code of conduct
 
 ## Top priorities
-* Implement deleting kapps by walking up the DAG. Only delete marked kapps.
 * merging kapp outputs together causes global helm-opts, etc. to grow out of control because each kapp has
   those settings, and we need to append list values when merging, so they keep getting appended together. 
 * Update the 'kapp vars' command
-* Think about how to deal with loading the output of kapps on dry runs - currently no output will be loaded from
-  parent kapps which means child kapps may not have the correct data in the registry to avoid parsing errors, etc.
 * Fix passing a single flag to helm/tf where the file may not exist
-* Implement deleting clusters
 * Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist
   depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a 
   kapp with the local provider because it hasn't e.g. written terraform output to a path that it 
@@ -20,21 +16,7 @@
 * add subcommands for 'kapps clean' and 'kapps output' to run them across kapps
 * Also add a --clean flag to make install/delete to clean kapps before running them
 * Add a flag to install all dependencies for a kapp (i.e. mark all nodes in the subgraph)
-* think about how to deal with downloading the kubeconfig file if the cluster has been configured to authenticate
-  against keycloak - we should probably test whether the cluster is accessible already (i.e. if a vpn provides access
-  into the cluster and the API server is accessible we won't necessarily need an SSH tunnel even if the API server
-  is private)
   
-### DAG algorithm
-* When installing specific kapps, create a DAG for the entire set of manifests, then extract a subgraph for the target
-  kapps. Now process the graph from the root: For all nodes which aren't the target nodes, if they declare output try 
-  to load it from a previous run. If no previous output exists invoke `make output`, and only `make install/delete`
-  on the target kapps, and execute any post actions they define.
-* To delete a kapp, build a DAG for the whole set of manifests then extract a subgraph for the target kapp(s). Next 
-  traverse the DAG loading outputs as above, then walk up the dag from leaves to children, deleting kapps along the 
-  way. Marked kapps can only be deleted if all their children have been deleted (maybe add a force flag to allow 
-  knocking out a kapp, punching a hole in the DAG)
-
 ### Merging kapp configs
 * Create a 'validate' command to verify that binaries declared in `requires` blocks exist
 * Support passing kapp vars on the command line when only one is selected
