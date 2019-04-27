@@ -43,6 +43,7 @@ programs:
     vars:
       kubeconfig: "{{ .kubeconfig }}"
       kube_context: "{{ .kube_context }}"
+      namespace: "{{ .kapp.id }}"
 
   aws:
     vars:

@@ -325,6 +325,7 @@ func (k Kapp) GetLocalRegistry() interfaces.IRegistry {
 
 // Sets the local registry for the kapp
 func (k *Kapp) SetLocalRegistry(registry interfaces.IRegistry) {
+	log.Logger.Tracef("Setting local registry for kapp '%s' to: %#v", k.FullyQualifiedId(), registry)
 	k.localRegistry = registry
 }
 

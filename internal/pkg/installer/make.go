@@ -168,6 +168,6 @@ func (i MakeInstaller) Output(installableObj interfaces.IInstallable, stack inte
 
 func (i MakeInstaller) GetVars(action string, approved bool) map[string]interface{} {
 	return map[string]interface{}{
-		"target":   action,
+		"action":   action,
 		"approved": fmt.Sprintf("%v", approved)}
 }
