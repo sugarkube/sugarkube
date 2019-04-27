@@ -40,6 +40,7 @@ type MinikubeConfig struct {
 	Params struct {
 		Global map[string]string
 		Start  map[string]string
+		Delete map[string]string
 	}
 }
 
@@ -95,6 +96,37 @@ func (p MinikubeProvisioner) Create(dryRun bool) error {
 	p.stack.GetStatus().SetStartedThisRun(true)
 	// only sleep before checking the cluster fo readiness if we started it
 	p.stack.GetStatus().SetSleepBeforeReadyCheck(MinikubeSleepSecondsBeforeReadyCheck)
+
+	return nil
+}
+
+// Deletes a new minikube cluster
+func (p MinikubeProvisioner) Delete(approved bool, dryRun bool) error {
+
+	dryRunPrefix := ""
+	if dryRun {
+		dryRunPrefix = "[Dry run] "
+	}
+
+	if !approved {
+		log.Logger.Infof("%sAborting deletion of minikube cluster. Pass --yes to actually delete it", dryRunPrefix)
+		return nil
+	}
+
+	args := []string{"delete"}
+	args = parameteriseValues(args, p.minikubeConfig.Params.Global)
+	args = parameteriseValues(args, p.minikubeConfig.Params.Delete)
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+
+	log.Logger.Infof("%sDeleting Minikube cluster...", dryRunPrefix)
+	err := utils.ExecCommand(p.minikubeConfig.Binary, args, map[string]string{}, &stdoutBuf,
+		&stderrBuf, "", 0, dryRun)
+	if err != nil {
+		return errors.Wrap(err, "Failed to delete the Minikube cluster")
+	}
+
+	log.Logger.Infof("%sMinikube cluster successfully deleted")
 
 	return nil
 }

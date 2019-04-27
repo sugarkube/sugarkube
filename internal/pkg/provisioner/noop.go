@@ -41,10 +41,15 @@ func (p NoOpProvisioner) GetStack() interfaces.IStack {
 	return p.stack
 }
 
-// Creates a new noop cluster
+// Doesn't create cluster
 func (p NoOpProvisioner) Create(dryRun bool) error {
-
 	log.Logger.Infof("Noop provisioner - no cluster will be created")
+	return nil
+}
+
+// Doesn't delete a cluster
+func (p NoOpProvisioner) Delete(approved bool, dryRun bool) error {
+	log.Logger.Infof("Noop provisioner - no cluster will be deleted")
 	return nil
 }
 

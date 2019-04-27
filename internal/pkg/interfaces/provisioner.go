@@ -21,6 +21,8 @@ type IProvisioner interface {
 	ClusterSot() IClusterSot
 	// Creates a cluster
 	Create(dryRun bool) error
+	// Deletes a cluster
+	Delete(approved bool, dryRun bool) error
 	// Returns whether the cluster is already running
 	IsAlreadyOnline(dryRun bool) (bool, error)
 	// Update the cluster config if supported by the provisioner
