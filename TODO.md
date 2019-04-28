@@ -11,8 +11,7 @@
   kapp with the local provider because it hasn't e.g. written terraform output to a path that it 
   would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for 
   remote providers, not the local one
-* add subcommands for 'kapps clean' and 'kapps output' to run them across kapps
-* Also add a --clean flag to make install/delete to clean kapps before running them
+* add subcommand for 'kapps output' to run them across kapps
 * Add a flag to install all dependencies for a kapp (i.e. mark all nodes in the subgraph)
   
 ### Merging kapp configs

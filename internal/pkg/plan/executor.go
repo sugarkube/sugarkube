@@ -33,7 +33,6 @@ import (
 	"strings"
 )
 
-// todo - should we add options to skip templating or running post actions?
 // Traverses the DAG executing the named action on marked/processable nodes depending on the
 // given options
 func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, approved bool,
@@ -58,6 +57,8 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 
 	switch action {
 	case constants.DagActionTemplate:
+		finishedCh = d.walkDown(processCh, doneCh)
+	case constants.DagActionClean:
 		finishedCh = d.walkDown(processCh, doneCh)
 	case constants.DagActionInstall:
 		finishedCh = d.walkDown(processCh, doneCh)
@@ -200,8 +201,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			return
 		}
 
-		// todo - support installing, deleting, running 'make clean', templating and printing out the vars
-		//  for each marked kapp
+		// todo - support running 'make clean', printing out the vars for each marked kapp
 		switch action {
 		case constants.DagActionInstall:
 			installOrDelete(true, dagObj, node, installerImpl, stackObj, plan, approved, skipPostActions,
@@ -209,6 +209,12 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 		case constants.DagActionDelete:
 			installOrDelete(false, dagObj, node, installerImpl, stackObj, plan, approved, skipPostActions,
 				ignoreErrors, dryRun, errCh)
+		case constants.DagActionClean:
+			err := installerImpl.Clean(installableObj, stackObj, dryRun)
+			if err != nil {
+				errCh <- errors.Wrapf(err, "Error cleaning kapp '%s'", installableObj.Id())
+				return
+			}
 		case constants.DagActionTemplate:
 			// Template nodes before trying to get the output in case getting the output relies on templated
 			// files, e.g. terraform backends

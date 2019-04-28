@@ -59,6 +59,7 @@ func NewKappsCmds(out io.Writer) *cobra.Command {
 		newTemplateCmd(out),
 		newInstallCmd(out),
 		newDeleteCmd(out),
+		newCleanCmd(out),
 		newVarsCmd(out),
 	)
 

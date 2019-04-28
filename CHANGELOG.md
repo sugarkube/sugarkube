@@ -24,6 +24,7 @@
 * Make the number of workers to use to process the DAG configurable via the 'num-workers' config setting
 * Implement deleting clusters and kapps  
 * Change the args field from a list of maps to just maps
+* Added a 'kapps clean' subcommand to run 'make clean' across selected kapps
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring

@@ -36,6 +36,7 @@ type MakeInstaller struct {
 const TargetInstall = "install"
 const TargetDelete = "delete"
 const TargetOutput = "output"
+const TargetClean = "clean"
 
 // Return the name of this installer
 func (i MakeInstaller) Name() string {
@@ -164,6 +165,13 @@ func (i MakeInstaller) Output(installableObj interfaces.IInstallable, stack inte
 	dryRun bool) error {
 	log.Logger.Infof("Getting output for kapp '%s'...", installableObj.FullyQualifiedId())
 	return i.run(TargetOutput, installableObj, stack, true, dryRun)
+}
+
+// Clean a kapp
+func (i MakeInstaller) Clean(installableObj interfaces.IInstallable, stack interfaces.IStack,
+	dryRun bool) error {
+	log.Logger.Infof("Cleaning kapp '%s'...", installableObj.FullyQualifiedId())
+	return i.run(TargetClean, installableObj, stack, true, dryRun)
 }
 
 func (i MakeInstaller) GetVars(action string, approved bool) map[string]interface{} {
