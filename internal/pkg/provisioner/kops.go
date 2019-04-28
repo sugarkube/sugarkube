@@ -827,14 +827,22 @@ func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string,
 
 	userHost := strings.Join([]string{sshUser, sshHost}, "@")
 
-	log.Logger.Infof("Setting up SSH port forwarding for '%s' to '%s'",
-		connectionString, userHost)
+	log.Logger.Infof("Setting up SSH port forwarding for '%s' to '%s' with private SSH key '%s'",
+		connectionString, userHost, privateKey)
 
 	var stdoutBuf, stderrBuf bytes.Buffer
-	// todo - make this configurable. Ideally users should push a known host key
-	// onto the bastion via metadata
-	sshCommand := exec.Command(sshPath, "-o", "StrictHostKeyChecking no",
-		"-i", privateKey, "-v", "-NL", connectionString, userHost)
+	args := []string{
+		// todo - make StrictHostKeyChecking configurable. Ideally users should push a known host key onto the bastion via metadata
+		"-o", "StrictHostKeyChecking no",
+		"-i", privateKey,
+		"-v", "-NL",
+		connectionString,
+		userHost,
+	}
+
+	log.Logger.Debugf("Setting up SSH port forwarding with: %s %s", sshPath, strings.Join(args, " "))
+
+	sshCommand := exec.Command(sshPath, args...)
 	sshCommand.Stdout = &stdoutBuf
 	sshCommand.Stderr = &stderrBuf
 
