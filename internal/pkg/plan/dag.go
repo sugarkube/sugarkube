@@ -36,6 +36,7 @@ const (
 	finished
 )
 
+const markedNodeStr = "*"
 const defaultSleepInterval = 500 // milliseconds
 
 // Wrapper around a directed graph so we can define our own methods on it
@@ -371,7 +372,8 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 
 // Prints out the DAG to the writer
 func (g *Dag) Print(writer io.Writer) error {
-	_, err := fmt.Fprintf(writer, "Created the DAG: \n")
+	_, err := fmt.Fprintf(writer, "Created the following DAG. Nodes marked with a %s will "+
+		"be processed: \n", markedNodeStr)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -397,7 +399,11 @@ func (g *Dag) Print(writer io.Writer) error {
 				parentNames = append(parentNames, parent.name)
 			}
 
-			_, err := fmt.Fprintf(writer, "%s - depends on: %s\n", node.name,
+			marked := ""
+			if node.marked {
+				marked = fmt.Sprintf("%s ", markedNodeStr)
+			}
+			_, err := fmt.Fprintf(writer, "%s%s - depends on: %s\n", marked, node.name,
 				strings.Join(parentNames, ", "))
 			if err != nil {
 				panic(err)
