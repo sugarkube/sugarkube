@@ -177,9 +177,9 @@ Sugarkube is really several things:
   * A system for checking out related versions of related kapps from manifest files.
   * A process for checking which kapps need installing/deleting based on the 
     input manifest(s) and what's running on the target cluster, and running 
-    `make install` or `make destroy` on each one. It generates a few files first 
+    `make install` or `make delete` on each one. It generates a few files first 
     and passes some extra parameters so the kapp has all the info it needs to 
-    install/destroy itself the right way. 
+    install/delete itself the right way. 
 
 There's no hard dependency on Kubernetes. If you can install something with 
 `make`, you should be able to convert it to a kapp to be installed by Sugarkube.
