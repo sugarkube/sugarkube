@@ -54,7 +54,7 @@ type KappConfig struct {
 	State       string
 	EnvVars     map[string]interface{} `yaml:"envVars"`
 	Version     string
-	Args        map[string]map[string][]map[string]string
+	Args        map[string]map[string]map[string]string
 	Requires    []string
 	PostActions []map[string]PostAction `yaml:"post_actions"`
 	Templates   []Template

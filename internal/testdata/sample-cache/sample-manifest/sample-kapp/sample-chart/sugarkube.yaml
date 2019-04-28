@@ -7,8 +7,7 @@ envVars:
 args:
   make:
     install:
-      - name: helm-opts
-        value: {{ .blank | default "yes" }}
+      helm-opts: {{ .blank | default "yes" }}
 
 requires:
   - helm

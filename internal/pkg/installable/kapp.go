@@ -193,8 +193,8 @@ func (k Kapp) GetCliArgs(installerName string, command string) []string {
 
 	cliArgs := make([]string, 0)
 
-	for _, arg := range commandArgs {
-		joined := strings.Join([]string{arg["name"], arg["value"]}, "=")
+	for name, value := range commandArgs {
+		joined := strings.Join([]string{name, value}, "=")
 		cliArgs = append(cliArgs, joined)
 	}
 

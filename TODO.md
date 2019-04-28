@@ -4,8 +4,6 @@
 * Code of conduct
 
 ## Top priorities
-* merging kapp outputs together causes global helm-opts, etc. to grow out of control because each kapp has
-  those settings, and we need to append list values when merging, so they keep getting appended together. 
 * Update the 'kapp vars' command
 * Fix passing a single flag to helm/tf where the file may not exist
 * Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist

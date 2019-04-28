@@ -25,8 +25,7 @@ programs:
           # cache directory, then files called `values-<provider/account/profile/etc>.yaml`. It takes
           # all files that exists and prepends '-f' to them so they'll be passed as options to helm.
           #
-          - name: helm-opts
-            value: customValue
+          helm-opts: customValue
 
   prog2:
     envVars:

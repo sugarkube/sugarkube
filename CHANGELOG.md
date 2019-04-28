@@ -23,6 +23,7 @@
 * Implement a DAG to manage dependencies between kapps. It's now possible for a kapp to access the output of earlier kapps even when just that one kapp is selected to be installed, deleted, templated, etc. This ensures kapps are installed and deleted in the correct order.
 * Make the number of workers to use to process the DAG configurable via the 'num-workers' config setting
 * Implement deleting clusters and kapps  
+* Change the args field from a list of maps to just maps
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring

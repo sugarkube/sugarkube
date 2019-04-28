@@ -45,13 +45,10 @@ func TestLoadConfig(t *testing.T) {
 					"release":      "{{ .kapp.vars.release | default .kapp.id }}",
 					"kube_context": "{{ .kube_context }}",
 				},
-				Args: map[string]map[string][]map[string]string{
+				Args: map[string]map[string]map[string]string{
 					"make": {
 						"install": {
-							{
-								"name":  "helm-opts",
-								"value": "customValue",
-							},
+							"helm-opts": "customValue",
 						},
 					},
 				},
