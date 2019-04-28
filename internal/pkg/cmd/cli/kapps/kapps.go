@@ -60,6 +60,7 @@ func NewKappsCmds(out io.Writer) *cobra.Command {
 		newInstallCmd(out),
 		newDeleteCmd(out),
 		newCleanCmd(out),
+		newOutputCmd(out),
 		newVarsCmd(out),
 	)
 

@@ -60,6 +60,8 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 		finishedCh = d.walkDown(processCh, doneCh)
 	case constants.DagActionClean:
 		finishedCh = d.walkDown(processCh, doneCh)
+	case constants.DagActionOutput:
+		finishedCh = d.walkDown(processCh, doneCh)
 	case constants.DagActionInstall:
 		finishedCh = d.walkDown(processCh, doneCh)
 	case constants.DagActionDelete:
@@ -201,7 +203,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			return
 		}
 
-		// todo - support running 'make clean', printing out the vars for each marked kapp
+		// todo - support printing out the vars for each marked kapp
 		switch action {
 		case constants.DagActionInstall:
 			installOrDelete(true, dagObj, node, installerImpl, stackObj, plan, approved, skipPostActions,
@@ -213,6 +215,12 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			err := installerImpl.Clean(installableObj, stackObj, dryRun)
 			if err != nil {
 				errCh <- errors.Wrapf(err, "Error cleaning kapp '%s'", installableObj.Id())
+				return
+			}
+		case constants.DagActionOutput:
+			err := installerImpl.Output(installableObj, stackObj, dryRun)
+			if err != nil {
+				errCh <- errors.Wrapf(err, "Error generating output for kapp '%s'", installableObj.Id())
 				return
 			}
 		case constants.DagActionTemplate:
