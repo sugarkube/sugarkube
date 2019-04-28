@@ -11,7 +11,7 @@
   kapp with the local provider because it hasn't e.g. written terraform output to a path that it 
   would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for 
   remote providers, not the local one
-* Add a flag to install all dependencies for a kapp (i.e. mark all parent nodes in the subgraph)
+* Add a flag to process all dependencies for a kapp (i.e. mark all parent nodes in the subgraph)
   
 ### Merging kapp configs
 * Create a 'validate' command to verify that binaries declared in `requires` blocks exist
