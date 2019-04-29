@@ -29,7 +29,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
 	"path/filepath"
-	"time"
 )
 
 type createCmd struct {
@@ -158,16 +157,13 @@ func (c *createCmd) run() error {
 
 		// create a DAG to template all the kapps
 		dagObj, err := kapps.BuildDagForSelected(stackObj, c.cacheDir, []string{}, []string{},
-			"", c.out)
+			false, "", c.out)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		// this should be a fast action so reduce the sleep interval
-		dagObj.SleepInterval = 5 * time.Millisecond
-
-		err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, false,
-			true, c.dryRun)
+		err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, true,
+			true, false, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

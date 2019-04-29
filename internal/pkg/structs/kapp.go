@@ -44,22 +44,25 @@ type Source struct {
 	// generic enough for all acquirers, not be specific to git
 }
 
-type PostAction struct {
+type Action struct {
 	Id     string
 	Params []string
 }
 
 // A struct for an actual sugarkube.yaml file
 type KappConfig struct {
-	State       string
-	EnvVars     map[string]interface{} `yaml:"envVars"`
-	Version     string
-	Args        map[string]map[string]map[string]string
-	Requires    []string
-	PostActions []map[string]PostAction `yaml:"post_actions"`
-	Templates   []Template
-	Vars        map[string]interface{}
-	DependsOn   []string `yaml:"depends_on"` // fully qualified IDs of other kapps this depends on
+	State              string
+	EnvVars            map[string]interface{} `yaml:"envVars"`
+	Version            string
+	Args               map[string]map[string]map[string]string
+	Requires           []string
+	PostInstallActions []map[string]Action `yaml:"post_install_actions"`
+	PostDeleteActions  []map[string]Action `yaml:"post_delete_actions"`
+	PreInstallActions  []map[string]Action `yaml:"pre_install_actions"`
+	PreDeleteActions   []map[string]Action `yaml:"pre_delete_actions"`
+	Templates          []Template
+	Vars               map[string]interface{}
+	DependsOn          []string `yaml:"depends_on"` // fully qualified IDs of other kapps this depends on
 	// todo - implement
 	//VarsTemplate string		// this will be read as a string, templated then converted to YAML and merged with the Vars map
 }

@@ -28,6 +28,8 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
+	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,7 +37,7 @@ import (
 
 // Traverses the DAG executing the named action on marked/processable nodes depending on the
 // given options
-func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, approved bool,
+func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, approved bool, skipPreActions bool,
 	skipPostActions bool, ignoreErrors bool, dryRun bool) error {
 	numWorkers := config.CurrentConfig.NumWorkers
 
@@ -49,20 +51,15 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 
 	// create the worker pool
 	for w := int(0); w < numWorkers; w++ {
-		go worker(d, processCh, doneCh, errCh, action, stackObj, plan, approved, skipPostActions,
+		go worker(d, processCh, doneCh, errCh, action, stackObj, plan, approved, skipPreActions, skipPostActions,
 			ignoreErrors, dryRun)
 	}
 
 	var finishedCh <-chan bool
 
 	switch action {
-	case constants.DagActionTemplate:
-		finishedCh = d.walkDown(processCh, doneCh)
-	case constants.DagActionClean:
-		finishedCh = d.walkDown(processCh, doneCh)
-	case constants.DagActionOutput:
-		finishedCh = d.walkDown(processCh, doneCh)
-	case constants.DagActionInstall:
+	case constants.DagActionTemplate, constants.DagActionClean, constants.DagActionOutput,
+		constants.DagActionInstall:
 		finishedCh = d.walkDown(processCh, doneCh)
 	case constants.DagActionDelete:
 		// first walk down the DAG to load outputs and build local registries for the kapps, then walk
@@ -72,6 +69,45 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 			return errors.WithStack(err)
 		}
 		finishedCh = d.walkUp(processCh, doneCh)
+	default:
+		return fmt.Errorf("Invalid action on DAG: %s", action)
+	}
+
+	log.Logger.Debug("Blocking waiting for the DAG to finish processing...")
+
+	for {
+		// Note: Do NOT add a case for doneCh or it'll introduce a race that prevents the DAG from
+		// updating the status of each node
+		select {
+		case err := <-errCh:
+			return errors.Wrapf(err, "Error processing kapp")
+		case <-finishedCh:
+			log.Logger.Infof("Finished processing kapps")
+			return nil
+		}
+	}
+}
+
+// Traverses the DAG printing vars for all marked nodes, optionally suppressing output for certain keys
+func (d *Dag) ExecuteGetVars(action string, stackObj interfaces.IStack, suppress []string) error {
+	numWorkers := config.CurrentConfig.NumWorkers
+
+	processCh := make(chan NamedNode, numWorkers)
+	doneCh := make(chan NamedNode)
+	errCh := make(chan error)
+
+	log.Logger.Infof("Executing DAG with action=%s", action)
+
+	// create the worker pool
+	for w := int(0); w < numWorkers; w++ {
+		go varsWorker(processCh, doneCh, errCh, stackObj, suppress)
+	}
+
+	var finishedCh <-chan bool
+
+	switch action {
+	case constants.DagActionVars:
+		finishedCh = d.walkDown(processCh, doneCh)
 	default:
 		return fmt.Errorf("Invalid action on DAG: %s", action)
 	}
@@ -176,7 +212,7 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 // Processes an installable, either installing/deleting it, running post actions or
 // loading its outputs, etc.
 func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, errCh chan error,
-	action string, stackObj interfaces.IStack, plan bool, approved bool, skipPostActions bool,
+	action string, stackObj interfaces.IStack, plan bool, approved bool, skipPreActions bool, skipPostActions bool,
 	ignoreErrors bool, dryRun bool) {
 
 	for node := range processCh {
@@ -203,25 +239,46 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			return
 		}
 
-		// todo - support printing out the vars for each marked kapp
 		switch action {
 		case constants.DagActionInstall:
-			installOrDelete(true, dagObj, node, installerImpl, stackObj, plan, approved, skipPostActions,
-				ignoreErrors, dryRun, errCh)
+			installOrDelete(true, dagObj, node, installerImpl, stackObj, approved, skipPreActions,
+				skipPostActions, ignoreErrors, dryRun, errCh)
 		case constants.DagActionDelete:
-			installOrDelete(false, dagObj, node, installerImpl, stackObj, plan, approved, skipPostActions,
-				ignoreErrors, dryRun, errCh)
+			installOrDelete(false, dagObj, node, installerImpl, stackObj, approved, skipPreActions,
+				skipPostActions, ignoreErrors, dryRun, errCh)
 		case constants.DagActionClean:
-			err := installerImpl.Clean(installableObj, stackObj, dryRun)
-			if err != nil {
-				errCh <- errors.Wrapf(err, "Error cleaning kapp '%s'", installableObj.Id())
-				return
+			if node.marked {
+				// template the kapp's descriptor, including the global registry
+				templatedVars, err := stackObj.GetTemplatedVars(installableObj,
+					installerImpl.GetVars(action, approved))
+				err = installableObj.TemplateDescriptor(templatedVars)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+					return
+				}
+
+				err = installerImpl.Clean(installableObj, stackObj, dryRun)
+				if err != nil {
+					errCh <- errors.Wrapf(err, "Error cleaning kapp '%s'", installableObj.Id())
+					return
+				}
 			}
 		case constants.DagActionOutput:
-			err := installerImpl.Output(installableObj, stackObj, dryRun)
-			if err != nil {
-				errCh <- errors.Wrapf(err, "Error generating output for kapp '%s'", installableObj.Id())
-				return
+			if node.marked {
+				// template the kapp's descriptor, including the global registry
+				templatedVars, err := stackObj.GetTemplatedVars(installableObj,
+					installerImpl.GetVars(action, approved))
+				err = installableObj.TemplateDescriptor(templatedVars)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+					return
+				}
+
+				err = installerImpl.Output(installableObj, stackObj, dryRun)
+				if err != nil {
+					errCh <- errors.Wrapf(err, "Error generating output for kapp '%s'", installableObj.Id())
+					return
+				}
 			}
 		case constants.DagActionTemplate:
 			// Template nodes before trying to get the output in case getting the output relies on templated
@@ -269,10 +326,103 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 	}
 }
 
+// Prints out the variables for each marked node
+func varsWorker(processCh <-chan NamedNode, doneCh chan<- NamedNode, errCh chan error, stackObj interfaces.IStack,
+	suppress []string) {
+
+	for node := range processCh {
+		installableObj := node.installableObj
+
+		if !node.marked {
+			log.Logger.Debugf("Not printing variables for unmarked node: '%s'", installableObj.FullyQualifiedId())
+			doneCh <- node
+			continue
+		}
+
+		kappRootDir := installableObj.GetCacheDir()
+		log.Logger.Infof("Worker received kapp '%s' in %s for processing", installableObj.FullyQualifiedId(), kappRootDir)
+
+		// todo - print (to stdout) details of the kapp being executed
+
+		_, err := os.Stat(kappRootDir)
+		if err != nil {
+			msg := fmt.Sprintf("Kapp '%s' doesn't exist in the cache at '%s'", installableObj.Id(), kappRootDir)
+			log.Logger.Warn(msg)
+			errCh <- errors.Wrap(err, msg)
+			return
+		}
+
+		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a Make installer)
+		installerImpl, err := installer.New(installer.MAKE, stackObj.GetProvider())
+		if err != nil {
+			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
+				"kapp '%s'", installableObj.Id())
+			return
+		}
+
+		log.Logger.Debugf("Getting variables for kapp '%s'", installableObj.FullyQualifiedId())
+
+		// template the kapp's descriptor, including the global registry
+		templatedVars, err := stackObj.GetTemplatedVars(installableObj,
+			installerImpl.GetVars("<action, e.g. install/delete>", false))
+
+		if len(suppress) > 0 {
+			for _, exclusion := range suppress {
+				// trim any leading zeroes for compatibility with how variables are referred to in templates
+				exclusion = strings.TrimPrefix(exclusion, ".")
+				blanked := utils.BlankNestedMap(map[string]interface{}{}, strings.Split(exclusion, "."))
+				log.Logger.Debugf("blanked=%#v", blanked)
+
+				err = mergo.Merge(&templatedVars, blanked, mergo.WithOverride)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+					return
+				}
+			}
+		}
+
+		yamlData, err := yaml.Marshal(&templatedVars)
+		if err != nil {
+			errCh <- errors.WithStack(err)
+			return
+		}
+
+		_, err = fmt.Printf("\n***** Start variables for kapp '%s' *****\n"+
+			"%s***** End variables for kapp '%s' *****\n",
+			installableObj.FullyQualifiedId(), yamlData, installableObj.FullyQualifiedId())
+		if err != nil {
+			errCh <- errors.WithStack(err)
+			return
+		}
+
+		err = installableObj.TemplateDescriptor(templatedVars)
+		if err != nil {
+			errCh <- errors.WithStack(err)
+			return
+		}
+
+		kappConfig, err := yaml.Marshal(installableObj.GetDescriptor())
+		if err != nil {
+			errCh <- errors.WithStack(err)
+			return
+		}
+
+		_, err = fmt.Printf("\n***** Start config for kapp '%s' *****\n"+
+			"%s***** End config for kapp '%s' *****\n",
+			installableObj.FullyQualifiedId(), kappConfig, installableObj.FullyQualifiedId())
+
+		log.Logger.Tracef("Vars worker finished processing kapp '%s' (node=%#v)", installableObj.FullyQualifiedId(),
+			node)
+		doneCh <- node
+		log.Logger.Tracef("Vars worker end of loop for kapp '%s'", installableObj.FullyQualifiedId())
+	}
+}
+
 // Implements the install action. Nodes that should be processed are installed. All nodes load any outputs
 // and merge them with their parents' outputs.
-func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl interfaces.IInstaller, stackObj interfaces.IStack,
-	plan bool, approved bool, skipPostActions bool, ignoreErrors bool, dryRun bool, errCh chan error) {
+func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl interfaces.IInstaller,
+	stackObj interfaces.IStack, approved bool, skipPreActions bool, skipPostActions bool, ignoreErrors bool,
+	dryRun bool, errCh chan error) {
 
 	installableObj := node.installableObj
 
@@ -292,6 +442,21 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 
 	// only plan or process kapps that have been flagged for processing
 	if node.marked {
+		// execute any pre actions depending on if we're installing/deleting the installable
+		if approved && len(installableObj.PostInstallActions()) > 0 && !skipPreActions {
+			var postActions []structs.Action
+
+			if actionName == constants.DagActionInstall {
+				postActions = installableObj.PostInstallActions()
+			} else {
+				postActions = installableObj.PostDeleteActions()
+			}
+
+			for _, postAction := range postActions {
+				executePostAction(postAction, installableObj, stackObj, errCh, dryRun)
+			}
+		}
+
 		if install {
 			err := installerImpl.Install(installableObj, stackObj, approved, dryRun)
 			if err != nil {
@@ -333,9 +498,17 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 		return
 	}
 
-	// execute any post actions if we've just actually installed the kapp.
-	if node.marked && approved && len(installableObj.PostActions()) > 0 && !skipPostActions {
-		for _, postAction := range installableObj.PostActions() {
+	// execute any post actions depending on if we're installing/deleting the installable
+	if node.marked && approved && len(installableObj.PostInstallActions()) > 0 && !skipPostActions {
+		var postActions []structs.Action
+
+		if actionName == constants.DagActionInstall {
+			postActions = installableObj.PostInstallActions()
+		} else {
+			postActions = installableObj.PostDeleteActions()
+		}
+
+		for _, postAction := range postActions {
 			executePostAction(postAction, installableObj, stackObj, errCh, dryRun)
 		}
 	}
@@ -414,7 +587,7 @@ func addInstallableLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string
 }
 
 // Executes post actions
-func executePostAction(postAction structs.PostAction, installableObj interfaces.IInstallable,
+func executePostAction(postAction structs.Action, installableObj interfaces.IInstallable,
 	stackObj interfaces.IStack, errCh chan error, dryRun bool) {
 	switch postAction.Id {
 	case constants.PostActionClusterUpdate:

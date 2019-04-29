@@ -25,6 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
+	"time"
 )
 
 type deleteCmd struct {
@@ -35,8 +36,10 @@ type deleteCmd struct {
 	oneShot             bool
 	ignoreErrors        bool
 	skipTemplating      bool
+	skipPreActions      bool
 	skipPostActions     bool
 	establishConnection bool
+	includeParents      bool
 	stackName           string
 	stackFile           string
 	provider            string
@@ -100,7 +103,9 @@ process before deleting the selected kapps.
 	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp with 'APPROVED=false' then "+
 		"'APPROVED=true' to delete kapps in a single pass")
 	f.BoolVar(&c.ignoreErrors, "ignore-errors", false, "ignore errors deleting kapps")
+	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before deleting them")
+	f.BoolVar(&c.skipPreActions, "no-pre-actions", false, "skip running pre actions in kapps")
 	f.BoolVar(&c.skipPostActions, "no-post-actions", false, "skip running post actions in kapps - useful to quickly tear down a cluster")
 	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
@@ -143,10 +148,13 @@ func (c *deleteCmd) run() error {
 	}
 
 	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
-		"", c.out)
+		c.includeParents, "", c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	// this increase the sleep interval since this may take a while
+	dagObj.SleepInterval = 500 * time.Millisecond
 
 	if c.establishConnection {
 		err = establishConnection(c.dryRun, dryRunPrefix)
@@ -169,8 +177,8 @@ func (c *deleteCmd) run() error {
 		}
 	}
 
-	err = dagObj.Execute(constants.DagActionDelete, stackObj, shouldPlan, approved, c.skipPostActions,
-		c.ignoreErrors, c.dryRun)
+	err = dagObj.Execute(constants.DagActionDelete, stackObj, shouldPlan, approved, c.skipPreActions,
+		c.skipPostActions, c.ignoreErrors, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

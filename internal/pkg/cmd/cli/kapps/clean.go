@@ -31,6 +31,7 @@ type cleanCmd struct {
 	out             io.Writer
 	cacheDir        string
 	dryRun          bool
+	includeParents  bool
 	stackName       string
 	stackFile       string
 	provider        string
@@ -69,6 +70,7 @@ func newCleanCmd(out io.Writer) *cobra.Command {
 
 	f := cmd.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
+	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -109,13 +111,13 @@ func (c *cleanCmd) run() error {
 	}
 
 	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
-		constants.PresentKey, c.out)
+		c.includeParents, constants.PresentKey, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	err = dagObj.Execute(constants.DagActionClean, stackObj, false, true, true,
-		false, c.dryRun)
+		true, false, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

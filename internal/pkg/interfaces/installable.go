@@ -28,7 +28,10 @@ type IInstallable interface {
 	FullyQualifiedId() string
 	ManifestId() string
 	State() string
-	PostActions() []structs.PostAction
+	PreInstallActions() []structs.Action
+	PreDeleteActions() []structs.Action
+	PostInstallActions() []structs.Action
+	PostDeleteActions() []structs.Action
 	GetDescriptor() structs.KappDescriptorWithMaps
 	LoadConfigFile(cacheDir string) error
 	SetTopLevelCacheDir(cacheDir string) error

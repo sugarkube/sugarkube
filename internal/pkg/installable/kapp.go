@@ -62,10 +62,28 @@ func (k Kapp) State() string {
 	return k.mergedDescriptor.State
 }
 
-func (k Kapp) PostActions() []structs.PostAction {
+// Returns the pre/post install/delete actions
+func (k Kapp) getActions(pre bool, install bool) []structs.Action {
 	// convert the map to a list
-	postActions := make([]structs.PostAction, 0)
-	for _, actionMap := range k.mergedDescriptor.PostActions {
+	postActions := make([]structs.Action, 0)
+
+	var actions []map[string]structs.Action
+
+	if pre {
+		if install {
+			actions = k.mergedDescriptor.PreInstallActions
+		} else {
+			actions = k.mergedDescriptor.PreDeleteActions
+		}
+	} else {
+		if install {
+			actions = k.mergedDescriptor.PostInstallActions
+		} else {
+			actions = k.mergedDescriptor.PostDeleteActions
+		}
+	}
+
+	for _, actionMap := range actions {
 		for k, v := range actionMap {
 			v.Id = k
 			postActions = append(postActions, v)
@@ -73,6 +91,26 @@ func (k Kapp) PostActions() []structs.PostAction {
 	}
 
 	return postActions
+}
+
+// Returns the post-install actions
+func (k Kapp) PreInstallActions() []structs.Action {
+	return k.getActions(true, true)
+}
+
+// Returns the post-delete actions
+func (k Kapp) PreDeleteActions() []structs.Action {
+	return k.getActions(true, false)
+}
+
+// Returns the post-install actions
+func (k Kapp) PostInstallActions() []structs.Action {
+	return k.getActions(false, true)
+}
+
+// Returns the post-delete actions
+func (k Kapp) PostDeleteActions() []structs.Action {
+	return k.getActions(false, false)
 }
 
 // Every time we add a new descriptor remerge the descriptor.

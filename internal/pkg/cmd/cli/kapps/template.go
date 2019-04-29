@@ -25,12 +25,12 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
-	"time"
 )
 
 type templateConfig struct {
 	out             io.Writer
 	dryRun          bool
+	includeParents  bool
 	cacheDir        string
 	stackName       string
 	stackFile       string
@@ -71,6 +71,7 @@ configured for the region the target cluster is in, generating Helm
 
 	f := cmd.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
+	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -105,16 +106,13 @@ func (c *templateConfig) run() error {
 
 	// create a DAG to template all the kapps
 	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
-		"", c.out)
+		c.includeParents, "", c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	// this should be a fast action so reduce the sleep interval
-	dagObj.SleepInterval = 5 * time.Millisecond
-
-	err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, false,
-		true, c.dryRun)
+	err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, true,
+		true, false, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

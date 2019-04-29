@@ -37,7 +37,7 @@ const (
 )
 
 const markedNodeStr = "*"
-const defaultSleepInterval = 500 // milliseconds
+const defaultSleepInterval = 5 // milliseconds
 
 // Wrapper around a directed graph so we can define our own methods on it
 type Dag struct {
@@ -73,7 +73,8 @@ type nodeStatus struct {
 
 // Creates a DAG for installables in the given manifests. If a list of selected installable IDs is
 // given a subgraph will be returned containing only those installables and their ancestors.
-func Create(manifests []interfaces.IManifest, selectedInstallableIds []string) (*Dag, error) {
+func Create(manifests []interfaces.IManifest, selectedInstallableIds []string,
+	includeParents bool) (*Dag, error) {
 	manifestIds := make([]string, 0)
 	for _, manifest := range manifests {
 		manifestIds = append(manifestIds, manifest.Id())
@@ -87,7 +88,7 @@ func Create(manifests []interfaces.IManifest, selectedInstallableIds []string) (
 		return nil, errors.WithStack(err)
 	}
 
-	dag, err = dag.subGraph(selectedInstallableIds)
+	dag, err = dag.subGraph(selectedInstallableIds, includeParents)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -193,7 +194,7 @@ func isAcyclic(graphObj *simple.DirectedGraph) bool {
 // Returns a new DAG comprising the nodes in the given input list and all their
 // ancestors. The returned graph is guaranteed to be a DAG. All nodes in the input list will be
 // marked for processing in the returned subgraph.
-func (g *Dag) subGraph(nodeNames []string) (*Dag, error) {
+func (g *Dag) subGraph(nodeNames []string, includeParents bool) (*Dag, error) {
 
 	log.Logger.Debugf("Extracting sub-graph for nodes: %s", strings.Join(nodeNames, ", "))
 
@@ -212,7 +213,7 @@ func (g *Dag) subGraph(nodeNames []string) (*Dag, error) {
 		// mark that we should process this node
 		ogNode := addNode(outputGraph, ogNodesByName, inputGraphNode.name,
 			inputGraphNode.installableObj, true)
-		addAncestors(g.graph, outputGraph, ogNodesByName, inputGraphNode, ogNode)
+		addAncestors(g.graph, outputGraph, ogNodesByName, inputGraphNode, ogNode, includeParents)
 	}
 
 	dag := Dag{
@@ -226,15 +227,16 @@ func (g *Dag) subGraph(nodeNames []string) (*Dag, error) {
 }
 
 func addAncestors(inputGraph *simple.DirectedGraph, outputGraph *simple.DirectedGraph,
-	ogNodes map[string]NamedNode, igNode NamedNode, ogNode NamedNode) {
+	ogNodes map[string]NamedNode, igNode NamedNode, ogNode NamedNode, includeParents bool) {
 	igParents := inputGraph.To(igNode.ID())
 
 	for igParents.Next() {
 		igParentNode := igParents.Node().(NamedNode)
 
-		// we don't want to process ancestors, only use them to grab their outputs
+		// we generally don't want to process ancestors, only use them to grab their
+		// outputs, but it depends on `includeParents`
 		ogParentNode := addNode(outputGraph, ogNodes, igParentNode.name,
-			igParentNode.installableObj, false)
+			igParentNode.installableObj, includeParents)
 
 		// now we have parent and child nodes in the output graph , create a directed
 		// edge between them
@@ -242,7 +244,7 @@ func addAncestors(inputGraph *simple.DirectedGraph, outputGraph *simple.Directed
 		outputGraph.SetEdge(edge)
 
 		// now recurse to the parent of the parent node
-		addAncestors(inputGraph, outputGraph, ogNodes, igParentNode, ogParentNode)
+		addAncestors(inputGraph, outputGraph, ogNodes, igParentNode, ogParentNode, includeParents)
 	}
 }
 
@@ -384,10 +386,6 @@ func (g *Dag) Print(writer io.Writer) error {
 	doneCh := make(chan NamedNode, numWorkers)
 	finishedCh := g.walkDown(processCh, doneCh)
 
-	// temporarily reduce the sleep time
-	originalSleepTime := g.SleepInterval
-	g.SleepInterval = 5 * time.Millisecond
-
 	go func() {
 		for node := range processCh {
 			log.Logger.Debugf("Visited node: %+v", node)
@@ -414,7 +412,6 @@ func (g *Dag) Print(writer io.Writer) error {
 
 	<-finishedCh
 
-	g.SleepInterval = originalSleepTime
 	log.Logger.Debug("DAG printed")
 
 	return nil

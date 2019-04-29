@@ -4,14 +4,12 @@
 * Code of conduct
 
 ## Top priorities
-* Update the 'kapp vars' command. Confirm 'cluster vars' still works too.
 * Fix passing a single flag to helm/tf where the file may not exist
 * Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist
   depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a 
   kapp with the local provider because it hasn't e.g. written terraform output to a path that it 
   would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for 
   remote providers, not the local one
-* Add a flag to process all dependencies for a kapp (i.e. mark all parent nodes in the subgraph)
   
 ### Merging kapp configs
 * Create a 'validate' command to verify that binaries declared in `requires` blocks exist

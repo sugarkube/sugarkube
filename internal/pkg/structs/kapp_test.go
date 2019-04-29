@@ -24,18 +24,46 @@ import (
 
 func TestPostActions(t *testing.T) {
 	input := `
-post_actions:
-  - test_1:
+post_install_actions:
+  - test_1_post_inst:
       params:
         - p1
         - p2
-  - atest2:
+  - atest2_pi:
+pre_install_actions:
+  - pre_inst_test_1:
+      params:
+        - p1
+        - p2
+  - pre_atest2:
+post_delete_actions:
+  - test_1_post_del:
+      params:
+        - p1
+        - p2
+pre_delete_actions:
+  - pre_del_test_1:
+      params:
+        - p1
+        - p2
+  - pre_atest2:
 `
 
 	expected := KappConfig{
-		PostActions: []map[string]PostAction{
-			{"test_1": PostAction{Id: "", Params: []string{"p1", "p2"}}},
-			{"atest2": PostAction{Id: "", Params: []string(nil)}},
+		PreInstallActions: []map[string]Action{
+			{"pre_inst_test_1": Action{Id: "", Params: []string{"p1", "p2"}}},
+			{"pre_atest2": Action{Id: "", Params: []string(nil)}},
+		},
+		PostInstallActions: []map[string]Action{
+			{"test_1_post_inst": Action{Id: "", Params: []string{"p1", "p2"}}},
+			{"atest2_pi": Action{Id: "", Params: []string(nil)}},
+		},
+		PreDeleteActions: []map[string]Action{
+			{"pre_del_test_1": Action{Id: "", Params: []string{"p1", "p2"}}},
+			{"pre_atest2": Action{Id: "", Params: []string(nil)}},
+		},
+		PostDeleteActions: []map[string]Action{
+			{"test_1_post_del": Action{Id: "", Params: []string{"p1", "p2"}}},
 		},
 	}
 

@@ -26,6 +26,8 @@
 * Change the args field from a list of maps to just maps
 * Added a 'kapps clean' subcommand to run 'make clean' across selected kapps
 * Added a 'kapps output' subcommand to run 'make output' across selected kapps
+* Add an option to most kapp commands to automatically work on all parents of selected kapps
+* Make post-actions more granular. It's now possible to specify pre/post install/delete actions for kapps 
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring

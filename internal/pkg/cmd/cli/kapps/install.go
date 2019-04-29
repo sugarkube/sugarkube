@@ -29,6 +29,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
+	"time"
 )
 
 type installCmd struct {
@@ -39,8 +40,10 @@ type installCmd struct {
 	oneShot  bool
 	//force               bool
 	skipTemplating      bool
+	skipPreActions      bool
 	skipPostActions     bool
 	establishConnection bool
+	includeParents      bool
 	stackName           string
 	stackFile           string
 	provider            string
@@ -120,9 +123,11 @@ process before installing the selected kapps.
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
 	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp with 'APPROVED=false' then "+
 		"'APPROVED=true' to install kapps in a single pass")
+	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/delete all the kapps "+
 	//	"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before installing them")
+	f.BoolVar(&c.skipPreActions, "no-pre-actions", false, "skip running pre actions in kapps")
 	f.BoolVar(&c.skipPostActions, "no-post-actions", false, "skip running post actions in kapps")
 	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
@@ -170,10 +175,13 @@ func (c *installCmd) run() error {
 	}
 
 	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
-		constants.PresentKey, c.out)
+		c.includeParents, constants.PresentKey, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	// this increase the sleep interval since this may take a while
+	dagObj.SleepInterval = 500 * time.Millisecond
 
 	if c.establishConnection {
 		err = establishConnection(c.dryRun, dryRunPrefix)
@@ -196,8 +204,8 @@ func (c *installCmd) run() error {
 		}
 	}
 
-	err = dagObj.Execute(constants.DagActionInstall, stackObj, shouldPlan, approved, false,
-		false, c.dryRun)
+	err = dagObj.Execute(constants.DagActionInstall, stackObj, shouldPlan, approved,
+		c.skipPreActions, c.skipPostActions, false, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -213,7 +221,7 @@ func (c *installCmd) run() error {
 // Creates a DAG for installables matched by selectors. If an optional state (e.g. present, absent, etc.) is
 // provided, only installables with the same state will be included in the returned DAG
 func BuildDagForSelected(stackObj interfaces.IStack, cacheDir string, includeSelector []string,
-	excludeSelector []string, stateFilter string, out io.Writer) (*plan.Dag, error) {
+	excludeSelector []string, includeParents bool, stateFilter string, out io.Writer) (*plan.Dag, error) {
 	// load configs for all installables in the stack
 	err := stackObj.LoadInstallables(cacheDir)
 	if err != nil {
@@ -242,7 +250,8 @@ func BuildDagForSelected(stackObj interfaces.IStack, cacheDir string, includeSel
 		}
 	}
 
-	dagObj, err := plan.Create(stackObj.GetConfig().Manifests(), filteredInstallableIds)
+	dagObj, err := plan.Create(stackObj.GetConfig().Manifests(), filteredInstallableIds,
+		includeParents)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

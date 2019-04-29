@@ -23,7 +23,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"sync"
 	"testing"
-	"time"
 )
 
 func init() {
@@ -135,8 +134,6 @@ func TestTraverse(t *testing.T) {
 	numProcessed := 0
 	var lastProcessedId string
 
-	// reduce the sleep time for testing
-	dag.SleepInterval = 5 * time.Millisecond
 	numWorkers := 5
 
 	for i := 0; i < numWorkers; i++ {
@@ -181,7 +178,7 @@ func TestSubGraph(t *testing.T) {
 
 	nodeNames := []string{"wordpress1", "independent"}
 
-	subGraph, err := dag.subGraph(nodeNames)
+	subGraph, err := dag.subGraph(nodeNames, false)
 	assert.Nil(t, err)
 
 	nodesByName := subGraph.nodesByName()
