@@ -304,7 +304,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			outputs, err := getOutputs(installableObj, stackObj, installerImpl, true, dryRun)
 			if err != nil {
 				if ignoreErrors {
-					log.Logger.Warnf("Ignoring error: %#v", err)
+					log.Logger.Warnf("Ignoring error getting outputs: %#v", err)
 					doneCh <- node
 					return
 				}
