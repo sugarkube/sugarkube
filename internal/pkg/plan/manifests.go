@@ -32,6 +32,8 @@ func findDependencies(manifests []interfaces.IManifest) map[string]nodeDescripto
 		for _, installableObj := range manifest.Installables() {
 			dependencies := make([]string, 0)
 
+			log.Logger.Tracef("Candidate dependency: %#v", installableObj)
+
 			// if a manifest is marked as being sequential, each kapp depends on the previous one
 			if manifest.IsSequential() {
 				log.Logger.Debugf("Manifest '%s' is sequential", manifest.Id())

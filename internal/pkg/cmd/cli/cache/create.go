@@ -161,7 +161,7 @@ func (c *createCmd) run() error {
 		}
 
 		err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, true,
-			true, false, c.dryRun)
+			true, true, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

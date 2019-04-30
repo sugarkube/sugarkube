@@ -1,0 +1,4 @@
+# Known bugs
+
+* If any kapps declare their own args for 'make', they'll propagate through to kapps below them in the DAG. This appears to be caused by a bug in mergo.
+  * Work around - declare all args in the global sugarkube-conf.yaml file, perhaps using regexes to match names. E.g. if all generated Helm values files are named `_generated_*.yaml`, just search by regex for them instead of naming each one explicitly.

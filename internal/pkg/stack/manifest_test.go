@@ -270,7 +270,7 @@ kapps:
 					KappConfig: structs.KappConfig{
 						State: "absent",
 						PostInstallActions: []map[string]structs.Action{
-							{constants.PostActionClusterUpdate: structs.Action{}},
+							{constants.ActionClusterUpdate: structs.Action{}},
 						},
 						Vars: map[string]interface{}{},
 					},

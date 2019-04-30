@@ -303,6 +303,11 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			// try loading outputs, but don't fail if we can't
 			outputs, err := getOutputs(installableObj, stackObj, installerImpl, true, dryRun)
 			if err != nil {
+				if ignoreErrors {
+					log.Logger.Warnf("Ignoring error: %#v", err)
+					doneCh <- node
+					return
+				}
 				errCh <- errors.WithStack(err)
 				return
 			}
@@ -556,6 +561,11 @@ func addInstallableLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string
 
 		parentRegistry := parent.installableObj.GetLocalRegistry()
 
+		// if may not be set, e.g. if we ignored errors while creating the cache
+		if parentRegistry == nil {
+			continue
+		}
+
 		// if the parent was in a different manifest, strip out all non fully-qualified registry
 		// entries
 		if parent.installableObj.ManifestId() != node.installableObj.ManifestId() {
@@ -590,7 +600,7 @@ func addInstallableLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string
 func executePostAction(postAction structs.Action, installableObj interfaces.IInstallable,
 	stackObj interfaces.IStack, errCh chan error, dryRun bool) {
 	switch postAction.Id {
-	case constants.PostActionClusterUpdate:
+	case constants.ActionClusterUpdate:
 		log.Logger.Info("Running cluster update action")
 		err := cluster.UpdateCluster(os.Stdout, stackObj, true, dryRun)
 		if err != nil {
@@ -598,8 +608,15 @@ func executePostAction(postAction structs.Action, installableObj interfaces.IIns
 				installableObj.Id())
 			return
 		}
-		break
-	case constants.PostActionAddProviderVarsFiles:
+	case constants.ActionClusterDelete:
+		log.Logger.Info("Running cluster delete action")
+		err := stackObj.GetProvisioner().Delete(true, dryRun)
+		if err != nil {
+			errCh <- errors.Wrapf(err, "Error deleting cluster, triggered by kapp '%s'",
+				installableObj.Id())
+			return
+		}
+	case constants.ActionAddProviderVarsFiles:
 		log.Logger.Infof("Running action to add provider vars dirs")
 		// todo - run each path through the templater
 		for _, path := range postAction.Params {
@@ -618,7 +635,6 @@ func executePostAction(postAction structs.Action, installableObj interfaces.IIns
 			errCh <- errors.WithStack(err)
 			return
 		}
-		break
 	}
 }
 
