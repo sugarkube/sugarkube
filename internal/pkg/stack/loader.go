@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
-	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
@@ -38,8 +37,7 @@ import (
 // variables are loaded and set as a property on the stackConfig. So after this step, stackConfig contains
 // all config values for the entire stack (although it won't have been templated yet so any '{{var_name}}'
 // type strings won't have been interpolated yet.
-func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.StackFile,
-	globalConfig *config.Config, out io.Writer) (interfaces.IStack, error) {
+func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.StackFile, out io.Writer) (interfaces.IStack, error) {
 
 	if strings.TrimSpace(stackName) == "" {
 		return nil, errors.New("The stack name is required")
@@ -78,7 +76,7 @@ func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.
 
 	registryImpl := registry.New()
 
-	stackObj, err := newStack(globalConfig, stackConfig, providerImpl, registryImpl)
+	stackObj, err := newStack(stackConfig, providerImpl, registryImpl)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

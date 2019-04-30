@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
-	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -36,23 +35,20 @@ import (
 // we need to pass around. This is in its own package to avoid circular
 // dependencies.
 type Stack struct {
-	globalConfig *config.Config // config loaded for the program from the 'sugarkube-conf.yaml' file
-	config       interfaces.IStackConfig
-	provider     interfaces.IProvider
-	provisioner  interfaces.IProvisioner
-	status       *ClusterStatus
-	registry     interfaces.IRegistry
+	config      interfaces.IStackConfig
+	provider    interfaces.IProvider
+	provisioner interfaces.IProvisioner
+	status      *ClusterStatus
+	registry    interfaces.IRegistry
 }
 
 // Creates a new Stack
-func newStack(globalConfig *config.Config, config interfaces.IStackConfig,
-	provider interfaces.IProvider, registry interfaces.IRegistry) (interfaces.IStack, error) {
+func newStack(config interfaces.IStackConfig, provider interfaces.IProvider, registry interfaces.IRegistry) (interfaces.IStack, error) {
 
 	stack := &Stack{
-		globalConfig: globalConfig,
-		config:       config,
-		provider:     provider,
-		provisioner:  nil,
+		config:      config,
+		provider:    provider,
+		provisioner: nil,
 		status: &ClusterStatus{
 			isOnline:              false,
 			isReady:               false,
@@ -84,10 +80,6 @@ func newStack(globalConfig *config.Config, config interfaces.IStackConfig,
 
 func (s Stack) GetConfig() interfaces.IStackConfig {
 	return s.config
-}
-
-func (s Stack) GetGlobalConfig() *config.Config {
-	return s.globalConfig
 }
 
 func (s Stack) GetStatus() interfaces.IClusterStatus {

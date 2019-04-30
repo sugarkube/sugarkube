@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -161,7 +160,7 @@ func (c *installCmd) run() error {
 
 	var err error
 
-	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, config.CurrentConfig, c.out)
+	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
