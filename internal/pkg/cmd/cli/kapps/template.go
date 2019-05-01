@@ -30,6 +30,7 @@ type templateConfig struct {
 	out             io.Writer
 	dryRun          bool
 	includeParents  bool
+	ignoreErrors    bool
 	cacheDir        string
 	stackName       string
 	stackFile       string
@@ -71,6 +72,7 @@ configured for the region the target cluster is in, generating Helm
 	f := cmd.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
+	f.BoolVar(&c.ignoreErrors, "ignore-errors", false, "ignore errors templating kapps")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -111,7 +113,7 @@ func (c *templateConfig) run() error {
 	}
 
 	err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, true,
-		true, false, c.dryRun)
+		true, c.ignoreErrors, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

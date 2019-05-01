@@ -241,10 +241,10 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 
 		switch action {
 		case constants.DagActionInstall:
-			installOrDelete(true, dagObj, node, installerImpl, stackObj, approved, skipPreActions,
+			installOrDelete(true, dagObj, node, installerImpl, stackObj, plan, approved, skipPreActions,
 				skipPostActions, ignoreErrors, dryRun, errCh)
 		case constants.DagActionDelete:
-			installOrDelete(false, dagObj, node, installerImpl, stackObj, approved, skipPreActions,
+			installOrDelete(false, dagObj, node, installerImpl, stackObj, plan, approved, skipPreActions,
 				skipPostActions, ignoreErrors, dryRun, errCh)
 		case constants.DagActionClean:
 			if node.marked {
@@ -283,10 +283,16 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 		case constants.DagActionTemplate:
 			// Template nodes before trying to get the output in case getting the output relies on templated
 			// files, e.g. terraform backends
+			installerVars := installerImpl.GetVars(action, approved)
 			if node.marked {
-				err = renderKappTemplates(stackObj, installableObj, map[string]interface{}{}, dryRun)
+				err = renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
 				if err != nil {
-					errCh <- errors.WithStack(err)
+					if ignoreErrors {
+						log.Logger.Warnf("Ignoring error templating kapp: %#v", err)
+						doneCh <- node
+					} else {
+						errCh <- errors.WithStack(err)
+					}
 					return
 				}
 			}
@@ -306,9 +312,9 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error getting outputs: %#v", err)
 					doneCh <- node
-					return
+				} else {
+					errCh <- errors.WithStack(err)
 				}
-				errCh <- errors.WithStack(err)
 				return
 			}
 
@@ -316,9 +322,14 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 
 			// only template marked nodes
 			if node.marked {
-				err = renderKappTemplates(stackObj, installableObj, map[string]interface{}{}, dryRun)
+				err = renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
 				if err != nil {
-					errCh <- errors.WithStack(err)
+					if ignoreErrors {
+						log.Logger.Warnf("Ignoring error templating kapp: %#v", err)
+						doneCh <- node
+					} else {
+						errCh <- errors.WithStack(err)
+					}
 					return
 				}
 			}
@@ -426,14 +437,22 @@ func varsWorker(processCh <-chan NamedNode, doneCh chan<- NamedNode, errCh chan 
 // Implements the install action. Nodes that should be processed are installed. All nodes load any outputs
 // and merge them with their parents' outputs.
 func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl interfaces.IInstaller,
-	stackObj interfaces.IStack, approved bool, skipPreActions bool, skipPostActions bool, ignoreErrors bool,
+	stackObj interfaces.IStack, plan bool, approved bool, skipPreActions bool, skipPostActions bool, ignoreErrors bool,
 	dryRun bool, errCh chan error) {
 
 	installableObj := node.installableObj
 
 	actionName := "install"
+	installerMethod := installerImpl.Install
+	preActions := installableObj.PreInstallActions()
+	postActions := installableObj.PostInstallActions()
+
 	if !install {
 		actionName = "delete"
+		installerMethod = installerImpl.Delete
+		preActions = installableObj.PreDeleteActions()
+		postActions = installableObj.PostDeleteActions()
+
 	}
 
 	installerVars := installerImpl.GetVars(actionName, approved)
@@ -447,29 +466,30 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 
 	// only plan or process kapps that have been flagged for processing
 	if node.marked {
-		// execute any pre actions depending on if we're installing/deleting the installable
-		if approved && len(installableObj.PostInstallActions()) > 0 && !skipPreActions {
-			var postActions []structs.Action
-
-			if actionName == constants.DagActionInstall {
-				postActions = installableObj.PostInstallActions()
-			} else {
-				postActions = installableObj.PostDeleteActions()
-			}
-
-			for _, postAction := range postActions {
-				executePostAction(postAction, installableObj, stackObj, errCh, dryRun)
+		if plan {
+			err = installerMethod(installableObj, stackObj, false, dryRun)
+			if err != nil {
+				if ignoreErrors {
+					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
+						installableObj.FullyQualifiedId(), err)
+					return
+				}
+				errCh <- errors.Wrapf(err, "Error planning kapp '%s'", installableObj.Id())
+				return
 			}
 		}
 
-		if install {
-			err := installerImpl.Install(installableObj, stackObj, approved, dryRun)
-			if err != nil {
-				errCh <- errors.Wrapf(err, "Error processing kapp '%s'", installableObj.Id())
-				return
+		// only execute pre actions if approved==true
+		if approved && !skipPreActions {
+			log.Logger.Infof("Will run %d pre %s actions", len(preActions), actionName)
+
+			for _, preAction := range preActions {
+				executeAction(preAction, installableObj, stackObj, errCh, dryRun)
 			}
-		} else {
-			err := installerImpl.Delete(installableObj, stackObj, approved, dryRun)
+		}
+
+		if approved {
+			err = installerMethod(installableObj, stackObj, approved, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
@@ -503,18 +523,12 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 		return
 	}
 
-	// execute any post actions depending on if we're installing/deleting the installable
-	if node.marked && approved && len(installableObj.PostInstallActions()) > 0 && !skipPostActions {
-		var postActions []structs.Action
-
-		if actionName == constants.DagActionInstall {
-			postActions = installableObj.PostInstallActions()
-		} else {
-			postActions = installableObj.PostDeleteActions()
-		}
+	// only execute post actions if approved==true
+	if node.marked && approved && !skipPostActions {
+		log.Logger.Infof("Will run %d post %s actions", len(postActions), actionName)
 
 		for _, postAction := range postActions {
-			executePostAction(postAction, installableObj, stackObj, errCh, dryRun)
+			executeAction(postAction, installableObj, stackObj, errCh, dryRun)
 		}
 	}
 }
@@ -597,7 +611,7 @@ func addInstallableLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string
 }
 
 // Executes post actions
-func executePostAction(postAction structs.Action, installableObj interfaces.IInstallable,
+func executeAction(postAction structs.Action, installableObj interfaces.IInstallable,
 	stackObj interfaces.IStack, errCh chan error, dryRun bool) {
 	switch postAction.Id {
 	case constants.ActionClusterUpdate:
