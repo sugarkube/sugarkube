@@ -25,10 +25,11 @@ import (
 )
 
 var CustomFunctions = template.FuncMap{
-	"findFiles":  findFiles,
-	"mapPrintF":  mapPrintF,
-	"listString": listString,
-	"isSet":      isSet,
+	"findFiles":   findFiles,
+	"mapPrintF":   mapPrintF,
+	"listString":  listString,
+	"isSet":       isSet,
+	"removeEmpty": removeEmpty,
 }
 
 // Turn separate string parameters into a single []string array
@@ -56,6 +57,31 @@ func mapPrintF(pattern string, genericItems interface{}) []string {
 		if ok {
 			for _, item := range stringItems {
 				output = append(output, fmt.Sprintf(pattern, item))
+			}
+		}
+	}
+
+	return output
+}
+
+// Deletes empty elements of a list
+func removeEmpty(genericItems interface{}) []string {
+	output := make([]string, 0)
+
+	items, ok := genericItems.([]interface{})
+	if ok {
+		for _, item := range items {
+			if item != nil {
+				output = append(output, fmt.Sprintf("%v", item))
+			}
+		}
+	} else {
+		stringItems, ok := genericItems.([]string)
+		if ok {
+			for _, item := range stringItems {
+				if item != "" {
+					output = append(output, item)
+				}
 			}
 		}
 	}
