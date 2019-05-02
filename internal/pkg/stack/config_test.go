@@ -93,10 +93,6 @@ func GetTestManifests(t *testing.T) []interfaces.IManifest {
 				},
 				Sources: map[string]structs.Source{
 					"pathA": {
-						// This line isn't in the manifest file but gets copied in because of the
-						// frigging we're doing inside kapp.AddDescriptor to work around an issue
-						// in mergo
-						Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.1.0",
 						Options: map[string]interface{}{
 							"branch": "stable",
 						},

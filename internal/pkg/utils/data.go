@@ -16,6 +16,11 @@
 
 package utils
 
+import (
+	"encoding/json"
+	"github.com/pkg/errors"
+)
+
 // Creates a nested map with the final element an empty string
 func BlankNestedMap(accumulator map[string]interface{}, elements []string) map[string]interface{} {
 	if len(elements) == 1 {
@@ -25,4 +30,20 @@ func BlankNestedMap(accumulator map[string]interface{}, elements []string) map[s
 		accumulator[elements[0]] = BlankNestedMap(map[string]interface{}{}, elements[1:])
 		return accumulator
 	}
+}
+
+// Performs a deep copy of an input by marshalling to and from JSON
+func DeepCopy(in interface{}, out interface{}) error {
+
+	bytes, err := json.Marshal(in)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	err = json.Unmarshal(bytes, out)
+	if err != nil {
+		return errors.Wrapf(err, "Error unmarshalling JSON")
+	}
+
+	return nil
 }

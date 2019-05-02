@@ -126,8 +126,16 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 	log.Logger.Tracef("Adding new descriptor for kapp '%s' (prepend=%v): %+v", k.FullyQualifiedId(),
 		prepend, config)
 
+	// deep copy the input because otherwise Mergo mutates the global state while merging somehow (something
+	// to do with maps being pointers I suspect)
+	configCopy := structs.KappDescriptorWithMaps{}
+	err := utils.DeepCopy(config, &configCopy)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	if prepend {
-		k.descriptorLayers = append([]structs.KappDescriptorWithMaps{config}, configLayers...)
+		k.descriptorLayers = append([]structs.KappDescriptorWithMaps{configCopy}, configLayers...)
 	} else {
 		// until https://github.com/imdario/mergo/issues/90 is resolved we need to manually propagate
 		// non-empty fields for maps to later layers
@@ -136,7 +144,7 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 			previousLayer := k.descriptorLayers[len(k.descriptorLayers)-1]
 
 			for key, previousSource := range previousLayer.Sources {
-				currentSource, ok := config.Sources[key]
+				currentSource, ok := configCopy.Sources[key]
 				if !ok {
 					continue
 				}
@@ -149,11 +157,11 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 					currentSource.Id = previousSource.Id
 				}
 
-				config.Sources[key] = currentSource
+				configCopy.Sources[key] = currentSource
 			}
 
 			for key, previousOutput := range previousLayer.Outputs {
-				currentOutput, ok := config.Outputs[key]
+				currentOutput, ok := configCopy.Outputs[key]
 				if !ok {
 					continue
 				}
@@ -168,11 +176,11 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 					currentOutput.Format = previousOutput.Format
 				}
 
-				config.Outputs[key] = currentOutput
+				configCopy.Outputs[key] = currentOutput
 			}
 		}
 
-		k.descriptorLayers = append(configLayers, config)
+		k.descriptorLayers = append(configLayers, configCopy)
 	}
 
 	return k.mergeDescriptorLayers()
