@@ -24,4 +24,4 @@ require (
 )
 
 // using our custom fork
-replace gopkg.in/yaml.v2 v2.2.2 => github.com/sugarkube/yaml v2.1.0+incompatible
+replace gopkg.in/yaml.v2 => github.com/sugarkube/yaml v0.0.0-20190303195351-8c2d5c55e5e0
