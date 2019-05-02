@@ -68,6 +68,7 @@ is created or updated by Sugarkube, but if you're deleting individual kapps
 you may need to pass the '--connect' flag to make Sugarkube go through that
 process before deleting the selected kapps.
 `,
+		Aliases: []string{"uninstall"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")
