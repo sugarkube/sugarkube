@@ -14,6 +14,9 @@
   for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific
   kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
 * Only run a kops update if the spec has changed (diff the new spec with the existing one)
+* Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity)
+* Documentation
+* Migrate to a go module
   
 ### Merging kapp configs
 * Create a 'validate' command to verify that binaries declared in `requires` blocks exist
@@ -43,11 +46,6 @@
 * use ps (https://github.com/shirou/gopsutil/) to check whether SSH port forwarding is actually set up, and 
   if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
   
-### Config phases/states
-* Enhance kapp selectors to allow specifying the first and last kapps to run. This'd make it easy to e.g. scale up
-  the bastion ASG, install some stuff then scale it down again... but maybe users should just chain sugarkube 
-  invocations?
-
 ### Everything else
 * Support declaring templates as 'sensitive' - they should be templated just-in-time then deleted (even on error/interrupts)
 
