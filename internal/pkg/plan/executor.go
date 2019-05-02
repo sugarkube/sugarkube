@@ -511,7 +511,9 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 		}
 	}
 
-	// get outputs if we've installed the kapp
+	// get outputs if we've installed the kapp (we assume we even need to get the outputs for skipped kapps since
+	// the assumption is that those kapps will have been previously installed and already exist - otherwise they'd
+	// be marked as absent not to be installed at all)
 	var outputs map[string]interface{}
 	if install && approved {
 		// fail if outputs don't exist
