@@ -6,7 +6,7 @@
 tf-patterns: &tf-patterns
   tf-params: >
     {{ mapPrintF "terraform_%s/.*defaults.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
-    {{ mapPrintF (mapPrintF "terraform_%s/.*%%s.tfvars$" (listString .stack.provider) | join "") .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
+    {{ mapPrintF (mapPrintF "terraform_%s/.*%%s.tfvars$" (listString .stack.provider) | join "") (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
     {{ mapPrintF "terraform_%s/.*_generated_.*.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
 
 # Search for parameters dynamically. The `findFiles` function takes a list of
@@ -23,7 +23,7 @@ tf-patterns: &tf-patterns
 helm-patterns: &helm-patterns
   helm-params: >
     {{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
-    {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
+    {{ mapPrintF "/values-%s.yaml$" (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
     {{ listString "/_generated_.*.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
 
 programs:
@@ -34,10 +34,10 @@ programs:
       release: "{{ .kapp.id }}"
       kube_context: "{{ .kube_context }}"
 
-  # todo - uncomment once viper supports not lowercasing all map keys
-#    envVars:
-#      RUN_HELM: |-
-#        "{{ if isSet .kapp.vars "run_helm" }}{{ .kapp.vars.run_helm }}{{ else }}true{{ end }}"
+    # todo - uncomment once viper supports not lowercasing all map keys
+    #    envVars:
+    #      RUN_HELM: |-
+    #        "{{ if isSet .kapp.vars "run_helm" }}{{ .kapp.vars.run_helm }}{{ else }}true{{ end }}"
 
     args:
       make:

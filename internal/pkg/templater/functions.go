@@ -71,7 +71,7 @@ func removeEmpty(genericItems interface{}) []string {
 	items, ok := genericItems.([]interface{})
 	if ok {
 		for _, item := range items {
-			if item != nil {
+			if item != nil && item != "" {
 				output = append(output, fmt.Sprintf("%v", item))
 			}
 		}
