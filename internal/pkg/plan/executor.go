@@ -479,16 +479,25 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 			}
 		}
 
+		skipInstallerMethod := false
+
 		// only execute pre actions if approved==true
 		if approved && !skipPreActions {
 			log.Logger.Infof("Will run %d pre %s actions", len(preActions), actionName)
 
-			for _, preAction := range preActions {
-				executeAction(preAction, installableObj, stackObj, errCh, dryRun)
+			for _, action := range preActions {
+				switch action.Id {
+				case constants.ActionSkip:
+					log.Logger.Infof("Marking that we should skip running '%s' on installable '%s'",
+						actionName, installableObj.FullyQualifiedId())
+					skipInstallerMethod = true
+				default:
+					executeAction(action, installableObj, stackObj, errCh, dryRun)
+				}
 			}
 		}
 
-		if approved {
+		if approved && !skipInstallerMethod {
 			err = installerMethod(installableObj, stackObj, approved, dryRun)
 			if err != nil {
 				if ignoreErrors {
@@ -527,8 +536,8 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	if node.marked && approved && !skipPostActions {
 		log.Logger.Infof("Will run %d post %s actions", len(postActions), actionName)
 
-		for _, postAction := range postActions {
-			executeAction(postAction, installableObj, stackObj, errCh, dryRun)
+		for _, action := range postActions {
+			executeAction(action, installableObj, stackObj, errCh, dryRun)
 		}
 	}
 }
@@ -611,11 +620,11 @@ func addInstallableLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string
 }
 
 // Executes post actions
-func executeAction(postAction structs.Action, installableObj interfaces.IInstallable,
+func executeAction(action structs.Action, installableObj interfaces.IInstallable,
 	stackObj interfaces.IStack, errCh chan error, dryRun bool) {
-	switch postAction.Id {
+	log.Logger.Infof("Executing action '%s' for installable '%s'", action, installableObj.FullyQualifiedId())
+	switch action.Id {
 	case constants.ActionClusterUpdate:
-		log.Logger.Info("Running cluster update action")
 		err := cluster.UpdateCluster(os.Stdout, stackObj, true, dryRun)
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'",
@@ -623,7 +632,6 @@ func executeAction(postAction structs.Action, installableObj interfaces.IInstall
 			return
 		}
 	case constants.ActionClusterDelete:
-		log.Logger.Info("Running cluster delete action")
 		err := stackObj.GetProvisioner().Delete(true, dryRun)
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error deleting cluster, triggered by kapp '%s'",
@@ -631,9 +639,8 @@ func executeAction(postAction structs.Action, installableObj interfaces.IInstall
 			return
 		}
 	case constants.ActionAddProviderVarsFiles:
-		log.Logger.Infof("Running action to add provider vars dirs")
 		// todo - run each path through the templater
-		for _, path := range postAction.Params {
+		for _, path := range action.Params {
 			if !filepath.IsAbs(path) {
 				// convert the relative path to absolute
 				path = filepath.Join(installableObj.GetConfigFileDir(), path)

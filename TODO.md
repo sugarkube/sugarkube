@@ -10,6 +10,7 @@
   kapp with the local provider because it hasn't e.g. written terraform output to a path that it 
   would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for 
   remote providers, not the local one
+* Create a dedicated terraform installer
   
 ### Merging kapp configs
 * Create a 'validate' command to verify that binaries declared in `requires` blocks exist
