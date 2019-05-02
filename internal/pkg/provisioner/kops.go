@@ -763,7 +763,7 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 		sshPortForwardingDelaySeconds)
 	time.Sleep(sshPortForwardingDelaySeconds * time.Second)
 
-	fmt.Printf("SSH port forwarding established. Use KUBECONFIG=%s", kubeConfigPathStr)
+	fmt.Printf("SSH port forwarding established. Use KUBECONFIG=%s\n", kubeConfigPathStr)
 
 	return true, nil
 }
