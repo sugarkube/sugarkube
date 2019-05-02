@@ -4,10 +4,10 @@
 # Dynamically searches for terraform tfvars files based on the current stack provider and various properties of the
 # stack (e.g. name, region, etc.) as well as any generated files. All files found are prepended by `-var-file`
 tf-patterns: &tf-patterns
-  tf-params: |
-    {{ mapPrintF "terraform_%s/.*defaults.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim | listString | removeEmpty | mapPrintF "%s \\" | join "" }}
-    {{ mapPrintF (mapPrintF "terraform_%s/.*%%s.tfvars$" (listString .stack.provider) | join "") .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim | listString | removeEmpty | mapPrintF "%s \\" | join "" }}
-    {{ mapPrintF "terraform_%s/.*_generated_.*.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim | listString | removeEmpty | mapPrintF "%s \\" | join "" }}
+  tf-params: >
+    {{ mapPrintF "terraform_%s/.*defaults.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
+    {{ mapPrintF (mapPrintF "terraform_%s/.*%%s.tfvars$" (listString .stack.provider) | join "") .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
+    {{ mapPrintF "terraform_%s/.*_generated_.*.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
 
 # Search for parameters dynamically. The `findFiles` function takes a list of
 # file name patterns and a starting directory to search from. It then recursively
@@ -21,10 +21,10 @@ tf-patterns: &tf-patterns
 # So these scary looking things search for a values.yaml file in the kapp cache directory, as well as
 # `values-<provider/account/profile/etc>.yaml` and prepends '-f' ready to be passed as options to helm.
 helm-patterns: &helm-patterns
-  helm-params: |
-    {{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim | listString | removeEmpty | mapPrintF "%s \\" | join "" }}
-    {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim | listString | removeEmpty | mapPrintF "%s \\" | join "" }}
-    {{ listString "/_generated_.*.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim | listString | removeEmpty | mapPrintF "%s \\" | join "" }}
+  helm-params: >
+    {{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
+    {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
+    {{ listString "/_generated_.*.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
 
 programs:
   helm:
