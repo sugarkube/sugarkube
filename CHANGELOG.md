@@ -29,6 +29,7 @@
 * Add an option to most kapp commands to automatically work on all parents of selected kapps
 * Make post-actions more granular. It's now possible to specify pre/post install/delete actions for kapps 
 * Allow kapps to be skipped when either installing the DAG or deleting it. This makes it possible to make Sugarkube create a shared resource like an RDS DB by installing a kapp, but by marking the kapp as skipped using a 'pre_delete_action' it'll never be deleted. This could be helpful in a prod environment but disabled in dev.
+* Convert sugarkube to a go module (thanks to kolba)
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring
