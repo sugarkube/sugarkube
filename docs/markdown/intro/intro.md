@@ -7,7 +7,7 @@ Welcome to this guide. This is intended for people who want to understand what p
 * It works with any infrastructure you can script (cloud, local, on-prem, legacy) 
 * It's compatible with any programming language
 * It enables a multi-cloud strategy
-* Sugarkube itself is a single golang binary that can be used for local development and be embedded in CI/CD pipelines. This simplifies local development by allowing developers to run almost exactly what the CI/CD tool will run.
+* Sugarkube itself is a single golang binary that can be used for local development and be embedded in CI/CD pipelines. This simplifies local development by allowing developers to run exactly what the CI/CD tool will run.
 * You can adopt it bit-by-bit while you test it out - you don't need to dedicate 3 months to migrate for an all-or-nothing release
 * The project is currently in alpha
 * Examples in these guides use Terraform and Helm, but both can be replaced by other similar tools as necessary (but things might be a bit tricky while we're still in alpha)
@@ -30,32 +30,41 @@ We believe an ideal release pipeline should:
  * make it possible to spin up and tear down environments quickly and easily. This facilitates testing and makes your entire infrastructure more robust by preventing snowflakes (brittle environments with custom changes)
  * be able to easily reproduce the state of any cluster at an arbitrary point in time into a different cloud account
  * give you confidence in what you're releasing to prod by having tested that exact code in a lower environment (e.g. staging) 
- * scale to allow individual developers to work in ring-fenced environments - either on dedicated clusters or in isolated parts of larger development clusters.
- * let developers get to work quickly on tasks instead of having to waste large amounts of time setting up their clusters and cloud infrastructure first
+ * scale to allow individual developers to work in isolated environments - either on dedicated clusters or in isolated parts of larger development clusters.
+ * let developers get to work quickly on developing new features or fixing bugs instead of having to waste large amounts of time setting up dev/test clusters and cloud infrastructure first
  * allow developers to work locally as much as possible before developing in the Cloud 
- * not require you to use a particular CI/CD system during local development or testing in non-live environments (e.g. if your release pipeline is a custom Jenkins library you're forced to always deploy through Jenkins - this can complicate and slow down development)
+ * not require you to use a particular CI/CD system during local development or testing in non-live environments (e.g. if your release pipeline is a custom Jenkins library, being forced to always deploy through Jenkins can complicate and slow down development)
+ 
+ This can largely be summarised as:
+ 
+ > Developers should be able to concentrate on coding, not fighting the release process.
 
 # What is Sugarkube?
-Sugarkube is a software release system that bundles your application code along with code to create any infrastructure it depends on, and versions it as a single unit. This means the releasable artefact is your application code + code to create dependent infrastructure. Because "app" is an overloaded term in software development, we call these bundles of
-applications and infrastructure code "kapps" (originally from "Kubernetes app", but there's no requirement to use Sugarkube with Kubernetes any more).
+Sugarkube is a software release system that bundles your application code along with code to create any infrastructure it depends on, and versions it as a single unit. This means the releasable artefact is your application code + code to create dependent infrastructure. Because "app" is an overloaded term in software development, we call these bundles of applications and infrastructure code "kapps" (originally from "Kubernetes app", but there's no requirement to use Sugarkube with Kubernetes any more).
 
 Many other tools either only create infrastructure (Kubernetes, Terraform, CloudFormation, etc.) or release your applications (Helm, tarballs, whatever). This means you need some way of coordinating your application changes with the infrastructure they depend on, which can be complicated and error-prone.
 
-Versioning code for your applications and infrastructure together is incredibly powerful. This idea means Sugarkube can:
+Versioning your applications and infrastructure together is incredibly powerful. This idea means Sugarkube can:
 
-* Recreate your clusters at any point in time. This makes it easy to create ephemeral clusters (e.g. a cluster per developer), and spin up/tear down testing/staging clusters.
-* Support multi-cloud - A kapp can create one set of infrastructure when being installed into AWS and a different set when being installed into GCP/Azure or even on-premise or locally.
-* Manage exactly which versions of these kapps (bundles) get released into each of your environments.
+* Recreate your clusters at any point in time (minus data of course). Therefore Sugarkube allows you to easily create short-lived ephemeral clusters on demand. This ability alone - which is entirely optional - opens up some very powerful capabilities such as:
+    * Allowing each developer or team to have their own dev clusters, and tear them down when they're done.
+    * Spin up/tear down testing/staging clusters.
+    * Frequently test your disaster recovery processes, since if you're regularly creating and tearing down your clusters you'll reduce the risk of uncommitted adhoc/manual changes tainting your cluster.
+    * Simplify going multi-region - if you're already deploying your cluster to one cloud region it's simple to deploy to another if you've followed the best practices
+    * Ease cluster upgrades - you could bring up a new instance of your prod cluster in a non-live account to test a Kubernetes rolling upgrade before applying it in prod, or go one step further and use a blue/green release process. In that case you could create an entirely new prod cluster in your prod account and gradually shift more and more traffic onto it. If all goes well you could tear down your old cluster, or if not just redirect all traffic back to the original.
+    * Aid compliance with e.g. PCI requirements by making your deliverable artefact your entire cluster. When dealing with PCI regulations the less that's running in your cluster and the less connectivity it has, the better.
+* Support multi-cloud - A kapp can create one set of infrastructure when being installed into AWS and a different set when being installed into GCP/Azure or even on-premise or locally. Just write the appropriate scripts/Terraform configs and Sugarkube will run the correct ones depending on your target cloud.
+* Manage exactly which versions of your kapps (bundles) get released into each of your environments.
 * Truly promote your applications and infrastructure through environments. An emphasise on portable artefacts (kapps) prevents you creating brittle snowflake environments.
 * Install "slices" of your stack into different environments. For example if you have several monitoring and metric collection applications installed alongside your web sites, you can choose not to install the monitoring stack in your dev environment if you're not going to work on it.
 
-All of the above make it simple to start working on new features without wasting time recreating infrastructure that your applications need. 
+All of the above make it simple to start working on new features without wasting time recreating infrastructure that your applications need. Adopting Sugarkube for a project will also lay extensive foundations for future scaling, both technologically and for when your team grows. 
 
 ### Extra features for Kubernetes users
-If you work with Kubernetes clusters Sugarkube provides additional features. It can launch clusters with several provisioners, e.g. Kops, Minikube (and more in future), and then configure them. For example it can patch Kops YAML configs before triggering an update to apply those changes. This makes it a useful tool for administering Kubernetes clusters. However its main benefit is that it allows you to create a cluster and install your applications (with dependent infrastructure) with a single command.
+If you work with Kubernetes clusters Sugarkube provides additional features. As mentioned above, it can launch Kubernetes clusters and can do so with several provisioners, for now Kops and Minikube, and then configure them. For example it can patch Kops YAML configs before triggering an update to apply those changes. This makes it a useful tool for administering Kubernetes clusters. However its main benefit is that it allows you to create a cluster and install your applications (with dependent infrastructure) with a single command.
 
 ### Choose your own tools
-Sugarkube doesn't force you to use any particular set of tools or technologies. It works with on-premise, legacy systems and infrastructure provided it's scriptable, and also with any programming language. You can adopt it bit-by-bit while you get used to it, and migrate more to it (or drop it) as you wish.
+As an orchestrator Sugarkube wraps other tools you're probably already familiar with - Kops/Minikube and Make. We provide a standard set of Makefiles for working with Helm/Terraform code, but you aren't forced to use any particular set of tools or technologies. Sugarkube will work with on-premise, legacy systems and infrastructure provided it's scriptable, and also with any programming language. You can adopt it bit-by-bit while you get used to it, and migrate more to it (or drop it) as you wish.
 
 ### Dealing with shared infrastructure 
 One important thing to point out is that kapps must only create infrastructure that is only used by the application in the kapp. Any infrastructure that's shared between multiple applications/kapps must be created by another kapp (i.e. so you have one or several kapps dedicated to creating shared infrastructure like load balancers, hosted zone records, etc.).
