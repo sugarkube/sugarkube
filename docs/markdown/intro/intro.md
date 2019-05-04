@@ -44,6 +44,8 @@ Sugarkube is a software release system that bundles your application code along 
 
 Many other tools either only create infrastructure (Kubernetes, Terraform, CloudFormation, etc.) or release your applications (Helm, tarballs, whatever). This means you need some way of coordinating your application changes with the infrastructure they depend on, which can be complicated and error-prone.
 
+Sugarkube is primarily an orchestrator. After defining which of your applications (kapps) depend on which others Sugarkube constructs a dependency graph which allows it to install your kapps in the correct order and uninstall them in the correct order. E.g. if your wordpress site depends on a database and load balancer, Sugarkube can make sure they're created first and deleted after wordpress has been deleted when uninstalling.
+
 Versioning your applications and infrastructure together is incredibly powerful. This idea means Sugarkube can:
 
 * Recreate your clusters at any point in time (minus data of course). Therefore Sugarkube allows you to easily create short-lived ephemeral clusters on demand. This ability alone - which is entirely optional - opens up some very powerful capabilities such as:
@@ -60,6 +62,27 @@ Versioning your applications and infrastructure together is incredibly powerful.
 
 All of the above make it simple to start working on new features without wasting time recreating infrastructure that your applications need. Adopting Sugarkube for a project will also lay extensive foundations for future scaling, both technologically and for when your team grows. 
 
+### Hierarchical configuration
+A key features that makes Sugarkube so flexible is that it allows you to define your configuration hierarchically. This means you can create default configurations and progressively override it or replace certain parts at more specific levels. To give a concrete example, a directory structure like such as below allows you to override and tailor your configurations in several ways:
+
+```
+- providers
+  - aws
+    - dev
+      - kops.yaml   <- extra config just for dev clusters
+      - dev1.yaml   <- configs just for the 'dev1' cluster
+      - eu-west-1.yaml   <- configs for all clusters running in eu-west-1
+    - test
+      - kops.yaml   <- extra config just for test clusters
+    kops.yaml    <- default kops config
+```
+
+Sugarkube will search for files with various basenames at each level in your directory hierarchy, merging them together depending on the parameters of your target cluster. In addition these files are also golang templates. Some practical applications of this are:
+
+* Easily configure using a few, small instances for your cluster in dev/test environments while using more, larger instances in staging and production.
+* Easily set default, region-specific base image IDs.
+* Apply naming conventions to fully namespace all your resources - e.g. create DNS zones per cluster called `{{cluster}}.{{region}}.example.com` 
+
 ### Extra features for Kubernetes users
 If you work with Kubernetes clusters Sugarkube provides additional features. As mentioned above, it can launch Kubernetes clusters and can do so with several provisioners, for now Kops and Minikube, and then configure them. For example it can patch Kops YAML configs before triggering an update to apply those changes. This makes it a useful tool for administering Kubernetes clusters. However its main benefit is that it allows you to create a cluster and install your applications (with dependent infrastructure) with a single command.
 
@@ -72,13 +95,11 @@ These 'shared infrastructure' kapps therefore form the foundation for running ce
 
 # How it works 
 ## Kapps
-The bundles of versioned application + infrastructure code are called "kapps". They're simply git repos where different directories contain a Makefile with some predefined targets. The git repos for kapps are tagged to create different versions.
+The bundles of versioned application + infrastructure code are called "kapps". They're simply git repos where different directories contain a Makefile with some predefined targets, and a `sugarkube.yaml` config file that configures the kapp. The git repos for kapps are tagged to create different versions.
 
-If you decide to install your applications into a Kubernetes cluster using Helm chart and manage your infrastructure using Terraform code you can take advantage of our ready-made Makefiles that should cover 80-90% of use-cases. However, you have complete freedom to implement Makefiles as you want with several minor caveats. When Sugarkube runs it'll pass
-several environment variables to the Makefile to allow it to modify its behaviour depending on which cloud provider is being targetted, the name of the target cluster, etc. 
+If you decide to install your applications into a Kubernetes cluster as a Helm chart and manage your infrastructure using Terraform code you can take advantage of our ready-made Makefiles that should cover 80-90% of use-cases. However, you have complete freedom to implement Makefiles as you want with several minor caveats. When Sugarkube runs it'll pass several environment variables to the Makefile to allow it to modify its behaviour depending on which cloud provider is being targetted, the name of the target cluster, etc. 
 
-**Note**: Although you don't have to use Kubernetes, Helm and Terraform with Sugarkube, we've made an assumption that you will while we're still in alpha. This allows us to simplify the problem-space and get something working in a more predictable setup instead of trying to please everyone immediately. So if you do choose not to use K8s, Helm and Terraform
-you may find a few things don't work as expected. Please open an issue on Github to tell us about those scenarios if you run into them so we can track them. 
+**Note**: Although you don't have to use Kubernetes, Helm and Terraform with Sugarkube, we've made an assumption that you will while we're still in alpha. This allows us to simplify the problem-space and get something working in a more predictable setup instead of trying to please everyone immediately. So if you choose not to use K8s, Helm and Terraform you may find a few things don't work as expected. Please open an issue on Github to tell us about those scenarios if you run into them so we can track them. 
 
 ## Execution
 When Sugarkube is executed, it:
