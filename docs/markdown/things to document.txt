@@ -9,3 +9,4 @@
 * kapps - config files
   * pre/post actions
 * stacks
+* sample project walkthrough
