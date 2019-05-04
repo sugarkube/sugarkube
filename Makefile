@@ -16,7 +16,6 @@ help:
 	@echo
 	@echo 'Usage:'
 	@echo '    make build           Compile the project.'
-	@echo '    make deps            runs dep ensure, mostly used for ci.'
 	@echo '    make build-alpine    Compile optimized for alpine linux.'
 	@echo '    make package         Build final docker image with just the go binary inside'
 	@echo '    make tag             Tag image created by package with latest, git commit and version'
@@ -32,14 +31,11 @@ build: fmt test
 	@echo "building ${BIN_NAME} version=${VERSION}"
 	@echo "GOPATH=${GOPATH}"
 	@echo "GOBIN=${BINDIR}"
-	GOBIN=$(BINDIR) go install -ldflags \
+	GOBIN=$(BINDIR) go build -o bin/sugarkube -ldflags \
 		"-X github.com/sugarkube/sugarkube/internal/pkg/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} \
 		 -X github.com/sugarkube/sugarkube/internal/pkg/version.BuildDate=${BUILD_DATE} \
 		 -X github.com/sugarkube/sugarkube/internal/pkg/version.Version=${VERSION} \
-		 " ./...
-
-deps:
-	dep ensure
+		 " cmd/sugarkube/main.go
 
 build-alpine: test-all
 	@echo "building ${BIN_NAME} ${VERSION}"
