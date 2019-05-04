@@ -1,24 +1,23 @@
 # Changelog
 ## 0.7.0
 * Renamed the `kapps apply` subcommand to `kapps install` and `kapps destroy` to `kapps delete`
-* Renamed the `destroy` make target and updated the [common makefiles](https://github.com/sugarkube/kapps/tree/master/incubator/common-makefiles)
+* Renamed the `destroy` make target to `delete` and updated the [common makefiles](https://github.com/sugarkube/kapps/tree/master/incubator/common-makefiles)
 * Changed the '--approved' flag to '--yes' to make it more intuitive
 * Add a command `sugarkube completions` to generate a bash completions script
 * SSH port forwarding tunnels are now closed (or an attempt is made to close them) after commands finish, including if errors occur or the program is killed via a signal.
 * Paths to templates declared in kapps are relative to the directory containing the `sugarkube.yaml` file
 * The strategy for merging list values under the same map key is now configurable. By default list values under the same map key will be appended. Set the `overwrite-merged-lists` setting to `true` to have higher priority lists completely replace the contents of lower priority lists.
 * Provider vars are re-evaluated for each tranche of a plan allowing for registry values to modify the config
-* Provider vars files now allow limited templating to allow registry values to conditionally affect the provider config (e.g. `{{ if .registry.outputs.<blah> }}...{{ end }}` )
+* Provider vars files now allow limited templating to allow registry values to conditionally affect the provider config (e.g. `{{ if .outputs.<blah> }}...{{ end }}` )
 * Kapp outputs are now parsed and added to the registry after they've finished running
 * Sensitive kapp outputs will be deleted as soon as the output has been parsed and added to the registry
-* By default missing template destination directories won't cause Sugarkube to abort. But it can be made to by setting `dest_dir_must_exist: true` in a template definition.
 * post_actions is now a list of maps. See documentation.
 * Kapps can now push additional provider vars dirs onto the list that will be merged by a provider. This allows them to modify the provider's config.
 * Kapp templates now get rendered before and after installing/deleting kapps so they can use their own output in templates
 * Default variables can now be defined per program in the global sugarkube-conf.yaml file. Keys map to programs in a kapp's 'requires' block
-* The kubeconfig file downloaded to access a kops cluster is now terminated once SSH port forwarding is terminated
+* The kubeconfig file downloaded to access a kops cluster is now deleted once SSH port forwarding is terminated
 * Any kapps that declare outputs now need to implement an extra make target called 'output' to non-destructively write their outputs to a file. 
-* Rename the 'parallisation' option in manifests to a boolean 'sequential' indicating that each kapp in the manifest depends on the previous one
+* ~~Rename the 'parallisation' option in manifests to a boolean 'sequential' indicating that each kapp in the manifest depends on the previous one~~ (superceded by the DAG).
 * Namespaces are separated from kapps when accessing outputs in templates by '__' instead of ':' because go also doesn't like colons in templates
 * Implement a DAG to manage dependencies between kapps. It's now possible for a kapp to access the output of earlier kapps even when just that one kapp is selected to be installed, deleted, templated, etc. This ensures kapps are installed and deleted in the correct order.
 * Make the number of workers to use to process the DAG configurable via the 'num-workers' config setting
@@ -26,10 +25,13 @@
 * Change the args field from a list of maps to just maps
 * Added a 'kapps clean' subcommand to run 'make clean' across selected kapps
 * Added a 'kapps output' subcommand to run 'make output' across selected kapps
-* Add an option to most kapp commands to automatically work on all parents of selected kapps
+* Add an option `--parents` to most kapp commands to automatically work on all parents of selected kapps
 * Make post-actions more granular. It's now possible to specify pre/post install/delete actions for kapps 
 * Allow kapps to be skipped when either installing the DAG or deleting it. This makes it possible to make Sugarkube create a shared resource like an RDS DB by installing a kapp, but by marking the kapp as skipped using a 'pre_delete_action' it'll never be deleted. This could be helpful in a prod environment but disabled in dev.
 * Convert sugarkube to a go module (thanks to kolba)
+* Make searching for helm/terraform parameter files more robust in the default sugarkube-conf.yaml file.
+* Terraform files matching `terraform_<provider>/_generated_*\.tfvars` will now automatically be passed to terraform if using the default sugarkube-conf.yaml file.
+* Helm values files matching `_generated_.*\.yaml` will now automatically be passed to helm if using the default sugarkube-conf.yaml file.
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring
