@@ -93,29 +93,12 @@ As an orchestrator Sugarkube wraps other tools you're probably already familiar 
 One important thing to point out is that kapps must only create infrastructure that is only used by the application in the kapp. Any infrastructure that's shared between multiple applications/kapps must be created by another kapp (i.e. so you have one or several kapps dedicated to creating shared infrastructure like load balancers, hosted zone records, etc.).
 These 'shared infrastructure' kapps therefore form the foundation for running certain groups of applications. So for example, you could create a shared infrastructure kapp to create your load balancer and hosted zone records, and configure it to be executed before executing kapps to install your web applications, etc.
 
-# How it works 
-## Kapps
+# Kapps
 The bundles of versioned application + infrastructure code are called "kapps". They're simply git repos where different directories contain a Makefile with some predefined targets, and a `sugarkube.yaml` config file that configures the kapp. The git repos for kapps are tagged to create different versions.
 
 If you decide to install your applications into a Kubernetes cluster as a Helm chart and manage your infrastructure using Terraform code you can take advantage of our ready-made Makefiles that should cover 80-90% of use-cases. However, you have complete freedom to implement Makefiles as you want with several minor caveats. When Sugarkube runs it'll pass several environment variables to the Makefile to allow it to modify its behaviour depending on which cloud provider is being targetted, the name of the target cluster, etc. 
 
 **Note**: Although you don't have to use Kubernetes, Helm and Terraform with Sugarkube, we've made an assumption that you will while we're still in alpha. This allows us to simplify the problem-space and get something working in a more predictable setup instead of trying to please everyone immediately. So if you choose not to use K8s, Helm and Terraform you may find a few things don't work as expected. Please open an issue on Github to tell us about those scenarios if you run into them so we can track them. 
-
-## Execution
-When Sugarkube is executed, it:
-
-1. Reads config files (which define your clusters, e.g. Kops on AWS or local Minikube, and the versions of which kapps to install into each cluster) 
-1. Clones the relevant git repos containing your kapps at the specified version
-1. Invokes `Make` on them passing various environment variables. The Makefiles tailor exactly what they do based on these environment variables. 
-
-Most operations are run in parallel for speed (although that's configurable). This include cloning git repos and installing kapps.
-
-The Makefile in each kapp acts as the interface between Sugarkube and exactly what a kapp does. Since our example kapps all use Helm + Terraform, we provide a set of default Makefiles that will:
-
-* Lint Helm charts before installing them
-* Initialise and execute Terraform code if a directory called `terraform_<provider>` exists
-
-It's up to you to tailor each kapp's Makefile for your purposes. This approach makes kapps incredibly flexible and doesn't tie you into any particular programming language, tool (e.g. Helm/Terraform) or cloud provider. In future, we may even remove the dependency on Make, allowing you to invoke arbitrary scripts/binaries (e.g. if you'd rather write your releease scripts in your language of choice).
 
 ## Alpha software
 To reiterate, Sugarkube is currently in alpha. To speed up development and to simplify the problem-space, examples for Sugarkube use Helm and Terraform. Helm is used because Kubernetes is becoming more and more popular so it makes sense to target it. Terraform is used because it will delete extraneous infrastructure, making it easy to tear down infrastructure. This is useful for testing and resetting environments. Despite this, it should be possible to use other tools as necessary but it might not be plain sailing for now. In future we hope to remove any dependencies on Helm, Terraform and Make.
