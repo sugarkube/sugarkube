@@ -14,3 +14,10 @@ This outlines a sample workflow using Sugarkube to spin up and tear down Kuberne
 1. Tag your new kapps and update your configs to deploy the new kapp to a target cluster.
 1. Tear down your dev cluster with `kapps delete`. 
 1. If no kapp declares the `cluster_delete` [action](actions.md), manually run `cluster delete`.
+
+Other useful commands while you're developing a kapp are:
+
+* `cluster vars` - see all the interpolated, merged variables for your target cluster
+* `kapp vars` - see the output of `cluster vars` plus the values of variables that will be supplied to your kapp and the values of any available outputs
+* `kapp template` - render templates declared in your kapp
+* `kapp clean` - run `make clean` across all your kapps to reset their state
