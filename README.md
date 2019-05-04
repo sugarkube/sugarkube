@@ -66,7 +66,7 @@ Sugarkube is a work in progress and not ready for production use just yet.
 
 # Installation & quick start
 * Install [cfssl](https://github.com/cloudflare/cfssl) (on OSX run `brew install cfssl`)
-* Download a [release](https://github.com/sugarkube/sugarkube/releases).
+* Download a [release](https://github.com/sugarkube/sugarkube/releases), or clone the repo and run `make build`.
 * Clone the [sample project](https://github.com/sugarkube/sample-project).
 * Launch a local minikube cluster (it may take a little while to come online):
 ```
