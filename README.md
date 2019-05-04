@@ -84,7 +84,7 @@ in the below command). Have a poke around in this later to see how it works:
 * Install the kapps into the cluster:
 ```
   ./sugarkube kapps install -s sample-project/stacks.yaml -n local-web \
-    ./caches/local-web --force --one-shot 
+    ./caches/local-web --one-shot 
 ```
 
 You should now have a local minikube cluster set up with Tiller installed
