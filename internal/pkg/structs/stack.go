@@ -41,8 +41,8 @@ type StackFile struct {
 	Region              string
 	Profile             string
 	Cluster             string
-	ProviderVarsDirs    []string             `yaml:"providerVarsDirs"`
-	KappVarsDirs        []string             `yaml:"kappVarsDirs"`
+	ProviderVarsDirs    []string             `yaml:"provider_vars_dirs"`
+	KappVarsDirs        []string             `yaml:"kapp_vars_dirs"`
 	ManifestDescriptors []ManifestDescriptor `yaml:"manifests"` // this struct should be immutable, so don't store pointers
-	TemplateDirs        []string             `yaml:"templateDirs"`
+	TemplateDirs        []string             `yaml:"template_dirs"`
 }

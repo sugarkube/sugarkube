@@ -32,7 +32,7 @@
 * Make searching for helm/terraform parameter files more robust in the default sugarkube-conf.yaml file.
 * Terraform files matching `terraform_<provider>/_generated_*\.tfvars` will now automatically be passed to terraform if using the default sugarkube-conf.yaml file.
 * Helm values files matching `_generated_.*\.yaml` will now automatically be passed to helm if using the default sugarkube-conf.yaml file.
-* Change the config value `envVars` to `env_vars`
+* Change the all values to snakecase, so now we have `env_vars`, 	`provider_vars_dirs`, `kapp_vars_dirs`, `manifests`, `template_dirs`
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring
