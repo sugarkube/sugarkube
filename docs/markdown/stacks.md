@@ -14,24 +14,35 @@ Here are the available settings for a stack:
 *	cluster - name of the cluster. This should also be used to namespace your resources to avoid conflicts between multiple clusters running in the same cloud account.              
 *	provider_vars_dirs - Directories that providers should search for config files
 *	kapp_vars_dirs - Directories that should be searched for kapp variables
-*	manifests - The list of manifests that should be applied to the stack
+*	manifests - The list of [manifests](manifests.yaml) that should be applied to the stack
 *	template_dirs - Directories to search for templates in if they aren't in a kapp
 
 A good way to organise stack configs is to use YAML references to share common settings, and to group related stacks together. E.g. in a file called `aws-dev.yaml`, define multiple clusters using your dev account like this:
 ```
+# aws-dev.yaml
+
 defaults: &defaults
   provider: aws
   provisioner: kops
   region: eu-west-2
-  kapp_vars_dirs: some/path
-  template_dirs: some/path
+  # other settings...
 
 aws-dev1:
   <<: *defaults
   cluster: dev1
   manifests: 
-  - manifest1.yaml
+  - uri: manifest1.yaml
   - ...
+  overrides:        # See below
+    wordpress-site2:
+      state: present
+      sources:
+        wordpress:
+          options:
+            branch: 1.0.2    
 ```
 
 # Overrides
+It's possible to override values for manifests in stack configs. This allows you to reuse the same set of manifests across multiple different stacks but to parameterise them differently at the stack level. You can override all config values for [kapps](kapps.md), as well as overriding the URIs to their sources. This is one way of selecting which release/tag of a kapp to deploy into each stack. 
+
+In the above sample stack config `aws-dev.yaml`, the release of the `wordpress-site2` kapp is set to 1.0.2, which will replace whatever value is declared in the manifest.
