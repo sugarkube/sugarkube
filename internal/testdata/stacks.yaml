@@ -3,7 +3,7 @@ standard:
   provisioner: minikube
   profile: local
   cluster: standard
-  providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
+  provider_vars_dirs:               # paths to yaml files to load data from. Keys will be merged.
     - ./stacks/
   manifests:
     - uri: manifests/manifest1.yaml
@@ -17,7 +17,7 @@ large:
   provisioner: minikube
   profile: local
   cluster: large
-  providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
+  provider_vars_dirs:               # paths to yaml files to load data from. Keys will be merged.
     - ./stacks/
   manifests:
     - uri: manifests/manifest1.yaml
@@ -33,10 +33,10 @@ large:
             stackVar: setInOverrides
     - uri: manifests/manifest2.yaml
       id: exampleManifest2
-  templateDirs:
+  template_dirs:
     - templates1/
     - templates2/
-  kappVarsDirs:
+  kapp_vars_dirs:
     - sample-kapp-vars/
 
 kops:
@@ -45,12 +45,12 @@ kops:
   account: dev
   profile: dev
   cluster: dev
-  providerVarsDirs:               # paths to yaml files to load data from. Keys will be merged.
+  provider_vars_dirs:               # paths to yaml files to load data from. Keys will be merged.
     - ./stacks/
   manifests:
     - uri: manifests/manifest1.yaml
     - uri: manifests/manifest2.yaml
       id: exampleManifest2
-  templateDirs:
+  template_dirs:
     - templates1/
     - templates2/
