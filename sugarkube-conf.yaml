@@ -35,7 +35,7 @@ programs:
       kube_context: "{{ .kube_context }}"
 
     # todo - uncomment once viper supports not lowercasing all map keys
-    #    envVars:
+    #    env_vars:
     #      RUN_HELM: |-
     #        "{{ if isSet .kapp.vars "run_helm" }}{{ .kapp.vars.run_helm }}{{ else }}true{{ end }}"
 

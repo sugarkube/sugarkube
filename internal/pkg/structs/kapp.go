@@ -52,7 +52,7 @@ type Action struct {
 // A struct for an actual sugarkube.yaml file
 type KappConfig struct {
 	State              string
-	EnvVars            map[string]interface{} `yaml:"envVars"`
+	EnvVars            map[string]interface{} `yaml:"env_vars"`
 	Version            string
 	Args               map[string]map[string]map[string]string
 	Requires           []string
