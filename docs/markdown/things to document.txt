@@ -10,3 +10,4 @@
   * pre/post actions
 * stacks
 * sample project walkthrough
+* installers - make & in future terraform

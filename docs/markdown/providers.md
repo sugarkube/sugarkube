@@ -4,4 +4,6 @@ When you're configuring a [stack](stacks.md) you need to specify the 'provider'.
 * aws - supports regions
 * local - doesn't support regions
 
-Providers (as in cloud providers) organise loading config files from disk. Some concepts (such as regions) don't make sense for local Minikube clusters so multiple ways of organising config files have been created to more closely mirror the target cloud a cluster will run on. 
+Providers (as in cloud providers) organise loading config files from disk. Some concepts (such as regions) don't make sense for local Minikube clusters so multiple ways of organising config files have been created to more closely mirror the target cloud a cluster will run on.
+
+See the `providers` directory in the [sample-project](https://github.com/sugarkube/sample-project/) for an example of how to layout variables directories for each provider.  

@@ -17,6 +17,11 @@ Here are the available settings for a stack:
 *	manifests - The list of [manifests](manifests.yaml) that should be applied to the stack
 *	template_dirs - Directories to search for templates in if they aren't in a kapp
 
+Manifests are defined as a list of:
+
+* uri - path to the local manifest file. Can be relative to the stack config file (i.e. the YAML file that defines your stack), or absolute. 
+* id - optional. If not set, the basename of the manifest file (i.e. the name without `.yaml`) will be used
+
 A good way to organise stack configs is to use YAML references to share common settings, and to group related stacks together. E.g. in a file called `aws-dev.yaml`, define multiple clusters using your dev account like this:
 ```
 # aws-dev.yaml
