@@ -24,6 +24,11 @@ kapps:
 
 If there's no need for all the kapps in a manifest to be installed sequentially, you can declare a list of kapps that a kapp requires with the `depends_on` key, e.g.
 ```
+# manifests/web.yaml
+defaults:
+  depends_on:       # defaults for all kapps in this manifest
+  - routing:load-balancer
+
 kapps:
 - id: database
   state: present
@@ -48,6 +53,16 @@ kapps:
   sources: 
   # ...
 ```
-In this definition, the `database`, `memcached` and `analytics` kapps can all be installed in parallel, but the `wordpress` kapp will only be installed once the `database` and `memcached` kapps have been installed. The advantage of declaring kapps this way is that it allows installing kapps in parallel once their dependencies have been met.
+In this definition, the `database`, `memcached` and `analytics` kapps can all be installed in parallel once the `routing:load-balancer` kapp in the `routing` manifest has been installed. The `wordpress` kapp will only be installed once the `database` and `memcached` kapps have been installed. The advantage of declaring kapps this way is that it allows them to be installed in parallel once their dependencies have been met.
+
+All the `sugarkube kapps <subcommand>` subcommands build a DAG and traverse it when performing operations.  
 
 # Selecting subsets of the DAG
+The DAG encapsulates the global set of dependencies between kapps in a target stack. Sometimes though you just want to work with a subset of the DAG, e.g. to install or delete one or two specific kapps. This is possible with selectors.
+
+Selectors are simply the fully-qualified ID of a kapp, which is of the form `<manifest ID>:<kapp ID>`. They can be used to include (with the `-i` flag) or exclude (`-x`) kapps from being operated on. The flag can be passed multiple times to include or exclude multiple kapps, e.g.:
+```
+sugarkube kapps install -i web:analytics -i web:wordpress
+```
+
+Internally Sugarkube first builds a DAG from the global set of dependencies, then extracts a subgraph containing just the parents of the selected kapps.
