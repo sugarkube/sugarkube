@@ -65,4 +65,6 @@ Selectors are simply the fully-qualified ID of a kapp, which is of the form `<ma
 sugarkube kapps install -i web:analytics -i web:wordpress
 ```
 
+You can also use the wildcard symbol `*` to select all kapps in a manifest, e.g. `web:*` (make sure to quote this on the command line though to prevent tripping up your shell).
+
 Internally Sugarkube first builds a DAG from the global set of dependencies, then extracts a subgraph containing just the parents of the selected kapps.
