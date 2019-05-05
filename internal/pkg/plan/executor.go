@@ -710,7 +710,8 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, outputs map[st
 	// store the output under various keys
 	for outputId, output := range outputs {
 		for _, prefix := range prefixes {
-			key := strings.Join([]string{prefix, outputId}, constants.RegistryFieldSeparator)
+			underscoredOutputId := strings.Replace(outputId, "-", "_", -1)
+			key := strings.Join([]string{prefix, underscoredOutputId}, constants.RegistryFieldSeparator)
 			err := registry.Set(key, output)
 			if err != nil {
 				return errors.WithStack(err)
