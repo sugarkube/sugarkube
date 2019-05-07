@@ -23,7 +23,7 @@ import (
 	"testing"
 )
 
-const GoodGitUri = "git@github.com:sugarkube/kapps.git//incubator/tiller/#master"
+const GoodGitUri = "git@github.com:sugarkube/kapps.git//incubator/tiller#master"
 
 func init() {
 	log.ConfigureLogger("debug", false)
@@ -52,7 +52,7 @@ func TestNewAcquirerGit(t *testing.T) {
 		id:     "tiller",
 		uri:    "git@github.com:sugarkube/kapps.git",
 		branch: "master",
-		path:   "incubator/tiller/",
+		path:   "incubator/tiller",
 	}
 
 	actual, err := New(structs.Source{
@@ -62,6 +62,22 @@ func TestNewAcquirerGit(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Fully-defined git acquirer incorrectly created")
+}
+func TestNewAcquirerGitHttps(t *testing.T) {
+	var expectedAcquirer = &GitAcquirer{
+		id:     "tiller",
+		uri:    "https://github.com/sugarkube/sugarkube.git",
+		branch: "master",
+		path:   "incubator/tiller",
+	}
+
+	actual, err := New(structs.Source{
+		Id:  "",
+		Uri: "https://github.com/sugarkube/sugarkube.git//incubator/tiller#master",
+	})
+	assert.Nil(t, err)
+	assert.Equal(t, expectedAcquirer, actual,
+		"Fully-defined HTTPS git acquirer incorrectly created")
 }
 
 func TestNewAcquirerGitNoBranch(t *testing.T) {
@@ -79,7 +95,7 @@ func TestNewAcquirerGitWithOptions(t *testing.T) {
 		id:     "tiller",
 		uri:    "git@github.com:sugarkube/kapps.git",
 		branch: "my-branch",
-		path:   "incubator/tiller/",
+		path:   "incubator/tiller",
 	}
 
 	actual, err := New(structs.Source{
@@ -120,7 +136,7 @@ func TestNewAcquirerGitExplicitId(t *testing.T) {
 		id:     "banana",
 		uri:    "git@github.com:sugarkube/kapps.git",
 		branch: "master",
-		path:   "incubator/tiller/",
+		path:   "incubator/tiller",
 	}
 
 	actual, err := New(structs.Source{Id: "banana", Uri: GoodGitUri})
