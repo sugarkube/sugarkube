@@ -63,6 +63,12 @@ func newGitAcquirer(source structs.Source) (*GitAcquirer, error) {
 			source.Uri))
 	}
 
+	// if an absolute path is given, remove a slash from the first component and prepend it to the second
+	if strings.HasSuffix(uriPathBranch[0], "/") {
+		uriPathBranch[0] = strings.TrimRight(uriPathBranch[0], "/")
+		uriPathBranch[1] = fmt.Sprintf("/%s", uriPathBranch[1])
+	}
+
 	pathBranch := strings.Split(uriPathBranch[1], BranchSeparator)
 	if len(pathBranch) != 2 && !(len(pathBranch) == 1 && branchFromOptions != "") {
 		return nil, errors.New(fmt.Sprintf("No branch separator ('%s') found in git URI '%s'", BranchSeparator,
