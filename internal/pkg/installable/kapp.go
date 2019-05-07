@@ -738,43 +738,57 @@ func (k Kapp) GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{
 
 		var parsedOutput interface{}
 
+		// get the file size so if it's empty we can return the appropriate empty value
+		pathStat, err := os.Stat(path)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
 		switch strings.ToLower(output.Format) {
 		case "json":
 			if !dryRun {
-				rawJson, err := ioutil.ReadFile(path)
-				if err != nil {
-					return nil, errors.WithStack(err)
-				}
+				if pathStat.Size() == 0 {
+					parsedOutput = make(map[string]interface{})
+				} else {
+					rawJson, err := ioutil.ReadFile(path)
+					if err != nil {
+						return nil, errors.WithStack(err)
+					}
 
-				err = json.Unmarshal(rawJson, &parsedOutput)
-				if err != nil {
-					return nil, errors.WithStack(err)
+					err = json.Unmarshal(rawJson, &parsedOutput)
+					if err != nil {
+						return nil, errors.WithStack(err)
+					}
 				}
 			}
-			break
 		case "yaml":
-			if !dryRun {
+			if pathStat.Size() == 0 {
+				parsedOutput = make(map[string]interface{})
+			} else {
+				if !dryRun {
+					err = utils.LoadYamlFile(path, &parsedOutput)
+					if err != nil {
+						return nil, errors.WithStack(err)
+					}
 
-				err = utils.LoadYamlFile(path, &parsedOutput)
-				if err != nil {
-					return nil, errors.WithStack(err)
-				}
-
-				parsedOutput, err = convert.MapInterfaceInterfaceToMapStringInterface(parsedOutput.(map[interface{}]interface{}))
-				if err != nil {
-					return nil, errors.WithStack(err)
+					parsedOutput, err = convert.MapInterfaceInterfaceToMapStringInterface(parsedOutput.(map[interface{}]interface{}))
+					if err != nil {
+						return nil, errors.WithStack(err)
+					}
 				}
 			}
-			break
 		case "text":
-			if !dryRun {
-				byteOutput, err := ioutil.ReadFile(path)
-				if err != nil {
-					return nil, errors.WithStack(err)
+			if pathStat.Size() == 0 {
+				parsedOutput = ""
+			} else {
+				if !dryRun {
+					byteOutput, err := ioutil.ReadFile(path)
+					if err != nil {
+						return nil, errors.WithStack(err)
+					}
+					parsedOutput = string(byteOutput)
 				}
-				parsedOutput = string(byteOutput)
 			}
-			break
 		default:
 			return nil, errors.New(fmt.Sprintf("Unsupported output format '%s' for kapp '%s'",
 				output.Format, k.FullyQualifiedId()))
