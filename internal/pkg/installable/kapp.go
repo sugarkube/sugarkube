@@ -458,6 +458,8 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 		}
 	}
 
+	log.Logger.Tracef("Returning vars for kapp '%s': %v", k.FullyQualifiedId(), namespacedKappMap)
+
 	return namespacedKappMap, nil
 }
 
