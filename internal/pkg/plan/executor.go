@@ -738,6 +738,21 @@ func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.I
 
 	// merge all the vars required to render the kapp's sugarkube.yaml file
 	templatedVars, err := stackObj.GetTemplatedVars(installableObj, installerVars)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// template the descriptor again in case variables refer to outputs
+	err = installableObj.TemplateDescriptor(templatedVars)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// get the updated template vars
+	templatedVars, err = stackObj.GetTemplatedVars(installableObj, installerVars)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	renderedTemplatePaths, err := installableObj.RenderTemplates(templatedVars, stackObj.GetConfig(),
 		dryRun)
