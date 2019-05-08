@@ -89,7 +89,7 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 }
 
 // Traverses the DAG printing vars for all marked nodes, optionally suppressing output for certain keys
-func (d *Dag) ExecuteGetVars(action string, stackObj interfaces.IStack, suppress []string) error {
+func (d *Dag) ExecuteGetVars(action string, stackObj interfaces.IStack, loadOutputs bool, suppress []string) error {
 	numWorkers := config.CurrentConfig.NumWorkers
 
 	processCh := make(chan NamedNode, numWorkers)
@@ -104,6 +104,16 @@ func (d *Dag) ExecuteGetVars(action string, stackObj interfaces.IStack, suppress
 	}
 
 	var finishedCh <-chan bool
+
+	if loadOutputs {
+		// initialise local registries to make outputs available
+		err := initLocalRegistries(d, numWorkers, stackObj, action, false, false)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		log.Logger.Debugf("Skipping loading outputs")
+	}
 
 	switch action {
 	case constants.DagActionVars:
@@ -669,7 +679,7 @@ func deleteNonFullyQualifiedOutputs(registry interfaces.IRegistry) {
 	}
 
 	// iterate through all the keys for those that aren't fully qualified and delete them
-	for k, _ := range outputs.(map[string]interface{}) {
+	for k := range outputs.(map[string]interface{}) {
 		if !strings.Contains(k, constants.TemplateNamespaceSeparator) {
 			fullKey := strings.Join([]string{
 				constants.RegistryKeyOutputs, k}, constants.RegistryFieldSeparator)
