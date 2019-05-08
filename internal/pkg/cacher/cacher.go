@@ -53,7 +53,10 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 		log.Logger.Infof("Caching kapp '%s'", installableObj.FullyQualifiedId())
 		log.Logger.Debugf("Kapp to cache: %#v", installableObj)
 
-		installableObj.SetTopLevelCacheDir(rootCacheDir)
+		err := installableObj.SetTopLevelCacheDir(rootCacheDir)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 
 		acquirers, err := installableObj.Acquirers()
 		if err != nil {
@@ -110,6 +113,7 @@ func acquireSources(manifestId string, acquirers map[string]acquirer.Acquirer, k
 				}
 			}
 
+			// todo - fix creating symlinks when the path is just '/'
 			sourcePath := filepath.Join(sourceDest, a.Path())
 			sourcePath = strings.TrimPrefix(sourcePath, kappTopLevelCacheDir)
 			sourcePath = strings.TrimPrefix(sourcePath, "/")
