@@ -601,15 +601,6 @@ func addInstallableLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string
 			continue
 		}
 
-		// if the parent was in a different manifest, strip out all non fully-qualified registry
-		// entries
-		if parent.installableObj.ManifestId() != node.installableObj.ManifestId() {
-			deleteNonFullyQualifiedOutputs(parentRegistry)
-		}
-
-		// always delete the special key 'this'
-		deleteSpecialThisOutput(parentRegistry)
-
 		for k, v := range parentRegistry.AsMap() {
 			err := localRegistry.Set(k, v)
 			if err != nil {
@@ -617,6 +608,15 @@ func addInstallableLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string
 				return
 			}
 		}
+
+		// if the parent was in a different manifest, strip out all non fully-qualified registry
+		// entries
+		if parent.installableObj.ManifestId() != node.installableObj.ManifestId() {
+			deleteNonFullyQualifiedOutputs(localRegistry)
+		}
+
+		// always delete the special key 'this'
+		deleteSpecialThisOutput(localRegistry)
 	}
 
 	// only add outputs if any were passed in
