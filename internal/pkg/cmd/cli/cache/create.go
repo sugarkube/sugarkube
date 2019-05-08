@@ -21,8 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
-	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
@@ -31,18 +29,17 @@ import (
 )
 
 type createCmd struct {
-	out            io.Writer
-	dryRun         bool
-	stackName      string
-	stackFile      string
-	provider       string
-	provisioner    string
-	profile        string
-	account        string
-	cluster        string
-	region         string
-	cacheDir       string
-	skipTemplating bool
+	out         io.Writer
+	dryRun      bool
+	stackName   string
+	stackFile   string
+	provider    string
+	provisioner string
+	profile     string
+	account     string
+	cluster     string
+	region      string
+	cacheDir    string
 }
 
 func newCreateCmd(out io.Writer) *cobra.Command {
@@ -70,7 +67,6 @@ templates defined by kapps.`,
 
 	f := cmd.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
-	f.BoolVar(&c.skipTemplating, "skip-templating", false, "don't render templates for kapps")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -146,36 +142,6 @@ func (c *createCmd) run() error {
 	}
 
 	log.Logger.Infof("Manifests cached to: %s", absRootCacheDir)
-
-	if !c.skipTemplating {
-		_, err = fmt.Fprintln(c.out, "Rendering templates for kapps...")
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		// create a DAG to template all the kapps
-		dagObj, err := kapps.BuildDagForSelected(stackObj, c.cacheDir, []string{}, []string{},
-			false, "", c.out)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, true,
-			true, true, c.dryRun)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		_, err = fmt.Fprintln(c.out, "Templates successfully rendered")
-		if err != nil {
-			return errors.WithStack(err)
-		}
-	} else {
-		_, err = fmt.Fprintln(c.out, "Skipping rendering templates for kapps")
-		if err != nil {
-			return errors.WithStack(err)
-		}
-	}
 
 	_, err = fmt.Fprintf(c.out, "Kapps successfully cached into '%s'\n", absRootCacheDir)
 	if err != nil {
