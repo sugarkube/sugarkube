@@ -173,6 +173,8 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 	for node := range processCh {
 		installableObj := node.installableObj
 
+		addParentRegistries(dagObj, node, errCh)
+
 		kappRootDir := installableObj.GetCacheDir()
 		log.Logger.Infof("Registry worker received kapp '%s' in %s for processing", installableObj.FullyQualifiedId(), kappRootDir)
 
@@ -197,6 +199,11 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 		// template the kapp's descriptor, including the global registry
 		templatedVars, err := stackObj.GetTemplatedVars(installableObj,
 			installerImpl.GetVars(action, approved))
+		if err != nil {
+			errCh <- errors.WithStack(err)
+			return
+		}
+
 		err = installableObj.TemplateDescriptor(templatedVars)
 		if err != nil {
 			errCh <- errors.WithStack(err)
@@ -210,7 +217,7 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 			return
 		}
 
-		addInstallableLocalRegistry(dagObj, node, outputs, errCh)
+		addInstallableLocalRegistry(node, outputs, errCh)
 
 		log.Logger.Tracef("Registry worker finished processing kapp '%s' (node=%#v)", installableObj.FullyQualifiedId(),
 			node)
@@ -227,6 +234,8 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 
 	for node := range processCh {
 		installableObj := node.installableObj
+
+		addParentRegistries(dagObj, node, errCh)
 
 		kappRootDir := installableObj.GetCacheDir()
 		log.Logger.Infof("Worker received kapp '%s' in %s for processing", installableObj.FullyQualifiedId(), kappRootDir)
@@ -328,7 +337,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 				return
 			}
 
-			addInstallableLocalRegistry(dagObj, node, outputs, errCh)
+			addInstallableLocalRegistry(node, outputs, errCh)
 
 			// only template marked nodes
 			if node.marked {
@@ -535,7 +544,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	}
 
 	// build the kapp's local registry
-	addInstallableLocalRegistry(dagObj, node, outputs, errCh)
+	addInstallableLocalRegistry(node, outputs, errCh)
 
 	// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
 	err = renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
@@ -577,11 +586,11 @@ func getOutputs(installableObj interfaces.IInstallable, stackObj interfaces.ISta
 	return outputs, nil
 }
 
-// Instantiates a new registry local to the installable and populates it with the result of merging
-// each local registry of each parent. If the parent's manifest ID is different to the current node's
-// manifest ID registry keys for non fully-qualified installable IDs will be deleted from the registry
-// before merging. In all cases the special value 'this' will not be merged either.
-func addInstallableLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string]interface{}, errCh chan<- error) {
+// Instantiate a new local registry and add values from the parent registries to it. If the
+// parent's manifest ID is different to the current node's manifest ID registry keys for
+// non fully-qualified installable IDs will be deleted from the registry before merging. In
+// all cases the special value 'this' will not be merged either.
+func addParentRegistries(dagObj *Dag, node NamedNode, errCh chan<- error) {
 	localRegistry := registry.New()
 
 	// clear any default values from the registry before using it
@@ -618,6 +627,14 @@ func addInstallableLocalRegistry(dagObj *Dag, node NamedNode, outputs map[string
 		// always delete the special key 'this'
 		deleteSpecialThisOutput(localRegistry)
 	}
+
+	node.installableObj.SetLocalRegistry(localRegistry)
+}
+
+// Add outputs to the kapp's local registry
+func addInstallableLocalRegistry(node NamedNode, outputs map[string]interface{}, errCh chan<- error) {
+
+	localRegistry := node.installableObj.GetLocalRegistry()
 
 	// only add outputs if any were passed in
 	if outputs != nil && len(outputs) > 0 {
