@@ -45,14 +45,16 @@ func IterativelyTemplate(vars map[string]interface{}) (map[string]interface{}, e
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		//log.Logger.Debugf("Vars to template (raw): %s", vars)
-		//log.Logger.Debugf("Vars to template as YAML:\n%s", yamlData)
+
+		log.Logger.Tracef("Vars to template (raw): %s", vars)
+		log.Logger.Tracef("Vars to template as YAML:\n%s", yamlData)
 
 		renderedYaml, err = RenderTemplate(string(yamlData[:]), vars)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		//log.Logger.Debugf("Variables templated as:\n%s", renderedYaml)
+
+		log.Logger.Tracef("Variables templated as:\n%s", renderedYaml)
 
 		// unmarshal the rendered template ready for another iteration
 		currentBytes := []byte(renderedYaml)
