@@ -50,6 +50,7 @@ const kopsCommandTimeoutSecondsLong = 300
 const kopsSleepSecondsBeforeReadyCheck = 60
 const sshPortForwardingDelaySeconds = 5
 
+// todo - catch errors accessing each of these
 const configKeyKopsSpecs = "specs"
 const configKeyKopsCluster = "cluster"
 const configKeyKopsInstanceGroups = "instanceGroups"
@@ -451,13 +452,14 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 
 	log.Logger.Info("Patching instance group configs...")
 
-	igSpecs := specs[configKeyKopsInstanceGroups].(map[interface{}]interface{})
-
-	for instanceGroupName, newSpec := range igSpecs {
-		specValues := map[string]interface{}{"spec": newSpec}
-		err = p.patchInstanceGroup(p.kopsConfig, instanceGroupName.(string), specValues, dryRun)
-		if err != nil {
-			return errors.WithStack(err)
+	igSpecs, ok := specs[configKeyKopsInstanceGroups]
+	if ok {
+		for instanceGroupName, newSpec := range igSpecs.(map[interface{}]interface{}) {
+			specValues := map[string]interface{}{"spec": newSpec}
+			err = p.patchInstanceGroup(p.kopsConfig, instanceGroupName.(string), specValues, dryRun)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
 	}
 
