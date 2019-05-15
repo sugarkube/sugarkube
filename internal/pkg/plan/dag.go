@@ -191,6 +191,19 @@ func isAcyclic(graphObj *simple.DirectedGraph) bool {
 	return err == nil
 }
 
+// Returns a list of all installables in the DAG (in any order).
+func (g *Dag) GetInstallables() []interfaces.IInstallable {
+	log.Logger.Debug("Putting all installables in the DAG into a list")
+
+	installables := make([]interfaces.IInstallable, 0)
+
+	for _, node := range g.nodesByName() {
+		installables = append(installables, node.installableObj)
+	}
+
+	return installables
+}
+
 // Returns a new DAG comprising the nodes in the given input list and all their
 // ancestors. The returned graph is guaranteed to be a DAG. All nodes in the input list will be
 // marked for processing in the returned subgraph.
@@ -374,7 +387,7 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 
 // Prints out the DAG to the writer
 func (g *Dag) Print(writer io.Writer) error {
-	_, err := fmt.Fprintf(writer, "Created the following DAG. Nodes marked with a %s will "+
+	_, err := fmt.Fprintf(writer, "\nCreated the following DAG. Nodes marked with a %s will "+
 		"be processed: \n", markedNodeStr)
 	if err != nil {
 		return errors.WithStack(err)
@@ -401,7 +414,7 @@ func (g *Dag) Print(writer io.Writer) error {
 			if node.marked {
 				marked = fmt.Sprintf("%s ", markedNodeStr)
 			}
-			_, err := fmt.Fprintf(writer, "%s%s - depends on: %s\n", marked, node.name,
+			_, err := fmt.Fprintf(writer, "  %s%s - depends on: %s\n", marked, node.name,
 				strings.Join(parentNames, ", "))
 			if err != nil {
 				panic(err)
@@ -411,6 +424,11 @@ func (g *Dag) Print(writer io.Writer) error {
 	}()
 
 	<-finishedCh
+
+	_, err = fmt.Fprintf(writer, "\n")
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	log.Logger.Debug("DAG printed")
 

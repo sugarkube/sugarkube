@@ -5,12 +5,15 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"io"
+	"os/exec"
+	"strings"
 )
 
-type varsConfig struct {
+type validateConfig struct {
 	out             io.Writer
 	cacheDir        string
 	stackName       string
@@ -21,23 +24,19 @@ type varsConfig struct {
 	account         string
 	cluster         string
 	region          string
-	includeParents  bool
-	skipOutputs     bool
 	includeSelector []string
 	excludeSelector []string
-	suppress        []string
 }
 
-func newVarsCmd(out io.Writer) *cobra.Command {
-	c := &varsConfig{
+func newValidateCmd(out io.Writer) *cobra.Command {
+	c := &validateConfig{
 		out: out,
 	}
 
 	cmd := &cobra.Command{
-		Use:   "vars [flags] [stack-file] [stack-name] [cache-dir]",
-		Short: fmt.Sprintf("Display all variables available for a kapp"),
-		Long: `Merges variables from all sources and displays them along with each kapp's 
-templated sugarkube.yaml file.`,
+		Use:   "validate [flags] [stack-file] [stack-name] [cache-dir]",
+		Short: fmt.Sprintf("Validate you have all the required binaries required by each kapp"),
+		Long:  `Loads all kapps and makes sure the binaries they declare in their 'requires' blocks are in your path`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")
@@ -52,8 +51,6 @@ templated sugarkube.yaml file.`,
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
-	f.BoolVar(&c.skipOutputs, "skip-outputs", false, "don't load outputs from parents")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -66,12 +63,10 @@ templated sugarkube.yaml file.`,
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
 			constants.WildcardCharacter))
-	f.StringArrayVarP(&c.suppress, "suppress", "s", []string{},
-		"paths to variables to suppress from the output to simplify it (e.g. 'provision.specs')")
 	return cmd
 }
 
-func (c *varsConfig) run() error {
+func (c *validateConfig) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &structs.StackFile{
@@ -89,14 +84,55 @@ func (c *varsConfig) run() error {
 	}
 
 	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
-		c.includeParents, "", c.out)
+		false, "", c.out)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = dagObj.ExecuteGetVars(constants.DagActionVars, stackObj, !c.skipOutputs, c.suppress)
-	if err != nil {
-		return errors.WithStack(err)
+	_, err = fmt.Fprintf(c.out, "Validating requirements for kapps...\n")
+
+	numMissing := 0
+
+	installables := dagObj.GetInstallables()
+	for _, installable := range installables {
+		descriptor := installable.GetDescriptor()
+
+		_, err := fmt.Fprintf(c.out, "  %s requires: %s\n", installable.FullyQualifiedId(),
+			strings.Join(descriptor.Requires, ", "))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		for _, requirement := range descriptor.Requires {
+			path, err := exec.LookPath(requirement)
+			if err != nil {
+				_, err = fmt.Fprintf(c.out, "  ❌ Requirement missing! Can't find '%s' for %s\n", requirement,
+					installable.FullyQualifiedId())
+				numMissing++
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				log.Logger.Errorf("Requirement missing. Can't find: %s", requirement)
+			} else {
+				_, err = fmt.Fprintf(c.out, "  ✅ Found '%s' at '%s'\n", requirement, path)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				log.Logger.Infof("Found requirement '%s' at '%s'", requirement, path)
+			}
+		}
+	}
+
+	if numMissing > 0 {
+		_, err = fmt.Fprintf(c.out, "Summary: %d requirement(s) missing\n", numMissing)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		_, err = fmt.Fprint(c.out, "Summary: All requirements satisfied\n")
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil

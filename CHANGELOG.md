@@ -33,6 +33,7 @@
 * Terraform files matching `terraform_<provider>/_generated_*\.tfvars` will now automatically be passed to terraform if using the default sugarkube-conf.yaml file.
 * Helm values files matching `_generated_.*\.yaml` will now automatically be passed to helm if using the default sugarkube-conf.yaml file.
 * Change the all values to snakecase, so now we have `env_vars`, 	`provider_vars_dirs`, `kapp_vars_dirs`, `manifests`, `template_dirs`
+* Added a new 'kapps validate' command to make sure all binaries declared in a kapp's 'requires' block exist on your path.
 
 ## 0.6.0 (25/3/19)
 * Major code clean up & refactoring
