@@ -862,8 +862,9 @@ func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string,
 func getBastionHostname(stackConfig interfaces.IStackConfig) (string, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	query := fmt.Sprintf("LoadBalancerDescriptions["+
-		"?starts_with(DNSName, `bastion-%s-`) == `true`].DNSName | [0]", stackConfig.GetCluster())
+	query := fmt.Sprintf("LoadBalancerDescriptions"+
+		"[?contains(DNSName, `-%s-`)] | "+
+		"[?contains(DNSName, `bastion`)].DNSName | [0]", stackConfig.GetCluster())
 
 	// get the bastion ELB's hostname
 	err := utils.ExecCommand(awsCliPath, []string{
