@@ -17,8 +17,10 @@
 package plan
 
 import (
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"strings"
 )
 
 // Determines dependencies between kapps in a set of manifests
@@ -45,6 +47,11 @@ func findDependencies(manifests []interfaces.IManifest) map[string]nodeDescripto
 					log.Logger.Tracef("Installable '%s' depends on %v", installableObj.FullyQualifiedId(),
 						installableObj.GetDescriptor().DependsOn)
 					for _, dependency := range installableObj.GetDescriptor().DependsOn {
+						// fully-qualify the dependency if it's not already
+						if !strings.Contains(dependency, constants.NamespaceSeparator) {
+							dependency = strings.Join([]string{installableObj.ManifestId(), dependency},
+								constants.NamespaceSeparator)
+						}
 						dependencies = append(dependencies, dependency)
 					}
 				}
@@ -56,6 +63,11 @@ func findDependencies(manifests []interfaces.IManifest) map[string]nodeDescripto
 				log.Logger.Tracef("Installable '%s' depends on %v", installableObj.FullyQualifiedId(),
 					installableObj.GetDescriptor().DependsOn)
 				for _, dependency := range installableObj.GetDescriptor().DependsOn {
+					// fully-qualify the dependency if it's not already
+					if !strings.Contains(dependency, constants.NamespaceSeparator) {
+						dependency = strings.Join([]string{installableObj.ManifestId(), dependency},
+							constants.NamespaceSeparator)
+					}
 					dependencies = append(dependencies, dependency)
 				}
 			}
