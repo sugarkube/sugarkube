@@ -101,13 +101,13 @@ func findFiles(root string, patterns []string) ([]string, error) {
 			return nil, errors.Wrapf(err, "Error finding '%s' in '%s'", pattern, root)
 		}
 
-		if len(filePaths) == 1 {
-			log.Logger.Debugf("Found a file matching pattern '%s' under dir '%s': %s",
-				pattern, root, filePaths[0])
-			output = append(output, filePaths[0])
-		} else if len(filePaths) > 1 {
-			return nil, errors.New(fmt.Sprintf("Found multiple files matching pattern '%s' in '%s'. Don't "+
-				"know which to choose. Try making your pattern more specific.", pattern, root))
+		if len(filePaths) > 0 {
+			log.Logger.Debugf("Found %d file(s) matching pattern '%s' under dir '%s': %s",
+				len(filePaths), pattern, root, filePaths[0])
+
+			for _, path := range filePaths {
+				output = append(output, path)
+			}
 		} else {
 			log.Logger.Tracef("No files found matching pattern '%s' under dir '%s'",
 				pattern, root)

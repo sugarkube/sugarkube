@@ -18,9 +18,10 @@
 * Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity)
 * Documentation
 * Add a way of replacing kapp settings in stack configs (e.g. to replace dependencies)
+* make the DAG executor print what it's doing every 30 seconds or so
+* Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
   
 ### Merging kapp configs
-* Create a 'validate' command to verify that binaries declared in `requires` blocks exist
 * Support passing kapp vars on the command line when only one is selected
 
 ### Kapp output
@@ -39,7 +40,6 @@
 * document  tf-params vs tf-opts and the same for helm in the makefiles
 
 ### Developer experience
-* Standardise on camelCase or snake_case for config values
 * Print important info instead of logging it. Print in different colours with an option to disable coloured output
 * Print out the plan before executing it
 * Print details of kapps being executed
@@ -66,6 +66,7 @@
 * Consider adding a cache so we can do cluster diffing to only install kapps that have changed to speed up
   deploying changes. Use a ClusterSOT for that.
 * Create a cache manager whose job it is to organise where files are stored in a cache to enable the no-op provisioner to be used
+* Sugarkube refuses to update a cache that contains checkouts of tags, even if there are no modifications to the kapp 
 
 ## Other things to consider
 * Is being focussed on clusters a mistake? 
