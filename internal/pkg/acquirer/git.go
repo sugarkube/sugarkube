@@ -118,6 +118,7 @@ func (a GitAcquirer) FullyQualifiedId() (string, error) {
 	// directory containing 'master' and they create a feature branch the dir id
 	// will be misleading).
 	orgRepo := strings.SplitAfter(a.uri, ":")
+	orgRepo[1] = strings.TrimLeft(orgRepo[1], "/")
 	hyphenatedOrg := strings.Replace(orgRepo[1], "/", "-", -1)
 	hyphenatedOrg = strings.TrimSuffix(hyphenatedOrg, ".git")
 
