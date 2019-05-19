@@ -4,22 +4,20 @@
 * Code of conduct
 
 ## Top priorities
+* Build symlinks correctly for git URIs with no path (if the ID is set explicitly it works)
 * Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist
-  depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a 
-  kapp with the local provider because it hasn't e.g. written terraform output to a path that it 
-  would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for 
-  remote providers, not the local one
+  depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a kapp with the local provider because it hasn't e.g. written terraform output to a path that it would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for remote providers, not the local one
 * Create a dedicated terraform installer
 * Create a python installer
-* Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded
-  for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific
-  kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
+* Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
 * Only run a kops update if the spec has changed (diff the new spec with the existing one)
 * Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity)
 * Documentation
 * Add a way of replacing kapp settings in stack configs (e.g. to replace dependencies)
 * make the DAG executor print what it's doing every 30 seconds or so
 * Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
+* Support opting out of global defaults for kapps so that they can be fully self-contained. Defaults should be useful but not constrictive
+* Add a setting to throw an error if kapp IDs aren't globally unique. We don't care, but terraform does with our sample naming convention. The options are either to add the manifest ID to the TF state path which stops people reorganising, or making kapp IDs globally unique, otherwise e.g. 2 wordpress instances in different manifests could clobber each other  
   
 ### Merging kapp configs
 * Support passing kapp vars on the command line when only one is selected
@@ -27,9 +25,9 @@
 ### Kapp output
 * We also need to allow access to vars from other kapps. E.g. if one kapp sets a particular variable, 
   'vars' blocks for other kapps should be able to refer to them (e.g. myvar: "{{ .kapps.somekapp.var.thevar }}")
-
 * Provide a 'varsTemplate' field to allow for templating before parsing vars. That'll help with things like reassigning
   a map. Template this block then parse it as yaml and merge it with the other vars.
+* It should be possible to load terraform outputs and use them to template other files in the kapp before installing them, without jumping through hoops with running a script to add them to the environment (a la keycloak)
 
 ### Makefiles
 * Get rid of the duplication of mapping variables - we currently do it once in sugarkube.yaml files then

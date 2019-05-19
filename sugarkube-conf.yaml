@@ -22,7 +22,7 @@ tf-patterns: &tf-patterns
 # `values-<provider/account/profile/etc>.yaml` and prepends '-f' ready to be passed as options to helm.
 helm-patterns: &helm-patterns
   helm-params: >-
-    {{ listString "/values\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
+    {{ listString "/values\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | last | join " " | trim }}
     {{ mapPrintF "/values-%s\\.yaml$" (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
     {{ listString "/_generated_.*\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
 
