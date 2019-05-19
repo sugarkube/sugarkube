@@ -1,0 +1,16 @@
+pinned:
+  provider: aws
+  provisioner: kops
+  account: dev
+  profile: dev
+  cluster: dev
+  provider_vars_dirs:               # paths to yaml files to load data from. Keys will be merged.
+    - ./stacks/
+  manifests:
+    - uri: manifests/manifest5.yaml
+      versions:
+        kappW/pathW: master
+        kappW/pathX: 1.2.3
+  template_dirs:
+    - templates1/
+    - templates2/

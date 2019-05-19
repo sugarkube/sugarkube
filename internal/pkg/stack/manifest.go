@@ -19,6 +19,7 @@ package stack
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/installable"
@@ -93,6 +94,31 @@ func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces
 		installableObj, err := installable.New(manifestId, descriptors)
 		if err != nil {
 			return nil, errors.WithStack(err)
+		}
+
+		// add descriptors for any versions declared
+		for key, version := range manifest.descriptor.Versions {
+			splitKey := strings.Split(key, constants.VersionSeparator)
+			if splitKey[0] != installableObj.Id() {
+				continue
+			}
+
+			descriptor := structs.KappDescriptorWithMaps{
+				Sources: map[string]structs.Source{
+					splitKey[1]: {
+						Options: map[string]interface{}{
+							// todo - use the right key depending on the acquirer (this
+							//  currently assumes it's always a git acquirer)
+							acquirer.BranchKey: version,
+						},
+					},
+				},
+			}
+
+			err = installableObj.AddDescriptor(descriptor, false)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
 		}
 
 		// if there were any overrides defined in the stack for this installable, append

@@ -26,6 +26,7 @@ type ManifestDescriptor struct {
 	// todo - we should get rid of the Id and Uri fields and just use a Source and acquirers:
 	//Source `yaml:",inline"`
 
+	Versions  map[string]string                 // for overriding git branches/package versions without a load of nesting
 	Overrides map[string]KappDescriptorWithMaps // the map key is the kappDescriptor ID
 }
 

@@ -67,6 +67,7 @@ func TestFindFilesByPattern(t *testing.T) {
 				filepath.Join(absTestDir, "manifests/manifest2.yaml"),
 				filepath.Join(absTestDir, "manifests/manifest3.yaml"),
 				filepath.Join(absTestDir, "manifests/manifest4.yaml"),
+				filepath.Join(absTestDir, "manifests/manifest5.yaml"),
 			},
 		},
 		{
