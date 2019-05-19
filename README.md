@@ -64,7 +64,7 @@ Sugarkube is great for new projects, but even legacy applications can be
 migrated into kapps. You can migrate a bit at a time to see how it helps you.
 
 ## Status
-Sugarkube is a work in progress and not ready for production use just yet.
+Sugarkube is a work in progress but ready for early adopters who don't mind things being a bit clunky.
 
 # Installation & quick start
 * Install [cfssl](https://github.com/cloudflare/cfssl) (on OSX run `brew install cfssl`)
