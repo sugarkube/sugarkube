@@ -1,5 +1,5 @@
 # Changelog
-## 0.7.0
+## 0.7.0 (19/5/19)
 * Renamed the `kapps apply` subcommand to `kapps install` and `kapps destroy` to `kapps delete`
 * Renamed the `destroy` make target to `delete` and updated the [common makefiles](https://github.com/sugarkube/kapps/tree/master/incubator/common-makefiles)
 * Changed the '--approved' flag to '--yes' to make it more intuitive
