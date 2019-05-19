@@ -100,6 +100,7 @@ func newGitAcquirer(source structs.Source) (*GitAcquirer, error) {
 
 	if id == "" {
 		id = filepath.Base(path)
+		id = strings.Trim(id, "/")
 	}
 
 	return &GitAcquirer{
@@ -119,9 +120,13 @@ func (a GitAcquirer) FullyQualifiedId() (string, error) {
 	orgRepo := strings.SplitAfter(a.uri, ":")
 	hyphenatedOrg := strings.Replace(orgRepo[1], "/", "-", -1)
 	hyphenatedOrg = strings.TrimSuffix(hyphenatedOrg, ".git")
-	hyphenatedName := strings.Replace(a.id, "/", "-", -1)
 
-	return strings.Join([]string{hyphenatedOrg, hyphenatedName}, "-"), nil
+	if a.id != "" {
+		hyphenatedName := strings.Replace(a.id, "/", "-", -1)
+		return strings.Join([]string{hyphenatedOrg, hyphenatedName}, "-"), nil
+	} else {
+		return hyphenatedOrg, nil
+	}
 }
 
 // Return the ID. This is used as a subcomponent of a fully-qualified ID and can be explicitly configured in config

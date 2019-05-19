@@ -4,7 +4,6 @@
 * Code of conduct
 
 ## Top priorities
-* Build symlinks correctly for git URIs with no path (if the ID is set explicitly it works)
 * Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist
   depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a kapp with the local provider because it hasn't e.g. written terraform output to a path that it would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for remote providers, not the local one
 * Create a dedicated terraform installer

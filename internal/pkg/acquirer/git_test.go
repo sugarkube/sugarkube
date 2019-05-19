@@ -31,7 +31,7 @@ func discardErr(acquirer Acquirer, err error) Acquirer {
 	return acquirer
 }
 
-func TestId(t *testing.T) {
+func TestFullyQualifiedId(t *testing.T) {
 	// the URI is invalid. It should cause an error
 	invalidUriAcquirer, err := newGitAcquirer(
 		structs.Source{
@@ -66,6 +66,15 @@ func TestId(t *testing.T) {
 			expectValues: "helm-charts-wordpress",
 		},
 		{
+			name: "good_no_path",
+			desc: "check missing paths use the git repo",
+			input: discardErr(newGitAcquirer(
+				structs.Source{
+					Uri: "git@github.com:helm/charts.git///#master",
+				})),
+			expectValues: "helm-charts",
+		},
+		{
 			name: "good_name_in_id",
 			desc: "check explicit names are put into IDs",
 			input: discardErr(newGitAcquirer(
@@ -85,7 +94,7 @@ func TestId(t *testing.T) {
 			assert.Empty(t, result)
 		} else {
 			assert.Nil(t, err)
-			assert.Equal(t, test.expectValues, result, "IDs don't match")
+			assert.Equal(t, test.expectValues, result, "IDs don't match in: %+v", test.input)
 		}
 	}
 }

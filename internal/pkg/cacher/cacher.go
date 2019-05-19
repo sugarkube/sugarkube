@@ -118,7 +118,17 @@ func acquireSources(manifestId string, acquirers map[string]acquirer.Acquirer, k
 			sourcePath = strings.TrimPrefix(sourcePath, kappTopLevelCacheDir)
 			sourcePath = strings.TrimPrefix(sourcePath, "/")
 
-			symLinkTarget := filepath.Join(kappTopLevelCacheDir, a.Id())
+			var symLinkTarget string
+			if a.Id() != "" {
+				symLinkTarget = filepath.Join(kappTopLevelCacheDir, a.Id())
+			} else {
+				fqId, err := a.FullyQualifiedId()
+				if err != nil {
+					errCh <- errors.WithStack(err)
+					return
+				}
+				symLinkTarget = filepath.Join(kappTopLevelCacheDir, fqId)
+			}
 
 			var symLinksExist bool
 
