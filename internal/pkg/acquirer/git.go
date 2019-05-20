@@ -220,15 +220,6 @@ func (a GitAcquirer) clone(dest string) error {
 		return errors.WithStack(err)
 	}
 
-	// so in that case create a new local branch to track the non-master branch
-	if strings.ToLower(a.branch) != "master" {
-		err = utils.ExecCommand(GitPath, []string{"checkout", "-b", a.branch},
-			map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
-	}
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	// we could optionally verify tags with:
 	// git tag -v a.branch 2>&1 >/dev/null | grep -E '{{ trusted_gpg_keys|join('|') }}'
 
@@ -254,7 +245,9 @@ func (a GitAcquirer) update(dest string) error {
 
 	localBranch := strings.TrimSpace(stdoutBuf.String())
 
-	if localBranch == a.branch || localBranch == fmt.Sprintf("heads/%s", a.branch) {
+	detachedHead := fmt.Sprintf("(HEAD detached at %s)", a.branch)
+
+	if localBranch == a.branch || localBranch == detachedHead {
 		log.Logger.Debugf("Branch '%s' already checked out into local cache at '%s'. Will "+
 			"update it...", localBranch, dest)
 	} else {
