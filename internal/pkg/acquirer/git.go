@@ -211,9 +211,20 @@ func (a GitAcquirer) clone(dest string) error {
 		return errors.WithStack(err)
 	}
 
-	// git checkout
+	log.Logger.Debugf("Checking out branch '%s'", a.branch)
+
+	// git checkout - this will put us in a detached head if the branch isn't master
 	err = utils.ExecCommand(GitPath, []string{"checkout", a.branch},
 		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// so in that case create a new local branch to track the non-master branch
+	if strings.ToLower(a.branch) != "master" {
+		err = utils.ExecCommand(GitPath, []string{"checkout", "-b", a.branch},
+			map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
+	}
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -243,7 +254,7 @@ func (a GitAcquirer) update(dest string) error {
 
 	localBranch := strings.TrimSpace(stdoutBuf.String())
 
-	if localBranch == a.branch {
+	if localBranch == a.branch || localBranch == fmt.Sprintf("heads/%s", a.branch) {
 		log.Logger.Debugf("Branch '%s' already checked out into local cache at '%s'. Will "+
 			"update it...", localBranch, dest)
 	} else {
