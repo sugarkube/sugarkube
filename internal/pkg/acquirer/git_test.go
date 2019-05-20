@@ -40,6 +40,14 @@ func TestFullyQualifiedId(t *testing.T) {
 	assert.Nil(t, invalidUriAcquirer)
 	assert.NotNil(t, err)
 
+	// no branch. It should cause an error
+	invalidUriAcquirer2, err := newGitAcquirer(
+		structs.Source{
+			Uri: "git@github.com:helm:thing/charts.git//stable/wordpress",
+		})
+	assert.Nil(t, invalidUriAcquirer2)
+	assert.NotNil(t, err)
+
 	tests := []struct {
 		name         string
 		desc         string
@@ -52,7 +60,10 @@ func TestFullyQualifiedId(t *testing.T) {
 			desc: "check IDs are generated with expected input",
 			input: discardErr(newGitAcquirer(
 				structs.Source{
-					Uri: "git@github.com:helm/charts.git//stable/wordpress#master",
+					Uri: "git@github.com:helm/charts.git//stable/wordpress",
+					Options: map[string]interface{}{
+						BranchKey: "master",
+					},
 				})),
 			expectValues: "helm-charts-wordpress",
 		},

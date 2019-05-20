@@ -17,6 +17,7 @@
 * Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
 * Support opting out of global defaults for kapps so that they can be fully self-contained. Defaults should be useful but not constrictive
 * Add a setting to throw an error if kapp IDs aren't globally unique. We don't care, but terraform does with our sample naming convention. The options are either to add the manifest ID to the TF state path which stops people reorganising, or making kapp IDs globally unique, otherwise e.g. 2 wordpress instances in different manifests could clobber each other  
+* Updating pinned kapps results in errors even if it hasn't been modified
   
 ### Merging kapp configs
 * Support passing kapp vars on the command line when only one is selected
