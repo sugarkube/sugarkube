@@ -731,6 +731,11 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 	if kubeConfigPathInterface != "" {
 		kubeConfigPathStr = kubeConfigPathInterface.(string)
 		log.Logger.Debugf("Kubeconfig file already downloaded to '%s'", kubeConfigPathStr)
+		if _, err := os.Stat(kubeConfigPathStr); err != nil {
+			log.Logger.Errorf("Kubeconfig file '%s' doesn't exist", kubeConfigPathStr)
+			return false, fmt.Errorf("Kubeconfig file '%s' doesn't exist! If you have a "+
+				"KUBECONFIG environment variable set, delete it and try again.", kubeConfigPathStr)
+		}
 	} else {
 		kubeConfigPathStr, err = p.downloadKubeConfigFile()
 		if err != nil {
