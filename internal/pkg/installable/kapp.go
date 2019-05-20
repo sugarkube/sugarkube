@@ -333,24 +333,27 @@ func (k *Kapp) LoadConfigFile(cacheDir string) error {
 	}
 
 	// now we've loaded the kapp's sugarkube.yaml file we can prepend descriptors for each
-	// requirement declared by it that has an entry in the global config file
-	for i := len(k.GetDescriptor().Requires) - 1; i >= 0; i-- {
-		requirement := k.GetDescriptor().Requires[i]
-		programDescriptor, ok := config.CurrentConfig.Programs[requirement]
-		if !ok {
-			continue
-		}
+	// requirement declared by it that has an entry in the global config file, provided the
+	// kapp hasn't opted out of them.
+	if !k.GetDescriptor().IgnoreGlobalDefaults {
+		for i := len(k.GetDescriptor().Requires) - 1; i >= 0; i-- {
+			requirement := k.GetDescriptor().Requires[i]
+			programDescriptor, ok := config.CurrentConfig.Programs[requirement]
+			if !ok {
+				continue
+			}
 
-		descriptor := structs.KappDescriptorWithMaps{
-			KappConfig: programDescriptor,
-		}
+			descriptor := structs.KappDescriptorWithMaps{
+				KappConfig: programDescriptor,
+			}
 
-		log.Logger.Tracef("Adding descriptor to kapp '%s' for requirement '%s'",
-			k.FullyQualifiedId(), requirement)
+			log.Logger.Tracef("Adding descriptor to kapp '%s' for requirement '%s'",
+				k.FullyQualifiedId(), requirement)
 
-		err = k.AddDescriptor(descriptor, true)
-		if err != nil {
-			return errors.WithStack(err)
+			err = k.AddDescriptor(descriptor, true)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
 	}
 

@@ -1,6 +1,7 @@
 # Changelog
 ## 0.8.0
 * Pinning kapp versions in stacks is now much more concise. See `internal/testdata/stack-pinned.yaml` for an example.
+* Allow kapps to opt out of receiving globally configured defaults via the `ignore_global_defaults` boolean
 
 ## 0.7.0 (19/5/19)
 * Renamed the `kapps apply` subcommand to `kapps install` and `kapps destroy` to `kapps delete`

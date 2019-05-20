@@ -51,18 +51,19 @@ type Action struct {
 
 // A struct for an actual sugarkube.yaml file
 type KappConfig struct {
-	State              string
-	EnvVars            map[string]interface{} `yaml:"env_vars"`
-	Version            string
-	Args               map[string]map[string]map[string]string
-	Requires           []string
-	PostInstallActions []map[string]Action `yaml:"post_install_actions"`
-	PostDeleteActions  []map[string]Action `yaml:"post_delete_actions"`
-	PreInstallActions  []map[string]Action `yaml:"pre_install_actions"`
-	PreDeleteActions   []map[string]Action `yaml:"pre_delete_actions"`
-	Templates          []Template
-	Vars               map[string]interface{}
-	DependsOn          []string `yaml:"depends_on"` // fully qualified IDs of other kapps this depends on
+	State                string
+	EnvVars              map[string]interface{} `yaml:"env_vars"`
+	Version              string
+	Args                 map[string]map[string]map[string]string
+	Requires             []string
+	PostInstallActions   []map[string]Action `yaml:"post_install_actions"`
+	PostDeleteActions    []map[string]Action `yaml:"post_delete_actions"`
+	PreInstallActions    []map[string]Action `yaml:"pre_install_actions"`
+	PreDeleteActions     []map[string]Action `yaml:"pre_delete_actions"`
+	Templates            []Template
+	Vars                 map[string]interface{}
+	DependsOn            []string `yaml:"depends_on"`             // fully qualified IDs of other kapps this depends on
+	IgnoreGlobalDefaults bool     `yaml:"ignore_global_defaults"` // don't add globally configured defaults for each requirement
 	// todo - implement
 	//VarsTemplate string		// this will be read as a string, templated then converted to YAML and merged with the Vars map
 }

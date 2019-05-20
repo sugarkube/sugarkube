@@ -15,9 +15,8 @@
 * Add a way of replacing kapp settings in stack configs (e.g. to replace dependencies)
 * make the DAG executor print what it's doing every 30 seconds or so
 * Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
-* Support opting out of global defaults for kapps so that they can be fully self-contained. Defaults should be useful but not constrictive
 * Add a setting to throw an error if kapp IDs aren't globally unique. We don't care, but terraform does with our sample naming convention. The options are either to add the manifest ID to the TF state path which stops people reorganising, or making kapp IDs globally unique, otherwise e.g. 2 wordpress instances in different manifests could clobber each other  
-* Updating pinned kapps results in errors even if it hasn't been modified
+* Updating pinned kapps results in errors even if it hasn't been modified in the cache
   
 ### Merging kapp configs
 * Support passing kapp vars on the command line when only one is selected
@@ -64,7 +63,6 @@
 * Consider adding a cache so we can do cluster diffing to only install kapps that have changed to speed up
   deploying changes. Use a ClusterSOT for that.
 * Create a cache manager whose job it is to organise where files are stored in a cache to enable the no-op provisioner to be used
-* Sugarkube refuses to update a cache that contains checkouts of tags, even if there are no modifications to the kapp 
 
 ## Other things to consider
 * Is being focussed on clusters a mistake? 

@@ -29,6 +29,7 @@ The following settings can be used to configure kapps everywhere it's possible t
 * pre_install_actions
 * pre_delete_actions
 * depends_on
+* ignore_global_defaults
 
 Sources are defined as a list of:
 
