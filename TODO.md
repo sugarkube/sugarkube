@@ -12,11 +12,19 @@
 * Only run a kops update if the spec has changed (diff the new spec with the existing one)
 * Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity)
 * Documentation
+  * Document the dangers of adding provider vars dirs (i.e. that the next time sugarkube is run it'll replace the config). It should only be used in certain situations (and probably never in prod)
 * Add a way of replacing kapp settings in stack configs (e.g. to replace dependencies)
 * make the DAG executor print what it's doing every 30 seconds or so
 * Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
 * Add a setting to throw an error if kapp IDs aren't globally unique. We don't care, but terraform does with our sample naming convention. The options are either to add the manifest ID to the TF state path which stops people reorganising, or making kapp IDs globally unique, otherwise e.g. 2 wordpress instances in different manifests could clobber each other  
+* Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
+* Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them)
+* Cluster connect reports success even with expired AWS creds or a non-existent stack
+* 'Cache' isn't clear. Rename to 'workspace'.
   
+### Cluster updates
+* It should be easy to see what changes will be applied by kops - perhaps go to a two-stage approach with a '--yes' flag, to make a distinction between --dry-run and staging changes.
+
 ### Merging kapp configs
 * Support passing kapp vars on the command line when only one is selected
 
@@ -27,13 +35,16 @@
   a map. Template this block then parse it as yaml and merge it with the other vars.
 * It should be possible to load terraform outputs and use them to template other files in the kapp before installing them, without jumping through hoops with running a script to add them to the environment (a la keycloak)
 
-### Makefiles
+### Installers
+* Support declaring the name of makefiles in case a repo already has one
 * Get rid of the duplication of mapping variables - we currently do it once in sugarkube.yaml files then
   again in makefiles. Try to automate the mapping in makefiles
 * Need to use 'override' with params in makefiles. How can we make that simpler?
 * See if we can suppress warning in overridden makefiles by using the technique
   by mpb [described here](https://stackoverflow.com/questions/11958626/make-file-warning-overriding-commands-for-target)
 * document  tf-params vs tf-opts and the same for helm in the makefiles
+* Create a generic 'script' installer that takes the name of the script to run and whether to pass it values as env vars or written to a file as parameters
+  * This could support ruby, js, python, etc. May need an 'init' call to e.g. make things install dependencies
 
 ### Developer experience
 * Print important info instead of logging it. Print in different colours with an option to disable coloured output
@@ -42,6 +53,7 @@
 * Stream console output in real-time
 * use ps (https://github.com/shirou/gopsutil/) to check whether SSH port forwarding is actually set up, and 
   if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
+* Improve the UX around using caches/workspaces, especially re updating while working on a change (sugarkube shouldn't bomb out but should update whatever it can)
   
 ### Everything else
 * Support declaring templates as 'sensitive' - they should be templated just-in-time then deleted (even on error/interrupts)
