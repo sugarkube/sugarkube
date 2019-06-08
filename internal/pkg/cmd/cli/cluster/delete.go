@@ -45,7 +45,7 @@ func newDeleteCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "delete [flags]",
+		Use:   "delete [flags] [stack-file] [stack-name]",
 		Short: fmt.Sprintf("Delete a cluster"),
 		Long:  `Tear down a target cluster.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
