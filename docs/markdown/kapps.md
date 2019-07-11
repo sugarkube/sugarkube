@@ -1,28 +1,31 @@
 # Kapps
+
 Kapps are the release artefacts in Sugarkube. If you're using Helm charts, there'll be pretty much a 1:1 mapping between Helm charts and kapps. The difference is that kapps can also contain other things like scripts or terraform configs. Depending on the [installer](installer.md) there may also need to be other files, e.g. a Makefile. 
 
 Kapps are organised into [manifests](manifests.md) which are further grouped into [stacks](stacks.md) that represent your actual clusters.
 
 ## Where kapps are configured
+
 Kapps can be configured at multiple levels in a Sugarkube project (in order of precedence from lowest to highest):
- 
- * Global defaults (the lowest level of precedence) can be set in the project's `sugarkube-conf.yaml` file. A [default one](https://github.com/sugarkube/sugarkube/blob/master/sugarkube-conf.yaml) is available that configures dynamically searching for Helm/Terraform values/.tfvars files
- * Default values can be set in the kapp's `sugarkube.yaml` file 
- * Each manifest file that uses a kapp can declare defaults in its  `defaults` block, or be parameterised at the point the kapp is declared in the manifest (this has higher precedence than the manifest's `defaults` block)
- * In a stack's `overrides` block
+
+* Global defaults (the lowest level of precedence) can be set in the project's `sugarkube-conf.yaml` file. A [default one](https://github.com/sugarkube/sugarkube/blob/master/sugarkube-conf.yaml) is available that configures dynamically searching for Helm/Terraform values/.tfvars files
+* Default values can be set in the kapp's `sugarkube.yaml` file 
+* Each manifest file that uses a kapp can declare defaults in its  `defaults` block, or be parameterised at the point the kapp is declared in the manifest (this has higher precedence than the manifest's `defaults` block)
+* In a stack's `overrides` block
 
 ## Configuration
+
 The following settings can be used to configure kapps everywhere it's possible to configure them (but some only make sense in certain places):
 
 * id
 * sources
 * outputs
-* state              
-* version            
-* args               
-* requires           
-* templates          
-* vars               
+* state
+* version
+* args
+* requires
+* templates
+* vars
 * env_vars
 * post_install_actions
 * post_delete_actions
@@ -49,11 +52,12 @@ Templates are defined as a list of:
 * dest - the path to write the templated file to, relative to the kapp's `sugarkube.yaml` file
 
 ## Execution
+
 When Sugarkube is executed, it:
 
-1. Reads config files (which define your clusters, e.g. Kops on AWS or local Minikube, and the versions of which kapps to install into each cluster) 
-1. Clones the relevant git repos containing your kapps at the specified version
-1. Invokes `Make` on them passing various environment variables. The Makefiles tailor exactly what they do based on these environment variables. 
+1. Reads config files (which define your clusters, e.g. Kops on AWS or local Minikube, and the versions of which kapps to install into each cluster)
+2. Clones the relevant git repos containing your kapps at the specified version
+3. Invokes `Make` on them passing various environment variables. The Makefiles tailor exactly what they do based on these environment variables.
 
 Most operations are run in parallel for speed (although that's configurable). This include cloning git repos and installing kapps.
 

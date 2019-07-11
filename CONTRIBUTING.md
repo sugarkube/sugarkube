@@ -8,7 +8,7 @@ You can contribute in many ways:
 
 ### Report Bugs
 
-Report bugs at https://github.com/sugarkube/sugarkube/issues.
+Report bugs at <https://github.com/sugarkube/sugarkube/issues.>
 
 If you are reporting a bug, please include:
 
@@ -18,23 +18,20 @@ If you are reporting a bug, please include:
 
 ### Fix Bugs
 
-Look through the GitHub issues for bugs. Anything tagged with "bug"
-is open to whoever wants to implement it.
+Look through the GitHub issues for bugs. Anything tagged with "bug" is open to whoever wants to implement it.
 
 ### Implement Features
 
-Look through the GitHub issues for features. Anything tagged with "feature"
-is open to whoever wants to implement it.
+Look through the GitHub issues for features. Anything tagged with "feature" is open to whoever wants to implement it.
 
 ### Write Documentation
 
-sugarkube could always use more documentation, whether as part of the
-official sugarkube docs, in docstrings, or even on the web in blog posts,
+sugarkube could always use more documentation, whether as part of the official sugarkube docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 ### Submit Feedback
 
-The best way to send feedback is to file an issue at https://github.com/sugarkube/sugarkube/issues.
+The best way to send feedback is to file an issue at <https://github.com/sugarkube/sugarkube/issues>.
 
 If you are proposing a feature:
 
@@ -43,7 +40,7 @@ If you are proposing a feature:
 * Remember that this is a volunteer-driven project, and that contributions
   are welcome :)
 
-## Get Started!
+## Get Started
 
 Ready to contribute? Here's how to set up `sugarkube` for local development.
 
@@ -62,22 +59,19 @@ Ready to contribute? Here's how to set up `sugarkube` for local development.
 
     $ make test
 
-6. Commit your changes and push your branch to GitHub::
+5. Commit your changes and push your branch to GitHub::
 
     $ git add .
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
 
-7. Submit a pull request through the GitHub website.
+6. Submit a pull request through the GitHub website.
 
-Pull Request Guidelines
------------------------
+## Pull Request Guidelines
 
 Before you submit a pull request, check that it meets these guidelines:
 
 1. The pull request should include tests.
-2. If the pull request adds functionality, the docs should be updated. Put
-   your new functionality into a function with a docstring, and add the
+2. If the pull request adds functionality, the docs should be updated. Put your Guidelinesnew functionality into a function with a docstring, and add the
    feature to the list in README.md.
-3. Your code should be structured according to the 
-   [standard project layout](https://github.com/golang-standards/project-layout).
+3. Your code should be structured according to the [standard project layout](https://github.com/golang-standards/project-layout).

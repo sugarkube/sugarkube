@@ -1,4 +1,5 @@
 # Scenario
+
 Here's a complex scenario that shows some of the possibilities of using Sugarkube:
 
 Imagine you're the developer for a web site. It runs on Kubernetes in production but you develop on Minikube locally. You want to optimise it to cache data in Memcached. While developing locally you want to develop against a Memcached instance in your Minikube cluster, but on AWS you'll use ElastiCache. You've already created a kapp for the web site. It's deployed as a Helm chart, and the current live release is v2.4.0. Your web site requires an S3 bucket and uses RDS in production but the Terraform code to create these is already part of the kapp.
@@ -29,10 +30,10 @@ The next step is to test your work on your dev AWS cluster. Because Sugarkube is
 
 You test it and everything looks good, so you commit the changes to your web site kapp repo, then open a PR to merge it into master which makes your CI pipeline tag your kapps repo at this version. It does this by inspecting which directories were modified in the previous commit and tagging them according to the tag in the kapp's `sugarkube.yaml` file.
 
-Now, your kapp repo has been updated and tagged with this new release. Next you create a feature branch for the repo containing your Sugarkube configs and update it to release your new kapp into staging. You commit and merge this and your CI system runs Sugarkube again, targetting your staging AWS cluster. 
+Now, your kapp repo has been updated and tagged with this new release. Next you create a feature branch for the repo containing your Sugarkube configs and update it to release your new kapp into staging. You commit and merge this and your CI system runs Sugarkube again, targetting your staging AWS cluster.
 
 Again, you test, you're happy, so you update the repo containing your Sugarkube configs to release into prod. This triggers Sugarkube to release into production. If you're really advanced your CI pipeline also pushes the docker image through various container repos as it progresses.
 
 **Note**: The above approach requires you to explicitly control which environment you're releasing into. This lets you support multiple live environments which is sometimes a requirement. For simpler setups, you could decide not to explicitly define the versions of kapps to release into staging, but instead modify your CI pipeline so that before releasing into prod it automatically releases into staging, runs tests, then releases to prod if everything is OK.
 
-The trade-offs Sugarkube has chosen give you ultimate control over how much automation you want vs how much explicit intervention should be required to release your changes. 
+The trade-offs Sugarkube has chosen give you ultimate control over how much automation you want vs how much explicit intervention should be required to release your changes.

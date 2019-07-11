@@ -1,10 +1,13 @@
 # Changelog
+
 ## 0.8.0
+
 * Pinning kapp versions in stacks is now much more concise. See `internal/testdata/stack-pinned.yaml` for an example.
 * Allow kapps to opt out of receiving globally configured defaults via the `ignore_global_defaults` boolean
 * Caches that contain checkouts of tags can now be updated by rerunning `cache create`
 
 ## 0.7.0 (19/5/19)
+
 * Renamed the `kapps apply` subcommand to `kapps install` and `kapps destroy` to `kapps delete`
 * Renamed the `destroy` make target to `delete` and updated the [common makefiles](https://github.com/sugarkube/kapps/tree/master/incubator/common-makefiles)
 * Changed the '--approved' flag to '--yes' to make it more intuitive
@@ -41,6 +44,7 @@
 * Added a new 'kapps validate' command to make sure all binaries declared in a kapp's 'requires' block exist on your path.
 
 ## 0.6.0 (25/3/19)
+
 * Major code clean up & refactoring
 * Variables can now be interpolated based on other variables
 * Kapp variables are now namespaced under a dedicated key ('kapp') to prevent them overwriting system variables
@@ -68,21 +72,27 @@
 * Change the format of the 'args' YAML in kapps
 
 ## 0.5.0 (2/12/19)
+
 * Kapps need to declare what environment variables they want and what to map to them in a 'sugarkube.yaml' file
 
 ## 0.4.0 (29/9/18)
+
 * Neaten up logging
 
 ## 0.3.0 (28/9/18)
+
 * Allow templates to be rendered for kapps
 * Variables can be loaded from various directories
 
 ## 0.2.0 (22/9/18)
+
 * Added an AWS provider
 * Added a KOPS provisioner
 
 ## 0.1.1 (28/8/18)
+
 * Pass the user's environment variables when running commands
 
 ## 0.1.0 (25/8/18)
+
 Initial release
