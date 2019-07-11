@@ -4,3 +4,4 @@ vendor
 *.iml
 .DS_Store
 .sugarkube/
+.vscode/
