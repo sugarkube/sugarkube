@@ -129,8 +129,6 @@ func init() {
 		jsonLogs = false
 	}
 
-	noColor := false
-
 	log.ConfigureLogger(defaultLogLevel, jsonLogs)
 
 	cobra.OnInitialize(func() {
@@ -159,7 +157,7 @@ func init() {
 			}
 		}
 
-		if noColor {
+		if config.CurrentConfig.NoColor {
 			log.Logger.Debug("Disabling coloured output")
 			printer.Disable()
 		}
@@ -168,6 +166,8 @@ func init() {
 		log.ConfigureLogger(config.CurrentConfig.LogLevel,
 			config.CurrentConfig.JsonLogs)
 	})
+
+	noColor := false
 
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|trace|debug|info|warn|error|fatal")
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "",
