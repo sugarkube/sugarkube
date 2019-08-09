@@ -34,7 +34,7 @@ func NewWorkspaceCmds(out io.Writer) *cobra.Command {
 		newCreateCmd(out),
 	)
 
-	cmd.Aliases = []string{"cache"} // for backwards compatibility after renaming cache -> workspace
+	cmd.Aliases = []string{"cache", "ws"} // for backwards compatibility after renaming cache -> workspace and laziness
 
 	return cmd
 }
