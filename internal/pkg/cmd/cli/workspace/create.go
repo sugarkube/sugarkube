@@ -120,13 +120,13 @@ func (c *createCmd) run() error {
 	log.Logger.Debugf("Creating workspace at %s...", absRootWorkspaceDir)
 
 	// don't use the abs workspace path here to keep the output simpler
-	_, err = fmt.Fprintf(c.out, "Creating workspace at '%s'...\n", c.workspaceDir)
+	_, err = fmt.Fprintf(c.out, "Creating/updating workspace at '%s'...\n", c.workspaceDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	for _, manifest := range stackObj.GetConfig().Manifests() {
-		err := cacher.CacheManifest(manifest, absRootWorkspaceDir, c.dryRun)
+		err := cacher.CacheManifest(c.out, manifest, absRootWorkspaceDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -140,15 +140,13 @@ func (c *createCmd) run() error {
 		}
 	}
 
-	_, err = fmt.Fprintln(c.out, "Workspace successfully created")
+	_, err = fmt.Fprintln(c.out, "Finished downloading kapps")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Infof("Workspace created at: %s", absRootWorkspaceDir)
-
 	if c.renderTemplates {
-		_, err = fmt.Fprintln(c.out, "Rendering templates for kapps...")
+		_, err = fmt.Fprintln(c.out, "\nRendering templates for kapps...")
 		if err != nil {
 			return errors.WithStack(err)
 		}

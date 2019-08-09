@@ -96,8 +96,8 @@ func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.
 			"define it in your stack.")
 	}
 
-	_, err = fmt.Fprintf(out, "Successfully loaded stack config containing %d "+
-		"manifest(s) and %d kapps in total.\n", len(stackConfig.Manifests()), numKapps)
+	_, err = fmt.Fprintf(out, "Successfully loaded stack config file '%s' containing %d "+
+		"manifest(s) and %d kapps in total.\n", stackFilePath, len(stackConfig.Manifests()), numKapps)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

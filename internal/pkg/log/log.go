@@ -64,7 +64,7 @@ func newLogger(logLevel string, jsonLogs bool) *logrus.Logger {
 	setLevel(l, logLevel)
 
 	// only print the filename for certain levels to reduce noise
-	if l.Level == logrus.TraceLevel || l.Level == logrus.DebugLevel {
+	if l.Level == logrus.TraceLevel || l.Level == logrus.DebugLevel || l.Level == logrus.InfoLevel {
 		l.AddHook(filename.NewHook())
 	}
 
