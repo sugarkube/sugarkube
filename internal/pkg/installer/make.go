@@ -23,6 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"path/filepath"
 	"strings"
@@ -123,8 +124,11 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Infof("Running 'make %s' on kapp '%s' with APPROVED=%v...", makeTarget,
-		installable.FullyQualifiedId(), approved)
+	_, err = printer.Fprintf("Running '[white]make %s[default]' on kapp '[white]%s[default]'...\n", makeTarget,
+		installable.FullyQualifiedId())
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	err = utils.ExecCommand("make", cliArgs, envVars, &stdoutBuf,
@@ -140,6 +144,11 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 
 	log.Logger.Infof("Kapp '%s' successfully processed (approved=%v, dry run=%v)",
 		installable.FullyQualifiedId(), approved, dryRun)
+
+	_, err = printer.Fprintf("[green]Successfully ran [default]'[white]%s[default]'\n", installable.FullyQualifiedId())
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	return nil
 }

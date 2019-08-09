@@ -420,7 +420,7 @@ func (g *Dag) Print() error {
 				parentNamesStr = "<nothing>"
 			}
 
-			str := fmt.Sprintf("  %s%s - depends on: %s\n", marked,
+			str := fmt.Sprintf("  %s%s[reset] - depends on: %s\n", marked,
 				node.name, parentNamesStr)
 			_, err = printer.Fprint(str)
 			if err != nil {
