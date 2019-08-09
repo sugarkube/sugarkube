@@ -59,8 +59,8 @@ func newGitAcquirer(source structs.Source) (*GitAcquirer, error) {
 	lastSeparatorIndex := strings.LastIndex(source.Uri, PathSeparator)
 	uriPathBranch := []string{source.Uri[0:lastSeparatorIndex], source.Uri[lastSeparatorIndex+len(PathSeparator):]}
 	if len(uriPathBranch) != 2 {
-		return nil, errors.New(fmt.Sprintf("No path separator ('%s') found in git URI '%s'", PathSeparator,
-			source.Uri))
+		return nil, fmt.Errorf("No path separator ('%s') found in git URI '%s'", PathSeparator,
+			source.Uri)
 	}
 
 	// if an absolute path is given, remove a slash from the first component and prepend it to the second

@@ -17,10 +17,10 @@
 package log
 
 import (
+	"github.com/onrik/logrus/filename"
 	"io/ioutil"
 	"os"
 
-	"github.com/onrik/logrus/filename"
 	"github.com/sirupsen/logrus"
 )
 
@@ -45,7 +45,6 @@ func ConfigureLogger(logLevel string, jsonLogs bool) {
 
 func newLogger(logLevel string, jsonLogs bool) *logrus.Logger {
 	l := logrus.New()
-	l.AddHook(filename.NewHook())
 
 	// make the formatter include the current time
 	var formatter logrus.Formatter
@@ -63,6 +62,11 @@ func newLogger(logLevel string, jsonLogs bool) *logrus.Logger {
 	l.Out = os.Stderr
 
 	setLevel(l, logLevel)
+
+	// only print the filename for certain levels to reduce noise
+	if l.Level == logrus.TraceLevel || l.Level == logrus.DebugLevel {
+		l.AddHook(filename.NewHook())
+	}
 
 	return l
 }
