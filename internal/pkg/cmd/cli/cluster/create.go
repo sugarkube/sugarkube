@@ -127,7 +127,7 @@ func CreateCluster(stackObj interfaces.IStack, dryRun bool) error {
 	if dryRun {
 		dryRunPrefix = "[Dry run] "
 	}
-	_, err := printer.Fprintf("%sChecking whether the target cluster '%s' is already "+
+	_, err := printer.Fprintf("%sChecking whether the target cluster '[white]%s' [default]is already "+
 		"online...\n", dryRunPrefix, stackObj.GetConfig().GetCluster())
 	if err != nil {
 		return errors.WithStack(err)
@@ -144,7 +144,7 @@ func CreateCluster(stackObj interfaces.IStack, dryRun bool) error {
 		}
 
 		if online {
-			_, err = printer.Fprintf("%sCluster is already online. Aborting.\n",
+			_, err = printer.Fprintf("%s[green]Cluster is already online. Aborting.\n",
 				dryRunPrefix)
 			if err != nil {
 				return errors.WithStack(err)
@@ -173,7 +173,7 @@ func CreateCluster(stackObj interfaces.IStack, dryRun bool) error {
 			return errors.WithStack(err)
 		}
 
-		_, err = printer.Fprintf("%sCluster '%s' successfully created.\n",
+		_, err = printer.Fprintf("%s[green]Cluster '%s' successfully created.\n",
 			dryRunPrefix, stackObj.GetConfig().GetCluster())
 		if err != nil {
 			return errors.WithStack(err)
