@@ -145,7 +145,7 @@ func init() {
 		if err != nil {
 			cause := errors.Cause(err)
 			if _, ok := cause.(viper.ConfigFileNotFoundError); ok {
-				fmt.Fprintf(os.Stderr, "%s\n", cause.Error())
+				_, _ = printer.Fprintf("%s\n", cause.Error())
 				log.Logger.Fatalf("No config file found. Aborting.")
 			} else {
 				if log.Logger.Level == logrus.DebugLevel || log.Logger.Level == logrus.TraceLevel {

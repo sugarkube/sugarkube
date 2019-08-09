@@ -108,6 +108,7 @@ process before installing the selected kapps.
 			}
 
 			if err1 != nil {
+				_, _ = printer.Fprint("\n[red][bold]Error installing kapp. Aborting.\n")
 				return errors.WithStack(err1)
 			}
 
@@ -207,7 +208,8 @@ func (c *installCmd) run() error {
 		}
 	}
 
-	_, err = printer.Fprintf("Running installers for selected kapps with [yellow][bold]APPROVED=%v\n", approved)
+	_, err = printer.Fprintf("Running installers for selected kapps with [yellow][bold]APPROVED=%v. [reset]Enable "+
+		"logging to see the exact parameters passed to each kapp.\n", approved)
 	if err != nil {
 		return errors.WithStack(err)
 	}
