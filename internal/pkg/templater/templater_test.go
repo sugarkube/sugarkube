@@ -105,7 +105,7 @@ func TestCustomFunctions(t *testing.T) {
 
 	absTestDir, err := filepath.Abs(testDir)
 	assert.Nil(t, err)
-	sampleKappCacheRoot := filepath.Join(absTestDir, "sample-cache", "sample-manifest", "sample-kapp")
+	sampleWorkspaceRoot := filepath.Join(absTestDir, "sample-workspace", "sample-manifest", "sample-kapp")
 
 	tests := []struct {
 		name     string
@@ -113,12 +113,10 @@ func TestCustomFunctions(t *testing.T) {
 		expected string
 	}{
 		{
-			name: "test findFiles",
-			// todo - this is intimidating. Perhaps we should offer some canned templates for helm/terraform users can
-			//  just refer to or load somehow
+			name:  "test findFiles",
 			input: `-f {{ listString "/values.yaml$" | findFiles .kapp.cacheRoot | uniq | join " " }} {{ mapPrintF "/values-%s.yaml$" .sugarkube.defaultVars | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " }}`,
 			expected: fmt.Sprintf("-f %s/sample-chart/values.yaml -f %s/sample-chart/values-dev.yaml "+
-				"-f %s/sample-chart/values-dev1.yaml", sampleKappCacheRoot, sampleKappCacheRoot, sampleKappCacheRoot),
+				"-f %s/sample-chart/values-dev1.yaml", sampleWorkspaceRoot, sampleWorkspaceRoot, sampleWorkspaceRoot),
 		},
 	}
 
@@ -129,7 +127,7 @@ func TestCustomFunctions(t *testing.T) {
 				"defaultVars": []string{"missing-provider", "dev", "dev", "dev1", "missing-region"},
 			},
 			"kapp": map[string]interface{}{
-				"cacheRoot": sampleKappCacheRoot,
+				"cacheRoot": sampleWorkspaceRoot,
 			},
 		})
 		assert.Nil(t, err)

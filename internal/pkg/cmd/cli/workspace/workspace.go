@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cache
+package workspace
 
 import (
 	"fmt"
@@ -22,18 +22,19 @@ import (
 	"io"
 )
 
-func NewCacheCmds(out io.Writer) *cobra.Command {
+func NewWorkspaceCmds(out io.Writer) *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:   "cache [command]",
-		Short: fmt.Sprintf("Work with kapp caches"),
-		Long:  `Create and refresh kapp caches`,
+		Use:   "workspace [command]",
+		Short: fmt.Sprintf("Work with workspaces"),
+		Long:  `Create and refresh workspaces`,
 	}
 
 	cmd.AddCommand(
 		newCreateCmd(out),
-		newDiffCmd(out),
 	)
+
+	cmd.Aliases = []string{"cache"} // for backwards compatibility after renaming cache -> workspace
 
 	return cmd
 }

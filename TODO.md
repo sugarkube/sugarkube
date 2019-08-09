@@ -20,7 +20,6 @@
 * Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
 * Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them)
 * Cluster connect reports success even with expired AWS creds or a non-existent stack
-* 'Cache' isn't clear. Rename to 'workspace'.
   
 ### Cluster updates
 * It should be easy to see what changes will be applied by kops - perhaps go to a two-stage approach with a '--yes' flag, to make a distinction between --dry-run and staging changes.

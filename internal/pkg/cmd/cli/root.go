@@ -22,9 +22,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cache"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/workspace"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
@@ -105,7 +105,7 @@ func NewCommand(name string) *cobra.Command {
 		newCompletionsCommand(),
 		cluster.NewClusterCmds(out),
 		kapps.NewKappsCmds(out),
-		cache.NewCacheCmds(out),
+		workspace.NewWorkspaceCmds(out),
 	)
 
 	return rootCmd

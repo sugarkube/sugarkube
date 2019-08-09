@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cache
+package workspace
 
 import (
 	"fmt"
@@ -41,7 +41,7 @@ type createCmd struct {
 	account         string
 	cluster         string
 	region          string
-	cacheDir        string
+	workspaceDir    string
 	renderTemplates bool
 }
 
@@ -51,9 +51,9 @@ func newCreateCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "create [flags] [stack-file] [stack-name] [cache-dir]",
-		Short: fmt.Sprintf("Create kapp caches"),
-		Long: `Create/update a local kapps cache for a given manifest(s), and renders any 
+		Use:   "create [flags] [stack-file] [stack-name] [workspace-dir]",
+		Short: fmt.Sprintf("Create a workspace"),
+		Long: `Create/update a local workspace for a given manifest(s), and renders any 
 templates defined by kapps.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 3 {
@@ -63,7 +63,7 @@ templates defined by kapps.`,
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
-			c.cacheDir = args[2]
+			c.workspaceDir = args[2]
 			return c.run()
 		},
 	}
@@ -112,40 +112,40 @@ func (c *createCmd) run() error {
 
 	log.Logger.Debugf("Manifests validated.")
 
-	absRootCacheDir, err := filepath.Abs(c.cacheDir)
+	absRootWorkspaceDir, err := filepath.Abs(c.workspaceDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Debugf("Caching manifests into %s...", absRootCacheDir)
+	log.Logger.Debugf("Creating workspace at %s...", absRootWorkspaceDir)
 
-	// don't use the abs cache path here to keep the output simpler
-	_, err = fmt.Fprintf(c.out, "Caching kapps into '%s'...\n", c.cacheDir)
+	// don't use the abs workspace path here to keep the output simpler
+	_, err = fmt.Fprintf(c.out, "Creating workspace at '%s'...\n", c.workspaceDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	for _, manifest := range stackObj.GetConfig().Manifests() {
-		err := cacher.CacheManifest(manifest, absRootCacheDir, c.dryRun)
+		err := cacher.CacheManifest(manifest, absRootWorkspaceDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
 		// reload each installable now its been cached so we can render templates
 		for _, installableObj := range manifest.Installables() {
-			err := installableObj.LoadConfigFile(absRootCacheDir)
+			err := installableObj.LoadConfigFile(absRootWorkspaceDir)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 		}
 	}
 
-	_, err = fmt.Fprintln(c.out, "Kapps successfully cached")
+	_, err = fmt.Fprintln(c.out, "Workspace successfully created")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Infof("Manifests cached to: %s", absRootCacheDir)
+	log.Logger.Infof("Workspace created at: %s", absRootWorkspaceDir)
 
 	if c.renderTemplates {
 		_, err = fmt.Fprintln(c.out, "Rendering templates for kapps...")
@@ -154,7 +154,7 @@ func (c *createCmd) run() error {
 		}
 
 		// create a DAG to template all the kapps
-		dagObj, err := kapps.BuildDagForSelected(stackObj, c.cacheDir, []string{}, []string{},
+		dagObj, err := kapps.BuildDagForSelected(stackObj, c.workspaceDir, []string{}, []string{},
 			false, "", c.out)
 		if err != nil {
 			return errors.WithStack(err)
@@ -177,7 +177,7 @@ func (c *createCmd) run() error {
 		}
 	}
 
-	_, err = fmt.Fprintf(c.out, "Kapps successfully cached into '%s'\n", absRootCacheDir)
+	_, err = fmt.Fprintf(c.out, "Workspace successfully created at '%s'\n", absRootWorkspaceDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
