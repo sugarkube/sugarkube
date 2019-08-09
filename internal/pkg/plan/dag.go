@@ -414,8 +414,13 @@ func (g *Dag) Print(writer io.Writer) error {
 			if node.marked {
 				marked = fmt.Sprintf("%s ", markedNodeStr)
 			}
-			_, err := fmt.Fprintf(writer, "  %s%s - depends on: %s\n", marked, node.name,
-				strings.Join(parentNames, ", "))
+
+			parentNamesStr := strings.Join(parentNames, ", ")
+			if parentNamesStr == "" {
+				parentNamesStr = "<nothing>"
+			}
+			_, err := fmt.Fprintf(writer, "  %s%s - depends on: %s\n", marked,
+				node.name, parentNamesStr)
 			if err != nil {
 				panic(err)
 			}
