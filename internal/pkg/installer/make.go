@@ -145,10 +145,18 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 	log.Logger.Infof("Kapp '%s' successfully processed (approved=%v, dry run=%v)",
 		installable.FullyQualifiedId(), approved, dryRun)
 
-	_, err = printer.Fprintf("[green]Successfully ran [default]'[white]%s[default]' with APPROVED=%v\n",
-		installable.FullyQualifiedId(), approved)
-	if err != nil {
-		return errors.WithStack(err)
+	if makeTarget == TargetOutput {
+		_, err = printer.Fprintf("[green]Successfully loaded output for [default]'[white]%s[default]'\n",
+			installable.FullyQualifiedId())
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		_, err = printer.Fprintf("[green]Successfully ran [default]'[white]%s[default]' with APPROVED=%v\n",
+			installable.FullyQualifiedId(), approved)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil
