@@ -654,7 +654,7 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 	log.Logger.Infof("Executing action '%s' for installable '%s'", action, installableObj.FullyQualifiedId())
 	switch action.Id {
 	case constants.ActionClusterUpdate:
-		err := cluster.UpdateCluster(os.Stdout, stackObj, true, dryRun)
+		err := cluster.UpdateCluster(stackObj, true, dryRun)
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'",
 				installableObj.Id())

@@ -19,11 +19,9 @@ package cluster
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"io"
 )
 
 type diffCmd struct {
-	out      io.Writer
 	extended bool
 }
 
@@ -32,10 +30,8 @@ type diffCmd struct {
 // since we run kapps in a two-phased manner - first planning then applying
 // changes - we won't use the more obvious term 'plan' here to avoid ambiguous
 // terms.
-func newDiffCmd(out io.Writer) *cobra.Command {
-	c := &diffCmd{
-		out: out,
-	}
+func newDiffCmd() *cobra.Command {
+	c := &diffCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "diff [flags]",

@@ -22,10 +22,10 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
-	"io"
 	"strings"
 	"time"
 )
@@ -386,8 +386,8 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 }
 
 // Prints out the DAG to the writer
-func (g *Dag) Print(writer io.Writer) error {
-	_, err := fmt.Fprintf(writer, "\nCreated the following DAG. Nodes marked with a %s will "+
+func (g *Dag) Print() error {
+	_, err := printer.Fprintf("Created the following DAG. Nodes marked with a %s will "+
 		"be processed: \n", markedNodeStr)
 	if err != nil {
 		return errors.WithStack(err)
@@ -412,15 +412,17 @@ func (g *Dag) Print(writer io.Writer) error {
 
 			marked := ""
 			if node.marked {
-				marked = fmt.Sprintf("%s ", markedNodeStr)
+				marked = fmt.Sprintf("[bold]%s ", markedNodeStr)
 			}
 
 			parentNamesStr := strings.Join(parentNames, ", ")
 			if parentNamesStr == "" {
 				parentNamesStr = "<nothing>"
 			}
-			_, err := fmt.Fprintf(writer, "  %s%s - depends on: %s\n", marked,
+
+			str := fmt.Sprintf("  %s%s - depends on: %s\n", marked,
 				node.name, parentNamesStr)
+			_, err = printer.Fprint(str)
 			if err != nil {
 				panic(err)
 			}
@@ -429,11 +431,6 @@ func (g *Dag) Print(writer io.Writer) error {
 	}()
 
 	<-finishedCh
-
-	_, err = fmt.Fprintf(writer, "\n")
-	if err != nil {
-		return errors.WithStack(err)
-	}
 
 	log.Logger.Debug("DAG printed")
 

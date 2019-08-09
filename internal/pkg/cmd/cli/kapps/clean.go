@@ -21,13 +21,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"io"
 )
 
 type cleanCmd struct {
-	out             io.Writer
 	workspaceDir    string
 	dryRun          bool
 	includeParents  bool
@@ -43,10 +42,8 @@ type cleanCmd struct {
 	excludeSelector []string
 }
 
-func newCleanCmd(out io.Writer) *cobra.Command {
-	c := &cleanCmd{
-		out: out,
-	}
+func newCleanCmd() *cobra.Command {
+	c := &cleanCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "clean [flags] [stack-file] [stack-name] [workspace-dir]",
@@ -99,7 +96,7 @@ func (c *cleanCmd) run() error {
 
 	var err error
 
-	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -110,7 +107,7 @@ func (c *cleanCmd) run() error {
 	}
 
 	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		c.includeParents, constants.PresentKey, c.out)
+		c.includeParents, constants.PresentKey)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -121,7 +118,7 @@ func (c *cleanCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "%sKapps successfully cleaned\n", dryRunPrefix)
+	_, err = printer.Fprintf("%sKapps successfully cleaned\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}

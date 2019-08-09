@@ -24,14 +24,13 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"io"
 	"path/filepath"
 )
 
 type createCmd struct {
-	out             io.Writer
 	dryRun          bool
 	stackName       string
 	stackFile       string
@@ -45,10 +44,8 @@ type createCmd struct {
 	renderTemplates bool
 }
 
-func newCreateCmd(out io.Writer) *cobra.Command {
-	c := &createCmd{
-		out: out,
-	}
+func newCreateCmd() *cobra.Command {
+	c := &createCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "create [flags] [stack-file] [stack-name] [workspace-dir]",
@@ -95,7 +92,7 @@ func (c *createCmd) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -120,13 +117,13 @@ func (c *createCmd) run() error {
 	log.Logger.Debugf("Creating workspace at %s...", absRootWorkspaceDir)
 
 	// don't use the abs workspace path here to keep the output simpler
-	_, err = fmt.Fprintf(c.out, "Creating/updating workspace at '%s'...\n", c.workspaceDir)
+	_, err = printer.Fprintf("Creating/updating workspace at '[white]%s'...\n", c.workspaceDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	for _, manifest := range stackObj.GetConfig().Manifests() {
-		err := cacher.CacheManifest(c.out, manifest, absRootWorkspaceDir, c.dryRun)
+		err := cacher.CacheManifest(manifest, absRootWorkspaceDir, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -140,20 +137,20 @@ func (c *createCmd) run() error {
 		}
 	}
 
-	_, err = fmt.Fprintln(c.out, "Finished downloading kapps")
+	_, err = printer.Fprintln("[green]Finished downloading kapps")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	if c.renderTemplates {
-		_, err = fmt.Fprintln(c.out, "\nRendering templates for kapps...")
+		_, err = printer.Fprintln("\nRendering templates for kapps...")
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
 		// create a DAG to template all the kapps
 		dagObj, err := kapps.BuildDagForSelected(stackObj, c.workspaceDir, []string{}, []string{},
-			false, "", c.out)
+			false, "")
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -164,18 +161,18 @@ func (c *createCmd) run() error {
 			return errors.WithStack(err)
 		}
 
-		_, err = fmt.Fprintln(c.out, "Templates successfully rendered")
+		_, err = printer.Fprintln("[green]Templates successfully rendered")
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	} else {
-		_, err = fmt.Fprintln(c.out, "Skipping rendering templates for kapps")
+		_, err = printer.Fprintln("Skipping rendering templates for kapps")
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
 
-	_, err = fmt.Fprintf(c.out, "Workspace successfully created at '%s'\n", absRootWorkspaceDir)
+	_, err = printer.Fprintf("\n[green]Workspace successfully created at '%s'\n", absRootWorkspaceDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}

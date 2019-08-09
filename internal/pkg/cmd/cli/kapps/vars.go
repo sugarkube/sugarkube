@@ -7,11 +7,9 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"io"
 )
 
 type varsConfig struct {
-	out             io.Writer
 	workspaceDir    string
 	stackName       string
 	stackFile       string
@@ -28,10 +26,8 @@ type varsConfig struct {
 	suppress        []string
 }
 
-func newVarsCmd(out io.Writer) *cobra.Command {
-	c := &varsConfig{
-		out: out,
-	}
+func newVarsCmd() *cobra.Command {
+	c := &varsConfig{}
 
 	cmd := &cobra.Command{
 		Use:   "vars [flags] [stack-file] [stack-name] [workspace-dir]",
@@ -83,13 +79,13 @@ func (c *varsConfig) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		c.includeParents, "", c.out)
+		c.includeParents, "")
 	if err != nil {
 		return errors.WithStack(err)
 	}

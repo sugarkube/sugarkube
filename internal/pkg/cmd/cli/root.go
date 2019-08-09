@@ -27,6 +27,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/workspace"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -98,14 +99,14 @@ func NewCommand(name string) *cobra.Command {
 	rootCmd.Use = name
 	rootCmd.SilenceUsage = true
 
-	out := rootCmd.OutOrStdout()
+	printer.SetOutput(rootCmd.OutOrStdout())
 
 	rootCmd.AddCommand(
 		newVersionCommand(),
 		newCompletionsCommand(),
-		cluster.NewClusterCmds(out),
-		kapps.NewKappsCmds(out),
-		workspace.NewWorkspaceCmds(out),
+		cluster.NewClusterCmds(),
+		kapps.NewKappsCmds(),
+		workspace.NewWorkspaceCmds(),
 	)
 
 	return rootCmd

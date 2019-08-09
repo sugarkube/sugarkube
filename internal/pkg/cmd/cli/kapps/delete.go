@@ -21,14 +21,13 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"io"
 	"time"
 )
 
 type deleteCmd struct {
-	out                 io.Writer
 	workspaceDir        string
 	dryRun              bool
 	approved            bool
@@ -51,10 +50,8 @@ type deleteCmd struct {
 	excludeSelector     []string
 }
 
-func newDeleteCmd(out io.Writer) *cobra.Command {
-	c := &deleteCmd{
-		out: out,
-	}
+func newDeleteCmd() *cobra.Command {
+	c := &deleteCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "delete [flags] [stack-file] [stack-name] [workspace-dir]",
@@ -137,7 +134,7 @@ func (c *deleteCmd) run() error {
 
 	var err error
 
-	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -148,7 +145,7 @@ func (c *deleteCmd) run() error {
 	}
 
 	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		c.includeParents, "", c.out)
+		c.includeParents, "")
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -183,7 +180,7 @@ func (c *deleteCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "%sKapp changes successfully applied\n", dryRunPrefix)
+	_, err = printer.Fprintf("%sKapp changes successfully applied\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}

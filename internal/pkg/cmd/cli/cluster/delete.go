@@ -20,13 +20,12 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"io"
 )
 
 type deleteCmd struct {
-	out         io.Writer
 	dryRun      bool
 	approved    bool
 	stackName   string
@@ -39,10 +38,8 @@ type deleteCmd struct {
 	region      string
 }
 
-func newDeleteCmd(out io.Writer) *cobra.Command {
-	c := &deleteCmd{
-		out: out,
-	}
+func newDeleteCmd() *cobra.Command {
+	c := &deleteCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "delete [flags] [stack-file] [stack-name]",
@@ -83,7 +80,7 @@ func (c *deleteCmd) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -93,7 +90,7 @@ func (c *deleteCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	_, err = fmt.Fprintf(c.out, "%sDeleting cluster (this may take some time...)\n", dryRunPrefix)
+	_, err = printer.Fprintf("%sDeleting cluster (this may take some time)...\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}

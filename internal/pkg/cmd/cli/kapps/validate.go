@@ -6,15 +6,14 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"io"
 	"os/exec"
 	"strings"
 )
 
 type validateConfig struct {
-	out             io.Writer
 	workspaceDir    string
 	stackName       string
 	stackFile       string
@@ -28,10 +27,8 @@ type validateConfig struct {
 	excludeSelector []string
 }
 
-func newValidateCmd(out io.Writer) *cobra.Command {
-	c := &validateConfig{
-		out: out,
-	}
+func newValidateCmd() *cobra.Command {
+	c := &validateConfig{}
 
 	cmd := &cobra.Command{
 		Use:   "validate [flags] [stack-file] [stack-name] [workspace-dir]",
@@ -78,18 +75,18 @@ func (c *validateConfig) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		false, "", c.out)
+		false, "")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "Validating requirements for kapps...\n")
+	_, err = printer.Fprintf("Validating requirements for kapps...\n")
 
 	numMissing := 0
 
@@ -97,7 +94,7 @@ func (c *validateConfig) run() error {
 	for _, installable := range installables {
 		descriptor := installable.GetDescriptor()
 
-		_, err := fmt.Fprintf(c.out, "  %s requires: %s\n", installable.FullyQualifiedId(),
+		_, err := printer.Fprintf("  %s requires: %s\n", installable.FullyQualifiedId(),
 			strings.Join(descriptor.Requires, ", "))
 		if err != nil {
 			return errors.WithStack(err)
@@ -106,7 +103,7 @@ func (c *validateConfig) run() error {
 		for _, requirement := range descriptor.Requires {
 			path, err := exec.LookPath(requirement)
 			if err != nil {
-				_, err = fmt.Fprintf(c.out, "  ❌ Requirement missing! Can't find '%s' for %s\n", requirement,
+				_, err = printer.Fprintf("  ❌ Requirement missing! Can't find '%s' for %s\n", requirement,
 					installable.FullyQualifiedId())
 				numMissing++
 				if err != nil {
@@ -114,7 +111,7 @@ func (c *validateConfig) run() error {
 				}
 				log.Logger.Errorf("Requirement missing. Can't find: %s", requirement)
 			} else {
-				_, err = fmt.Fprintf(c.out, "  ✅ Found '%s' at '%s'\n", requirement, path)
+				_, err = printer.Fprintf("  ✅ Found '%s' at '%s'\n", requirement, path)
 				if err != nil {
 					return errors.WithStack(err)
 				}
@@ -124,12 +121,12 @@ func (c *validateConfig) run() error {
 	}
 
 	if numMissing > 0 {
-		_, err = fmt.Fprintf(c.out, "Summary: %d requirement(s) missing\n", numMissing)
+		_, err = printer.Fprintf("Summary: %d requirement(s) missing\n", numMissing)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	} else {
-		_, err = fmt.Fprint(c.out, "Summary: All requirements satisfied\n")
+		_, err = printer.Fprint("Summary: All requirements satisfied\n")
 		if err != nil {
 			return errors.WithStack(err)
 		}

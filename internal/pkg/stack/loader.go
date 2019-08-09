@@ -22,12 +22,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,7 +37,7 @@ import (
 // variables are loaded and set as a property on the stackConfig. So after this step, stackConfig contains
 // all config values for the entire stack (although it won't have been templated yet so any '{{var_name}}'
 // type strings won't have been interpolated yet.
-func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.StackFile, out io.Writer) (interfaces.IStack, error) {
+func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.StackFile) (interfaces.IStack, error) {
 
 	if strings.TrimSpace(stackName) == "" {
 		return nil, errors.New("The stack name is required")
@@ -96,8 +96,8 @@ func BuildStack(stackName string, stackFilePath string, cliStackConfig *structs.
 			"define it in your stack.")
 	}
 
-	_, err = fmt.Fprintf(out, "Successfully loaded stack config file '%s' containing %d "+
-		"manifest(s) and %d kapps in total.\n", stackFilePath, len(stackConfig.Manifests()), numKapps)
+	_, err = printer.Fprintf("[green]Successfully loaded stack config file '%s' containing %d "+
+		"manifest(s) and %d kapps in total.\n\n", stackFilePath, len(stackConfig.Manifests()), numKapps)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

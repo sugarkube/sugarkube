@@ -20,17 +20,16 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"io"
 	"time"
 )
 
 // Launches a cluster, either local or remote.
 
 type connectCmd struct {
-	out         io.Writer
 	dryRun      bool
 	stackName   string
 	stackFile   string
@@ -42,11 +41,9 @@ type connectCmd struct {
 	region      string
 }
 
-func newConnectCmd(out io.Writer) *cobra.Command {
+func newConnectCmd() *cobra.Command {
 
-	c := &connectCmd{
-		out: out,
-	}
+	c := &connectCmd{}
 
 	command := &cobra.Command{
 		Use:   "connect [flags] [stack-file] [stack-name]",
@@ -108,7 +105,7 @@ func (c *connectCmd) run() error {
 
 	var err error
 
-	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -118,8 +115,11 @@ func (c *connectCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	fmt.Printf("Connectivity established to the API server. Press " +
+	_, err = printer.Fprintf("Connectivity established to the API server. Press " +
 		"CTRL-C to quit.\n")
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	for {
 		time.Sleep(60 * time.Second)

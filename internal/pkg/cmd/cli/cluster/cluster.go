@@ -21,7 +21,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,7 +28,7 @@ import (
 
 var stackObj interfaces.IStack
 
-func NewClusterCmds(out io.Writer) *cobra.Command {
+func NewClusterCmds() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "cluster [command]",
@@ -57,12 +56,12 @@ func NewClusterCmds(out io.Writer) *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		newCreateCmd(out),
-		newUpdateCmd(out),
-		newDiffCmd(out),
-		newDeleteCmd(out),
-		newVarsCmd(out),
-		newConnectCmd(out),
+		newCreateCmd(),
+		newUpdateCmd(),
+		newDiffCmd(),
+		newDeleteCmd(),
+		newVarsCmd(),
+		newConnectCmd(),
 	)
 
 	return cmd

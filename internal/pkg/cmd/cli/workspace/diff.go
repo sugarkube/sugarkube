@@ -23,13 +23,10 @@ package workspace
 //)
 //
 //type diffCmd struct {
-//	out io.Writer
 //}
 //
-//func newDiffCmd(out io.Writer) *cobra.Command {
-//	c := &diffCmd{
-//		out: out,
-//	}
+//func newDiffCmd() *cobra.Command {
+//	c := &diffCmd{}
 //
 //	cmd := &cobra.Command{
 //		Use:   "diff [flags]",

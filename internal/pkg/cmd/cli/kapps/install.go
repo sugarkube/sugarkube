@@ -24,15 +24,14 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"io"
 	"time"
 )
 
 type installCmd struct {
-	out          io.Writer
 	workspaceDir string
 	dryRun       bool
 	approved     bool
@@ -57,10 +56,8 @@ type installCmd struct {
 	readyTimeout        uint32
 }
 
-func newInstallCmd(out io.Writer) *cobra.Command {
-	c := &installCmd{
-		out: out,
-	}
+func newInstallCmd() *cobra.Command {
+	c := &installCmd{}
 
 	cmd := &cobra.Command{
 		Use:   "install [flags] [stack-file] [stack-name] [workspace-dir]",
@@ -160,7 +157,7 @@ func (c *installCmd) run() error {
 
 	var err error
 
-	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err = stack.BuildStack(c.stackName, c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -174,7 +171,7 @@ func (c *installCmd) run() error {
 	}
 
 	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		c.includeParents, constants.PresentKey, c.out)
+		c.includeParents, constants.PresentKey)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -209,7 +206,7 @@ func (c *installCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "%sKapp changes successfully applied\n", dryRunPrefix)
+	_, err = printer.Fprintf("%sKapp changes successfully applied\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -220,7 +217,7 @@ func (c *installCmd) run() error {
 // Creates a DAG for installables matched by selectors. If an optional state (e.g. present, absent, etc.) is
 // provided, only installables with the same state will be included in the returned DAG
 func BuildDagForSelected(stackObj interfaces.IStack, workspaceDir string, includeSelector []string,
-	excludeSelector []string, includeParents bool, stateFilter string, out io.Writer) (*plan.Dag, error) {
+	excludeSelector []string, includeParents bool, stateFilter string) (*plan.Dag, error) {
 	// load configs for all installables in the stack
 	err := stackObj.LoadInstallables(workspaceDir)
 	if err != nil {
@@ -255,7 +252,7 @@ func BuildDagForSelected(stackObj interfaces.IStack, workspaceDir string, includ
 		return nil, errors.WithStack(err)
 	}
 
-	err = dagObj.Print(out)
+	err = dagObj.Print()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

@@ -24,7 +24,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"gopkg.in/yaml.v2"
-	"os"
 	"testing"
 )
 
@@ -107,7 +106,7 @@ func TestSetManifestDefaults(t *testing.T) {
 func TestSelectKapps(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
-	stackConfig, err := BuildStack("kops", "../../testdata/stacks.yaml", &structs.StackFile{}, os.Stdout)
+	stackConfig, err := BuildStack("kops", "../../testdata/stacks.yaml", &structs.StackFile{})
 	assert.Nil(t, err)
 	assert.NotNil(t, stackConfig)
 
@@ -138,7 +137,7 @@ func TestSelectKapps(t *testing.T) {
 func TestSelectKappsExclusions(t *testing.T) {
 
 	// testing the correctness of this stack is handled in stack_test.go
-	stack, err := BuildStack("kops", "../../testdata/stacks.yaml", &structs.StackFile{}, os.Stdout)
+	stack, err := BuildStack("kops", "../../testdata/stacks.yaml", &structs.StackFile{})
 	assert.Nil(t, err)
 	assert.NotNil(t, stack)
 
@@ -319,7 +318,7 @@ kapps:
 func TestManifestOverrides(t *testing.T) {
 
 	// testing the correctness of this stack is handled elsewhere
-	stackConfig, err := BuildStack("large", "../../testdata/stacks.yaml", &structs.StackFile{}, os.Stdout)
+	stackConfig, err := BuildStack("large", "../../testdata/stacks.yaml", &structs.StackFile{})
 	assert.Nil(t, err)
 	assert.NotNil(t, stackConfig)
 
@@ -366,7 +365,7 @@ func TestManifestOverrides(t *testing.T) {
 func TestManifestOverridesNil(t *testing.T) {
 
 	// testing the correctness of this stack is handled elsewhere
-	stackConfig, err := BuildStack("large", "../../testdata/stacks.yaml", &structs.StackFile{}, os.Stdout)
+	stackConfig, err := BuildStack("large", "../../testdata/stacks.yaml", &structs.StackFile{})
 	assert.Nil(t, err)
 	assert.NotNil(t, stackConfig)
 

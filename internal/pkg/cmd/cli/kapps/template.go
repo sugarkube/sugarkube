@@ -21,13 +21,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"io"
 )
 
 type templateConfig struct {
-	out             io.Writer
 	dryRun          bool
 	includeParents  bool
 	ignoreErrors    bool
@@ -44,10 +43,8 @@ type templateConfig struct {
 	excludeSelector []string
 }
 
-func newTemplateCmd(out io.Writer) *cobra.Command {
-	c := &templateConfig{
-		out: out,
-	}
+func newTemplateCmd() *cobra.Command {
+	c := &templateConfig{}
 
 	cmd := &cobra.Command{
 		Use:   "template [flags] [stack-file] [stack-name] [workspace-dir]",
@@ -100,14 +97,14 @@ func (c *templateConfig) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// create a DAG to template all the kapps
 	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		c.includeParents, "", c.out)
+		c.includeParents, "")
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -118,7 +115,7 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintln(c.out, "Templates successfully rendered")
+	_, err = printer.Fprintln("Templates successfully rendered")
 	if err != nil {
 		return errors.WithStack(err)
 	}

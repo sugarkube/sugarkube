@@ -22,16 +22,15 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	datautils "github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
-	"io"
 	"strings"
 )
 
 type varsConfig struct {
-	out          io.Writer
 	workspaceDir string
 	stackName    string
 	stackFile    string
@@ -44,10 +43,8 @@ type varsConfig struct {
 	suppress     []string
 }
 
-func newVarsCmd(out io.Writer) *cobra.Command {
-	c := &varsConfig{
-		out: out,
-	}
+func newVarsCmd() *cobra.Command {
+	c := &varsConfig{}
 
 	cmd := &cobra.Command{
 		Use:   "vars [flags] [stack-file] [stack-name]",
@@ -89,12 +86,12 @@ func (c *varsConfig) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprintf(c.out, "Displaying variables for stack '%s':\n\n",
+	_, err = printer.Fprintf("Displaying variables for stack '%s':\n\n",
 		stackObj.GetConfig().GetName())
 	if err != nil {
 		return errors.WithStack(err)
@@ -124,7 +121,7 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = fmt.Fprint(c.out, string(yamlData))
+	_, err = printer.Fprint(string(yamlData))
 	if err != nil {
 		return errors.WithStack(err)
 	}

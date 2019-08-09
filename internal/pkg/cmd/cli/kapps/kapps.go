@@ -21,7 +21,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,7 +28,7 @@ import (
 
 var stackObj interfaces.IStack
 
-func NewKappsCmds(out io.Writer) *cobra.Command {
+func NewKappsCmds() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "kapps [command]",
@@ -56,13 +55,13 @@ func NewKappsCmds(out io.Writer) *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		newTemplateCmd(out),
-		newInstallCmd(out),
-		newDeleteCmd(out),
-		newCleanCmd(out),
-		newOutputCmd(out),
-		newVarsCmd(out),
-		newValidateCmd(out),
+		newTemplateCmd(),
+		newInstallCmd(),
+		newDeleteCmd(),
+		newCleanCmd(),
+		newOutputCmd(),
+		newVarsCmd(),
+		newValidateCmd(),
 	)
 
 	cmd.Aliases = []string{"kapp"}

@@ -17,12 +17,11 @@
 package cacher
 
 import (
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/acquirer"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
-	"io"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,7 +39,7 @@ type CacheGrouper interface {
 }
 
 // Cache a group of cacheable objects under a root directory
-func CacheManifest(out io.Writer, cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) error {
+func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) error {
 
 	// create a directory to cache all kapps in this cacheGroup in
 	groupCacheDir := filepath.Join(rootCacheDir, cacheGroup.Id())
@@ -55,7 +54,7 @@ func CacheManifest(out io.Writer, cacheGroup CacheGrouper, rootCacheDir string, 
 		log.Logger.Infof("Caching kapp '%s'", installableObj.FullyQualifiedId())
 		log.Logger.Debugf("Kapp to cache: %#v", installableObj)
 
-		_, err = fmt.Fprintf(out, "Downloading kapp '%s'...\n", installableObj.FullyQualifiedId())
+		_, err = printer.Fprintf("Downloading kapp '[white]%s'...\n", installableObj.FullyQualifiedId())
 		if err != nil {
 			return errors.WithStack(err)
 		}

@@ -22,16 +22,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"io"
 )
 
 // Launches a cluster, either local or remote.
 
 type createCmd struct {
-	out           io.Writer
 	dryRun        bool
 	stackName     string
 	stackFile     string
@@ -45,11 +44,9 @@ type createCmd struct {
 	readyTimeout  uint32
 }
 
-func newCreateCmd(out io.Writer) *cobra.Command {
+func newCreateCmd() *cobra.Command {
 
-	c := &createCmd{
-		out: out,
-	}
+	c := &createCmd{}
 
 	command := &cobra.Command{
 		Use:   "create [flags] [stack-file] [stack-name]",
@@ -108,7 +105,7 @@ func (c *createCmd) run() error {
 		Account:     c.account,
 	}
 
-	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig, c.out)
+	stackObj, err := stack.BuildStack(c.stackName, c.stackFile, cliStackConfig)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -116,7 +113,7 @@ func (c *createCmd) run() error {
 	stackObj.GetConfig().SetReadyTimeout(c.readyTimeout)
 	stackObj.GetConfig().SetOnlineTimeout(c.onlineTimeout)
 
-	err = CreateCluster(c.out, stackObj, c.dryRun)
+	err = CreateCluster(stackObj, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -125,12 +122,12 @@ func (c *createCmd) run() error {
 }
 
 // Creates a cluster with a stack config
-func CreateCluster(out io.Writer, stackObj interfaces.IStack, dryRun bool) error {
+func CreateCluster(stackObj interfaces.IStack, dryRun bool) error {
 	dryRunPrefix := ""
 	if dryRun {
 		dryRunPrefix = "[Dry run] "
 	}
-	_, err := fmt.Fprintf(out, "%sChecking whether the target cluster '%s' is already "+
+	_, err := printer.Fprintf("%sChecking whether the target cluster '%s' is already "+
 		"online...\n", dryRunPrefix, stackObj.GetConfig().GetCluster())
 	if err != nil {
 		return errors.WithStack(err)
@@ -147,7 +144,7 @@ func CreateCluster(out io.Writer, stackObj interfaces.IStack, dryRun bool) error
 		}
 
 		if online {
-			_, err = fmt.Fprintf(out, "%sCluster is already online. Aborting.\n",
+			_, err = printer.Fprintf("%sCluster is already online. Aborting.\n",
 				dryRunPrefix)
 			if err != nil {
 				return errors.WithStack(err)
@@ -157,8 +154,8 @@ func CreateCluster(out io.Writer, stackObj interfaces.IStack, dryRun bool) error
 		}
 	}
 
-	_, err = fmt.Fprintf(out, "%sCluster is not online. Will create it now (this "+
-		"may take some time...)\n", dryRunPrefix)
+	_, err = printer.Fprintf("%sCluster is not online. Will create it now (this "+
+		"may take some time)...\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -176,7 +173,7 @@ func CreateCluster(out io.Writer, stackObj interfaces.IStack, dryRun bool) error
 			return errors.WithStack(err)
 		}
 
-		_, err = fmt.Fprintf(out, "%sCluster '%s' successfully created.\n",
+		_, err = printer.Fprintf("%sCluster '%s' successfully created.\n",
 			dryRunPrefix, stackObj.GetConfig().GetCluster())
 		if err != nil {
 			return errors.WithStack(err)

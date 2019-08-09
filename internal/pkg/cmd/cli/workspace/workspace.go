@@ -19,10 +19,9 @@ package workspace
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"io"
 )
 
-func NewWorkspaceCmds(out io.Writer) *cobra.Command {
+func NewWorkspaceCmds() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "workspace [command]",
@@ -31,7 +30,7 @@ func NewWorkspaceCmds(out io.Writer) *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		newCreateCmd(out),
+		newCreateCmd(),
 	)
 
 	cmd.Aliases = []string{"cache", "ws"} // for backwards compatibility after renaming cache -> workspace and laziness
