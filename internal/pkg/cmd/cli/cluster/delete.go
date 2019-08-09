@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
@@ -90,9 +91,23 @@ func (c *deleteCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	_, err = printer.Fprintf("%s[yellow]Deleting cluster (this may take some time)...\n", dryRunPrefix)
+	_, err = printer.Fprintf("%s[yellow]Deleting cluster (this may take some time)...[reset]\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
+	}
+
+	if c.approved {
+		_, err = printer.Fprintf("%s[green]Cluster '%s' successfully deleted.\n",
+			dryRunPrefix, stackObj.GetConfig().GetCluster())
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		_, err = printer.Fprintf("[white][bold]Note: [reset]No destructive changes were made. To actually "+
+			"delete the cluster, rerun this command passing [cyan][bold]--%s[reset]\n", constants.YES_FLAG)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	err = stackObj.GetProvisioner().Delete(c.approved, c.dryRun)
