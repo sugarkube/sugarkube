@@ -3,7 +3,6 @@
 * the DAG (specifying dependencies)
 * commands
 * General workflow
-* caches
 * provisioners - Kops (including port forwarding)/minikube - and how to configure them
 * providers - hierarchical config, variables, and how to parameterise a stack differently depending on its parameters
 * kapps - config files

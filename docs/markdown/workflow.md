@@ -7,7 +7,7 @@ This outlines a sample workflow using Sugarkube to spin up and tear down Kuberne
 1. Create some [kapps](kapps.md) or use [ours](https://github.com/sugarkube/kapps)
 
 ## Dev workflow
-1. Create a [cache](cache.md) for your target cluster with `cache create`.
+1. Create a [workspace](workspaces.md) for your target cluster with `workspace create`.
 1. If you don't use the `cluster_update` [action](actions.md) to create a cluster, explicitly create a cluster by running `cluster create`. Don't do this if one of your kapps/manifests calls that action though. 
 1. Run `kapps install` to install your kapps (and create your cluster if they call the `cluster_update` action)
 1. Do your work - by editing/creating new kapps as necessary, and running `kapps install -i <manifest:kapp-id>` to reinstall just the kapp you're working on.

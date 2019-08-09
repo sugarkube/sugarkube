@@ -11,10 +11,10 @@ Describes how installing kapps works at a high level.
     subset of kapps).
   * Use the configured `Source of Truth` to find out what's already installed 
     in the target cluster.
-  * Refresh (or build) the cache (see below)
+  * Refresh (or build) the workspace (see below)
   * Read `sugarkube.yaml` from each kapp so we know what creds each one needs
   * Print the diff as YAML on stdout, or to a file (default 
-    `<cache_dir>/_generated_diff.yaml`)
+    `<workspace_dir>/_generated_diff.yaml`)
 
 Also support loading a previously generated diff instead of always having to 
 go through this process.
@@ -31,19 +31,19 @@ via heuristics (e.g. a kapp includes a Helm chart if it includes a file called
 `Chart.yaml`), some can't be so easily so must be explicitly specified. They
 can be specified in `sugarkube.yaml`.
 
-## Refreshing the cache
-Sometimes we'll want to build a cache for all kapps in all manifests for a 
+## Refreshing the workspace
+Sometimes we'll want to build a workspace for all kapps in all manifests for a 
 target cluster, sometimes we'll only want to create one for the kapps to 
 install and destroy. 
 
-Caches can be built in named directories so you can maintain a cache for each
-of your clusters. Refreshing a cache allows you to easily update your cache
+Workspaces can be built in named directories so you can maintain a workspace for each
+of your clusters. Refreshing a workspace allows you to easily update your workspace
 when the manifest changes (e.g. by someone else in the team). It uses git 
 sparse checkouts to support storing your kapps in a single repo, but building
-your cache from kapps at different versions of that repo. 
+your workspace from kapps at different versions of that repo. 
 
-* If no cache dir is given as an option, create a new temp dir for the cache.
-* If a path to an existing cache dir is given, and `refresh_cache=true`, we 
+* If no workspace dir is given as an option, create a new temp dir for the workspace.
+* If a path to an existing workspace dir is given we 
   can proceed. Otherwise abort (configurably) so we don't blat a user's working 
   dir by mistake.
 * Do a sparse git checkout of each kapp to install, along with all required
@@ -56,7 +56,7 @@ your cache from kapps at different versions of that repo.
 ### Install kapps
 Process each manifest sequentially, processing all kapps in it in parallel. For
 `helm` charts, do the following:
-* Find the dir in the cache containing `Chart.yaml`
+* Find the dir in the workspace containing `Chart.yaml`
 * Expect the Makefile to be in the same dir
 * Search for `values.yaml`, and `values-<profile/cluster>.yaml` (but 
   these could be in a sibling directory... how do we find them? Maybe have

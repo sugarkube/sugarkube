@@ -36,8 +36,8 @@ Focus on building your product, not your deployment pipeline. Join us to help cr
   * Initially manifests will be read from disk, but in future they could come from pluggable backends (e.g. consul).
 * Cluster provisioners - Plugins that allow you to provision local clusters with minikube, or remote clusters with kops, EKS, GKE, etc.
 * Secrets providers - Kapps declare which secrets they need from whichever secrets provider they want. This means some secrets could come from e.g. vault, or from the environment. If secrets come from the environment, they could either be generated per kapp when running against dev clusters, or be supplied by e.g. Jenkins when running as part of a CI/CD pipeline.
-* Kapp caches - These are working directories that contain each target kapp in a manifest at a target version, along with any dependencies. 
-  * You can have multiple kapp caches, one per cluster. This allows you to clearly see which kapps are installed at which version, and provides an easy way to develop new features. 
+* Workspaces - These are working directories that contain each target kapp in a manifest at a target version, along with any dependencies. 
+  * You can have multiple workspaces, one per cluster. This allows you to clearly see which kapps are installed at which version, and provides an easy way to develop new features. 
   * This concept is important because different versions of different kapps may be installed on different clusters. For example you may be running 1.0.0 of `cert-manager` in your live environment, while you're testing 1.1.0 in a lower env. If you have to then fast-track a fix for live for a different kapp, it's useful to have a local working directory tree that contains `cert-manager` at 1.0.0 instead of 1.1.0.
 * The `sugarkube` binary itself provides the following:
   * A single command to launch a cluster and install kapps into it from whichever manifest(s) are supplied. Another command will tear it down. 
@@ -50,13 +50,13 @@ Focus on building your product, not your deployment pipeline. Join us to help cr
     * It can query cluster state via several plugins, by default by directly invoking the `Helm` binary. In future this could be through backends like Consul. After determining which kapps are already installed it will create a plan describing which kapps will be installed at which versions, and which credentials each needs from each secret provider. 
       * Sugarkube won't reinstall kapps that are already installed at the target versions. This makes installing kapps fast and idempotent.
     * The plan can be used by e.g. Jenkins to make required credentials available to the kapp at deployment time, as well as to provide a clear audit trail.
-    * Once the plan is approved, it builds a kapp cache for all candidate kapps. 
-    * Then `make install` is run against each kapp in the cache. 
+    * Once the plan is approved, it builds a workspace for all candidate kapps. 
+    * Then `make install` is run against each kapp in the workspace. 
       * By default kapps are installed in parallel, but single-threading can be specified per kapp in each manifest. This means that e.g. shared infrastructure can be installed first and can block the installation of all other kapps. Once the shared infra is up, the remaining kapps can be installed in parallel to reduce the amount of time necessary to provision clusters and apply the manifests.
       * Each kapp is also run in a planning mode and output is logged. This means that any kapps that use e.g. terraform can run `terraform plan`. 
       * After each kapp has been planned, all the log output can be merged and parsed. The CI pipeline can then halt the deployment and require manual approval if, e.g. any infrastructure is planned to be deleted.
       * Finally, each kapp is rerun in an `apply` mode to apply any previously generated plans. This can include applying any previously generated terraform plans if terraform is being used to manage infrastructure.
-  * A command to build and maintain kapp caches.
+  * A command to build and maintain workspaces.
   * A command to initialise kapps with dynamic configs (e.g. generate a terraform backend for the region the cluster will run in, etc.).
 * Sample Jenkins pipelines - kapps should work without any dependency on, or awareness of the CI/CD system they're being deployed with. This makes kapps simpler to develop since it removes a dependency on Jenkins which is a pain to test locally.
   * CI/CD "business logic" should be kept to a minimum in Jenkins pipelines. It should do basic checks but beyond that should just call `sugarkube`. This makes is simple for developers to reproduce clusters and provision them outside their CI/CD system. 
