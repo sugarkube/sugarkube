@@ -76,17 +76,17 @@ Sugarkube is a work in progress but ready for early adopters who don't mind thin
     -v --log-level=info
 ```
 
-* Download the kapps to be installed into a local cache directory (`caches/local-web` 
+* Download the kapps to be installed into a local workspace directory (`workspaces/local-web` 
 in the below command). Have a poke around in this later to see how it works:
 ```
-  ./sugarkube cache create -s sample-project/stacks.yaml -n local-web \
-    caches/local-web -v --log-level=info 
+  ./sugarkube workspace create -s sample-project/stacks.yaml -n local-web \
+    workspaces/local-web -v --log-level=info 
 ```
 
 * Install the kapps into the cluster:
 ```
   ./sugarkube kapps install -s sample-project/stacks.yaml -n local-web \
-    ./caches/local-web --one-shot 
+    ./workspaces/local-web --one-shot 
 ```
 
 You should now have a local minikube cluster set up with Tiller installed
@@ -110,7 +110,7 @@ echo $(minikube ip) wordpress.localhost | sudo tee -a /etc/hosts
 
 ## Explore
 Have a look in `sample-project/stacks.yaml` and look for `local-web`. Follow the
-paths it declares. Then look in `./caches/local-web` to see how that relates to the
+paths it declares. Then look in `./workspaces/local-web` to see how that relates to the
 git repos defined in the manifests used in `stacks.yaml`.
 
 # FAQ
