@@ -185,9 +185,21 @@ func (c *deleteCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = printer.Fprintf("%s[green]Kapp changes successfully applied\n", dryRunPrefix)
-	if err != nil {
-		return errors.WithStack(err)
+	if !approved {
+		_, err = printer.Fprintln("[green]All deletion plans completed successfully!")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		_, err = printer.Fprintf("[white][bold]Note: [reset]No destructive changes were made. To actually "+
+			"delete kapps, rerun this command passing [cyan][bold]--%s[reset]\n", YES_FLAG)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		_, err = printer.Fprintf("%s[green]Kapps successfully deleted!\n", dryRunPrefix)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil

@@ -239,12 +239,12 @@ func (c *installCmd) run() error {
 	}
 
 	if !approved {
-		_, err = printer.Fprintln("[green]All plans successfully completed!")
+		_, err = printer.Fprintln("[green]All installation plans completed successfully!")
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		_, err = printer.Fprintf("[white][bold]Note: [reset]No destructive changes were made. To actually apply your changes, rerun "+
-			"this command passing [cyan][bold]--%s[reset]\n", YES_FLAG)
+		_, err = printer.Fprintf("[white][bold]Note: [reset]No destructive changes were made. To actually "+
+			"install kapps, rerun this command passing [cyan][bold]--%s[reset]\n", YES_FLAG)
 		if err != nil {
 			return errors.WithStack(err)
 		}
