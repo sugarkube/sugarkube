@@ -112,13 +112,18 @@ func (c *cleanCmd) run() error {
 		return errors.WithStack(err)
 	}
 
+	_, err = printer.Fprintln("")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	err = dagObj.Execute(constants.DagActionClean, stackObj, false, true, true,
 		true, false, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	_, err = printer.Fprintf("%sKapps successfully cleaned\n", dryRunPrefix)
+	_, err = printer.Fprintf("%s[green]Kapps successfully cleaned\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -109,13 +109,18 @@ func (c *templateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
+	_, err = printer.Fprintln("")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	err = dagObj.Execute(constants.DagActionTemplate, stackObj, false, true, true,
 		true, c.ignoreErrors, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	_, err = printer.Fprintln("Templates successfully rendered")
+	_, err = printer.Fprintln("[green]Templates successfully rendered")
 	if err != nil {
 		return errors.WithStack(err)
 	}

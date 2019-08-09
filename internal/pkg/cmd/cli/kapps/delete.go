@@ -150,6 +150,11 @@ func (c *deleteCmd) run() error {
 		return errors.WithStack(err)
 	}
 
+	_, err = printer.Fprintln("")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	// this increase the sleep interval since this may take a while
 	dagObj.SleepInterval = 500 * time.Millisecond
 
@@ -180,7 +185,7 @@ func (c *deleteCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = printer.Fprintf("%sKapp changes successfully applied\n", dryRunPrefix)
+	_, err = printer.Fprintf("%s[green]Kapp changes successfully applied\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}

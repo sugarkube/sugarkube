@@ -12,6 +12,8 @@ func SetOutput(out io.Writer) {
 	writer = out
 }
 
+// Valid colour codes are listed at: https://github.com/mitchellh/colorstring/blob/master/colorstring.go
+
 func Fprint(text string) (int, error) {
 	return colorstring.Fprint(writer, text)
 }

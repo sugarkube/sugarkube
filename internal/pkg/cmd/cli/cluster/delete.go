@@ -90,7 +90,7 @@ func (c *deleteCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	_, err = printer.Fprintf("%sDeleting cluster (this may take some time)...\n", dryRunPrefix)
+	_, err = printer.Fprintf("%s[yellow]Deleting cluster (this may take some time)...\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}

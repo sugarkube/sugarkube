@@ -112,13 +112,18 @@ func (c *outputCmd) run() error {
 		return errors.WithStack(err)
 	}
 
+	_, err = printer.Fprintln("")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	err = dagObj.Execute(constants.DagActionOutput, stackObj, false, true, true,
 		true, false, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	_, err = printer.Fprintf("%sKapps successfully processed\n", dryRunPrefix)
+	_, err = printer.Fprintf("%s[green]Kapps successfully processed\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
 	}

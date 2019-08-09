@@ -115,7 +115,7 @@ func (c *connectCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = printer.Fprintf("Connectivity established to the API server. Press " +
+	_, err = printer.Fprintf("[green]Connectivity established to the API server. Press " +
 		"CTRL-C to quit.\n")
 	if err != nil {
 		return errors.WithStack(err)

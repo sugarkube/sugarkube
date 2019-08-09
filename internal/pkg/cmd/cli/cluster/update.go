@@ -125,7 +125,7 @@ func UpdateCluster(stackObj interfaces.IStack, autoCreate bool,
 		dryRunPrefix = "[Dry run] "
 	}
 
-	_, err := printer.Fprintf("%sChecking whether the target cluster '%s' is already "+
+	_, err := printer.Fprintf("%sChecking whether the target cluster '[white]%s' [default]is already "+
 		"online...\n", dryRunPrefix, stackObj.GetConfig().GetCluster())
 	if err != nil {
 		return errors.WithStack(err)
@@ -149,14 +149,14 @@ func UpdateCluster(stackObj interfaces.IStack, autoCreate bool,
 			}
 
 		} else {
-			_, err = printer.Fprintf("%sCluster isn't online but we're not to create it. Aborting.\n", dryRunPrefix)
+			_, err = printer.Fprintf("%s[red]Cluster isn't online but we're not to create it. Aborting.\n", dryRunPrefix)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 			return nil
 		}
 	} else {
-		_, err = printer.Fprintf("%sCluster is online. Will update it now (this "+
+		_, err = printer.Fprintf("%s[yellow]Cluster is online. Will update it now (this "+
 			"may take some time)...\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
@@ -175,7 +175,7 @@ func UpdateCluster(stackObj interfaces.IStack, autoCreate bool,
 				return errors.WithStack(err)
 			}
 
-			_, err = printer.Fprintf("%sCluster '%s' successfully updated.\n",
+			_, err = printer.Fprintf("%s[green]Cluster '%s' successfully updated.\n",
 				dryRunPrefix, stackObj.GetConfig().GetCluster())
 			if err != nil {
 				return errors.WithStack(err)

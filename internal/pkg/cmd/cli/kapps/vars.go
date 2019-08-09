@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
@@ -86,6 +87,11 @@ func (c *varsConfig) run() error {
 
 	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
 		c.includeParents, "")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	_, err = printer.Fprintln("")
 	if err != nil {
 		return errors.WithStack(err)
 	}

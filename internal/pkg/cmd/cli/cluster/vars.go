@@ -91,7 +91,7 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = printer.Fprintf("Displaying variables for stack '%s':\n\n",
+	_, err = printer.Fprintf("Displaying variables for stack '[white]%s':\n\n",
 		stackObj.GetConfig().GetName())
 	if err != nil {
 		return errors.WithStack(err)
