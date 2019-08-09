@@ -12,7 +12,7 @@ import (
 
 type varsConfig struct {
 	out             io.Writer
-	cacheDir        string
+	workspaceDir    string
 	stackName       string
 	stackFile       string
 	provider        string
@@ -34,7 +34,7 @@ func newVarsCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "vars [flags] [stack-file] [stack-name] [cache-dir]",
+		Use:   "vars [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Display all variables available for a kapp"),
 		Long: `Merges variables from all sources and displays them along with each kapp's 
 templated sugarkube.yaml file.`,
@@ -46,7 +46,7 @@ templated sugarkube.yaml file.`,
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
-			c.cacheDir = args[2]
+			c.workspaceDir = args[2]
 			return c.run()
 		},
 	}
@@ -88,7 +88,7 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
 		c.includeParents, "", c.out)
 	if err != nil {
 		return errors.WithStack(err)

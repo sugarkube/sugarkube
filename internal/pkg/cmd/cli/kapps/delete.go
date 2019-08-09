@@ -29,7 +29,7 @@ import (
 
 type deleteCmd struct {
 	out                 io.Writer
-	cacheDir            string
+	workspaceDir        string
 	dryRun              bool
 	approved            bool
 	oneShot             bool
@@ -57,9 +57,9 @@ func newDeleteCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "delete [flags] [stack-file] [stack-name] [cache-dir]",
+		Use:   "delete [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Delete kapps from a cluster"),
-		Long: `Delete cached kapps from a target cluster according to manifests.
+		Long: `Delete kapps from a target cluster according to manifests.
 
 For Kubernetes clusters with a non-public API server, the provisioner may need 
 to set up connectivity to make it accessible to Sugarkube (e.g. by setting up 
@@ -77,7 +77,7 @@ process before deleting the selected kapps.
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
-			c.cacheDir = args[2]
+			c.workspaceDir = args[2]
 
 			err1 := c.run()
 			// shutdown any SSH port forwarding then return the error
@@ -147,7 +147,7 @@ func (c *deleteCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
 		c.includeParents, "", c.out)
 	if err != nil {
 		return errors.WithStack(err)

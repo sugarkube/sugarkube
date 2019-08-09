@@ -15,7 +15,7 @@ import (
 
 type validateConfig struct {
 	out             io.Writer
-	cacheDir        string
+	workspaceDir    string
 	stackName       string
 	stackFile       string
 	provider        string
@@ -34,7 +34,7 @@ func newValidateCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "validate [flags] [stack-file] [stack-name] [cache-dir]",
+		Use:   "validate [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Validate you have all the required binaries required by each kapp"),
 		Long:  `Loads all kapps and makes sure the binaries they declare in their 'requires' blocks are in your path`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -45,7 +45,7 @@ func newValidateCmd(out io.Writer) *cobra.Command {
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
-			c.cacheDir = args[2]
+			c.workspaceDir = args[2]
 			return c.run()
 		},
 	}
@@ -83,7 +83,7 @@ func (c *validateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
 		false, "", c.out)
 	if err != nil {
 		return errors.WithStack(err)

@@ -31,7 +31,7 @@ type templateConfig struct {
 	dryRun          bool
 	includeParents  bool
 	ignoreErrors    bool
-	cacheDir        string
+	workspaceDir    string
 	stackName       string
 	stackFile       string
 	provider        string
@@ -50,7 +50,7 @@ func newTemplateCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "template [flags] [stack-file] [stack-name] [cache-dir]",
+		Use:   "template [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Render templates for kapps"),
 		Long: `Renders configured templates for kapps, useful for e.g. terraform backends 
 configured for the region the target cluster is in, generating Helm 
@@ -63,7 +63,7 @@ configured for the region the target cluster is in, generating Helm
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
-			c.cacheDir = args[2]
+			c.workspaceDir = args[2]
 			return c.run()
 		},
 		Aliases: []string{"templates"},
@@ -106,7 +106,7 @@ func (c *templateConfig) run() error {
 	}
 
 	// create a DAG to template all the kapps
-	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
 		c.includeParents, "", c.out)
 	if err != nil {
 		return errors.WithStack(err)

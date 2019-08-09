@@ -53,7 +53,7 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 		log.Logger.Infof("Caching kapp '%s'", installableObj.FullyQualifiedId())
 		log.Logger.Debugf("Kapp to cache: %#v", installableObj)
 
-		err := installableObj.SetTopLevelCacheDir(rootCacheDir)
+		err := installableObj.SetWorkspaceDir(rootCacheDir)
 		if err != nil {
 			return errors.WithStack(err)
 		}

@@ -248,13 +248,13 @@ func (a GitAcquirer) update(dest string) error {
 	detachedHead := fmt.Sprintf("(HEAD detached at %s)", a.branch)
 
 	if localBranch == a.branch || localBranch == detachedHead {
-		log.Logger.Debugf("Branch '%s' already checked out into local cache at '%s'. Will "+
+		log.Logger.Debugf("Branch '%s' already checked out into workspace at '%s'. Will "+
 			"update it...", localBranch, dest)
 	} else {
 		// todo - work out if there's anything we can do to help (a flag to force overwriting,
 		// or a flag to just go ahead and switch? We could do a 'git status' and ignore the
 		// different branches if there are no modified files, etc.)
-		return errors.New(fmt.Sprintf("Error updating the cache. The path "+
+		return errors.New(fmt.Sprintf("Error updating the workspace. The path "+
 			"at '%s' already contains the branch '%s', but we need to populate it with "+
 			"the branch '%s'. Aborting to prevent losing work.",
 			dest, localBranch, a.branch))

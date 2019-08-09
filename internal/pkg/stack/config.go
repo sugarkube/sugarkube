@@ -109,7 +109,7 @@ func (s StackConfig) GetOnlineTimeout() uint32 {
 }
 
 // Validates that there aren't multiple manifests in the stack config with the
-// same ID, which would break creating caches
+// same ID, which would break creating workspaces
 func validateStackConfig(stackConfig interfaces.IStackConfig) error {
 	ids := map[string]bool{}
 

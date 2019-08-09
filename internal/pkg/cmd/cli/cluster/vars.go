@@ -31,17 +31,17 @@ import (
 )
 
 type varsConfig struct {
-	out         io.Writer
-	cacheDir    string
-	stackName   string
-	stackFile   string
-	provider    string
-	provisioner string
-	profile     string
-	account     string
-	cluster     string
-	region      string
-	suppress    []string
+	out          io.Writer
+	workspaceDir string
+	stackName    string
+	stackFile    string
+	provider     string
+	provisioner  string
+	profile      string
+	account      string
+	cluster      string
+	region       string
+	suppress     []string
 }
 
 func newVarsCmd(out io.Writer) *cobra.Command {

@@ -28,7 +28,7 @@ import (
 
 type outputCmd struct {
 	out             io.Writer
-	cacheDir        string
+	workspaceDir    string
 	dryRun          bool
 	includeParents  bool
 	stackName       string
@@ -49,7 +49,7 @@ func newOutputCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "output [flags] [stack-file] [stack-name] [cache-dir]",
+		Use:   "output [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Generate output for kapps"),
 		Long: `Run 'make output' on all selected kapps.
 `,
@@ -61,7 +61,7 @@ func newOutputCmd(out io.Writer) *cobra.Command {
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
-			c.cacheDir = args[2]
+			c.workspaceDir = args[2]
 
 			return c.run()
 		},
@@ -109,7 +109,7 @@ func (c *outputCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
 		c.includeParents, constants.PresentKey, c.out)
 	if err != nil {
 		return errors.WithStack(err)

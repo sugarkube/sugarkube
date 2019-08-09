@@ -605,7 +605,7 @@ func addParentRegistries(dagObj *Dag, node NamedNode, errCh chan<- error) {
 
 		parentRegistry := parent.installableObj.GetLocalRegistry()
 
-		// if may not be set, e.g. if we ignored errors while creating the cache
+		// if may not be set, e.g. if we ignored errors while creating the workspace
 		if parentRegistry == nil {
 			continue
 		}

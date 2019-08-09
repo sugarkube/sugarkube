@@ -32,11 +32,11 @@ import (
 )
 
 type installCmd struct {
-	out      io.Writer
-	cacheDir string
-	dryRun   bool
-	approved bool
-	oneShot  bool
+	out          io.Writer
+	workspaceDir string
+	dryRun       bool
+	approved     bool
+	oneShot      bool
 	//force               bool
 	skipTemplating      bool
 	skipPreActions      bool
@@ -63,9 +63,9 @@ func newInstallCmd(out io.Writer) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "install [flags] [stack-file] [stack-name] [cache-dir]",
+		Use:   "install [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Install kapps into a cluster"),
-		Long: `Install cached kapps in a target cluster according to manifests.
+		Long: `Install kapps in a target cluster according to manifests.
 
 Kapps are installed using two phases - the first expects kapps to plan their
 changes but not actually perform any. For example, during this phase any
@@ -97,7 +97,7 @@ process before installing the selected kapps.
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
-			c.cacheDir = args[2]
+			c.workspaceDir = args[2]
 
 			err1 := c.run()
 			// shutdown any SSH port forwarding then return the error
@@ -173,7 +173,7 @@ func (c *installCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.cacheDir, c.includeSelector, c.excludeSelector,
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
 		c.includeParents, constants.PresentKey, c.out)
 	if err != nil {
 		return errors.WithStack(err)
@@ -219,10 +219,10 @@ func (c *installCmd) run() error {
 
 // Creates a DAG for installables matched by selectors. If an optional state (e.g. present, absent, etc.) is
 // provided, only installables with the same state will be included in the returned DAG
-func BuildDagForSelected(stackObj interfaces.IStack, cacheDir string, includeSelector []string,
+func BuildDagForSelected(stackObj interfaces.IStack, workspaceDir string, includeSelector []string,
 	excludeSelector []string, includeParents bool, stateFilter string, out io.Writer) (*plan.Dag, error) {
 	// load configs for all installables in the stack
-	err := stackObj.LoadInstallables(cacheDir)
+	err := stackObj.LoadInstallables(workspaceDir)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

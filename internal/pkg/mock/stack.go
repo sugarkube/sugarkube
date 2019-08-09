@@ -135,6 +135,6 @@ func (m *MockStack) RefreshProviderVars() error {
 	return nil
 }
 
-func (m *MockStack) LoadInstallables(cacheDir string) error {
+func (m *MockStack) LoadInstallables(workspaceDir string) error {
 	return nil
 }

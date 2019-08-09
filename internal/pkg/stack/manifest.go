@@ -169,7 +169,7 @@ func ParseManifestFile(manifestFilePath string, manifestDescriptor structs.Manif
 }
 
 // Validates that there aren't multiple kapps with the same ID in the manifest,
-// or it'll break creating a cache
+// or it'll break creating a workspace
 func ValidateManifest(manifest interfaces.IManifest) error {
 	ids := map[string]bool{}
 

@@ -43,7 +43,7 @@ type Kapp struct {
 	configFileDir    string                           // path to the directory containing the kapp's sugarkube.yaml file
 	mergedDescriptor structs.KappDescriptorWithMaps   // the final descriptor after merging all the descriptor layers. This is a template until its rendered by TemplateDescriptor
 	descriptorLayers []structs.KappDescriptorWithMaps // config templates where values from later configs will take precedence over earlier ones
-	kappCacheDir     string                           // the top-level directory for this kapp in the cache, i.e. the directory containing the kapp's .sugarkube directory
+	kappCacheDir     string                           // the top-level directory for this kapp in the workspace, i.e. the directory containing the kapp's .sugarkube directory
 	localRegistry    interfaces.IRegistry             // a registry local to the kapp that contains the results of merging
 	// each of its parents' registries, tailored depending on whether parent was in the same manifest
 }
@@ -271,23 +271,23 @@ func (k Kapp) Acquirers() (map[string]acquirer.Acquirer, error) {
 	return acquirers, nil
 }
 
-// Sets the top-level cache directory, i.e. the one users specify on the command line
-func (k *Kapp) SetTopLevelCacheDir(cacheDir string) error {
-	// set the top level cache dir as an absolute path
-	absCacheDir, err := filepath.Abs(cacheDir)
+// Sets the workspace directory, i.e. the one users specify on the command line
+func (k *Kapp) SetWorkspaceDir(workspaceDir string) error {
+	// set the workspace dir as an absolute path
+	absWorkspaceDir, err := filepath.Abs(workspaceDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	k.kappCacheDir = filepath.Join(absCacheDir, k.manifestId, k.Id())
+	k.kappCacheDir = filepath.Join(absWorkspaceDir, k.manifestId, k.Id())
 
 	return nil
 }
 
 // Loads the kapp's sugarkube.yaml file and adds it as a config layer
-// cacheDir - The path to the top-level cache directory. Can be an empty string if the kapp isn't cached
-func (k *Kapp) LoadConfigFile(cacheDir string) error {
+// workspaceDir - The path to the workspace directory. Can be an empty string if the kapp isn't in a workspace
+func (k *Kapp) LoadConfigFile(workspaceDir string) error {
 
-	err := k.SetTopLevelCacheDir(cacheDir)
+	err := k.SetWorkspaceDir(workspaceDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}

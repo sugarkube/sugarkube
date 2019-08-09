@@ -185,7 +185,7 @@ func (s *Stack) RefreshProviderVars() error {
 }
 
 // Loads the configs for all installables
-func (s *Stack) LoadInstallables(cacheDir string) error {
+func (s *Stack) LoadInstallables(workspaceDir string) error {
 	installables := make([]interfaces.IInstallable, 0)
 
 	// load configs for all installables so we can build a DAG and load outputs
@@ -196,20 +196,20 @@ func (s *Stack) LoadInstallables(cacheDir string) error {
 		}
 	}
 
-	// set the cache dir on each installable if it's non-empty
-	if cacheDir != "" {
-		absCacheDir, err := filepath.Abs(cacheDir)
+	// set the workspace dir on each installable if it's non-empty
+	if workspaceDir != "" {
+		absWorkspaceDir, err := filepath.Abs(workspaceDir)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		if _, err := os.Stat(absCacheDir); err != nil {
-			return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist", absCacheDir))
+		if _, err := os.Stat(absWorkspaceDir); err != nil {
+			return errors.New(fmt.Sprintf("Workspace dir '%s' doesn't exist", absWorkspaceDir))
 		}
 
 		for _, installableObj := range installables {
 			// load the config file (if we've cached it)
-			err := installableObj.LoadConfigFile(absCacheDir)
+			err := installableObj.LoadConfigFile(absWorkspaceDir)
 			if err != nil {
 				return errors.WithStack(err)
 			}

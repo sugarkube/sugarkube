@@ -33,8 +33,8 @@ type IInstallable interface {
 	PostInstallActions() []structs.Action
 	PostDeleteActions() []structs.Action
 	GetDescriptor() structs.KappDescriptorWithMaps
-	LoadConfigFile(cacheDir string) error
-	SetTopLevelCacheDir(cacheDir string) error
+	LoadConfigFile(workspaceDir string) error
+	SetWorkspaceDir(workspaceDir string) error
 	GetCacheDir() string
 	GetConfigFileDir() string
 	Acquirers() (map[string]acquirer.Acquirer, error)

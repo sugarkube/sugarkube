@@ -67,7 +67,7 @@ If you need to bootstrap your environment before launching a cluster (e.g. to cr
 DNS records, S3 buckets, etc.), create one or more kapps to create those resources.
 On the last kapp, add a 'post_action' of 'cluster_create'. The cluster will be created
 after running that kapp with 'sugarkube kapps apply' (assuming you've already created a
-cache with 'sugarkube cache create').
+workspace with 'sugarkube workspace create').
 
 Note: Not all providers require all arguments. See documentation for help.
 `,
