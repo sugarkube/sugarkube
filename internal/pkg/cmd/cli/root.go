@@ -129,6 +129,8 @@ func init() {
 		jsonLogs = false
 	}
 
+	noColor := false
+
 	log.ConfigureLogger(defaultLogLevel, jsonLogs)
 
 	cobra.OnInitialize(func() {
@@ -157,6 +159,11 @@ func init() {
 			}
 		}
 
+		if noColor {
+			log.Logger.Debug("Disabling coloured output")
+			printer.Disable()
+		}
+
 		// reconfigure the logger based on CLI args
 		log.ConfigureLogger(config.CurrentConfig.LogLevel,
 			config.CurrentConfig.JsonLogs)
@@ -167,11 +174,13 @@ func init() {
 		fmt.Sprintf("path to a config file. If not given, default paths "+
 			"will be searched for a file called '%s.(yaml|json)'", config.ConfigFileName))
 	rootCmd.PersistentFlags().BoolVarP(&jsonLogs, "json-logs", "j", false, "whether to emit JSON-formatted logs")
+	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable coloured output")
 
 	// bind viper to CLI args
 	bindings := map[string]string{
 		"log-level": "log-level",
 		"json-logs": "json-logs",
+		"no-color":  "no-color",
 	}
 
 	viperConfig := config.ViperConfig

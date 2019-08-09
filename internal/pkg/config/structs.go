@@ -20,6 +20,7 @@ import "github.com/sugarkube/sugarkube/internal/pkg/structs"
 
 type Config struct {
 	JsonLogs   bool   `mapstructure:"json-logs"`
+	NoColor    bool   `mapstructure:"no-color"` // for disabling coloured output
 	LogLevel   string `mapstructure:"log-level"`
 	NumWorkers int    `mapstructure:"num-workers"` // an uncontroversial name that avoids British/American spelling differences (vs 'parallelisation', etc)
 	// if true, merging lists under the same map key will replace the existing list entirely. If false,

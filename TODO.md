@@ -46,9 +46,6 @@
   * This could support ruby, js, python, etc. May need an 'init' call to e.g. make things install dependencies
 
 ### Developer experience
-* Print important info instead of logging it. Print in different colours with an option to disable coloured output
-* Print out the plan before executing it
-* Print details of kapps being executed
 * Stream console output in real-time
 * use ps (https://github.com/shirou/gopsutil/) to check whether SSH port forwarding is actually set up, and 
   if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up

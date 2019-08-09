@@ -2,6 +2,7 @@
 ## 0.9.0
 * Rename the 'cache' subcommand to 'workspace' because it wasn't clear that users should actually work inside cache directories (i.e. they're not temporary caches).
 * Colourise output messages for clarity
+* Add a `--no-color` option to the main sugarkube command to disable coloured output
 
 ## 0.8.0
 * Pinning kapp versions in stacks is now much more concise. See `internal/testdata/stack-pinned.yaml` for an example.

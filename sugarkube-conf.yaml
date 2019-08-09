@@ -1,4 +1,4 @@
-#log-level: none
+log-level: none
 #json-logs: false
 
 # Dynamically searches for terraform tfvars files based on the current stack provider and various properties of the
