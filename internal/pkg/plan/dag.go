@@ -387,7 +387,7 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 
 // Prints out the DAG to the writer
 func (g *Dag) Print() error {
-	_, err := printer.Fprintf("Created the following DAG. Nodes marked with a %s will "+
+	_, err := printer.Fprintf("Created the following DAG. Only nodes marked with a %s will "+
 		"be processed: \n", markedNodeStr)
 	if err != nil {
 		return errors.WithStack(err)
@@ -410,7 +410,7 @@ func (g *Dag) Print() error {
 				parentNames = append(parentNames, parent.name)
 			}
 
-			marked := ""
+			marked := "  "
 			if node.marked {
 				marked = fmt.Sprintf("[bold]%s ", markedNodeStr)
 			}

@@ -185,6 +185,11 @@ func (c *deleteCmd) run() error {
 		return errors.WithStack(err)
 	}
 
+	_, err = printer.Fprintln("")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	if !approved {
 		_, err = printer.Fprintln("[green]All deletion plans completed successfully!")
 		if err != nil {

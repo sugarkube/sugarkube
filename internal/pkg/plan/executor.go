@@ -26,6 +26,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
@@ -64,13 +65,29 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 	case constants.DagActionDelete:
 		// first walk down the DAG to load outputs and build local registries for the kapps, then walk
 		// up it executing the marked ones
-		err := initLocalRegistries(d, numWorkers, stackObj, action, approved, dryRun)
+		_, err := printer.Fprintln("[yellow]Loading any kapp outputs...")
 		if err != nil {
 			return errors.WithStack(err)
 		}
+
+		err = initLocalRegistries(d, numWorkers, stackObj, action, approved, dryRun)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		_, err = printer.Fprintf("[green]Kapp outputs loaded\n\n")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
 		finishedCh = d.walkUp(processCh, doneCh)
 	default:
 		return fmt.Errorf("Invalid action on DAG: %s", action)
+	}
+
+	_, err := printer.Fprintln("[yellow]Executing the DAG...")
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	log.Logger.Debug("Blocking waiting for the DAG to finish processing...")
