@@ -200,16 +200,29 @@ func (c *installCmd) run() error {
 	if c.oneShot {
 		shouldPlan = true
 		approved = true
+
+		_, err = printer.Fprintf("[yellow]Running installers for selected kapps in a single pass (one shot)\n")
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	} else {
+		// frig the messaging to hide the details of how one-shot works
 		if c.approved {
 			approved = true
+			_, err = printer.Fprintf("[yellow]Running installers for selected kapps with [bold]APPROVED=true\n")
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		} else {
 			shouldPlan = true
+			_, err = printer.Fprintf("[yellow]Running installers for selected kapps with [bold]APPROVED=false\n")
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
 	}
 
-	_, err = printer.Fprintf("Running installers for selected kapps with [yellow][bold]APPROVED=%v. [reset]Enable "+
-		"logging to see the exact parameters passed to each kapp.\n", approved)
+	_, err = printer.Fprintf("Enable logging to see the exact parameters passed to each kapp\n\n")
 	if err != nil {
 		return errors.WithStack(err)
 	}
