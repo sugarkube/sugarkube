@@ -110,18 +110,65 @@ func (c *connectCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = provisioner.IsAlreadyOnline(stackObj.GetProvisioner(), c.dryRun)
+	_, err = printer.Fprintf("Trying to connect to cluster '[bold]%s[reset]'...\n",
+		stackObj.GetConfig().GetName())
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	_, err = printer.Fprintf("[green]Connectivity established to the API server. Press " +
-		"CTRL-C to quit.\n")
+	connected, err := provisioner.IsAlreadyOnline(stackObj.GetProvisioner(), c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	for {
-		time.Sleep(60 * time.Second)
+	if connected {
+		_, err = printer.Fprintf("[green]Connectivity established to the API server. Press " +
+			"CTRL-C to quit.\n")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		for {
+			time.Sleep(60 * time.Second)
+		}
+	} else {
+		_, err = printer.Fprintln("[red]Connection failed. [reset]Gathering more information...")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		online, err := stackObj.GetProvisioner().IsAlreadyOnline(false)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		if online {
+			_, err = printer.Fprintf("[red]Cluster '%s' [bold]is[reset][red] online. \n",
+				stackObj.GetConfig().GetName())
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			_, err = printer.Fprintln("[blue]Tip[reset]: This should have worked. You'll need to manually " +
+				"investigate why we couldn't connect to a running cluster. Try rerunning this command with logging " +
+				"enabled for more information.")
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		} else {
+			_, err = printer.Fprintf("[red]Cluster '%s' [bold]is not[reset][red] online\n",
+				stackObj.GetConfig().GetName())
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			_, err = printer.Fprintln("[blue]Tip[reset]: Create a cluster with the `[white]cluster create[reset]` " +
+				"command or by using the `[white]cluster_update[reset]` pre-/post-action in a kapp.")
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
 	}
+
+	return nil
 }
