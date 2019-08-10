@@ -26,7 +26,7 @@ import (
 )
 
 func init() {
-	log.ConfigureLogger("debug", false)
+	log.ConfigureLogger("trace", false)
 }
 
 func getDescriptors() map[string]nodeDescriptor {
@@ -153,6 +153,7 @@ func TestTraverse(t *testing.T) {
 				numProcessed++
 				mutex.Unlock()
 
+				log.Logger.Debugf("Test worker finished processing node '%s'", node.name)
 				doneCh <- node
 			}
 		}()

@@ -38,6 +38,7 @@ const (
 
 const markedNodeStr = "*"
 const defaultSleepInterval = 5 // milliseconds
+const progressInterval = 20    // seconds
 
 // Wrapper around a directed graph so we can define our own methods on it
 type Dag struct {
@@ -324,11 +325,33 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 
 	// spawn a goroutine to listen to the doneCh to update the statuses of completed nodes
 	go func() {
-		for namedNode := range doneCh {
-			log.Logger.Debugf("Worker informs the DAG it's finished processing node '%s'", namedNode.name)
-			nodeItem := nodeStatusesById[namedNode.node.ID()]
-			nodeItem.status = finished
-			nodeStatusesById[namedNode.node.ID()] = nodeItem
+		// create a ticker to display progress
+		progressTicker := time.NewTicker(progressInterval * time.Second)
+		defer progressTicker.Stop()
+
+		for {
+			select {
+			case namedNode, ok := <-doneCh:
+				// this will be false if the channel has been closed, otherwise it pumps out nil values
+				if ok {
+					log.Logger.Debugf("Worker informs the DAG it's finished processing node '%s'", namedNode.name)
+					nodeItem := nodeStatusesById[namedNode.node.ID()]
+					nodeItem.status = finished
+					nodeStatusesById[namedNode.node.ID()] = nodeItem
+				}
+			case <-progressTicker.C:
+				inProgressNodes := make([]string, 0)
+				for node, nodeStatus := range nodeStatusesById {
+					if nodeStatus.status == running {
+						namedNode := nodeStatusesById[node]
+						inProgressNodes = append(inProgressNodes, namedNode.node.name)
+					}
+				}
+
+				if len(inProgressNodes) > 0 {
+					_, _ = printer.Fprintf("[yellow]Waiting on: %s...\n", strings.Join(inProgressNodes, ", "))
+				}
+			}
 		}
 	}()
 
@@ -426,6 +449,8 @@ func (g *Dag) Print() error {
 			if err != nil {
 				panic(err)
 			}
+
+			log.Logger.Tracef("Print worker finished with node %s", node.name)
 			doneCh <- node
 		}
 	}()

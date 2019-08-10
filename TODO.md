@@ -14,7 +14,6 @@
 * Documentation
   * Document the dangers of adding provider vars dirs (i.e. that the next time sugarkube is run it'll replace the config). It should only be used in certain situations (and probably never in prod)
 * Add a way of replacing kapp settings in stack configs (e.g. to replace dependencies)
-* make the DAG executor print what it's doing every 30 seconds or so
 * Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
 * Add a setting to throw an error if kapp IDs aren't globally unique. We don't care, but terraform does with our sample naming convention. The options are either to add the manifest ID to the TF state path which stops people reorganising, or making kapp IDs globally unique, otherwise e.g. 2 wordpress instances in different manifests could clobber each other  
 * Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
