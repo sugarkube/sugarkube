@@ -149,7 +149,7 @@ func (c *connectCmd) run() error {
 				return errors.WithStack(err)
 			}
 
-			_, err = printer.Fprintln("[blue]Tip[reset]: This should have worked. You'll need to manually " +
+			_, err = printer.Fprintln("[cyan][bold]Tip[reset]: This should have worked. You'll need to manually " +
 				"investigate why we couldn't connect to a running cluster. Try rerunning this command with logging " +
 				"enabled for more information.")
 			if err != nil {
@@ -162,7 +162,7 @@ func (c *connectCmd) run() error {
 				return errors.WithStack(err)
 			}
 
-			_, err = printer.Fprintln("[blue]Tip[reset]: Create a cluster with the `[white]cluster create[reset]` " +
+			_, err = printer.Fprintln("[cyan][bold]Tip[reset]: Create a cluster with the `[white]cluster create[reset]` " +
 				"command or by using the `[white]cluster_update[reset]` pre-/post-action in a kapp.")
 			if err != nil {
 				return errors.WithStack(err)
