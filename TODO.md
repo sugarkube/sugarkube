@@ -10,7 +10,7 @@
 * ~~Create a python installer~~  Subsumed by run units.
 * Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
 * Only run a kops update if the spec has changed (diff the new spec with the existing one)
-* Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity)
+* Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity) (created https://github.com/kubernetes/kops/issues/7393)
 * Documentation
   * Document the dangers of adding provider vars dirs (i.e. that the next time sugarkube is run it'll replace the config). It should only be used in certain situations (and probably never in prod)
 * Add a way of replacing kapp settings in stack configs (e.g. to replace dependencies)
@@ -18,7 +18,6 @@
 * Add a setting to throw an error if kapp IDs aren't globally unique. We don't care, but terraform does with our sample naming convention. The options are either to add the manifest ID to the TF state path which stops people reorganising, or making kapp IDs globally unique, otherwise e.g. 2 wordpress instances in different manifests could clobber each other  
 * Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
 * Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them)
-* Cluster connect/Kops should throw an error with expired AWS creds
   
 ### Cluster updates
 * It should be easy to see what changes will be applied by kops - perhaps go to a two-stage approach with a '--yes' flag, to make a distinction between --dry-run and staging changes.

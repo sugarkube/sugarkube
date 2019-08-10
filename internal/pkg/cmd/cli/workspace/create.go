@@ -117,7 +117,7 @@ func (c *createCmd) run() error {
 	log.Logger.Debugf("Creating workspace at %s...", absRootWorkspaceDir)
 
 	// don't use the abs workspace path here to keep the output simpler
-	_, err = printer.Fprintf("Creating/updating workspace at '[white]%s'...\n", c.workspaceDir)
+	_, err = printer.Fprintf("[yellow]Creating/updating workspace at '[bold]%s'...\n", c.workspaceDir)
 	if err != nil {
 		return errors.WithStack(err)
 	}
