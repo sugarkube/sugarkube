@@ -38,7 +38,7 @@ const (
 
 const markedNodeStr = "*"
 const defaultSleepInterval = 5 // milliseconds
-const progressInterval = 20    // seconds
+const progressInterval = 30    // seconds
 
 // Wrapper around a directed graph so we can define our own methods on it
 type Dag struct {

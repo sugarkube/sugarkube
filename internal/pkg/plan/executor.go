@@ -65,7 +65,7 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 	case constants.DagActionDelete:
 		// first walk down the DAG to load outputs and build local registries for the kapps, then walk
 		// up it executing the marked ones
-		_, err := printer.Fprintln("[yellow]Loading any kapp outputs...")
+		_, err := printer.Fprintln("[yellow]Loading kapp outputs...")
 		if err != nil {
 			return errors.WithStack(err)
 		}
