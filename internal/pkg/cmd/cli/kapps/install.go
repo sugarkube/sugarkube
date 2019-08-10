@@ -247,7 +247,7 @@ func (c *installCmd) run() error {
 			return errors.WithStack(err)
 		}
 	} else {
-		_, err = printer.Fprintf("%s[green]Kapp changes successfully applied!\n", dryRunPrefix)
+		_, err = printer.Fprintf("%s[green]Kapps successfully installed!\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
 		}
