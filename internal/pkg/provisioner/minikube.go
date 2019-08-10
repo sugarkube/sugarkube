@@ -21,9 +21,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"os/exec"
+	"strings"
 )
 
 const MinikubeProvisionerName = "minikube"
@@ -82,8 +84,14 @@ func (p MinikubeProvisioner) Create(dryRun bool) error {
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
+	_, err := printer.Fprintf("Launching minikube cluster with args: %s\n",
+		strings.Join(args, " "))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	log.Logger.Info("Launching Minikube cluster...")
-	err := utils.ExecCommand(p.minikubeConfig.Binary, args, map[string]string{}, &stdoutBuf,
+	err = utils.ExecCommand(p.minikubeConfig.Binary, args, map[string]string{}, &stdoutBuf,
 		&stderrBuf, "", 0, dryRun)
 	if err != nil {
 		return errors.Wrap(err, "Failed to start a Minikube cluster")

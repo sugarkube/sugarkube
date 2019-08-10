@@ -154,7 +154,7 @@ func CreateCluster(stackObj interfaces.IStack, dryRun bool) error {
 		}
 	}
 
-	_, err = printer.Fprintf("%s[yellow]Cluster is not online. Will create it now (this "+
+	_, err = printer.Fprintf("%s[yellow]Cluster is [bold]not[reset][yellow] online. Will create it now (this "+
 		"may take some time)...\n", dryRunPrefix)
 	if err != nil {
 		return errors.WithStack(err)
