@@ -439,8 +439,8 @@ func varsWorker(processCh <-chan NamedNode, doneCh chan<- NamedNode, errCh chan 
 			return
 		}
 
-		_, err = fmt.Printf("\n***** Start variables for kapp '%s' *****\n"+
-			"%s***** End variables for kapp '%s' *****\n",
+		_, err = printer.Fprintf("\n[yellow]***** Start variables for kapp '[bold]%s[reset][yellow]' *****[reset]\n"+
+			"%s[yellow]***** End variables for kapp '[bold]%s[reset][yellow]' *****[reset]\n",
 			installableObj.FullyQualifiedId(), yamlData, installableObj.FullyQualifiedId())
 		if err != nil {
 			errCh <- errors.WithStack(err)
@@ -459,8 +459,8 @@ func varsWorker(processCh <-chan NamedNode, doneCh chan<- NamedNode, errCh chan 
 			return
 		}
 
-		_, err = fmt.Printf("\n***** Start config for kapp '%s' *****\n"+
-			"%s***** End config for kapp '%s' *****\n",
+		_, err = printer.Fprintf("\n[yellow]***** Start config for kapp '[bold]%s[reset][yellow]' *****[reset]\n"+
+			"%s[yellow]***** End config for kapp '[bold]%s[reset][yellow]' *****[reset]\n",
 			installableObj.FullyQualifiedId(), kappConfig, installableObj.FullyQualifiedId())
 
 		log.Logger.Tracef("Vars worker finished processing kapp '%s' (node=%#v)", installableObj.FullyQualifiedId(),
