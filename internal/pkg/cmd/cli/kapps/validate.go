@@ -91,7 +91,7 @@ func (c *validateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = printer.Fprintf("Validating requirements for kapps...\n")
+	_, err = printer.Fprintf("[yellow]Validating requirements for kapps...\n")
 	if err != nil {
 		return errors.WithStack(err)
 	}
