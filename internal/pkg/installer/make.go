@@ -145,7 +145,8 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 	log.Logger.Infof("Kapp '%s' successfully processed (approved=%v, dry run=%v)",
 		installable.FullyQualifiedId(), approved, dryRun)
 
-	_, err = printer.Fprintf("[green]Successfully ran[default] '[white]make %s[default]' on [default]'[white]%s[default]' with APPROVED=%v\n",
+	_, err = printer.Fprintf("[green]Successfully ran[default] '[white]make %s[default]' on "+
+		"[default]'[white]%s[default]' with [bold]APPROVED=%v\n",
 		makeTarget, installable.FullyQualifiedId(), approved)
 	if err != nil {
 		return errors.WithStack(err)
