@@ -11,6 +11,15 @@ sites, and loads different sample data into each of them. All this with 2 comman
 
 Complete [documentation](docs/markdown).
 
+**Create a cluster**
+[![asciicast](https://asciinema.org/a/xaVdUOndLFbzujiP4LzsA2yGi.png)](https://asciinema.org/a/xaVdUOndLFbzujiP4LzsA2yGi)
+
+**Create a workspace**
+[![asciicast](https://asciinema.org/a/AQVupT34Gio5RpoqS5H4rBtYN.png)](https://asciinema.org/a/AQVupT34Gio5RpoqS5H4rBtYN)
+
+**Install stuff**
+[![asciicast](https://asciinema.org/a/Ftq2nRMODMVhiV1Rz9S9VKc8I.png)](https://asciinema.org/a/Ftq2nRMODMVhiV1Rz9S9VKc8I)
+
 ## Overview
 Sugarkube is dependency management for your infrastructure. 
 While its focus is Kubernetes-based clusters, it can be used to deploy your
