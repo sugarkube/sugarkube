@@ -12,13 +12,13 @@ sites, and loads different sample data into each of them. All this with 2 comman
 Complete [documentation](docs/markdown).
 
 **Create a cluster**
-[![asciicast](https://asciinema.org/a/xaVdUOndLFbzujiP4LzsA2yGi.png)](https://asciinema.org/a/xaVdUOndLFbzujiP4LzsA2yGi)
+![Create a cluster](docs/svgs/cluster-create.svg)
 
 **Create a workspace**
-[![asciicast](https://asciinema.org/a/AQVupT34Gio5RpoqS5H4rBtYN.png)](https://asciinema.org/a/AQVupT34Gio5RpoqS5H4rBtYN)
+![Create a cluster](docs/svgs/workspace-create.svg)
 
 **Install stuff**
-[![asciicast](https://asciinema.org/a/Ftq2nRMODMVhiV1Rz9S9VKc8I.png)](https://asciinema.org/a/Ftq2nRMODMVhiV1Rz9S9VKc8I)
+![Create a cluster](docs/svgs/kapps-install.svg)
 
 ## Overview
 Sugarkube is dependency management for your infrastructure. 
