@@ -25,6 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -41,7 +42,7 @@ type MinikubeConfig struct {
 	Binary string
 	Params struct {
 		Global map[string]string
-		Start  map[string]string
+		Start  map[string]interface{}
 		Delete map[string]string
 	}
 }
@@ -78,9 +79,34 @@ func (p MinikubeProvisioner) ClusterSot() interfaces.IClusterSot {
 // Creates a new minikube cluster
 func (p MinikubeProvisioner) Create(dryRun bool) error {
 
+	// the --extra-config flag can be specified multiple times
+	const extraConfigKey = "extra_config"
+
+	// remove any extra configs from the start parameters, then handle them specifically
+	extraConfig := make([]string, 0)
+	startStringMap := make(map[string]string)
+	for k, v := range p.minikubeConfig.Params.Start {
+		if k == extraConfigKey {
+			for _, conf := range v.([]interface{}) {
+				extraConfig = append(extraConfig, conf.(string))
+			}
+			continue
+		}
+
+		if strVal, ok := v.(string); ok {
+			startStringMap[k] = strVal
+		} else {
+			startStringMap[k] = strconv.Itoa(v.(int))
+		}
+	}
+
 	args := []string{"start"}
 	args = parameteriseValues(args, p.minikubeConfig.Params.Global)
-	args = parameteriseValues(args, p.minikubeConfig.Params.Start)
+	args = parameteriseValues(args, startStringMap)
+
+	for i := 0; i < len(extraConfig); i++ {
+		args = append(args, []string{"--extra-config", extraConfig[i]}...)
+	}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
