@@ -51,7 +51,7 @@ programs:
       vars:
         helm: helm        # path to the helm binary to run. This allows version pinning if you have multiple versions of helm on your machine.
         run_helm: true    # none of these units will be run for a kapp if this is false because of the associated condition
-        <<: *helm-patterns
+#        <<: *helm-patterns
       working_dir: "{{ .kapp.cacheRoot }}"       # directory to use as the working directory
       conditions:       # all must be true for any units to be run
         - "{{ .kapp.vars.run_helm }}"
@@ -93,8 +93,6 @@ programs:
   aws:
     vars:
       region: "{{ .stack.region }}"
-    run_units:
-      working_dir: hothot
 
   terraform:
     vars:
