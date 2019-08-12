@@ -55,19 +55,31 @@ programs:
       conditions:       # all must be true for any units to be run
         - {{ .kapp.vars.run_helm }}
       plan_install:
-        - command: |
-            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} lint --kube-context={{ .kapp.vars.kube_context }} \
-              . --namespace={{ .kapp.vars.namespace }}
+        - name: helm-lint
+          command: |
+            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} lint \
+              --kube-context={{ .kapp.vars.kube_context }} \
+              --namespace={{ .kapp.vars.namespace }} .
       apply_install:
-        - command: |
-            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} upgrade --kube-context={{ .kapp.vars.kube_context }} \
-              --tiller-namespace={{ .kapp.vars.tiller_namespace }} --wait --install --recreate-pods --timeout 600 \
-              {{ .kapp.vars.release }} . \
-              --namespace={{ .kapp.vars.namespace }}
+        - name: helm install
+          command: |
+            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} upgrade \
+              --kube-context={{ .kapp.vars.kube_context }} \
+              --tiller-namespace={{ .kapp.vars.tiller_namespace }} \
+              --wait \
+              --install \
+              --recreate-pods \
+              --timeout 600 \
+              --namespace={{ .kapp.vars.namespace }} \
+              {{ .kapp.vars.release }} .
       apply_delete:
-        - command: |
-            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} delete --kube-context={{ .kapp.vars.kube_context }} \
-              --tiller-namespace={{ .kapp.vars.tiller_namespace }} --purge {{ .kapp.vars.release }}
+        - name: helm-delete
+          command: |
+            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} delete \
+              --kube-context={{ .kapp.vars.kube_context }} \
+              --tiller-namespace={{ .kapp.vars.tiller_namespace }} \
+              --purge \
+              {{ .kapp.vars.release }}
 
   kubectl:
     vars:
@@ -99,6 +111,7 @@ programs:
         terraform: terraform
         terraform_dir: terraform_{{ .stack.provider }}
         tf_output_path: terraform-output.json
+        tf_plan_path: _generated_plan.tfplan
       working_dir: "{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}"       # directory to use as the working directory
       conditions:       # all must be true for any units to be run
         - {{ .kapp.vars.run_terraform }}
@@ -112,10 +125,10 @@ programs:
         - name: tf-validate
           command: "{{ .kapp.vars.terraform }} validate"
         - name: tf-plan
-          command: "{{ .kapp.vars.terraform }} plan -refresh=true -out _generated_plan.tfplan"
+          command: "{{ .kapp.vars.terraform }} plan -refresh=true -out {{ .kapp.vars.tf_plan_path }}"
       apply_install:
         - name: tf-apply
-          command: "{{ .kapp.vars.terraform }} apply _generated_plan.tfplan"
+          command: "{{ .kapp.vars.terraform }} apply {{ .kapp.vars.tf_plan_path }}"
       apply_delete:
         - call: tf-init       # call the tf-init step defined under `plan_install`
         - name: tf-destroy
