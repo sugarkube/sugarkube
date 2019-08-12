@@ -98,6 +98,7 @@ programs:
         run_terraform: true    # none of these units will be run for a kapp if this is false because of the associated condition
         terraform: terraform
         terraform_dir: terraform_{{ .stack.provider }}
+        tf_output_path: terraform-output.json
       working_dir: "{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}"       # directory to use as the working directory
       conditions:       # all must be true for any units to be run
         - {{ .kapp.vars.run_terraform }}
@@ -116,12 +117,13 @@ programs:
         - name: tf-apply
           command: "{{ .kapp.vars.terraform }} apply _generated_plan.tfplan"
       apply_delete:
-        - name: tf-init
-          command: "{{ .kapp.vars.terraform }} init"
-          conditions:       # additional conditions for this specific step to be run
-          - ! -d "{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}/.terraform"
+        - call: tf-init       # call the tf-init step defined under `plan_install`
         - name: tf-destroy
           command: "{{ .kapp.vars.terraform }} destroy -auto-approve"
+      output:
+        - call: tf-init       # call the tf-init step defined under `plan_install`
+        - name: tf-output
+          command: "{{ .kapp.vars.terraform }} output -json > {{ .kapp.vars.tf_output_path }}"
 
 # globally defined run units will be used as defaults for each program
 run_units:
