@@ -34,14 +34,14 @@ type MakeInstaller struct {
 	provider interfaces.IProvider
 }
 
-const TargetInstall = "install"
-const TargetDelete = "delete"
+const TargetInstall = "install" // todo - replace this with 2 targets - plan-install and apply-install
+const TargetDelete = "delete"   // todo - replace this with 2 targets - plan-delete and apply-delete
 const TargetOutput = "output"
 const TargetClean = "clean"
 
 // Return the name of this installer
 func (i MakeInstaller) Name() string {
-	return "make"
+	return Make
 }
 
 // Run the given make target
@@ -155,20 +155,36 @@ func (i MakeInstaller) run(makeTarget string, installable interfaces.IInstallabl
 	return nil
 }
 
-// Install a kapp
-func (i MakeInstaller) Install(installableObj interfaces.IInstallable, stack interfaces.IStack,
-	approved bool, dryRun bool) error {
-	log.Logger.Infof("Installing kapp '%s' (approved=%v, dry run=%v)...",
-		installableObj.FullyQualifiedId(), approved, dryRun)
-	return i.run(TargetInstall, installableObj, stack, approved, dryRun)
+// Plan installation of a kapp
+func (i MakeInstaller) PlanInstall(installableObj interfaces.IInstallable, stack interfaces.IStack,
+	dryRun bool) error {
+	log.Logger.Infof("Planning installation of kapp '%s' (dry run=%v)...",
+		installableObj.FullyQualifiedId(), dryRun)
+	return i.run(TargetInstall, installableObj, stack, false, dryRun)
 }
 
-// Delete a kapp
-func (i MakeInstaller) Delete(installableObj interfaces.IInstallable, stack interfaces.IStack,
-	approved bool, dryRun bool) error {
-	log.Logger.Infof("Deleting kapp '%s' (approved=%v, dry run=%v)...",
-		installableObj.FullyQualifiedId(), approved, dryRun)
-	return i.run(TargetDelete, installableObj, stack, approved, dryRun)
+// Actually install a kapp
+func (i MakeInstaller) ApplyInstall(installableObj interfaces.IInstallable, stack interfaces.IStack,
+	dryRun bool) error {
+	log.Logger.Infof("Installing kapp '%s' (dry run=%v)...",
+		installableObj.FullyQualifiedId(), dryRun)
+	return i.run(TargetInstall, installableObj, stack, true, dryRun)
+}
+
+// Plan deletion of a kapp
+func (i MakeInstaller) PlanDelete(installableObj interfaces.IInstallable, stack interfaces.IStack,
+	dryRun bool) error {
+	log.Logger.Infof("Planning deletion of kapp '%s' (dry run=%v)...",
+		installableObj.FullyQualifiedId(), dryRun)
+	return i.run(TargetDelete, installableObj, stack, false, dryRun)
+}
+
+// Actually delete a kapp
+func (i MakeInstaller) ApplyDelete(installableObj interfaces.IInstallable, stack interfaces.IStack,
+	dryRun bool) error {
+	log.Logger.Infof("Deleting kapp '%s' (dry run=%v)...",
+		installableObj.FullyQualifiedId(), dryRun)
+	return i.run(TargetDelete, installableObj, stack, true, dryRun)
 }
 
 // Get a kapp's outputs

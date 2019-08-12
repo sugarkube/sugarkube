@@ -206,7 +206,7 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 		}
 
 		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a Make installer)
-		installerImpl, err := installer.New(installer.MAKE, stackObj.GetProvider())
+		installerImpl, err := installer.New(installer.Make, stackObj.GetProvider())
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
 				"kapp '%s'", installableObj.Id())
@@ -268,7 +268,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 		}
 
 		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a Make installer)
-		installerImpl, err := installer.New(installer.MAKE, stackObj.GetProvider())
+		installerImpl, err := installer.New(installer.Make, stackObj.GetProvider())
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
 				"kapp '%s'", installableObj.Id())
@@ -405,7 +405,7 @@ func varsWorker(processCh <-chan NamedNode, doneCh chan<- NamedNode, errCh chan 
 		}
 
 		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a Make installer)
-		installerImpl, err := installer.New(installer.MAKE, stackObj.GetProvider())
+		installerImpl, err := installer.New(installer.Make, stackObj.GetProvider())
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
 				"kapp '%s'", installableObj.Id())
@@ -478,18 +478,10 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 
 	installableObj := node.installableObj
 
-	actionName := "install"
-	installerMethod := installerImpl.Install
-	preActions := installableObj.PreInstallActions()
-	postActions := installableObj.PostInstallActions()
-
-	if !install {
-		actionName = "delete"
-		installerMethod = installerImpl.Delete
-		preActions = installableObj.PreDeleteActions()
-		postActions = installableObj.PostDeleteActions()
-
-	}
+	var actionName string
+	var installerMethod func(installableObj interfaces.IInstallable, stack interfaces.IStack, dryRun bool) error
+	var preActions []structs.Action
+	var postActions []structs.Action
 
 	installerVars := installerImpl.GetVars(actionName, approved)
 
@@ -503,7 +495,13 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	// only plan or process kapps that have been flagged for processing
 	if node.marked {
 		if plan {
-			err = installerMethod(installableObj, stackObj, false, dryRun)
+			if install {
+				installerMethod = installerImpl.PlanInstall
+			} else {
+				installerMethod = installerImpl.PlanDelete
+			}
+
+			err = installerMethod(installableObj, stackObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
@@ -519,6 +517,12 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 
 		// only execute pre actions if approved==true
 		if approved && !skipPreActions {
+			if install {
+				preActions = installableObj.PreInstallActions()
+			} else {
+				preActions = installableObj.PreDeleteActions()
+			}
+
 			log.Logger.Infof("Will run %d pre %s actions", len(preActions), actionName)
 
 			for _, action := range preActions {
@@ -534,7 +538,13 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 		}
 
 		if approved && !skipInstallerMethod {
-			err = installerMethod(installableObj, stackObj, approved, dryRun)
+			if install {
+				installerMethod = installerImpl.ApplyInstall
+			} else {
+				installerMethod = installerImpl.ApplyDelete
+			}
+
+			err = installerMethod(installableObj, stackObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
@@ -573,6 +583,12 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	// only execute post actions if approved==true
 	if node.marked && approved && !skipPostActions {
 		log.Logger.Infof("Will run %d post %s actions", len(postActions), actionName)
+
+		if install {
+			postActions = installableObj.PostInstallActions()
+		} else {
+			postActions = installableObj.PostDeleteActions()
+		}
 
 		for _, action := range postActions {
 			executeAction(action, installableObj, stackObj, errCh, dryRun)

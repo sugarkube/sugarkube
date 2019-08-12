@@ -23,12 +23,18 @@ import (
 )
 
 // implemented installers
-const MAKE = "make"
+const Make = "make"
+const RunUnit = "rununit"
 
 // Factory that creates installers
 func New(name string, providerImpl interfaces.IProvider) (interfaces.IInstaller, error) {
-	if name == MAKE {
+	switch name {
+	case Make:
 		return MakeInstaller{
+			provider: providerImpl,
+		}, nil
+	case RunUnit:
+		return RunUnitInstaller{
 			provider: providerImpl,
 		}, nil
 	}

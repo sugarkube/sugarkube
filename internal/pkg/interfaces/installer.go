@@ -17,8 +17,10 @@
 package interfaces
 
 type IInstaller interface {
-	Install(installableObj IInstallable, stack IStack, approved bool, dryRun bool) error
-	Delete(installableObj IInstallable, stack IStack, approved bool, dryRun bool) error
+	PlanInstall(installableObj IInstallable, stack IStack, dryRun bool) error
+	ApplyInstall(installableObj IInstallable, stack IStack, dryRun bool) error
+	PlanDelete(installableObj IInstallable, stack IStack, dryRun bool) error
+	ApplyDelete(installableObj IInstallable, stack IStack, dryRun bool) error
 	Clean(installableObj IInstallable, stack IStack, dryRun bool) error
 	Output(installableObj IInstallable, stack IStack, dryRun bool) error
 	Name() string
