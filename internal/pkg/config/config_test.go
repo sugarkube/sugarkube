@@ -39,7 +39,7 @@ func TestLoadConfig(t *testing.T) {
 		OverwriteMergedLists: false,
 		Programs: map[string]structs.KappConfig{
 			"helm": {
-				EnvVars: map[string]interface{}{
+				Vars: map[string]interface{}{
 					"kubeconfig":   "{{ .kubeconfig }}",
 					"namespace":    "{{ .kapp.vars.namespace | default .kapp.id }}",
 					"release":      "{{ .kapp.vars.release | default .kapp.id }}",
@@ -54,7 +54,7 @@ func TestLoadConfig(t *testing.T) {
 				},
 			},
 			"prog2": {
-				EnvVars: map[string]interface{}{
+				Vars: map[string]interface{}{
 					"kubeconfig":   "{{ .kubeconfig }}",
 					"kube_context": "{{ .kube_context }}",
 					"region":       "{{ .stack.region }}",
