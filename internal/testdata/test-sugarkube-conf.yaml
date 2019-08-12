@@ -3,7 +3,7 @@ json-logs: false
 
 programs:
   helm:
-    envVars:
+    vars:
       KUBECONFIG: "{{ .kubeconfig }}"
       NAMESPACE: "{{ .kapp.vars.namespace | default .kapp.id }}"
       RELEASE: "{{ .kapp.vars.release | default .kapp.id }}"
@@ -28,7 +28,7 @@ programs:
           helm-opts: customValue
 
   prog2:
-    envVars:
+    vars:
       KUBECONFIG: "{{ .kubeconfig }}"
       KUBE_CONTEXT: "{{ .kube_context }}"
       REGION: "{{ .stack.region }}"
