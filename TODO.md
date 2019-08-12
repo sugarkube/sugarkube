@@ -45,7 +45,7 @@ All these subsumed by run units.
 * ~~This could support ruby, js, python, etc. May need an 'init' call to e.g. make things install dependencies~~
 
 ### Developer experience
-* Stream console output in real-time - see stern for an example of streaming logs from multiple processes in parallel
+* Stream console output in real-time - see stern for an example of streaming logs from multiple processes in parallel. Add a flag to enable this.
 * use ps (https://github.com/shirou/gopsutil/) to check whether SSH port forwarding is actually set up, and 
   if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
 * Or do ssh using a golang library so we can make it more robust (reconnecting on dropped connections, etc)
