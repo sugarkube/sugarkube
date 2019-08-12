@@ -47,6 +47,25 @@ programs:
         delete:
           <<: *helm-patterns
 
+    run_units:
+      vars:
+        helm: $(which helm)
+        chart_dir: $(basename {{ .kapp.cacheRoot }} )
+      plan_install:
+        - command: |
+            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} lint --kube-context={{ .kapp.vars.kube_context }} \
+              {{ .kapp.vars.chart_dir }} --namespace={{ .kapp.vars.namespace }}
+      apply_install:
+        - command: |
+            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} upgrade --kube-context={{ .kapp.vars.kube_context }} \
+              --tiller-namespace={{ .kapp.vars.tiller_namespace }} --wait --install --recreate-pods --timeout 600 \
+              {{ .kapp.vars.release }} {{ .kapp.vars.chart_dir }} \
+              --namespace={{ .kapp.vars.namespace }}
+      apply_delete:
+        - command: |
+            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} delete --kube-context={{ .kapp.vars.kube_context }} \
+              --tiller-namespace={{ .kapp.vars.tiller_namespace }} --purge {{ .kapp.vars.release }}
+
   kubectl:
     vars:
       kubeconfig: "{{ .kubeconfig }}"
@@ -73,3 +92,40 @@ programs:
           <<: *tf-patterns
         output:
           <<: *tf-patterns
+
+    run_units:
+      vars:
+        terraform: $(which terraform)
+        terraform_dir: terraform_{{ .stack.provider }}
+      plan_install:
+        - name: tf-init
+          command: cd {{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }} && {{ .kapp.vars.terraform }} init
+          condition: ! -d "{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}/.terraform"
+        - name: tf-format
+          command: cd {{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }} && {{ .kapp.vars.terraform }} fmt
+        - name: tf-validate
+          command: cd {{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }} && {{ .kapp.vars.terraform }} validate
+        - name: tf-plan
+          command: |
+            cd {{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }} && {{ .kapp.vars.terraform }} plan \
+              -refresh=true -out _generated_plan.tfplan
+      apply_install:
+        - name: tf-apply
+          command: |
+            cd {{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }} && {{ .kapp.vars.terraform }} \
+              apply _generated_plan.tfplan
+      apply_delete:
+        - name: tf-init
+          command: cd {{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }} && {{ .kapp.vars.terraform }} init
+          condition: ! -d "{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}/.terraform"
+        - name: tf-destroy
+          command: |
+            cd {{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }} && {{ .kapp.vars.terraform }} destroy -auto-approve
+
+# globally defined run units will be used as defaults for each program
+run_units:
+  clean:
+    - $(rm {{ .kapp.cacheRoot }}/*.log)
+    - $(rm {{ .kapp.cacheRoot }}/*.err)
+    - $(find {{ .kapp.cacheRoot }} -name '_generated_*' -type f -delete)
+    - $(find {{ .kapp.cacheRoot }} -name '_generated_*' -type d -exec rm -r {} ';')
