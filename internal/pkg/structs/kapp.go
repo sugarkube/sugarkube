@@ -49,6 +49,23 @@ type Action struct {
 	Params []string
 }
 
+type RunStep struct {
+	Name          string
+	Command       string
+	Conditions    []string
+	MergePriority uint8 `yaml:"merge_priority"`
+}
+
+type RunUnits struct {
+	Vars         map[string]interface{}
+	WorkingDir   string `yaml:"working_dir"`
+	Conditions   []string
+	PlanInstall  []RunStep `yaml:"plan_install"`
+	ApplyInstall []RunStep `yaml:"apply_install"`
+	PlanDelete   []RunStep `yaml:"plan_delete"`
+	ApplyDelete  []RunStep `yaml:"apply_delete"`
+}
+
 // A struct for an actual sugarkube.yaml file
 type KappConfig struct {
 	State                string
@@ -62,6 +79,7 @@ type KappConfig struct {
 	PreDeleteActions     []map[string]Action `yaml:"pre_delete_actions"`
 	Templates            []Template
 	Vars                 map[string]interface{}
+	RunUnits             RunUnits `yaml:"run_units"`
 	DependsOn            []string `yaml:"depends_on"`             // fully qualified IDs of other kapps this depends on
 	IgnoreGlobalDefaults bool     `yaml:"ignore_global_defaults"` // don't add globally configured defaults for each requirement
 	// todo - implement

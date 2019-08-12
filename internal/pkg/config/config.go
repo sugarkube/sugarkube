@@ -19,6 +19,7 @@ package config
 import (
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"os/user"
 	"path"
@@ -88,6 +89,8 @@ func Load(viperConfig *viper.Viper) error {
 	if err != nil {
 		return errors.Wrapf(err, "Error unmarshalling config")
 	}
+
+	log.Logger.Debugf("Loaded config struct: %#v", newConfig)
 
 	CurrentConfig = newConfig
 

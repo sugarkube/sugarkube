@@ -49,17 +49,18 @@ programs:
 
     run_units:
       vars:
-        helm: helm
+        helm: helm        # path to the helm binary to run. This allows version pinning if you have multiple versions of helm on your machine.
         run_helm: true    # none of these units will be run for a kapp if this is false because of the associated condition
+        <<: *helm-patterns
       working_dir: "{{ .kapp.cacheRoot }}"       # directory to use as the working directory
       conditions:       # all must be true for any units to be run
-        - {{ .kapp.vars.run_helm }}
+        - "{{ .kapp.vars.run_helm }}"
       plan_install:
         - name: helm-lint
           command: |
             KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} lint \
               --kube-context={{ .kapp.vars.kube_context }} \
-              --namespace={{ .kapp.vars.namespace }} .
+              --namespace={{ .kapp.vars.namespace }} . {{ index .kapp.vars "helm-params" }}
       apply_install:
         - name: helm install
           command: |
@@ -72,6 +73,7 @@ programs:
               --timeout 600 \
               --namespace={{ .kapp.vars.namespace }} \
               {{ .kapp.vars.release }} .
+          merge_priority: 5         # install helm charts *after* running terraform
       apply_delete:
         - name: helm-delete
           command: |
@@ -80,6 +82,7 @@ programs:
               --tiller-namespace={{ .kapp.vars.tiller_namespace }} \
               --purge \
               {{ .kapp.vars.release }}
+          merge_priority: 0         # delete helm charts *before* running terraform
 
   kubectl:
     vars:
@@ -90,6 +93,8 @@ programs:
   aws:
     vars:
       region: "{{ .stack.region }}"
+    run_units:
+      working_dir: hothot
 
   terraform:
     vars:
@@ -108,13 +113,13 @@ programs:
     run_units:
       vars:
         run_terraform: true    # none of these units will be run for a kapp if this is false because of the associated condition
-        terraform: terraform
+        terraform: terraform   # path to the terraform binary to run. This allows version pinning if you have multiple versions of terraform on your machine.
         terraform_dir: terraform_{{ .stack.provider }}
         tf_output_path: terraform-output.json
         tf_plan_path: _generated_plan.tfplan
       working_dir: "{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}"       # directory to use as the working directory
       conditions:       # all must be true for any units to be run
-        - {{ .kapp.vars.run_terraform }}
+        - "{{ .kapp.vars.run_terraform }}"
       plan_install:
         - name: tf-init
           command: "{{ .kapp.vars.terraform }} init"
@@ -129,10 +134,12 @@ programs:
       apply_install:
         - name: tf-apply
           command: "{{ .kapp.vars.terraform }} apply {{ .kapp.vars.tf_plan_path }}"
+          merge_priority: 0         # apply terraform *before* installing a helm chart
       apply_delete:
         - call: tf-init       # call the tf-init step defined under `plan_install`
         - name: tf-destroy
           command: "{{ .kapp.vars.terraform }} destroy -auto-approve"
+          merge_priority: 5         # delete terraform *after* deleting a helm chart
       output:
         - call: tf-init       # call the tf-init step defined under `plan_install`
         - name: tf-output
