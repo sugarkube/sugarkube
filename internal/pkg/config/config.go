@@ -48,6 +48,7 @@ func initViper(appName string) *viper.Viper {
 	//v.SetKeyCaseSensitivity(true)
 
 	// global defaults
+	// todo - change to snake_case for consistency
 	v.SetDefault("json-logs", false)
 	v.SetDefault("log-level", "info")
 	v.SetDefault("num-workers", "5")

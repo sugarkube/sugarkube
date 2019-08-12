@@ -4,8 +4,8 @@ log-level: none
 
 # Dynamically searches for terraform tfvars files based on the current stack provider and various properties of the
 # stack (e.g. name, region, etc.) as well as any generated files. All files found are prepended by `-var-file`
-tf-patterns: &tf-patterns
-  tf-params: >-
+tf_patterns: &tf_patterns
+  tf_params: >-
     {{ mapPrintF "terraform_%s/.*defaults\\.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
     {{ mapPrintF (mapPrintF "terraform_%s/.*%%s\\.tfvars$" (listString .stack.provider) | join "") (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
     {{ mapPrintF "terraform_%s/.*_generated_.*\\.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
@@ -21,8 +21,8 @@ tf-patterns: &tf-patterns
 #
 # So these scary looking things search for a values.yaml file in the kapp cache directory, as well as
 # `values-<provider/account/profile/etc>.yaml` and prepends '-f' ready to be passed as options to helm.
-helm-patterns: &helm-patterns
-  helm-params: >-
+helm_patterns: &helm_patterns
+  helm_params: >-
     {{ listString "/values\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | last | join " " | trim }}
     {{ mapPrintF "/values-%s\\.yaml$" (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
     {{ listString "/_generated_.*\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
@@ -35,23 +35,18 @@ programs:
       release: "{{ .kapp.id }}"
       kube_context: "{{ .kube_context }}"
 
-    # todo - uncomment once viper supports not lowercasing all map keys
-    #    env_vars:
-    #      RUN_HELM: |-
-    #        "{{ if isSet .kapp.vars "run_helm" }}{{ .kapp.vars.run_helm }}{{ else }}true{{ end }}"
-
     args:
       make:
         install:
-          <<: *helm-patterns
+          <<: *helm_patterns
         delete:
-          <<: *helm-patterns
+          <<: *helm_patterns
 
     run_units:
       vars:
         helm: helm        # path to the helm binary to run. This allows version pinning if you have multiple versions of helm on your machine.
         run_helm: true    # none of these units will be run for a kapp if this is false because of the associated condition
-#        <<: *helm-patterns
+        <<: *helm_patterns
       working_dir: "{{ .kapp.cacheRoot }}"       # directory to use as the working directory
       conditions:       # all must be true for any units to be run
         - "{{ .kapp.vars.run_helm }}"
@@ -60,7 +55,7 @@ programs:
           command: |
             KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} lint \
               --kube-context={{ .kapp.vars.kube_context }} \
-              --namespace={{ .kapp.vars.namespace }} . {{ index .kapp.vars "helm-params" }}
+              --namespace={{ .kapp.vars.namespace }} . {{ .kapp.vars.helm_params }}
       apply_install:
         - name: helm install
           command: |
@@ -72,7 +67,7 @@ programs:
               --recreate-pods \
               --timeout 600 \
               --namespace={{ .kapp.vars.namespace }} \
-              {{ .kapp.vars.release }} .
+              {{ .kapp.vars.release }} . {{ .kapp.vars.helm_params }}
           merge_priority: 5         # install helm charts *after* running terraform
       apply_delete:
         - name: helm-delete
@@ -102,11 +97,11 @@ programs:
     args:
       make:
         install:
-          <<: *tf-patterns
+          <<: *tf_patterns
         delete:
-          <<: *tf-patterns
+          <<: *tf_patterns
         output:
-          <<: *tf-patterns
+          <<: *tf_patterns
 
     run_units:
       vars:
@@ -115,6 +110,7 @@ programs:
         terraform_dir: terraform_{{ .stack.provider }}
         tf_output_path: terraform-output.json
         tf_plan_path: _generated_plan.tfplan
+        <<: *tf_patterns
       working_dir: "{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}"       # directory to use as the working directory
       conditions:       # all must be true for any units to be run
         - "{{ .kapp.vars.run_terraform }}"
@@ -122,13 +118,14 @@ programs:
         - name: tf-init
           command: "{{ .kapp.vars.terraform }} init"
           conditions:       # additional conditions for this specific step to be run
-          - ! -d "{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}/.terraform"
+          # only run if terraform hasn't already initialised (i.e. no .terraform directory exists)
+          - "{{ eq len(findFiles \"{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}/.terraform\") 0 }}"
         - name: tf-format
           command: "{{ .kapp.vars.terraform }} fmt"
         - name: tf-validate
-          command: "{{ .kapp.vars.terraform }} validate"
+          command: "{{ .kapp.vars.terraform }} validate {{ .kapp.vars.tf_params }}"
         - name: tf-plan
-          command: "{{ .kapp.vars.terraform }} plan -refresh=true -out {{ .kapp.vars.tf_plan_path }}"
+          command: "{{ .kapp.vars.terraform }} plan -refresh=true -out {{ .kapp.vars.tf_plan_path }} {{ .kapp.vars.tf_params }}"
       apply_install:
         - name: tf-apply
           command: "{{ .kapp.vars.terraform }} apply {{ .kapp.vars.tf_plan_path }}"
@@ -136,7 +133,7 @@ programs:
       apply_delete:
         - call: tf-init       # call the tf-init step defined under `plan_install`
         - name: tf-destroy
-          command: "{{ .kapp.vars.terraform }} destroy -auto-approve"
+          command: "{{ .kapp.vars.terraform }} destroy -auto-approve {{ .kapp.vars.tf_params }}"
           merge_priority: 5         # delete terraform *after* deleting a helm chart
       output:
         - call: tf-init       # call the tf-init step defined under `plan_install`
