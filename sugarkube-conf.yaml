@@ -47,37 +47,38 @@ programs:
           helm-params: "{{ .kapps.vars.helm_params }}"
 
     run_units:
-      working_dir: "{{ .kapp.cacheRoot }}"       # directory to use as the working directory
-      conditions:       # all must be true for any units to be run
-        - "{{ .kapp.vars.run_helm }}"
-      plan_install:
-        - name: helm-lint
-          command: |
-            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} lint \
-              --kube-context={{ .kapp.vars.kube_context }} \
-              --namespace={{ .kapp.vars.namespace }} . {{ .kapp.vars.helm_params }}
-      apply_install:
-        - name: helm-install
-          command: |
-            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} upgrade \
-              --kube-context={{ .kapp.vars.kube_context }} \
-              --tiller-namespace={{ .kapp.vars.tiller_namespace }} \
-              --wait \
-              --install \
-              --recreate-pods \
-              --timeout 600 \
-              --namespace={{ .kapp.vars.namespace }} \
-              {{ .kapp.vars.release }} . {{ .kapp.vars.helm_params }}
-          merge_priority: 5         # install helm charts *after* running terraform
-      apply_delete:
-        - name: helm-delete
-          command: |
-            KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} delete \
-              --kube-context={{ .kapp.vars.kube_context }} \
-              --tiller-namespace={{ .kapp.vars.tiller_namespace }} \
-              --purge \
-              {{ .kapp.vars.release }}
-          merge_priority: 0         # delete helm charts *before* running terraform
+      helm:
+        working_dir: "{{ .kapp.cacheRoot }}"       # directory to use as the working directory
+        conditions:       # all must be true for any units to be run
+          - "{{ .kapp.vars.run_helm }}"
+        plan_install:
+          - name: helm-lint
+            command: |
+              KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} lint \
+                --kube-context={{ .kapp.vars.kube_context }} \
+                --namespace={{ .kapp.vars.namespace }} . {{ .kapp.vars.helm_params }}
+        apply_install:
+          - name: helm-install
+            command: |
+              KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} upgrade \
+                --kube-context={{ .kapp.vars.kube_context }} \
+                --tiller-namespace={{ .kapp.vars.tiller_namespace }} \
+                --wait \
+                --install \
+                --recreate-pods \
+                --timeout 600 \
+                --namespace={{ .kapp.vars.namespace }} \
+                {{ .kapp.vars.release }} . {{ .kapp.vars.helm_params }}
+            merge_priority: 5         # install helm charts *after* running terraform
+        apply_delete:
+          - name: helm-delete
+            command: |
+              KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} delete \
+                --kube-context={{ .kapp.vars.kube_context }} \
+                --tiller-namespace={{ .kapp.vars.tiller_namespace }} \
+                --purge \
+                {{ .kapp.vars.release }}
+            merge_priority: 0         # delete helm charts *before* running terraform
 
   kubectl:
     vars:
@@ -110,35 +111,36 @@ programs:
           tf-patterns: "{{ .kapp.vars.tf_patterns }}"
 
     run_units:
-      working_dir: "{{ .kapp.vars.terraform_dir }}"       # directory to use as the working directory
-      conditions:       # all must be true for any units to be run
-        - "{{ .kapp.vars.run_terraform }}"
-        - "{{ exists \"d\" .kapp.vars.terraform_dir }}"          # won't run these if there's no terraform_<provider> directory (e.g. for local providers)
-      plan_install:
-        - name: tf-init
-          command: "{{ .kapp.vars.terraform }} init"
-          conditions:       # additional conditions for this specific step to be run. These must all be truthy for the command to be executed.
-            # only run if terraform hasn't already initialised (i.e. no .terraform directory exists)
-            - "{{ exists \"d\" \"{{ .kapp.vars.terraform_dir }}/.terraform\" }}"
-        - name: tf-format
-          command: "{{ .kapp.vars.terraform }} fmt"
-        - name: tf-validate
-          command: "{{ .kapp.vars.terraform }} validate {{ .kapp.vars.tf_params }}"
-        - name: tf-plan
-          command: "{{ .kapp.vars.terraform }} plan -refresh=true -out {{ .kapp.vars.tf_plan_path }} {{ .kapp.vars.tf_params }}"
-      apply_install:
-        - name: tf-apply
-          command: "{{ .kapp.vars.terraform }} apply {{ .kapp.vars.tf_plan_path }}"
-          merge_priority: 0         # apply terraform *before* installing a helm chart
-      apply_delete:
-        - call: tf-init       # call the tf-init step defined under `plan_install`
-        - name: tf-destroy
-          command: "{{ .kapp.vars.terraform }} destroy -auto-approve {{ .kapp.vars.tf_params }}"
-          merge_priority: 5         # delete terraform *after* deleting a helm chart
-      output:
-        - call: tf-init       # call the tf-init step defined under `plan_install`
-        - name: tf-output
-          command: "{{ .kapp.vars.terraform }} output -json > {{ .kapp.vars.tf_output_path }}"
+      terraform:
+        working_dir: "{{ .kapp.vars.terraform_dir }}"       # directory to use as the working directory
+        conditions:       # all must be true for any units to be run
+          - "{{ .kapp.vars.run_terraform }}"
+          - "{{ exists \"d\" .kapp.vars.terraform_dir }}"          # won't run these if there's no terraform_<provider> directory (e.g. for local providers)
+        plan_install:
+          - name: tf-init
+            command: "{{ .kapp.vars.terraform }} init"
+            conditions:       # additional conditions for this specific step to be run. These must all be truthy for the command to be executed.
+              # only run if terraform hasn't already initialised (i.e. no .terraform directory exists)
+              - "{{ exists \"d\" \"{{ .kapp.vars.terraform_dir }}/.terraform\" }}"
+          - name: tf-format
+            command: "{{ .kapp.vars.terraform }} fmt"
+          - name: tf-validate
+            command: "{{ .kapp.vars.terraform }} validate {{ .kapp.vars.tf_params }}"
+          - name: tf-plan
+            command: "{{ .kapp.vars.terraform }} plan -refresh=true -out {{ .kapp.vars.tf_plan_path }} {{ .kapp.vars.tf_params }}"
+        apply_install:
+          - name: tf-apply
+            command: "{{ .kapp.vars.terraform }} apply {{ .kapp.vars.tf_plan_path }}"
+            merge_priority: 0         # apply terraform *before* installing a helm chart
+        apply_delete:
+          - call: tf-init       # call the tf-init step defined under `plan_install`
+          - name: tf-destroy
+            command: "{{ .kapp.vars.terraform }} destroy -auto-approve {{ .kapp.vars.tf_params }}"
+            merge_priority: 5         # delete terraform *after* deleting a helm chart
+        output:
+          - call: tf-init       # call the tf-init step defined under `plan_install`
+          - name: tf-output
+            command: "{{ .kapp.vars.terraform }} output -json > {{ .kapp.vars.tf_output_path }}"
 
 # globally defined run units will be used as defaults for each program
 run_units:
