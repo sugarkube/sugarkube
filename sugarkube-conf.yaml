@@ -57,7 +57,7 @@ programs:
               --kube-context={{ .kapp.vars.kube_context }} \
               --namespace={{ .kapp.vars.namespace }} . {{ .kapp.vars.helm_params }}
       apply_install:
-        - name: helm install
+        - name: helm-install
           command: |
             KUBECONFIG={{ .kapp.vars.kubeconfig }} {{ .kapp.vars.helm }} upgrade \
               --kube-context={{ .kapp.vars.kube_context }} \
