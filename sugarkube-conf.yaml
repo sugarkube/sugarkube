@@ -34,6 +34,7 @@ programs:
       namespace: "{{ .kapp.id }}"
       release: "{{ .kapp.id }}"
       kube_context: "{{ .kube_context }}"
+      tiller_namespace: kube-system
       helm: helm        # path to the helm binary to run. This allows version pinning if you have multiple versions of helm on your machine.
       run_helm: true    # none of these units will be run for a kapp if this is false because of the associated condition
       <<: *helm_patterns
@@ -94,7 +95,7 @@ programs:
       project: "{{ .project }}"
       run_terraform: true    # none of these units will be run for a kapp if this is false because of the associated condition
       terraform: terraform   # path to the terraform binary to run. This allows version pinning if you have multiple versions of terraform on your machine.
-      terraform_dir: terraform_{{ .stack.provider }}
+      terraform_dir: "{{ .kapp.cacheRoot }}/terraform_{{ .stack.provider }}"
       tf_output_path: _generated_terraform_output.json
       tf_plan_path: _generated_plan.tfplan
       <<: *tf_patterns
@@ -109,16 +110,16 @@ programs:
           tf-patterns: "{{ .kapp.vars.tf_patterns }}"
 
     run_units:
-      working_dir: "{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}"       # directory to use as the working directory
+      working_dir: "{{ .kapp.vars.terraform_dir }}"       # directory to use as the working directory
       conditions:       # all must be true for any units to be run
         - "{{ .kapp.vars.run_terraform }}"
-        - "{{ eq len(findFiles .kapp.vars.terraform_dir) 1 }}"          # won't run these if there's no terraform_<provider> directory (e.g. for local providers)
+        - "{{ exists \"d\" .kapp.vars.terraform_dir }}"          # won't run these if there's no terraform_<provider> directory (e.g. for local providers)
       plan_install:
         - name: tf-init
           command: "{{ .kapp.vars.terraform }} init"
           conditions:       # additional conditions for this specific step to be run. These must all be truthy for the command to be executed.
-          # only run if terraform hasn't already initialised (i.e. no .terraform directory exists)
-          - "{{ eq len(findFiles \"{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}/.terraform\") 0 }}"
+            # only run if terraform hasn't already initialised (i.e. no .terraform directory exists)
+            - "{{ exists \"d\" \"{{ .kapp.vars.terraform_dir }}/.terraform\" }}"
         - name: tf-format
           command: "{{ .kapp.vars.terraform }} fmt"
         - name: tf-validate

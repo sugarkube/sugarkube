@@ -24,7 +24,7 @@ import (
 
 // implemented installers
 const Make = "make"
-const RunUnit = "rununit"
+const RunUnit = "run-unit"
 
 // Factory that creates installers
 func New(name string, providerImpl interfaces.IProvider) (interfaces.IInstaller, error) {

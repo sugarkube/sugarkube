@@ -201,8 +201,11 @@ func (i MakeInstaller) Clean(installableObj interfaces.IInstallable, stack inter
 	return i.run(TargetClean, installableObj, stack, true, dryRun)
 }
 
+// todo - get rid of this and just use plan-install, plan-delete, etc as make targets.
+//  see the rununit installer
 func (i MakeInstaller) GetVars(action string, approved bool) map[string]interface{} {
 	return map[string]interface{}{
 		"action":   action,
-		"approved": fmt.Sprintf("%v", approved)}
+		"approved": fmt.Sprintf("%v", approved),
+	}
 }

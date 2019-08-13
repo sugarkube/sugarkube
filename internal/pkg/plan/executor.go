@@ -424,7 +424,7 @@ func varsWorker(processCh <-chan NamedNode, doneCh chan<- NamedNode, errCh chan 
 
 		// template the kapp's descriptor, including the global registry
 		templatedVars, err := stackObj.GetTemplatedVars(installableObj,
-			installerImpl.GetVars("<action, e.g. install/delete>", false))
+			installerImpl.GetVars("<action, e.g. plan-install, apply-delete, etc>", false))
 
 		if len(suppress) > 0 {
 			for _, exclusion := range suppress {
