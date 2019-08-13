@@ -7,6 +7,10 @@ type RunUnitInstaller struct {
 	provider interfaces.IProvider
 }
 
+func (r RunUnitInstaller) Name() string {
+	return RunUnit
+}
+
 func (r RunUnitInstaller) PlanInstall(installableObj interfaces.IInstallable,
 	stack interfaces.IStack, dryRun bool) error {
 	return nil
@@ -35,10 +39,6 @@ func (r RunUnitInstaller) Clean(installableObj interfaces.IInstallable,
 func (r RunUnitInstaller) Output(installableObj interfaces.IInstallable,
 	stack interfaces.IStack, dryRun bool) error {
 	return nil
-}
-
-func (r RunUnitInstaller) Name() string {
-	return RunUnit
 }
 
 func (r RunUnitInstaller) GetVars(action string, approved bool) map[string]interface{} {

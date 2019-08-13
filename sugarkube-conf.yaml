@@ -34,6 +34,8 @@ programs:
       namespace: "{{ .kapp.id }}"
       release: "{{ .kapp.id }}"
       kube_context: "{{ .kube_context }}"
+      helm: helm        # path to the helm binary to run. This allows version pinning if you have multiple versions of helm on your machine.
+      run_helm: true    # none of these units will be run for a kapp if this is false because of the associated condition
       <<: *helm_patterns
 
     args:
@@ -44,9 +46,6 @@ programs:
           helm-params: "{{ .kapps.vars.helm_params }}"
 
     run_units:
-      vars:
-        helm: helm        # path to the helm binary to run. This allows version pinning if you have multiple versions of helm on your machine.
-        run_helm: true    # none of these units will be run for a kapp if this is false because of the associated condition
       working_dir: "{{ .kapp.cacheRoot }}"       # directory to use as the working directory
       conditions:       # all must be true for any units to be run
         - "{{ .kapp.vars.run_helm }}"
@@ -93,6 +92,11 @@ programs:
     vars:
       region: "{{ .stack.region }}"
       project: "{{ .project }}"
+      run_terraform: true    # none of these units will be run for a kapp if this is false because of the associated condition
+      terraform: terraform   # path to the terraform binary to run. This allows version pinning if you have multiple versions of terraform on your machine.
+      terraform_dir: terraform_{{ .stack.provider }}
+      tf_output_path: _generated_terraform_output.json
+      tf_plan_path: _generated_plan.tfplan
       <<: *tf_patterns
 
     args:
@@ -105,13 +109,6 @@ programs:
           tf-patterns: "{{ .kapp.vars.tf_patterns }}"
 
     run_units:
-      vars:
-        run_terraform: true    # none of these units will be run for a kapp if this is false because of the associated condition
-        terraform: terraform   # path to the terraform binary to run. This allows version pinning if you have multiple versions of terraform on your machine.
-        terraform_dir: terraform_{{ .stack.provider }}
-        tf_output_path: _generated_terraform_output.json
-        tf_plan_path: _generated_plan.tfplan
-
       working_dir: "{{ .kapp.cacheRoot }}/{{ .kapp.vars.terraform_dir }}"       # directory to use as the working directory
       conditions:       # all must be true for any units to be run
         - "{{ .kapp.vars.run_terraform }}"

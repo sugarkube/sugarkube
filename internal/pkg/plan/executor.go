@@ -267,8 +267,16 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			return
 		}
 
+		// Default to the make installer
+		installerName := installableObj.GetDescriptor().Installer
+		if installerName == "" {
+			installerName = installer.Make
+		}
+
+		log.Logger.Debugf("Instantiating a new '%s' installer for kapp '%s'", installerName, installableObj.Id())
+
 		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a Make installer)
-		installerImpl, err := installer.New(installer.Make, stackObj.GetProvider())
+		installerImpl, err := installer.New(installerName, stackObj.GetProvider())
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
 				"kapp '%s'", installableObj.Id())
