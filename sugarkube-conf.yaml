@@ -1,6 +1,6 @@
-log-level: none
-#json-logs: false
-#no-color: true
+log_level: none
+#json_logs: false
+#no_color: true
 
 # Dynamically searches for terraform tfvars files based on the current stack provider and various properties of the
 # stack (e.g. name, region, etc.) as well as any generated files. All files found are prepended by `-var-file`

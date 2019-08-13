@@ -178,9 +178,9 @@ func init() {
 
 	// bind viper to CLI args
 	bindings := map[string]string{
-		"log-level": "log-level",
-		"json-logs": "json-logs",
-		"no-color":  "no-color",
+		"log_level": "log-level",
+		"json_logs": "json-logs",
+		"no_color":  "no-color",
 	}
 
 	viperConfig := config.ViperConfig

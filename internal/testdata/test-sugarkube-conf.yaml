@@ -1,5 +1,5 @@
-log-level: warn
-json-logs: false
+log_level: warn
+json_logs: false
 
 programs:
   helm:
