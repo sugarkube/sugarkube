@@ -21,10 +21,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
+	"os"
 	"text/template"
 )
 
 var CustomFunctions = template.FuncMap{
+	"exists":      exists,
 	"findFiles":   findFiles,
 	"mapPrintF":   mapPrintF,
 	"listString":  listString,
@@ -87,6 +89,30 @@ func removeEmpty(genericItems interface{}) []string {
 	}
 
 	return output
+}
+
+// Checks whether a path exists. The filetype string determines whether to test for a file or dir
+func exists(fileType string, path string) (bool, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+
+	switch fileType {
+	case "d":
+		return info.IsDir(), nil
+	case "f":
+		return info.Mode().IsRegular(), nil
+	case "any":
+		return true, nil
+	default:
+		return true, errors.New("No filetype specified. See docs for the `exists` " +
+			"template function.")
+	}
 }
 
 // Takes a list of file names and searches an input path for them recursively.
