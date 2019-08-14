@@ -96,7 +96,7 @@ programs:
       project: "{{ .project }}"
       run_terraform: true    # none of these units will be run for a kapp if this is false because of the associated condition
       terraform: terraform   # path to the terraform binary to run. This allows version pinning if you have multiple versions of terraform on your machine.
-      terraform_dir: "{{ .kapp.cacheRoot }}/terraform_{{ .stack.provider }}"
+      terraform_dir: "{{ .kapp.cacheRoot }}/{{ .kapp.id }}/terraform_{{ .stack.provider }}"
       tf_output_path: _generated_terraform_output.json
       tf_plan_path: _generated_plan.tfplan
       <<: *tf_patterns
@@ -121,7 +121,7 @@ programs:
             command: "{{ .kapp.vars.terraform }} init"
             conditions:       # additional conditions for this specific step to be run. These must all be truthy for the command to be executed.
               # only run if terraform hasn't already initialised (i.e. no .terraform directory exists)
-              - "{{ exists \"d\" \"{{ .kapp.vars.terraform_dir }}/.terraform\" }}"
+              - "{{ exists \"d\" \"{{ .kapp.vars.terraform_dir }}/.terraform\" | not }}"
           - name: tf-format
             command: "{{ .kapp.vars.terraform }} fmt"
           - name: tf-validate

@@ -50,13 +50,14 @@ type Action struct {
 }
 
 type RunStep struct {
-	Name          string
-	Command       string
-	Conditions    []string
-	MergePriority uint8 `yaml:"merge_priority"`
+	Name       string
+	Command    string
+	Conditions []string
+	// pointer so we can tell whether the user has actually set this value or not (otherwise it'd default to the zero value)
+	MergePriority *uint8 `yaml:"merge_priority" mapstructure:"merge_priority"`
 }
 
-type RunUnits struct {
+type RunUnit struct {
 	WorkingDir   string `yaml:"working_dir" mapstructure:"working_dir"`
 	Conditions   []string
 	PlanInstall  []RunStep `yaml:"plan_install" mapstructure:"plan_install"`
@@ -78,10 +79,10 @@ type KappConfig struct {
 	PreDeleteActions     []map[string]Action `yaml:"pre_delete_actions"`
 	Templates            []Template
 	Vars                 map[string]interface{}
-	Installer            string              // name of the installer to use
-	RunUnits             map[string]RunUnits `yaml:"run_units" mapstructure:"run_units"`
-	DependsOn            []string            `yaml:"depends_on"`             // fully qualified IDs of other kapps this depends on
-	IgnoreGlobalDefaults bool                `yaml:"ignore_global_defaults"` // don't add globally configured defaults for each requirement
+	Installer            string             // name of the installer to use
+	RunUnits             map[string]RunUnit `yaml:"run_units" mapstructure:"run_units"`
+	DependsOn            []string           `yaml:"depends_on"`             // fully qualified IDs of other kapps this depends on
+	IgnoreGlobalDefaults bool               `yaml:"ignore_global_defaults"` // don't add globally configured defaults for each requirement
 	// todo - implement
 	//VarsTemplate string		// this will be read as a string, templated then converted to YAML and merged with the Vars map
 }
