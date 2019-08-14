@@ -7,6 +7,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"math"
 	"sort"
 	"strconv"
@@ -21,20 +22,88 @@ func (r RunUnitInstaller) Name() string {
 	return RunUnit
 }
 
+// Search for a named run step in a list of them
+func findStep(steps []structs.RunStep, name string) *structs.RunStep {
+	for i := range steps {
+		if steps[i].Name == name {
+			return &steps[i]
+		}
+	}
+
+	return nil
+}
+
+// Replaces run steps that call another step with the actual step they refer to
+func interpolateCalls(steps []structs.RunStep, runUnits map[string]structs.RunUnit) ([]structs.RunStep, error) {
+
+	log.Logger.Tracef("Interpolating run steps: %#v", steps)
+
+	interpolated := make([]structs.RunStep, 0)
+
+	for _, step := range steps {
+		if step.Call != "" {
+			// find the referenced step
+			var targetStep *structs.RunStep
+			for _, v := range runUnits {
+				targetStep = findStep(v.PlanInstall, step.Call)
+
+				if targetStep == nil {
+					targetStep = findStep(v.ApplyInstall, step.Call)
+				}
+				if targetStep == nil {
+					targetStep = findStep(v.PlanDelete, step.Call)
+				}
+				if targetStep == nil {
+					targetStep = findStep(v.ApplyDelete, step.Call)
+				}
+
+				if targetStep != nil {
+					break
+				}
+			}
+
+			if targetStep == nil {
+				return nil, fmt.Errorf("Unable to find run step '%s'", step.Call)
+			}
+
+			// overwrite the merge priority with the one on the call step if it's set
+			var priority *uint8
+			if step.MergePriority != nil {
+				priority = step.MergePriority
+			}
+
+			// do a deep copy on the step so we can modify it
+			step = structs.RunStep{}
+			err := utils.DeepCopy(*targetStep, &step)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+
+			if priority != nil {
+				step.MergePriority = priority
+			}
+		}
+
+		interpolated = append(interpolated, step)
+	}
+
+	return interpolated, nil
+}
+
 // Merge steps for an action from different run units, respecting the merge priority (steps
 // with a priority closer to zero will appear earlier in the returned list. Steps with no
 // merge priority will appear last. Conditions on each run unit must evaluate to true to be
 // included in the resulting list.
-func mergeRunUnits(units map[string]structs.RunUnit, action string,
+func mergeRunUnits(runUnits map[string]structs.RunUnit, action string,
 	installableObj interfaces.IInstallable) ([]structs.RunStep, error) {
 
 	log.Logger.Tracef("Merging '%s' run units for '%s': %#v", action,
-		installableObj.FullyQualifiedId(), units)
+		installableObj.FullyQualifiedId(), runUnits)
 
 	steps := make([]structs.RunStep, 0)
 
-	for k, v := range units {
-		allOk, err := all(units[k].Conditions)
+	for k, v := range runUnits {
+		allOk, err := all(runUnits[k].Conditions)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -58,6 +127,12 @@ func mergeRunUnits(units map[string]structs.RunUnit, action string,
 		case constants.ApplyDelete:
 			steps = append(steps, v.ApplyDelete...)
 		}
+	}
+
+	// interpolate calls to other steps with the actual step
+	steps, err := interpolateCalls(steps, runUnits)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	// use a temporary variable because we can't use the address of a constant directly
@@ -125,6 +200,9 @@ func (r RunUnitInstaller) PlanInstall(installableObj interfaces.IInstallable,
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	// todo - check for any outputs after each step and load them. this will solve
+	//  passing outputs from terraform to helm
 
 	return nil
 }

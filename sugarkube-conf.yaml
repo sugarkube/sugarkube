@@ -69,7 +69,7 @@ programs:
                 --timeout 600 \
                 --namespace={{ .kapp.vars.namespace }} \
                 {{ .kapp.vars.release }} . {{ .kapp.vars.helm_params }}
-            merge_priority: 5         # install helm charts *after* running terraform
+            merge_priority: 30         # install helm charts *after* running terraform
         apply_delete:
           - name: helm-delete
             command: |
@@ -78,7 +78,7 @@ programs:
                 --tiller-namespace={{ .kapp.vars.tiller_namespace }} \
                 --purge \
                 {{ .kapp.vars.release }}
-            merge_priority: 0         # delete helm charts *before* running terraform
+            merge_priority: 10         # delete helm charts *before* running terraform (we don't use 0 so you can insert your own steps before this one)
 
   kubectl:
     vars:
@@ -131,12 +131,12 @@ programs:
         apply_install:
           - name: tf-apply
             command: "{{ .kapp.vars.terraform }} apply {{ .kapp.vars.tf_plan_path }}"
-            merge_priority: 0         # apply terraform *before* installing a helm chart
+            merge_priority: 10         # apply terraform *before* installing a helm chart
         apply_delete:
           - call: tf-init       # call the tf-init step defined under `plan_install`
           - name: tf-destroy
             command: "{{ .kapp.vars.terraform }} destroy -auto-approve {{ .kapp.vars.tf_params }}"
-            merge_priority: 5         # delete terraform *after* deleting a helm chart
+            merge_priority: 30         # delete terraform *after* deleting a helm chart
         output:
           - call: tf-init       # call the tf-init step defined under `plan_install`
           - name: tf-output

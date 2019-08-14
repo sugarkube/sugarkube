@@ -50,11 +50,12 @@ type Action struct {
 }
 
 type RunStep struct {
-	Name       string
-	Command    string
-	Conditions []string
-	// pointer so we can tell whether the user has actually set this value or not (otherwise it'd default to the zero value)
+	Name          string
+	Command       string
+	Conditions    []string
 	MergePriority *uint8 `yaml:"merge_priority" mapstructure:"merge_priority"`
+	// pointer so we can tell whether the user has actually set this value or not (otherwise it'd default to the zero value)
+	Call string
 }
 
 type RunUnit struct {
