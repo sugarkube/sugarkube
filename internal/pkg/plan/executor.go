@@ -17,6 +17,7 @@
 package plan
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
@@ -278,6 +279,8 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			return
 		}
 
+		var runSteps []structs.RunStep
+
 		switch action {
 		case constants.DagActionInstall:
 			installOrDelete(true, dagObj, node, installerImpl, stackObj, plan, approved, skipPreActions,
@@ -296,9 +299,15 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 					return
 				}
 
-				steps, err := installerImpl.Clean(installableObj, stackObj, dryRun)
+				runSteps, err = installerImpl.Clean(installableObj, stackObj, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error cleaning kapp '%s'", installableObj.Id())
+					return
+				}
+
+				err = executeRunSteps(runSteps, installableObj, dryRun)
+				if err != nil {
+					errCh <- errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 					return
 				}
 			}
@@ -313,9 +322,15 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 					return
 				}
 
-				steps, err := installerImpl.Output(installableObj, stackObj, dryRun)
+				runSteps, err = installerImpl.Output(installableObj, stackObj, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error generating output for kapp '%s'", installableObj.Id())
+					return
+				}
+
+				err = executeRunSteps(runSteps, installableObj, dryRun)
+				if err != nil {
+					errCh <- errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 					return
 				}
 			}
@@ -345,6 +360,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 				return
 			}
 
+			// todo - what should we do here?
 			// try loading outputs, but don't fail if we can't
 			outputs, err := getOutputs(installableObj, stackObj, installerImpl, true, dryRun)
 			if err != nil {
@@ -481,6 +497,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 
 	installableObj := node.installableObj
 
+	var runSteps []structs.RunStep
 	var actionName string
 	var installerMethod func(installableObj interfaces.IInstallable, stack interfaces.IStack, dryRun bool) ([]structs.RunStep, error)
 	var preActions []structs.Action
@@ -504,7 +521,18 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				installerMethod = installerImpl.PlanDelete
 			}
 
-			steps, err := installerMethod(installableObj, stackObj, dryRun)
+			runSteps, err = installerMethod(installableObj, stackObj, dryRun)
+			if err != nil {
+				if ignoreErrors {
+					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
+						installableObj.FullyQualifiedId(), err)
+					return
+				}
+				errCh <- errors.Wrapf(err, "Error planning kapp '%s'", installableObj.Id())
+				return
+			}
+
+			err = executeRunSteps(runSteps, installableObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
@@ -547,7 +575,18 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				installerMethod = installerImpl.ApplyDelete
 			}
 
-			steps, err := installerMethod(installableObj, stackObj, dryRun)
+			runSteps, err = installerMethod(installableObj, stackObj, dryRun)
+			if err != nil {
+				if ignoreErrors {
+					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
+						installableObj.FullyQualifiedId(), err)
+					return
+				}
+				errCh <- errors.Wrapf(err, "Error processing kapp '%s'", installableObj.Id())
+				return
+			}
+
+			err = executeRunSteps(runSteps, installableObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
@@ -599,6 +638,49 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	}
 }
 
+// Executes a list of run steps
+func executeRunSteps(runSteps []structs.RunStep, installableObj interfaces.IInstallable, dryRun bool) error {
+
+	for _, step := range runSteps {
+		// evaluate any conditions
+		allOk, err := utils.All(step.Conditions)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		if !allOk {
+			log.Logger.Infof("Some conditions for run step '%s' evaluated to false for kapp '%s'. Won't execute "+
+				"run units for it.", step.Name, installableObj.FullyQualifiedId())
+			continue
+		}
+
+		var stdoutBuf, stderrBuf bytes.Buffer
+		err = utils.ExecCommand(step.Command, step.Args, step.EnvVars, &stdoutBuf,
+			&stderrBuf, step.WorkingDir, step.Timeout, dryRun)
+
+		log.Logger.Infof("Stdout: %s", stdoutBuf.String())
+		log.Logger.Infof("Stderr: %s", stderrBuf.String())
+
+		if step.Stdout != "" {
+			// todo write stdout to file
+		}
+
+		if step.Stderr != "" {
+			// todo write stderr to file
+		}
+
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		if step.LoadOutputs {
+			// todo - load any outputs, parse them and add values to the registry
+		}
+	}
+
+	return nil
+}
+
 // Makes a kapp generate its output then loads and returns them
 func getOutputs(installableObj interfaces.IInstallable, stackObj interfaces.IStack,
 	installerImpl interfaces.IInstaller, ignoreMissing bool, dryRun bool) (map[string]interface{}, error) {
@@ -607,9 +689,14 @@ func getOutputs(installableObj interfaces.IInstallable, stackObj interfaces.ISta
 	// try to load kapp outputs and fail if we can't (assume we only need to do this when installing)
 	if installableObj.HasOutputs() {
 		// run the output target to write outputs to files
-		steps, err := installerImpl.Output(installableObj, stackObj, dryRun)
+		runSteps, err := installerImpl.Output(installableObj, stackObj, dryRun)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error writing output for kapp '%s'", installableObj.Id())
+		}
+
+		err = executeRunSteps(runSteps, installableObj, dryRun)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 		}
 
 		// load and parse outputs

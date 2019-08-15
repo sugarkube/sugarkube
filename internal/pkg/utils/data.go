@@ -19,6 +19,7 @@ package utils
 import (
 	"encoding/json"
 	"github.com/pkg/errors"
+	"strconv"
 )
 
 // Creates a nested map with the final element an empty string
@@ -46,4 +47,22 @@ func DeepCopy(in interface{}, out interface{}) error {
 	}
 
 	return nil
+}
+
+// Returns true if all conditions are true. Conditions must be parseable as booleans.
+func All(conditions []string) (bool, error) {
+	var boolCondition bool
+	var err error
+	for _, condition := range conditions {
+		boolCondition, err = strconv.ParseBool(condition)
+		if err != nil {
+			return false, errors.WithStack(err)
+		}
+
+		if !boolCondition {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }

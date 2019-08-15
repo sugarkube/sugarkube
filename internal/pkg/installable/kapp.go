@@ -220,33 +220,6 @@ func (k Kapp) FullyQualifiedId() string {
 	}
 }
 
-// Return env vars
-func (k Kapp) GetEnvVars() map[string]interface{} {
-	return k.mergedDescriptor.EnvVars
-}
-
-// Return CLI args for the Kapp for the given installer and command/target
-func (k Kapp) GetCliArgs(installerName string, command string) []string {
-	installerArgs, ok := k.mergedDescriptor.Args[installerName]
-	if !ok {
-		return []string{}
-	}
-
-	commandArgs, ok := installerArgs[command]
-	if !ok {
-		return []string{}
-	}
-
-	cliArgs := make([]string, 0)
-
-	for name, value := range commandArgs {
-		joined := strings.Join([]string{name, value}, "=")
-		cliArgs = append(cliArgs, joined)
-	}
-
-	return cliArgs
-}
-
 // Returns the directory for this kapp in the cache, i.e. the directory containing the kapp's
 // .sugarkube directory. This path may or may not exist depending on whether the cache has actually
 // been created.

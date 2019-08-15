@@ -10,7 +10,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"math"
 	"sort"
-	"strconv"
 )
 
 // Installs kapps with defined run units
@@ -90,6 +89,19 @@ func interpolateCalls(steps []structs.RunStep, runUnits map[string]structs.RunUn
 	return interpolated, nil
 }
 
+// Default to the run unit's working dir if the step doesn't define its own
+func SetDefaults(runUnit structs.RunUnit, runSteps []structs.RunStep) []structs.RunStep {
+
+	// use the unit's working dir if none was defined on the step itself
+	for i := range runSteps {
+		if runSteps[i].WorkingDir == "" {
+			runSteps[i].WorkingDir = runUnit.WorkingDir
+		}
+	}
+
+	return runSteps
+}
+
 // Merge steps for an action from different run units, respecting the merge priority (steps
 // with a priority closer to zero will appear earlier in the returned list. Steps with no
 // merge priority will appear last. Conditions on each run unit must evaluate to true to be
@@ -103,7 +115,7 @@ func mergeRunUnits(runUnits map[string]structs.RunUnit, action string,
 	steps := make([]structs.RunStep, 0)
 
 	for k, v := range runUnits {
-		allOk, err := all(runUnits[k].Conditions)
+		allOk, err := utils.All(runUnits[k].Conditions)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -119,13 +131,17 @@ func mergeRunUnits(runUnits map[string]structs.RunUnit, action string,
 
 		switch action {
 		case constants.PlanInstall:
-			steps = append(steps, v.PlanInstall...)
+			runSteps := SetDefaults(v, v.PlanInstall)
+			steps = append(steps, runSteps...)
 		case constants.ApplyInstall:
-			steps = append(steps, v.ApplyInstall...)
+			runSteps := SetDefaults(v, v.ApplyInstall)
+			steps = append(steps, runSteps...)
 		case constants.PlanDelete:
-			steps = append(steps, v.PlanDelete...)
+			runSteps := SetDefaults(v, v.PlanDelete)
+			steps = append(steps, runSteps...)
 		case constants.ApplyDelete:
-			steps = append(steps, v.ApplyDelete...)
+			runSteps := SetDefaults(v, v.ApplyDelete)
+			steps = append(steps, runSteps...)
 		}
 	}
 
@@ -236,22 +252,4 @@ func (r RunUnitInstaller) GetVars(action string, dryRun bool) map[string]interfa
 		"action":  action,
 		"dry-run": dryRun,
 	}
-}
-
-// Returns true if all conditions are true. Conditions must be parseable as booleans.
-func all(conditions []string) (bool, error) {
-	var boolCondition bool
-	var err error
-	for _, condition := range conditions {
-		boolCondition, err = strconv.ParseBool(condition)
-		if err != nil {
-			return false, errors.WithStack(err)
-		}
-
-		if !boolCondition {
-			return false, nil
-		}
-	}
-
-	return true, nil
 }

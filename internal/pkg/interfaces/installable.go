@@ -39,8 +39,6 @@ type IInstallable interface {
 	GetConfigFileDir() string
 	Acquirers() (map[string]acquirer.Acquirer, error)
 	TemplateDescriptor(templateVars map[string]interface{}) error
-	GetCliArgs(installerName string, command string) []string
-	GetEnvVars() map[string]interface{}
 	Vars(stack IStack) (map[string]interface{}, error)
 	AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool) error
 	RenderTemplates(templateVars map[string]interface{}, stackConfig IStackConfig,

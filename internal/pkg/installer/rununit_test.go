@@ -21,6 +21,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"testing"
 )
 
@@ -142,7 +143,7 @@ func TestAll(t *testing.T) {
 	}
 
 	for _, input := range inputs {
-		actual, err := all(input.conditions)
+		actual, err := utils.All(input.conditions)
 		assert.Nil(t, err)
 		assert.Equal(t, input.expected, actual)
 	}

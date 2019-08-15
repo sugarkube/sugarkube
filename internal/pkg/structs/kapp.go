@@ -52,7 +52,12 @@ type Action struct {
 type RunStep struct {
 	Name          string
 	Command       string
+	Args          []string
+	EnvVars       map[string]string
+	Stdout        string // path to write stdout to
+	Stderr        string // path to write stderr to
 	Conditions    []string
+	WorkingDir    string `yaml:"working_dir" mapstructure:"working_dir"`
 	MergePriority *uint8 `yaml:"merge_priority" mapstructure:"merge_priority"`
 	// pointer so we can tell whether the user has actually set this value or not (otherwise it'd default to the zero value)
 	Call string
@@ -60,6 +65,7 @@ type RunStep struct {
 	// this step. Missing outputs won't cause errors though because this can be specified
 	// multiple times as different outputs become available.
 	LoadOutputs bool `yaml:"load_outputs" mapstructure:"load_outputs"`
+	Timeout     int  // number of seconds the command must complete within
 }
 
 type RunUnit struct {
@@ -74,9 +80,7 @@ type RunUnit struct {
 // A struct for an actual sugarkube.yaml file
 type KappConfig struct {
 	State                string
-	EnvVars              map[string]interface{} `yaml:"env_vars"`
 	Version              string
-	Args                 map[string]map[string]map[string]string
 	Requires             []string
 	PostInstallActions   []map[string]Action `yaml:"post_install_actions"`
 	PostDeleteActions    []map[string]Action `yaml:"post_delete_actions"`

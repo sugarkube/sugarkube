@@ -5,6 +5,7 @@
 * Add a `--no-color` option to the main sugarkube command to disable coloured output
 * The DAG now prints progress information about the nodes it's waiting on.
 * Remove the 'make' installer. Everything it could do can be done with run units instead.
+* Remove env vars from the kapp config. Make sure to remove any `env_vars` blocks from `sugarkube.yaml` files.
 
 ## 0.8.0
 * Pinning kapp versions in stacks is now much more concise. See `internal/testdata/stack-pinned.yaml` for an example.
