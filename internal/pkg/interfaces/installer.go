@@ -16,13 +16,15 @@
 
 package interfaces
 
+import "github.com/sugarkube/sugarkube/internal/pkg/structs"
+
 type IInstaller interface {
-	PlanInstall(installableObj IInstallable, stackObj IStack, dryRun bool) error
-	ApplyInstall(installableObj IInstallable, stackObj IStack, dryRun bool) error
-	PlanDelete(installableObj IInstallable, stackObj IStack, dryRun bool) error
-	ApplyDelete(installableObj IInstallable, stackObj IStack, dryRun bool) error
-	Clean(installableObj IInstallable, stackObj IStack, dryRun bool) error
-	Output(installableObj IInstallable, stackObj IStack, dryRun bool) error
+	PlanInstall(installableObj IInstallable, stackObj IStack, dryRun bool) ([]structs.RunStep, error)
+	ApplyInstall(installableObj IInstallable, stackObj IStack, dryRun bool) ([]structs.RunStep, error)
+	PlanDelete(installableObj IInstallable, stackObj IStack, dryRun bool) ([]structs.RunStep, error)
+	ApplyDelete(installableObj IInstallable, stackObj IStack, dryRun bool) ([]structs.RunStep, error)
+	Clean(installableObj IInstallable, stackObj IStack, dryRun bool) ([]structs.RunStep, error)
+	Output(installableObj IInstallable, stackObj IStack, dryRun bool) ([]structs.RunStep, error)
 	Name() string
 	GetVars(action string, approved bool) map[string]interface{}
 }

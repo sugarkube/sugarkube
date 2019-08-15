@@ -16,6 +16,7 @@
 
 package installer
 
+/*
 import (
 	"bytes"
 	"fmt"
@@ -203,9 +204,10 @@ func (i MakeInstaller) Clean(installableObj interfaces.IInstallable, stack inter
 
 // todo - get rid of this and just use plan-install, plan-delete, etc as make targets.
 //  see the rununit installer
-func (i MakeInstaller) GetVars(action string, approved bool) map[string]interface{} {
+func (i MakeInstaller) GetVars(action string, dryRun bool) map[string]interface{} {
 	return map[string]interface{}{
-		"action":   action,
-		"approved": fmt.Sprintf("%v", approved),
+		"action":  action,
+		"dry-run": fmt.Sprintf("%v", dryRun),
 	}
 }
+*/

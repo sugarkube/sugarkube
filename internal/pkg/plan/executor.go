@@ -203,8 +203,8 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 			return
 		}
 
-		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a Make installer)
-		installerImpl, err := installer.New(installer.Make, stackObj.GetProvider())
+		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a RunUnit installer)
+		installerImpl, err := installer.New(installer.RunUnit, stackObj.GetProvider())
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
 				"kapp '%s'", installableObj.Id())
@@ -213,7 +213,7 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 
 		// template the kapp's descriptor, including the global registry
 		templatedVars, err := stackObj.GetTemplatedVars(installableObj,
-			installerImpl.GetVars(action, approved))
+			installerImpl.GetVars(action, dryRun))
 		if err != nil {
 			errCh <- errors.WithStack(err)
 			return
@@ -266,10 +266,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 		}
 
 		// Default to the make installer
-		installerName := installableObj.GetDescriptor().Installer
-		if installerName == "" {
-			installerName = installer.Make
-		}
+		installerName := installer.RunUnit
 
 		log.Logger.Debugf("Instantiating a new '%s' installer for kapp '%s'", installerName, installableObj.Id())
 
@@ -292,14 +289,14 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			if node.marked {
 				// template the kapp's descriptor, including the global registry
 				templatedVars, err := stackObj.GetTemplatedVars(installableObj,
-					installerImpl.GetVars(action, approved))
+					installerImpl.GetVars(action, dryRun))
 				err = installableObj.TemplateDescriptor(templatedVars)
 				if err != nil {
 					errCh <- errors.WithStack(err)
 					return
 				}
 
-				err = installerImpl.Clean(installableObj, stackObj, dryRun)
+				steps, err := installerImpl.Clean(installableObj, stackObj, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error cleaning kapp '%s'", installableObj.Id())
 					return
@@ -309,14 +306,14 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			if node.marked {
 				// template the kapp's descriptor, including the global registry
 				templatedVars, err := stackObj.GetTemplatedVars(installableObj,
-					installerImpl.GetVars(action, approved))
+					installerImpl.GetVars(action, dryRun))
 				err = installableObj.TemplateDescriptor(templatedVars)
 				if err != nil {
 					errCh <- errors.WithStack(err)
 					return
 				}
 
-				err = installerImpl.Output(installableObj, stackObj, dryRun)
+				steps, err := installerImpl.Output(installableObj, stackObj, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error generating output for kapp '%s'", installableObj.Id())
 					return
@@ -325,7 +322,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 		case constants.DagActionTemplate:
 			// Template nodes before trying to get the output in case getting the output relies on templated
 			// files, e.g. terraform backends
-			installerVars := installerImpl.GetVars(action, approved)
+			installerVars := installerImpl.GetVars(action, dryRun)
 			if node.marked {
 				err = renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
 				if err != nil {
@@ -341,7 +338,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 
 			// template the kapp's descriptor, including the global registry
 			templatedVars, err := stackObj.GetTemplatedVars(installableObj,
-				installerImpl.GetVars(action, approved))
+				installerImpl.GetVars(action, dryRun))
 			err = installableObj.TemplateDescriptor(templatedVars)
 			if err != nil {
 				errCh <- errors.WithStack(err)
@@ -410,8 +407,8 @@ func varsWorker(processCh <-chan NamedNode, doneCh chan<- NamedNode, errCh chan 
 			return
 		}
 
-		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a Make installer)
-		installerImpl, err := installer.New(installer.Make, stackObj.GetProvider())
+		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a RunUnit installer)
+		installerImpl, err := installer.New(installer.RunUnit, stackObj.GetProvider())
 		if err != nil {
 			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
 				"kapp '%s'", installableObj.Id())
@@ -485,11 +482,11 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	installableObj := node.installableObj
 
 	var actionName string
-	var installerMethod func(installableObj interfaces.IInstallable, stack interfaces.IStack, dryRun bool) error
+	var installerMethod func(installableObj interfaces.IInstallable, stack interfaces.IStack, dryRun bool) ([]structs.RunStep, error)
 	var preActions []structs.Action
 	var postActions []structs.Action
 
-	installerVars := installerImpl.GetVars(actionName, approved)
+	installerVars := installerImpl.GetVars(actionName, dryRun)
 
 	// render templates in case any are used as outputs for some reason
 	err := renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
@@ -507,7 +504,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				installerMethod = installerImpl.PlanDelete
 			}
 
-			err = installerMethod(installableObj, stackObj, dryRun)
+			steps, err := installerMethod(installableObj, stackObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
@@ -550,7 +547,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				installerMethod = installerImpl.ApplyDelete
 			}
 
-			err = installerMethod(installableObj, stackObj, dryRun)
+			steps, err := installerMethod(installableObj, stackObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
@@ -610,7 +607,7 @@ func getOutputs(installableObj interfaces.IInstallable, stackObj interfaces.ISta
 	// try to load kapp outputs and fail if we can't (assume we only need to do this when installing)
 	if installableObj.HasOutputs() {
 		// run the output target to write outputs to files
-		err := installerImpl.Output(installableObj, stackObj, dryRun)
+		steps, err := installerImpl.Output(installableObj, stackObj, dryRun)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error writing output for kapp '%s'", installableObj.Id())
 		}

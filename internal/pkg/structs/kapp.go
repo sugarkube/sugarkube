@@ -84,7 +84,6 @@ type KappConfig struct {
 	PreDeleteActions     []map[string]Action `yaml:"pre_delete_actions"`
 	Templates            []Template
 	Vars                 map[string]interface{}
-	Installer            string             // name of the installer to use
 	RunUnits             map[string]RunUnit `yaml:"run_units" mapstructure:"run_units"`
 	DependsOn            []string           `yaml:"depends_on"`             // fully qualified IDs of other kapps this depends on
 	IgnoreGlobalDefaults bool               `yaml:"ignore_global_defaults"` // don't add globally configured defaults for each requirement

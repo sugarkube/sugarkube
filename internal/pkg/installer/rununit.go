@@ -160,8 +160,8 @@ func mergeRunUnits(runUnits map[string]structs.RunUnit, action string,
 	return steps, nil
 }
 
-func (r RunUnitInstaller) initialise(installableObj interfaces.IInstallable,
-	stackObj interfaces.IStack, action string, dryRun bool) error {
+func (r RunUnitInstaller) getRunSteps(installableObj interfaces.IInstallable,
+	stackObj interfaces.IStack, action string, dryRun bool) ([]structs.RunStep, error) {
 
 	installerVars := map[string]interface{}{
 		"action":  action,
@@ -170,13 +170,13 @@ func (r RunUnitInstaller) initialise(installableObj interfaces.IInstallable,
 
 	templatedVars, err := stackObj.GetTemplatedVars(installableObj, installerVars)
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	// template the kapp's descriptor
 	err = installableObj.TemplateDescriptor(templatedVars)
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	// all templates in the run units will now have been evaluated. So e.g. conditions should
@@ -185,87 +185,58 @@ func (r RunUnitInstaller) initialise(installableObj interfaces.IInstallable,
 
 	runSteps, err := mergeRunUnits(runUnits, action, installableObj)
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
-	log.Logger.Fatalf("** Got run steps: %#v", runSteps)
+	log.Logger.Debugf("Calculated '%s' run steps for '%s': %#v", action, installableObj.FullyQualifiedId(),
+		runSteps)
 
-	return nil
+	return runSteps, nil
 }
 
 func (r RunUnitInstaller) PlanInstall(installableObj interfaces.IInstallable,
-	stackObj interfaces.IStack, dryRun bool) error {
+	stackObj interfaces.IStack, dryRun bool) ([]structs.RunStep, error) {
 
-	err := r.initialise(installableObj, stackObj, constants.PlanInstall, dryRun)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	// todo - check for any outputs after each step and load them. this will solve
-	//  passing outputs from terraform to helm
-
-	return nil
+	return r.getRunSteps(installableObj, stackObj, constants.PlanInstall, dryRun)
 }
 
 func (r RunUnitInstaller) ApplyInstall(installableObj interfaces.IInstallable,
-	stackObj interfaces.IStack, dryRun bool) error {
+	stackObj interfaces.IStack, dryRun bool) ([]structs.RunStep, error) {
 
-	err := r.initialise(installableObj, stackObj, constants.ApplyInstall, dryRun)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
+	return r.getRunSteps(installableObj, stackObj, constants.ApplyInstall, dryRun)
 }
 
 func (r RunUnitInstaller) PlanDelete(installableObj interfaces.IInstallable,
-	stackObj interfaces.IStack, dryRun bool) error {
+	stackObj interfaces.IStack, dryRun bool) ([]structs.RunStep, error) {
 
-	err := r.initialise(installableObj, stackObj, constants.PlanDelete, dryRun)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
+	return r.getRunSteps(installableObj, stackObj, constants.PlanDelete, dryRun)
 }
 
 func (r RunUnitInstaller) ApplyDelete(installableObj interfaces.IInstallable,
-	stackObj interfaces.IStack, dryRun bool) error {
+	stackObj interfaces.IStack, dryRun bool) ([]structs.RunStep, error) {
 
-	err := r.initialise(installableObj, stackObj, constants.ApplyDelete, dryRun)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
+	return r.getRunSteps(installableObj, stackObj, constants.ApplyDelete, dryRun)
 }
 
 func (r RunUnitInstaller) Clean(installableObj interfaces.IInstallable,
-	stackObj interfaces.IStack, dryRun bool) error {
-	return nil
+	stackObj interfaces.IStack, dryRun bool) ([]structs.RunStep, error) {
+
+	return r.getRunSteps(installableObj, stackObj, constants.Clean, dryRun)
 }
 
 func (r RunUnitInstaller) Output(installableObj interfaces.IInstallable,
-	stackObj interfaces.IStack, dryRun bool) error {
-	return nil
+	stackObj interfaces.IStack, dryRun bool) ([]structs.RunStep, error) {
+
+	return r.getRunSteps(installableObj, stackObj, constants.Output, dryRun)
 }
 
 // todo - get rid of this and just return the action name
-func (r RunUnitInstaller) GetVars(action string, approved bool) map[string]interface{} {
+func (r RunUnitInstaller) GetVars(action string, dryRun bool) map[string]interface{} {
 	return map[string]interface{}{
-		"action":   action,
-		"approved": fmt.Sprintf("%v", approved),
+		"action":  action,
+		"dry-run": dryRun,
 	}
 }
-
-// Evaluates a list of conditional strings by running them through the templater
-//func evaluateConditions(conditions []string) (bool, error) {
-//	results := make([]bool, 0)
-//
-//	for _, conditionTemplate := range conditions {
-//		result := templater.RenderTemplate(conditionTemplate, )
-//	}
-//}
 
 // Returns true if all conditions are true. Conditions must be parseable as booleans.
 func all(conditions []string) (bool, error) {
