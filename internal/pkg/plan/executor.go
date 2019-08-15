@@ -195,8 +195,6 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 		kappRootDir := installableObj.GetCacheDir()
 		log.Logger.Infof("Registry worker received kapp '%s' in %s for processing", installableObj.FullyQualifiedId(), kappRootDir)
 
-		// todo - print (to stdout) details of the kapp being executed
-
 		_, err := os.Stat(kappRootDir)
 		if err != nil {
 			msg := fmt.Sprintf("Kapp '%s' doesn't exist in the cache at '%s'", installableObj.Id(), kappRootDir)

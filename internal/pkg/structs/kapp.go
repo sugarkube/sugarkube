@@ -56,6 +56,10 @@ type RunStep struct {
 	MergePriority *uint8 `yaml:"merge_priority" mapstructure:"merge_priority"`
 	// pointer so we can tell whether the user has actually set this value or not (otherwise it'd default to the zero value)
 	Call string
+	// instructs sugarkube to load and parse any outputs defined by the kapp after running
+	// this step. Missing outputs won't cause errors though because this can be specified
+	// multiple times as different outputs become available.
+	LoadOutputs bool `yaml:"load_outputs" mapstructure:"load_outputs"`
 }
 
 type RunUnit struct {

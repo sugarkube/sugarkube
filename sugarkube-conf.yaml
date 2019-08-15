@@ -69,7 +69,8 @@ programs:
                 --timeout 600 \
                 --namespace={{ .kapp.vars.namespace }} \
                 {{ .kapp.vars.release }} . {{ .kapp.vars.helm_params }}
-            merge_priority: 30         # install helm charts *after* running terraform
+            merge_priority: 30         # install helm charts *after* running terraform if terraform is used. By default
+                                       # terraform output will have been generated and loaded.
         apply_delete:
           - name: helm-delete
             command: |
@@ -132,15 +133,25 @@ programs:
           - name: tf-apply
             command: "{{ .kapp.vars.terraform }} apply {{ .kapp.vars.tf_plan_path }}"
             merge_priority: 10         # apply terraform *before* installing a helm chart
+          - call: output      # call the whole 'output' unit
+            merge_priority: 15         # apply terraform *before* installing a helm chart
         apply_delete:
-          - call: tf-init       # call the tf-init step defined under `plan_install`
+          - call: plan-install/tf-init       # call the tf-init step defined under `plan_install`
+            merge_priority: 25  # this needs to be merged after helm has run
           - name: tf-destroy
             command: "{{ .kapp.vars.terraform }} destroy -auto-approve {{ .kapp.vars.tf_params }}"
             merge_priority: 30         # delete terraform *after* deleting a helm chart
         output:
-          - call: tf-init       # call the tf-init step defined under `plan_install`
+          - call: plan-install/tf-init       # call the tf-init step defined under `plan_install`
+          - name: tf-refresh
+            command: "{{ .kapp.vars.terraform }} refresh {{ .kapp.vars.tf_params }}"
+            conditions:
+              # this is evaluated before any steps are executed so it'll be false even if the tf-init step has just
+              # created this directory
+              - "{{ exists \"d\" \"{{ .kapp.vars.terraform_dir }}/.terraform\" | not }}"
           - name: tf-output
             command: "{{ .kapp.vars.terraform }} output -json > {{ .kapp.vars.tf_output_path }}"
+            load_outputs: true      # instructs sugarkube to load and parse any defined outputs making them available for subsequent run steps
 
 # globally defined run units will be used as defaults for each program
 run_units:
