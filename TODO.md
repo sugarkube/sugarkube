@@ -7,8 +7,7 @@
 * Documentation!!
 * Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist
   depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a kapp with the local provider because it hasn't e.g. written terraform output to a path that it would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for remote providers, not the local one
-* ~~Create a dedicated terraform installer~~  Subsumed by run units.
-* ~~Create a python installer~~  Subsumed by run units.
+  * Use `conditions`
 * Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
 * Only run a kops update if the spec has changed (diff the new spec with the existing one)
 * Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity) (created https://github.com/kubernetes/kops/issues/7393)
@@ -19,7 +18,8 @@
 * Add a setting to throw an error if kapp IDs aren't globally unique. We don't care, but terraform does with our sample naming convention. The options are either to add the manifest ID to the TF state path which stops people reorganising, or making kapp IDs globally unique, otherwise e.g. 2 wordpress instances in different manifests could clobber each other  
 * Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
 * Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them)
-  
+* Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
+
 ### Cluster updates
 * It should be easy to see what changes will be applied by kops - perhaps go to a two-stage approach with a '--yes' flag, to make a distinction between --dry-run and staging changes.
 * If a kapp uses actions to create/update clusters, warn users if the cluster config would be altered while they're planning it, and get them to pass an extra flag to confirm the config change (to avoid accidental cluster config changes)
@@ -33,16 +33,6 @@
 * Provide a 'varsTemplate' field to allow for templating before parsing vars. That'll help with things like reassigning
   a map. Template this block then parse it as yaml and merge it with the other vars.
 * It should be possible to load terraform outputs and use them to template other files in the kapp before installing them, without jumping through hoops with running a script to add them to the environment (a la keycloak)
-
-### Installers
-All these subsumed by run units.
-* ~~Support declaring the name of makefiles in case a repo already has one~~
-* ~~Get rid of the duplication of mapping variables - we currently do it once in sugarkube.yaml files then again in makefiles. Try to automate the mapping in makefiles~~
-* ~~Need to use 'override' with params in makefiles. How can we make that simpler?~~
-* ~~See if we can suppress warning in overridden makefiles by using the technique by mpb~~ [described here](https://stackoverflow.com/questions/11958626/make-file-warning-overriding-commands-for-target)
-* ~~document  tf-params vs tf-opts and the same for helm in the makefiles~~
-* ~~Create a generic 'script' installer that takes the name of the script to run and whether to pass it values as env vars or written to a file as parameters~~
-* ~~This could support ruby, js, python, etc. May need an 'init' call to e.g. make things install dependencies~~
 
 ### Developer experience
 * Stream console output in real-time - see stern for an example of streaming logs from multiple processes in parallel. Add a flag to enable this.
