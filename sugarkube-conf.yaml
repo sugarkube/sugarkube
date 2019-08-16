@@ -10,23 +10,6 @@ tf_patterns: &tf_patterns
     {{ mapPrintF (mapPrintF "terraform_%s/.*%%s\\.tfvars$" (listString .stack.provider) | join "") (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
     {{ mapPrintF "terraform_%s/.*_generated_.*\\.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
 
-# Search for parameters dynamically. The `findFiles` function takes a list of
-# file name patterns and a starting directory to search from. It then recursively
-# searches for a single file matching the pattern. If one (and only one) is found,
-# it's returned in the result array. Patterns that don't match any files are
-# filtered out.
-#
-# The `.sugarkube.defaultVars` variable is a list populated at runtime containing (in
-# order of precedence: provider, account, profile, cluster, region.
-#
-# So these scary looking things search for a values.yaml file in the kapp cache directory, as well as
-# `values-<provider/account/profile/etc>.yaml` and prepends '-f' ready to be passed as options to helm.
-helm_patterns: &helm_patterns
-  helm_params: >-
-    {{ listString "/values\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | last | join " " | trim }}
-    {{ mapPrintF "/values-%s\\.yaml$" (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
-    {{ listString "/_generated_.*\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f %s" | uniq | join " " | trim }}
-
 programs:
   helm:
     vars:
@@ -37,11 +20,25 @@ programs:
       tiller_namespace: kube-system
       helm: helm        # path to the helm binary to run. This allows version pinning if you have multiple versions of helm on your machine.
       run_helm: true    # none of these units will be run for a kapp if this is false because of the associated condition
-      <<: *helm_patterns
+      # Search for parameters dynamically. The `findFiles` function takes a list of
+      # file name patterns and a starting directory to search from. It then recursively
+      # searches for a single file matching the pattern. If one (and only one) is found,
+      # it's returned in the result array. Patterns that don't match any files are
+      # filtered out.
+      #
+      # The `.sugarkube.defaultVars` variable is a list populated at runtime containing (in
+      # order of precedence: provider, account, profile, cluster, region.
+      #
+      # So these scary looking things search for a values.yaml file in the kapp cache directory, as well as
+      # `values-<provider/account/profile/etc>.yaml` and prepends '-f' ready to be passed as options to helm.
+      helm_params: >-
+        {{ listString "/values\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f=%s" | uniq | last | list }}
+        {{ mapPrintF "/values-%s\\.yaml$" (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-f=%s" | uniq }}
+        {{ listString "/_generated_.*\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f=%s" | uniq }}
 
     run_units:
       helm:
-        working_dir: "{{ .kapp.cacheRoot }}"       # directory to use as the working directory
+        working_dir: "{{ .kapp.cacheRoot }}/{{ .kapp.id }}"       # directory to use as the working directory
         conditions:       # all must be true for any units to be run
           - "{{ .kapp.vars.run_helm }}"
         plan_install:
@@ -52,7 +49,7 @@ programs:
               - --kube-context={{ .kapp.vars.kube_context }}
               - --namespace={{ .kapp.vars.namespace }}
               - .
-              - "{{ .kapp.vars.helm_params }}"
+              - "{{ .kapp.vars.helm_params }}"          # this nested list will be flattened and appended to the main args list. Empty lists will be filtered out.
             env_vars:
               KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
         apply_install:
@@ -107,15 +104,6 @@ programs:
       tf_output_path: _generated_terraform_output.json
       tf_plan_path: _generated_plan.tfplan
       <<: *tf_patterns
-
-    args:
-      make:
-        install:
-          tf-patterns: "{{ .kapp.vars.tf_patterns }}"
-        delete:
-          tf-patterns: "{{ .kapp.vars.tf_patterns }}"
-        output:
-          tf-patterns: "{{ .kapp.vars.tf_patterns }}"
 
     run_units:
       terraform:

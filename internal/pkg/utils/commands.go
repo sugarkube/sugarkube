@@ -24,6 +24,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"os/exec"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -48,6 +49,27 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 	// sort the env vars to simplify copying and pasting log output
 	sort.Strings(strEnvVars)
 
+	// flatten the args list if it contains sublists. Also remove empty lists
+	flattenedArgs := make([]string, 0)
+	listRegEx := regexp.MustCompile(`\[([^]]+)]`)
+	for _, arg := range args {
+		log.Logger.Tracef("Searching command arg '%s' for sublists...", arg)
+		reMatches := listRegEx.FindAllStringSubmatch(arg, -1)
+
+		if len(reMatches) > 0 {
+			for _, matches := range reMatches {
+				log.Logger.Tracef("Command arg contains sublists: %#v", matches)
+				match := matches[1]
+				flattenedArgs = append(flattenedArgs, match)
+			}
+		} else {
+			// just append the argument
+			flattenedArgs = append(flattenedArgs, arg)
+		}
+	}
+
+	log.Logger.Infof("Command '%s' has args: %#v and env vars: %#v", command, flattenedArgs, strEnvVars)
+
 	var cmd *exec.Cmd
 	var ctx context.Context
 	var cancel context.CancelFunc
@@ -60,9 +82,9 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 			time.Duration(timeoutSeconds)*time.Second)
 		defer cancel() // The cancel should be deferred so resources are cleaned up
 
-		cmd = exec.CommandContext(ctx, command, args...)
+		cmd = exec.CommandContext(ctx, command, flattenedArgs...)
 	} else {
-		cmd = exec.Command(command, args...)
+		cmd = exec.Command(command, flattenedArgs...)
 	}
 
 	cmd.Env = append(os.Environ(), strEnvVars...)
@@ -75,7 +97,7 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 
 	commandString := fmt.Sprintf("%s %s %s",
 		strings.TrimSpace(strings.Join(strEnvVars, " ")),
-		command, strings.Join(args, " "))
+		command, strings.Join(flattenedArgs, " "))
 
 	if dryRun {
 		log.Logger.Infof("Dry run. Would run command in directory '%s':\n%s\n",

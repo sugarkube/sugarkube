@@ -126,8 +126,8 @@ func mergeRunUnits(runUnits map[string]structs.RunUnit, action string,
 			continue
 		}
 
-		log.Logger.Infof("All conditions for run step '%s' evaluated to true for kapp '%s'. "+
-			"Run units will be executed for it.", k, installableObj.FullyQualifiedId())
+		log.Logger.Infof("All conditions for run unit '%s' evaluated to true for kapp '%s'. "+
+			"Run steps will be executed for it.", k, installableObj.FullyQualifiedId())
 
 		switch action {
 		case constants.PlanInstall:
