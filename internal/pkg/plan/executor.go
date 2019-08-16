@@ -659,8 +659,13 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 // Executes a list of run steps
 func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj interfaces.IInstallable, dryRun bool) error {
 
-	_, err := printer.Fprintf("[white][bold]%s[reset] - Executing '[white]%s[default]' run steps...\n",
-		installableObj.FullyQualifiedId(), unitName)
+	dryRunPrefix := ""
+	if dryRun {
+		dryRunPrefix = "[Dry run] "
+	}
+
+	_, err := printer.Fprintf("%s[white][bold]%s[reset] - Executing '[white]%s[default]' run steps...\n",
+		dryRunPrefix, installableObj.FullyQualifiedId(), unitName)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -687,8 +692,8 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 		}
 
 		if config.CurrentConfig.Verbose {
-			_, err := printer.Fprintf("* [white]%s[reset] - Executing run step '[white]%s[default]'...\n",
-				installableObj.FullyQualifiedId(), step.Name)
+			_, err := printer.Fprintf("* %s[white]%s[reset] - Executing run step '[white]%s[default]'...\n",
+				dryRunPrefix, installableObj.FullyQualifiedId(), step.Name)
 			if err != nil {
 				return errors.WithStack(err)
 			}

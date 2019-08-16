@@ -2,14 +2,6 @@ log_level: none
 #json_logs: false
 #no_color: true
 
-# Dynamically searches for terraform tfvars files based on the current stack provider and various properties of the
-# stack (e.g. name, region, etc.) as well as any generated files. All files found are prepended by `-var-file`
-tf_patterns: &tf_patterns
-  tf_params: >-
-    {{ mapPrintF "terraform_%s/.*defaults\\.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
-    {{ mapPrintF (mapPrintF "terraform_%s/.*%%s\\.tfvars$" (listString .stack.provider) | join "") (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
-    {{ mapPrintF "terraform_%s/.*_generated_.*\\.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
-
 programs:
   helm:
     vars:
@@ -103,7 +95,12 @@ programs:
       terraform_dir: "{{ .kapp.cacheRoot }}/{{ .kapp.id }}/terraform_{{ .stack.provider }}"
       tf_output_path: _generated_terraform_output.json
       tf_plan_path: _generated_plan.tfplan
-      <<: *tf_patterns
+      # Dynamically searches for terraform tfvars files based on the current stack provider and various properties of the
+      # stack (e.g. name, region, etc.) as well as any generated files. All files found are prepended by `-var-file`
+      tf_params: >-
+        {{ mapPrintF "terraform_%s/.*defaults\\.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
+        {{ mapPrintF (mapPrintF "terraform_%s/.*%%s\\.tfvars$" (listString .stack.provider) | join "") (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
+        {{ mapPrintF "terraform_%s/.*_generated_.*\\.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
 
     run_units:
       terraform:
