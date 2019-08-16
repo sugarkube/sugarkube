@@ -310,7 +310,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 					return
 				}
 
-				err = executeRunSteps(runSteps, installableObj, dryRun)
+				err = executeRunSteps(constants.Clean, runSteps, installableObj, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 					return
@@ -333,7 +333,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 					return
 				}
 
-				err = executeRunSteps(runSteps, installableObj, dryRun)
+				err = executeRunSteps(constants.Output, runSteps, installableObj, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 					return
@@ -523,10 +523,13 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	// only plan or process kapps that have been flagged for processing
 	if node.marked {
 		if plan {
+			var unitName string
 			if install {
 				installerMethod = installerImpl.PlanInstall
+				unitName = constants.PlanInstall
 			} else {
 				installerMethod = installerImpl.PlanDelete
+				unitName = constants.PlanDelete
 			}
 
 			runSteps, err = installerMethod(installableObj, stackObj, dryRun)
@@ -540,7 +543,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				return
 			}
 
-			err = executeRunSteps(runSteps, installableObj, dryRun)
+			err = executeRunSteps(unitName, runSteps, installableObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
@@ -577,10 +580,13 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 		}
 
 		if approved && !skipInstallerMethod {
+			var unitName string
 			if install {
 				installerMethod = installerImpl.ApplyInstall
+				unitName = constants.ApplyInstall
 			} else {
 				installerMethod = installerImpl.ApplyDelete
+				unitName = constants.ApplyDelete
 			}
 
 			runSteps, err = installerMethod(installableObj, stackObj, dryRun)
@@ -594,7 +600,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				return
 			}
 
-			err = executeRunSteps(runSteps, installableObj, dryRun)
+			err = executeRunSteps(unitName, runSteps, installableObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
@@ -651,9 +657,10 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 }
 
 // Executes a list of run steps
-func executeRunSteps(runSteps []structs.RunStep, installableObj interfaces.IInstallable, dryRun bool) error {
+func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj interfaces.IInstallable, dryRun bool) error {
 
-	_, err := printer.Fprintf("Executing run steps for '[white]%s[default]'...\n", installableObj.FullyQualifiedId())
+	_, err := printer.Fprintf("Executing '[white]%s[default]' run steps for '[white]%s[default]'...\n",
+		unitName, installableObj.FullyQualifiedId())
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -744,7 +751,7 @@ func getOutputs(installableObj interfaces.IInstallable, stackObj interfaces.ISta
 			return nil, errors.Wrapf(err, "Error writing output for kapp '%s'", installableObj.Id())
 		}
 
-		err = executeRunSteps(runSteps, installableObj, dryRun)
+		err = executeRunSteps(constants.Output, runSteps, installableObj, dryRun)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 		}
