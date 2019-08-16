@@ -32,6 +32,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -233,7 +234,11 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 			return
 		}
 
-		addInstallableLocalRegistry(node, outputs, errCh)
+		err = addInstallableLocalRegistry(node.installableObj, outputs)
+		if err != nil {
+			errCh <- errors.WithStack(err)
+			return
+		}
 
 		log.Logger.Tracef("Registry worker finished processing kapp '%s' (node=%#v)", installableObj.FullyQualifiedId(),
 			node)
@@ -360,7 +365,6 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 				return
 			}
 
-			// todo - what should we do here?
 			// try loading outputs, but don't fail if we can't
 			outputs, err := getOutputs(installableObj, stackObj, installerImpl, true, dryRun)
 			if err != nil {
@@ -373,7 +377,11 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 				return
 			}
 
-			addInstallableLocalRegistry(node, outputs, errCh)
+			err = addInstallableLocalRegistry(node.installableObj, outputs)
+			if err != nil {
+				errCh <- errors.WithStack(err)
+				return
+			}
 
 			// only template marked nodes
 			if node.marked {
@@ -613,7 +621,11 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	}
 
 	// build the kapp's local registry
-	addInstallableLocalRegistry(node, outputs, errCh)
+	err = addInstallableLocalRegistry(node.installableObj, outputs)
+	if err != nil {
+		errCh <- errors.WithStack(err)
+		return
+	}
 
 	// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
 	err = renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
@@ -641,6 +653,11 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 // Executes a list of run steps
 func executeRunSteps(runSteps []structs.RunStep, installableObj interfaces.IInstallable, dryRun bool) error {
 
+	_, err := printer.Fprintf("Executing run steps for '[white]%s[default]'...\n", installableObj.FullyQualifiedId())
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	for _, step := range runSteps {
 		// evaluate any conditions
 		allOk, err := utils.All(step.Conditions)
@@ -661,20 +678,37 @@ func executeRunSteps(runSteps []structs.RunStep, installableObj interfaces.IInst
 		log.Logger.Infof("Stdout: %s", stdoutBuf.String())
 		log.Logger.Infof("Stderr: %s", stderrBuf.String())
 
+		var err2 error
+
 		if step.Stdout != "" {
-			// todo write stdout to file
+			err2 = ioutil.WriteFile(step.Stdout, stdoutBuf.Bytes(), 0644)
 		}
 
 		if step.Stderr != "" {
-			// todo write stderr to file
+			err2 = ioutil.WriteFile(step.Stderr, stderrBuf.Bytes(), 0644)
 		}
 
+		// the original error is more important to return, so return that. We should write files
+		// before returning it though
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		if step.LoadOutputs {
-			// todo - load any outputs, parse them and add values to the registry
+		if err2 != nil {
+			return errors.WithStack(err2)
+		}
+
+		if step.LoadOutputs && installableObj.HasOutputs() {
+			// load any outputs we can, parse them and add values to the registry
+			outputs, err := installableObj.GetOutputs(true, dryRun)
+			if err != nil {
+				return errors.Wrapf(err, "Error loading the output of kapp '%s'", installableObj.Id())
+			}
+
+			err = addInstallableLocalRegistry(installableObj, outputs)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
 	}
 
@@ -755,20 +789,20 @@ func addParentRegistries(dagObj *Dag, node NamedNode, errCh chan<- error) {
 }
 
 // Add outputs to the kapp's local registry
-func addInstallableLocalRegistry(node NamedNode, outputs map[string]interface{}, errCh chan<- error) {
+func addInstallableLocalRegistry(installableObj interfaces.IInstallable, outputs map[string]interface{}) error {
 
-	localRegistry := node.installableObj.GetLocalRegistry()
+	localRegistry := installableObj.GetLocalRegistry()
 
 	// only add outputs if any were passed in
 	if outputs != nil && len(outputs) > 0 {
-		err := addOutputsToRegistry(node.installableObj, outputs, localRegistry)
+		err := addOutputsToRegistry(installableObj, outputs, localRegistry)
 		if err != nil {
-			errCh <- errors.WithStack(err)
-			return
+			return errors.WithStack(err)
 		}
 	}
 
-	node.installableObj.SetLocalRegistry(localRegistry)
+	installableObj.SetLocalRegistry(localRegistry)
+	return nil
 }
 
 // Executes post actions

@@ -52,7 +52,7 @@ programs:
               - --kube-context={{ .kapp.vars.kube_context }}
               - --namespace={{ .kapp.vars.namespace }}
               - .
-              - {{ .kapp.vars.helm_params }}
+              - "{{ .kapp.vars.helm_params }}"
             env_vars:
               KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
         apply_install:
@@ -67,9 +67,9 @@ programs:
               - --recreate-pods
               - --timeout=600
               - --namespace={{ .kapp.vars.namespace }}
-              - {{ .kapp.vars.release }}
+              - "{{ .kapp.vars.release }}"
               - .
-              - {{ .kapp.vars.helm_params }}
+              - "{{ .kapp.vars.helm_params }}"
             env_vars:
               KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
             merge_priority: 30         # install helm charts *after* running terraform if terraform is used. By default
@@ -82,7 +82,7 @@ programs:
               - --kube-context={{ .kapp.vars.kube_context }}
               - --tiller-namespace={{ .kapp.vars.tiller_namespace }}
               - --purge
-              - {{ .kapp.vars.release }}
+              - "{{ .kapp.vars.release }}"
             env_vars:
               KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
             merge_priority: 10         # delete helm charts *before* running terraform (we don't use 0 so you can insert your own steps before this one)
@@ -151,9 +151,9 @@ programs:
         apply_install:
           - name: tf-apply
             command: "{{ .kapp.vars.terraform }}"
-              args:
-                - apply
-                - "{{ .kapp.vars.tf_plan_path }}"
+            args:
+              - apply
+              - "{{ .kapp.vars.tf_plan_path }}"
             merge_priority: 10         # apply terraform *before* installing a helm chart
           - call: output      # call the whole 'output' unit
             merge_priority: 15         # apply terraform *before* installing a helm chart
@@ -162,44 +162,44 @@ programs:
             merge_priority: 25  # this needs to be merged after helm has run
           - name: tf-destroy
             command: "{{ .kapp.vars.terraform }}"
-              args:
-                - destroy
-                - -auto-approve
-                - "{{ .kapp.vars.tf_params }}"
+            args:
+              - destroy
+              - -auto-approve
+              - "{{ .kapp.vars.tf_params }}"
             merge_priority: 30         # delete terraform *after* deleting a helm chart
         output:
           - call: plan-install/tf-init       # call the tf-init step defined under `plan_install`
           - name: tf-refresh
             command: "{{ .kapp.vars.terraform }}"
-              args:
-                - refresh
-                - "{{ .kapp.vars.tf_params }}"
+            args:
+              - refresh
+              - "{{ .kapp.vars.tf_params }}"
             conditions:
               # this is evaluated before any steps are executed so it'll be false even if the tf-init step has just
               # created this directory
               - "{{ exists \"d\" \"{{ .kapp.vars.terraform_dir }}/.terraform\" | not }}"
           - name: tf-output
             command: "{{ .kapp.vars.terraform }}"
-              args:
-                - output
-                - -json
-              stdout: "{{ .kapp.vars.tf_output_path }}"       # save stdout to this path
+            args:
+              - output
+              - -json
+            stdout: "{{ .kapp.vars.tf_output_path }}"       # save stdout to this path
             load_outputs: true      # instructs sugarkube to load and parse any defined outputs making them available for subsequent run steps
 
 # globally defined run units will be used as defaults for each program
 run_units:
   clean:
     - command: find
-        args:
-          - "{{ .kapp.cacheRoot }}"
-          - -name
-          - '_generated_*'
-          - -type f
-          - -delete
+      args:
+        - "{{ .kapp.cacheRoot }}"
+        - -name
+        - '_generated_*'
+        - -type f
+        - -delete
     - command: find
-        args:
-          - "{{ .kapp.cacheRoot }}"
-          - -name
-          - '_generated_*'
-          - -type d
-          - -exec rm -rf {} ';'
+      args:
+        - "{{ .kapp.cacheRoot }}"
+        - -name
+        - '_generated_*'
+        - -type d
+        - -exec rm -rf {} ';'
