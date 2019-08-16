@@ -168,6 +168,7 @@ func init() {
 	})
 
 	noColor := false
+	verbose := false
 
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|trace|debug|info|warn|error|fatal")
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "",
@@ -175,12 +176,14 @@ func init() {
 			"will be searched for a file called '%s.(yaml|json)'", config.ConfigFileName))
 	rootCmd.PersistentFlags().BoolVarP(&jsonLogs, "json-logs", "j", false, "whether to emit JSON-formatted logs")
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable coloured output")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "show more output")
 
 	// bind viper to CLI args
 	bindings := map[string]string{
 		"log_level": "log-level",
 		"json_logs": "json-logs",
 		"no_color":  "no-color",
+		"verbose":   "verbose",
 	}
 
 	viperConfig := config.ViperConfig

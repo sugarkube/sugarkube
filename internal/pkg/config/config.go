@@ -46,6 +46,7 @@ func initViper(appName string) *viper.Viper {
 	v.SetDefault("log_level", "info")
 	v.SetDefault("num_workers", "5")
 	v.SetDefault("overwrite_merged_lists", false)
+	v.SetDefault("verbose", false)
 
 	v.SetConfigName(ConfigFileName)
 

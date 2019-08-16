@@ -666,9 +666,25 @@ func executeRunSteps(runSteps []structs.RunStep, installableObj interfaces.IInst
 		}
 
 		if !allOk {
+			if config.CurrentConfig.Verbose {
+				_, err := printer.Fprintf("Some conditions for the '[white]%s[default]' run step '[white]%s[default]' "+
+					"evaluated to false. Won't execute it...\n", installableObj.FullyQualifiedId(), step.Name)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+			}
+
 			log.Logger.Infof("Some conditions for run step '%s' evaluated to false for kapp '%s'. Won't execute "+
 				"run units for it.", step.Name, installableObj.FullyQualifiedId())
 			continue
+		}
+
+		if config.CurrentConfig.Verbose {
+			_, err := printer.Fprintf("Executing the '[white]%s[default]' run step '[white]%s[default]'...\n",
+				installableObj.FullyQualifiedId(), step.Name)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
 
 		var stdoutBuf, stderrBuf bytes.Buffer

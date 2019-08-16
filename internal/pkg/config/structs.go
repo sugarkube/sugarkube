@@ -23,6 +23,7 @@ type Config struct {
 	NoColor    bool   `mapstructure:"no_color"` // for disabling coloured output
 	LogLevel   string `mapstructure:"log_level"`
 	NumWorkers int    `mapstructure:"num_workers"` // an uncontroversial name that avoids British/American spelling differences (vs 'parallelisation', etc)
+	Verbose    bool
 	// if true, merging lists under the same map key will replace the existing list entirely. If false,
 	// values from lists being merged in will be appended to the existing list
 	OverwriteMergedLists bool                          `mapstructure:"overwrite_merged_lists"`
