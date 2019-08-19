@@ -344,7 +344,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			// files, e.g. terraform backends
 			installerVars := installerImpl.GetVars(action, dryRun)
 			if node.marked {
-				err = renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
+				err = renderKappTemplates(stackObj, installableObj, installerVars, false, dryRun)
 				if err != nil {
 					if ignoreErrors {
 						log.Logger.Warnf("Ignoring error templating kapp: %#v", err)
@@ -385,7 +385,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 
 			// only template marked nodes
 			if node.marked {
-				err = renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
+				err = renderKappTemplates(stackObj, installableObj, installerVars, true, dryRun)
 				if err != nil {
 					if ignoreErrors {
 						log.Logger.Warnf("Ignoring error templating kapp: %#v", err)
@@ -514,7 +514,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	installerVars := installerImpl.GetVars(actionName, dryRun)
 
 	// render templates in case any are used as outputs for some reason
-	err := renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
+	err := renderKappTemplates(stackObj, installableObj, installerVars, true, dryRun)
 	if err != nil {
 		errCh <- errors.WithStack(err)
 		return
@@ -634,7 +634,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	}
 
 	// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
-	err = renderKappTemplates(stackObj, installableObj, installerVars, dryRun)
+	err = renderKappTemplates(stackObj, installableObj, installerVars, false, dryRun)
 	if err != nil {
 		errCh <- errors.WithStack(err)
 		return
@@ -936,7 +936,7 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, outputs map[st
 
 // Renders templates for a kapp
 func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.IInstallable,
-	installerVars map[string]interface{}, dryRun bool) error {
+	installerVars map[string]interface{}, printMessage bool, dryRun bool) error {
 
 	// merge all the vars required to render the kapp's sugarkube.yaml file
 	templatedVars, err := stackObj.GetTemplatedVars(installableObj, installerVars)
@@ -960,6 +960,14 @@ func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.I
 		dryRun)
 	if err != nil {
 		return errors.WithStack(err)
+	}
+
+	if config.CurrentConfig.Verbose && printMessage {
+		_, err := printer.Fprintf("  Rendered templates for '[white][bold]%s[reset]' to '%s'\n",
+			installableObj.FullyQualifiedId(), strings.Join(renderedTemplatePaths, "', '"))
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	// merge renderedTemplates into the templatedVars under the "kapp.templates" key. This will
