@@ -7,7 +7,8 @@
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp.
 * The Wordpress kapp should provide control over whether to install fixtures or not. Maybe by default it should only do it when the kapp is first installed, since after that it fails...
 * Update the prometheus-operator kapp to delete its CRDs when it's deleted
-* Documentation!!
+* Documentation!! 
+  * Format docs using this hugo theme: https://learn.netlify.com/en/
 * Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist
   depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a kapp with the local provider because it hasn't e.g. written terraform output to a path that it would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for remote providers, not the local one
   * Use `conditions`
