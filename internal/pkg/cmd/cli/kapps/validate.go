@@ -109,6 +109,8 @@ func (c *validateConfig) run() error {
 		}
 
 		for _, requirement := range descriptor.Requires {
+			// todo - this should lookup the requirement's Command
+
 			path, err := exec.LookPath(requirement)
 			if err != nil {
 				_, err = printer.Fprintf("  [red]Requirement missing! Can't find '[bold]%s[reset][red]' for [bold]%s\n", requirement,
