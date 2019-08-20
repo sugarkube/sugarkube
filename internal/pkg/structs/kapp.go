@@ -53,9 +53,9 @@ type RunStep struct {
 	Name          string
 	Command       string
 	Args          []string
-	EnvVars       map[string]string
-	Stdout        string // path to write stdout to
-	Stderr        string // path to write stderr to
+	EnvVars       map[string]string `yaml:"env_vars" mapstructure:"env_vars"`
+	Stdout        string            // path to write stdout to
+	Stderr        string            // path to write stderr to
 	Conditions    []string
 	WorkingDir    string `yaml:"working_dir" mapstructure:"working_dir"`
 	MergePriority *uint8 `yaml:"merge_priority" mapstructure:"merge_priority"`
