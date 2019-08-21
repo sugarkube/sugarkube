@@ -50,7 +50,7 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 	sort.Strings(strEnvVars)
 
 	// flatten the args list if it contains sublists. Also remove empty lists
-	flattenedArgs := make([]string, 0)
+	sanitisedArgs := make([]string, 0)
 	listRegEx := regexp.MustCompile(`\[([^]]+)]`)
 	for _, arg := range args {
 		log.Logger.Tracef("Searching command arg '%s' for sublists...", arg)
@@ -59,16 +59,22 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 		if len(reMatches) > 0 {
 			for _, matches := range reMatches {
 				log.Logger.Tracef("Command arg contains sublists: %#v", matches)
-				match := matches[1]
-				flattenedArgs = append(flattenedArgs, match)
+				match := strings.TrimSpace(matches[1])
+				if match != "" {
+					sanitisedArgs = append(sanitisedArgs, match)
+				}
 			}
 		} else {
-			// just append the argument
-			flattenedArgs = append(flattenedArgs, arg)
+			// ignore empty arguments
+			arg = strings.TrimSpace(arg)
+			if arg != "" {
+				// just append the argument
+				sanitisedArgs = append(sanitisedArgs, arg)
+			}
 		}
 	}
 
-	log.Logger.Infof("Command '%s' has args: %#v and env vars: %#v", command, flattenedArgs, strEnvVars)
+	log.Logger.Infof("Command '%s' has args: %#v and env vars: %#v", command, sanitisedArgs, strEnvVars)
 
 	var cmd *exec.Cmd
 	var ctx context.Context
@@ -82,9 +88,9 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 			time.Duration(timeoutSeconds)*time.Second)
 		defer cancel() // The cancel should be deferred so resources are cleaned up
 
-		cmd = exec.CommandContext(ctx, command, flattenedArgs...)
+		cmd = exec.CommandContext(ctx, command, sanitisedArgs...)
 	} else {
-		cmd = exec.Command(command, flattenedArgs...)
+		cmd = exec.Command(command, sanitisedArgs...)
 	}
 
 	cmd.Env = append(os.Environ(), strEnvVars...)
@@ -97,7 +103,7 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 
 	commandString := fmt.Sprintf("%s %s %s",
 		strings.TrimSpace(strings.Join(strEnvVars, " ")),
-		command, strings.Join(flattenedArgs, " "))
+		command, strings.Join(sanitisedArgs, " "))
 
 	if dryRun {
 		log.Logger.Infof("Dry run. Would run command in directory '%s':\n%s\n",

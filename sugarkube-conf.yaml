@@ -127,7 +127,7 @@ programs:
             command: "{{ .kapp.vars.terraform }}"
             args:
               - validate
-              - "{{ .kapp.vars.tf_params }}"
+              - "{{ .kapp.vars.tf_params }}"      # entirely blank/empty args will be stripped out by sugarkube
           - name: tf-plan
             command: "{{ .kapp.vars.terraform }}"
             args:
@@ -155,7 +155,7 @@ programs:
               - -auto-approve
               - "{{ .kapp.vars.tf_params }}"
             merge_priority: 30         # delete terraform *after* deleting a helm chart
-        output:
+        output:         # todo - we'll probably need the ability to add conditions to entire run units, e.g. gt 0 len(.kapp.output)
           - call: plan-install/tf-init       # call the tf-init step defined under `plan_install`
           - name: tf-refresh
             command: "{{ .kapp.vars.terraform }}"

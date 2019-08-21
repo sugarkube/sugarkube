@@ -9,7 +9,7 @@
 * Update the prometheus-operator kapp to delete its CRDs when it's deleted
 * Documentation!! 
   * Format docs using this hugo theme: https://learn.netlify.com/en/
-* Support adding some regexes to resolve whether to throw an error if certain directories/outputs exist
+* Support adding some regexes to resolve whether to throw an error if certain directories/templates/outputs exist
   depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a kapp with the local provider because it hasn't e.g. written terraform output to a path that it would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for remote providers, not the local one
   * Use `conditions`
 * Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
@@ -24,6 +24,8 @@
 * Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them)
 * Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
 * Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
+* It should be possible to set kapp vars that are maps
+* Think of a good way of declaring per-project names that can be used for namespacing (i.e. to allow multiple clusters to be brought up for different reasons)
 
 ### Cluster updates
 * It should be easy to see what changes will be applied by kops - perhaps go to a two-stage approach with a '--yes' flag, to make a distinction between --dry-run and staging changes.
