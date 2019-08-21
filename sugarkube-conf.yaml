@@ -25,9 +25,9 @@ programs:
       # So these scary looking things search for a values.yaml file in the kapp cache directory, as well as
       # `values-<provider/account/profile/etc>.yaml` and prepends '-f' ready to be passed as options to helm.
       helm_params: >-
-        {{ listString "/values\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f=%s" | uniq | last | list }}
-        {{ mapPrintF "/values-%s\\.yaml$" (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-f=%s" | uniq }}
-        {{ listString "/_generated_.*\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f=%s" | uniq }}
+        {{ listString "/values\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f=%s" | uniq | last }}
+        {{ mapPrintF "/values-%s\\.yaml$" (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-f=%s" | uniq | join " " }}
+        {{ listString "/_generated_.*\\.yaml$" | findFiles .kapp.cacheRoot | mapPrintF "-f=%s" | uniq | join " " }}
 
     run_units:
       helm:
