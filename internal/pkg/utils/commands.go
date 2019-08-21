@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"os/exec"
@@ -74,7 +75,13 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 		}
 	}
 
-	log.Logger.Infof("Command '%s' has args: %#v and env vars: %#v", command, sanitisedArgs, strEnvVars)
+	log.Logger.Infof("Command '%s' has args: %#v and explicit env vars: %#v", command, sanitisedArgs, strEnvVars)
+
+	completeEnvVars := append(os.Environ(), strEnvVars...)
+
+	if log.Logger.Level == logrus.TraceLevel || log.Logger.Level == logrus.DebugLevel {
+		log.Logger.Debugf("Complete env vars are: %#v", completeEnvVars)
+	}
 
 	var cmd *exec.Cmd
 	var ctx context.Context
@@ -93,7 +100,7 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 		cmd = exec.Command(command, sanitisedArgs...)
 	}
 
-	cmd.Env = append(os.Environ(), strEnvVars...)
+	cmd.Env = completeEnvVars
 	cmd.Stdout = stdoutBuf
 	cmd.Stderr = stderrBuf
 

@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/imdario/mergo"
+	"github.com/mattn/go-shellwords"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/cluster"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
@@ -700,7 +701,11 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 		}
 
 		var stdoutBuf, stderrBuf bytes.Buffer
-		err = utils.ExecCommand(step.Command, step.Args, step.EnvVars, &stdoutBuf,
+		args, err := shellwords.Parse(step.Args)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		err = utils.ExecCommand(step.Command, args, step.EnvVars, &stdoutBuf,
 			&stderrBuf, step.WorkingDir, step.Timeout, dryRun)
 
 		log.Logger.Infof("Stdout: %s", stdoutBuf.String())

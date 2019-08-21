@@ -52,7 +52,7 @@ type Action struct {
 type RunStep struct {
 	Name          string
 	Command       string
-	Args          []string
+	Args          string
 	EnvVars       map[string]string `yaml:"env_vars" mapstructure:"env_vars"`
 	Stdout        string            // path to write stdout to
 	Stderr        string            // path to write stderr to
