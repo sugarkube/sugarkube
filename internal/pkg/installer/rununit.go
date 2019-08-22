@@ -55,6 +55,12 @@ func findStepInRunUnits(runUnits map[string]structs.RunUnit, unitName string, st
 		}
 
 		if targetStep != nil {
+			intermediate := setWorkingDir(v, []structs.RunStep{*targetStep})
+			if len(intermediate) != 1 {
+				return nil, fmt.Errorf("Error setting working directory on run step: %#v", *targetStep)
+			}
+
+			targetStep = &intermediate[0]
 			break
 		}
 	}
@@ -68,25 +74,30 @@ func findStepInRunUnits(runUnits map[string]structs.RunUnit, unitName string, st
 
 // Returns all steps for the named run unit in a map of run units
 func getStepsInRunUnit(runUnits map[string]structs.RunUnit, unitName string) []structs.RunStep {
-	steps := make([]structs.RunStep, 0)
+	result := make([]structs.RunStep, 0)
 	for _, v := range runUnits {
+		var steps []structs.RunStep
 		switch unitName {
 		case constants.PlanInstall:
-			steps = append(steps, v.PlanInstall...)
+			steps = v.PlanInstall
 		case constants.ApplyInstall:
-			steps = append(steps, v.ApplyInstall...)
+			steps = v.ApplyInstall
 		case constants.PlanDelete:
-			steps = append(steps, v.PlanDelete...)
+			steps = v.PlanDelete
 		case constants.ApplyDelete:
-			steps = append(steps, v.ApplyDelete...)
+			steps = v.ApplyDelete
 		case constants.Output:
-			steps = append(steps, v.Output...)
+			steps = v.Output
 		case constants.Clean:
-			steps = append(steps, v.Clean...)
+			steps = v.Clean
 		}
+
+		steps = setWorkingDir(v, steps)
+
+		result = append(result, steps...)
 	}
 
-	return steps
+	return result
 }
 
 // Replaces run steps that call another step with the actual step they refer to, recursing up to a maximum number of times
@@ -176,7 +187,7 @@ func callsToInterpolate(runSteps []structs.RunStep) bool {
 }
 
 // Default to the run unit's working dir if the step doesn't define its own
-func SetDefaults(runUnit structs.RunUnit, runSteps []structs.RunStep) []structs.RunStep {
+func setWorkingDir(runUnit structs.RunUnit, runSteps []structs.RunStep) []structs.RunStep {
 
 	// use the unit's working dir if none was defined on the step itself
 	for i := range runSteps {
@@ -218,16 +229,16 @@ func mergeRunUnits(runUnits map[string]structs.RunUnit, action string,
 
 		switch action {
 		case constants.PlanInstall:
-			runSteps := SetDefaults(v, v.PlanInstall)
+			runSteps := setWorkingDir(v, v.PlanInstall)
 			steps = append(steps, runSteps...)
 		case constants.ApplyInstall:
-			runSteps := SetDefaults(v, v.ApplyInstall)
+			runSteps := setWorkingDir(v, v.ApplyInstall)
 			steps = append(steps, runSteps...)
 		case constants.PlanDelete:
-			runSteps := SetDefaults(v, v.PlanDelete)
+			runSteps := setWorkingDir(v, v.PlanDelete)
 			steps = append(steps, runSteps...)
 		case constants.ApplyDelete:
-			runSteps := SetDefaults(v, v.ApplyDelete)
+			runSteps := setWorkingDir(v, v.ApplyDelete)
 			steps = append(steps, runSteps...)
 		}
 	}

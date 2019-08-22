@@ -29,6 +29,9 @@ func init() {
 	log.ConfigureLogger("debug", false)
 }
 
+const helmWorkingDir = "/helm/dir"
+const terraformWorkingDir = "/terraform/dir"
+
 func TestMergeRunUnits(t *testing.T) {
 	var highest uint8 = 0
 	var medium uint8 = 5
@@ -156,6 +159,7 @@ func getFixtures() map[string]structs.RunUnit {
 
 	return map[string]structs.RunUnit{
 		"helm": {
+			WorkingDir: helmWorkingDir,
 			PlanInstall: []structs.RunStep{
 				{
 					Name:          "plan-inst-3",
@@ -179,6 +183,7 @@ func getFixtures() map[string]structs.RunUnit {
 			},
 		},
 		"terraform": {
+			WorkingDir: terraformWorkingDir,
 			PlanInstall: []structs.RunStep{
 				{
 					Name:          "st-1",
@@ -202,7 +207,7 @@ func getFixtures() map[string]structs.RunUnit {
 					MergePriority: &medium,
 				},
 				{
-					Call:          "plan-install/st-1", // only a single step should replace this
+					Call:          "plan-install/plan-inst-3", // only a single step should replace this
 					MergePriority: &low,
 				},
 			},
@@ -245,12 +250,14 @@ func TestFindStepInRunUnits(t *testing.T) {
 		Name:          "plan-inst-3",
 		Command:       "plan-inst-comm3",
 		MergePriority: &low,
+		WorkingDir:    helmWorkingDir,
 	}
 
 	assert.NotNil(t, output)
 
 	assert.Equal(t, expected.Name, output.Name)
 	assert.Equal(t, expected.Command, output.Command)
+	assert.Equal(t, expected.WorkingDir, output.WorkingDir)
 	assert.Equal(t, *expected.MergePriority, *output.MergePriority)
 }
 
@@ -268,16 +275,19 @@ func TestGetStepsInRunUnit(t *testing.T) {
 			Name:          "plan-inst-3",
 			Command:       "plan-inst-comm3",
 			MergePriority: &low,
+			WorkingDir:    helmWorkingDir,
 		},
 		{
 			Name:          "st-1",
 			Command:       "plan-inst-1",
 			MergePriority: &highest,
+			WorkingDir:    terraformWorkingDir,
 		},
 		{
 			Name:          "st-2",
 			Command:       "plan-inst-2",
 			MergePriority: &medium,
+			WorkingDir:    terraformWorkingDir,
 		},
 	}
 
@@ -294,6 +304,7 @@ func TestGetStepsInRunUnit(t *testing.T) {
 
 				assert.Equal(t, expectedStep.Name, outputStep.Name)
 				assert.Equal(t, expectedStep.Command, outputStep.Command)
+				assert.Equal(t, expectedStep.WorkingDir, outputStep.WorkingDir)
 				assert.Equal(t, *expectedStep.MergePriority, *outputStep.MergePriority)
 			}
 		}
@@ -314,11 +325,13 @@ func TestInterpolateCallsSingleStep(t *testing.T) {
 			Name:          "del-step-1",
 			Command:       "del-command1",
 			MergePriority: &medium,
+			WorkingDir:    terraformWorkingDir,
 		},
 		{
-			Name:          "st-1",
-			Command:       "plan-inst-1",
+			Name:          "plan-inst-3",
+			Command:       "plan-inst-comm3",
 			MergePriority: &low,
+			WorkingDir:    helmWorkingDir,
 		},
 	}
 	output, err := interpolateCalls(fixture["terraform"].ApplyDelete, fixture, maxInterpolationRecursions)
@@ -354,16 +367,19 @@ func TestInterpolateCallsUnit(t *testing.T) {
 			Name:          "st-1",
 			Command:       "plan-inst-1",
 			MergePriority: &low,
+			WorkingDir:    terraformWorkingDir,
 		},
 		{
 			Name:          "st-2",
 			Command:       "plan-inst-2",
 			MergePriority: &low,
+			WorkingDir:    terraformWorkingDir,
 		},
 		{
 			Name:          "plan-inst-3",
 			Command:       "plan-inst-comm3",
 			MergePriority: &low,
+			WorkingDir:    helmWorkingDir,
 		},
 	}
 	output, err := interpolateCalls(fixture["helm"].PlanDelete, fixture, maxInterpolationRecursions)
@@ -380,6 +396,7 @@ func TestInterpolateCallsUnit(t *testing.T) {
 
 				assert.Equal(t, expectedStep.Name, outputStep.Name)
 				assert.Equal(t, expectedStep.Command, outputStep.Command)
+				assert.Equal(t, expectedStep.WorkingDir, outputStep.WorkingDir)
 				assert.Equal(t, *expectedStep.MergePriority, *outputStep.MergePriority)
 			}
 		}
@@ -400,11 +417,13 @@ func TestInterpolateCallsUnitRecursive(t *testing.T) {
 			Name:          "del-step-1",
 			Command:       "del-command1",
 			MergePriority: &medium,
+			WorkingDir:    terraformWorkingDir,
 		},
 		{
-			Name:          "st-1",
-			Command:       "plan-inst-1",
+			Name:          "plan-inst-3",
+			Command:       "plan-inst-comm3",
 			MergePriority: &low,
+			WorkingDir:    helmWorkingDir,
 		},
 	}
 	output, err := interpolateCalls(fixture["helm"].Clean, fixture, maxInterpolationRecursions)
@@ -421,6 +440,7 @@ func TestInterpolateCallsUnitRecursive(t *testing.T) {
 
 				assert.Equal(t, expectedStep.Name, outputStep.Name)
 				assert.Equal(t, expectedStep.Command, outputStep.Command)
+				assert.Equal(t, expectedStep.WorkingDir, outputStep.WorkingDir)
 				assert.Equal(t, *expectedStep.MergePriority, *outputStep.MergePriority)
 			}
 		}
