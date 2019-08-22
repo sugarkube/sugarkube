@@ -39,10 +39,10 @@ programs:
             command: "{{ .kapp.vars.helm }}"
             # the nested list `helm_params` will be flattened and appended to the main args list. Empty lists will be filtered out.
             args: |
-              lint \
-                --kube-context={{ .kapp.vars.kube_context }} \
-                --namespace={{ .kapp.vars.namespace }} \
-                . \
+              lint
+                --kube-context={{ .kapp.vars.kube_context }}
+                --namespace={{ .kapp.vars.namespace }}
+                .
                 {{ .kapp.vars.helm_params }}
             env_vars:
               KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
@@ -50,16 +50,16 @@ programs:
           - name: helm-install
             command: "{{ .kapp.vars.helm }}"
             args: |
-              upgrade \
-                --kube-context={{ .kapp.vars.kube_context }} \
-                --tiller-namespace={{ .kapp.vars.tiller_namespace }} \
-                --wait \
-                --install \
-                --recreate-pods \
-                --timeout=600 \
-                --namespace={{ .kapp.vars.namespace }} \
-                {{ .kapp.vars.release }} \
-                . \
+              upgrade
+                --kube-context={{ .kapp.vars.kube_context }}
+                --tiller-namespace={{ .kapp.vars.tiller_namespace }}
+                --wait
+                --install
+                --recreate-pods
+                --timeout=600
+                --namespace={{ .kapp.vars.namespace }}
+                {{ .kapp.vars.release }}
+                .
                 {{ .kapp.vars.helm_params }}
             env_vars:
               KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
@@ -69,10 +69,10 @@ programs:
           - name: helm-delete
             command: "{{ .kapp.vars.helm }}"
             args: |
-              delete \
-                --kube-context={{ .kapp.vars.kube_context }} \
-                --tiller-namespace={{ .kapp.vars.tiller_namespace }} \
-                --purge \
+              delete
+                --kube-context={{ .kapp.vars.kube_context }}
+                --tiller-namespace={{ .kapp.vars.tiller_namespace }}
+                --purge
                 {{ .kapp.vars.release }}
             env_vars:
               KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
@@ -126,15 +126,17 @@ programs:
             command: "{{ .kapp.vars.terraform }}"
             args: validate {{ .kapp.vars.tf_params }}      # entirely blank/empty args will be stripped out by sugarkube
           - name: tf-plan
+            print: verbose                     # print the plan to the console
             command: "{{ .kapp.vars.terraform }}"
             args: |
-              plan \
-                -refresh=true \
-                -out \
-                {{ .kapp.vars.tf_plan_path }} \
+              plan
+                -refresh=true
+                -out
+                {{ .kapp.vars.tf_plan_path }}
                 {{ .kapp.vars.tf_params }}
         apply_install:
           - name: tf-apply
+            print: verbose
             command: "{{ .kapp.vars.terraform }}"
             args: apply {{ .kapp.vars.tf_plan_path }}
             merge_priority: 10         # apply terraform *before* installing a helm chart
