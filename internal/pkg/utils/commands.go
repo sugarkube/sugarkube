@@ -25,7 +25,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"os"
 	"os/exec"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -50,34 +49,10 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 	// sort the env vars to simplify copying and pasting log output
 	sort.Strings(strEnvVars)
 
-	// flatten the args list if it contains sublists. Also remove empty lists
-	sanitisedArgs := make([]string, 0)
-	listRegEx := regexp.MustCompile(`\[([^]]+)]`)
-	for _, arg := range args {
-		log.Logger.Tracef("Searching command arg '%s' for sublists...", arg)
-		reMatches := listRegEx.FindAllStringSubmatch(arg, -1)
-
-		if len(reMatches) > 0 {
-			for _, matches := range reMatches {
-				log.Logger.Tracef("Command arg contains sublists: %#v", matches)
-				match := strings.TrimSpace(matches[1])
-				if match != "" {
-					sanitisedArgs = append(sanitisedArgs, match)
-				}
-			}
-		} else {
-			// ignore empty arguments
-			arg = strings.TrimSpace(arg)
-			if arg != "" {
-				// just append the argument
-				sanitisedArgs = append(sanitisedArgs, arg)
-			}
-		}
-	}
-
-	log.Logger.Infof("Command '%s' has args: %#v and explicit env vars: %#v", command, sanitisedArgs, strEnvVars)
+	log.Logger.Infof("Command '%s' has args: %#v and explicit env vars: %#v", command, args, strEnvVars)
 
 	completeEnvVars := append(os.Environ(), strEnvVars...)
+	sort.Strings(completeEnvVars)
 
 	if log.Logger.Level == logrus.TraceLevel || log.Logger.Level == logrus.DebugLevel {
 		log.Logger.Debugf("Complete env vars are: %#v", completeEnvVars)
@@ -95,9 +70,9 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 			time.Duration(timeoutSeconds)*time.Second)
 		defer cancel() // The cancel should be deferred so resources are cleaned up
 
-		cmd = exec.CommandContext(ctx, command, sanitisedArgs...)
+		cmd = exec.CommandContext(ctx, command, args...)
 	} else {
-		cmd = exec.Command(command, sanitisedArgs...)
+		cmd = exec.Command(command, args...)
 	}
 
 	cmd.Env = completeEnvVars
@@ -110,7 +85,7 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 
 	commandString := fmt.Sprintf("%s %s %s",
 		strings.TrimSpace(strings.Join(strEnvVars, " ")),
-		command, strings.Join(sanitisedArgs, " "))
+		command, strings.Join(args, " "))
 
 	if dryRun {
 		log.Logger.Infof("Dry run. Would run command in directory '%s':\n%s\n",

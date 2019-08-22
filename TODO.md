@@ -26,6 +26,7 @@
 * Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
 * It should be possible to set kapp vars that are maps
 * Think of a good way of declaring per-project names that can be used for namespacing (i.e. to allow multiple clusters to be brought up for different reasons)
+* Add a flag on the 'kapps install' command to print out what it would execute for each step to make it easier to debug what would happen
 
 ### Cluster updates
 * It should be easy to see what changes will be applied by kops - perhaps go to a two-stage approach with a '--yes' flag, to make a distinction between --dry-run and staging changes.
