@@ -18,6 +18,8 @@ type RunUnitInstaller struct {
 	provider interfaces.IProvider
 }
 
+const maxInterpolationRecursions = 5
+
 func (r RunUnitInstaller) Name() string {
 	return RunUnit
 }
@@ -87,8 +89,8 @@ func getStepsInRunUnit(runUnits map[string]structs.RunUnit, unitName string) []s
 	return steps
 }
 
-// Replaces run steps that call another step with the actual step they refer to
-func interpolateCalls(steps []structs.RunStep, runUnits map[string]structs.RunUnit) ([]structs.RunStep, error) {
+// Replaces run steps that call another step with the actual step they refer to, recursing up to a maximum number of times
+func interpolateCalls(steps []structs.RunStep, runUnits map[string]structs.RunUnit, maxRecursions uint8) ([]structs.RunStep, error) {
 
 	log.Logger.Tracef("Interpolating run steps: %#v", steps)
 
@@ -145,9 +147,32 @@ func interpolateCalls(steps []structs.RunStep, runUnits map[string]structs.RunUn
 		}
 	}
 
-	// todo - recurse if any interpolated steps contain call blocks
+	// recurse if any interpolated steps contain call blocks
+	if callsToInterpolate(interpolated) {
+		if maxRecursions <= 0 {
+			return nil, errors.New("Recursion limit reached interpolating run step calls")
+		}
+
+		var err error
+		// interpolate calls to other steps with the actual step
+		interpolated, err = interpolateCalls(interpolated, runUnits, maxRecursions-1)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+	}
 
 	return interpolated, nil
+}
+
+// Returns a boolean indicating whether any of the input run steps contain calls to other steps that need interpolating
+func callsToInterpolate(runSteps []structs.RunStep) bool {
+	for _, step := range runSteps {
+		if step.Call != "" {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Default to the run unit's working dir if the step doesn't define its own
@@ -173,6 +198,7 @@ func mergeRunUnits(runUnits map[string]structs.RunUnit, action string,
 	log.Logger.Tracef("Merging '%s' run units for '%s': %#v", action,
 		installableObj.FullyQualifiedId(), runUnits)
 
+	var err error
 	steps := make([]structs.RunStep, 0)
 
 	for k, v := range runUnits {
@@ -206,10 +232,12 @@ func mergeRunUnits(runUnits map[string]structs.RunUnit, action string,
 		}
 	}
 
-	// interpolate calls to other steps with the actual step
-	steps, err := interpolateCalls(steps, runUnits)
-	if err != nil {
-		return nil, errors.WithStack(err)
+	if callsToInterpolate(steps) {
+		// interpolate calls to other steps with the actual step
+		steps, err = interpolateCalls(steps, runUnits, maxInterpolationRecursions)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
 	}
 
 	// use a temporary variable because we can't use the address of a constant directly
