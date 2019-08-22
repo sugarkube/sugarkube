@@ -299,3 +299,89 @@ func TestGetStepsInRunUnit(t *testing.T) {
 
 	assert.True(t, found)
 }
+
+func TestInterpolateCallsSingleStep(t *testing.T) {
+	var medium uint8 = 5
+	var low uint8 = 10
+
+	fixture := getFixtures()
+	expected := []structs.RunStep{
+		{
+			Name:          "del-step-1",
+			Command:       "del-command1",
+			MergePriority: &medium,
+		},
+		{
+			Name:          "st-1",
+			Command:       "plan-inst-1",
+			MergePriority: &low,
+		},
+	}
+	output, err := interpolateCalls(fixture["terraform"].ApplyDelete, fixture)
+	assert.Nil(t, err)
+
+	found := false
+	for _, expectedStep := range expected {
+		found = false
+
+		// iterate through all the output steps because we don't care about ordering at this point
+		for _, outputStep := range output {
+			if expectedStep.Name == outputStep.Name {
+				found = true
+
+				assert.Equal(t, expectedStep.Name, outputStep.Name)
+				assert.Equal(t, expectedStep.Command, outputStep.Command)
+				assert.Equal(t, *expectedStep.MergePriority, *outputStep.MergePriority)
+			}
+		}
+
+		assert.True(t, found)
+	}
+
+	assert.True(t, found)
+}
+
+func TestInterpolateCallsUnit(t *testing.T) {
+	var low uint8 = 10
+
+	fixture := getFixtures()
+	expected := []structs.RunStep{
+		{
+			Name:          "st-1",
+			Command:       "plan-inst-1",
+			MergePriority: &low,
+		},
+		{
+			Name:          "st-2",
+			Command:       "plan-inst-2",
+			MergePriority: &low,
+		},
+		{
+			Name:          "plan-inst-3",
+			Command:       "plan-inst-comm3",
+			MergePriority: &low,
+		},
+	}
+	output, err := interpolateCalls(fixture["helm"].PlanDelete, fixture)
+	assert.Nil(t, err)
+
+	found := false
+	for _, expectedStep := range expected {
+		found = false
+
+		// iterate through all the output steps because we don't care about ordering at this point
+		for _, outputStep := range output {
+			if expectedStep.Name == outputStep.Name {
+				found = true
+
+				assert.Equal(t, expectedStep.Name, outputStep.Name)
+				assert.Equal(t, expectedStep.Command, outputStep.Command)
+				assert.Equal(t, *expectedStep.MergePriority, *outputStep.MergePriority)
+			}
+		}
+
+		assert.True(t, found)
+	}
+
+	assert.True(t, found)
+}
