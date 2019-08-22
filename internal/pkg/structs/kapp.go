@@ -75,6 +75,8 @@ type RunUnit struct {
 	ApplyInstall []RunStep `yaml:"apply_install" mapstructure:"apply_install"`
 	PlanDelete   []RunStep `yaml:"plan_delete" mapstructure:"plan_delete"`
 	ApplyDelete  []RunStep `yaml:"apply_delete" mapstructure:"apply_delete"`
+	Output       []RunStep `yaml:"output" mapstructure:"output"`
+	Clean        []RunStep `yaml:"clean" mapstructure:"clean"`
 }
 
 // A struct for an actual sugarkube.yaml file

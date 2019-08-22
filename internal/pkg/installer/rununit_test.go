@@ -148,3 +148,104 @@ func TestAll(t *testing.T) {
 		assert.Equal(t, input.expected, actual)
 	}
 }
+
+func getFixtures() map[string]structs.RunUnit {
+	var highest uint8 = 0
+	var medium uint8 = 5
+	var low uint8 = 10
+
+	return map[string]structs.RunUnit{
+		"helm": {
+			PlanInstall: []structs.RunStep{
+				{
+					Name:          "plan-inst-3",
+					Command:       "plan-inst-comm3",
+					MergePriority: &low,
+				},
+			},
+			ApplyInstall: nil,
+			PlanDelete: []structs.RunStep{
+				{
+					Call:          "plan-install", // this should be replaced by all steps from `plan-install`
+					MergePriority: &low,           // all merged steps should have this priority
+				},
+			},
+			ApplyDelete: nil,
+			Output:      nil,
+			Clean:       nil,
+		},
+		"terraform": {
+			PlanInstall: []structs.RunStep{
+				{
+					Name:          "st-1",
+					Command:       "plan-inst-1",
+					MergePriority: &highest,
+				},
+				{
+					Name:          "st-2",
+					Command:       "plan-inst-2",
+					MergePriority: &medium,
+				},
+			},
+			ApplyInstall: []structs.RunStep{
+				{Call: "plan-install"},
+			},
+			PlanDelete: nil,
+			ApplyDelete: []structs.RunStep{
+				{
+					Name:          "del-step-1",
+					Command:       "del-command1",
+					MergePriority: &medium,
+				},
+				{
+					Call:          "plan-install/st-1", // only a single step should replace this
+					MergePriority: &low,
+				},
+			},
+			Output: nil,
+			Clean:  nil,
+		},
+	}
+}
+
+func TestFindStep(t *testing.T) {
+	var low uint8 = 10
+
+	fixture := getFixtures()
+	steps := fixture["helm"].PlanInstall
+	assert.NotNil(t, steps)
+
+	output := findStep(steps, "plan-inst-3")
+	expected := structs.RunStep{
+		Name:          "plan-inst-3",
+		Command:       "plan-inst-comm3",
+		MergePriority: &low,
+	}
+
+	assert.NotNil(t, output)
+
+	assert.Equal(t, expected.Name, output.Name)
+	assert.Equal(t, expected.Command, output.Command)
+	assert.Equal(t, *expected.MergePriority, *output.MergePriority)
+}
+
+func TestFindStepInRunUnits(t *testing.T) {
+	var low uint8 = 10
+
+	fixture := getFixtures()
+
+	output, err := findStepInRunUnits(fixture, "plan-install", "plan-inst-3")
+	assert.Nil(t, err)
+
+	expected := structs.RunStep{
+		Name:          "plan-inst-3",
+		Command:       "plan-inst-comm3",
+		MergePriority: &low,
+	}
+
+	assert.NotNil(t, output)
+
+	assert.Equal(t, expected.Name, output.Name)
+	assert.Equal(t, expected.Command, output.Command)
+	assert.Equal(t, *expected.MergePriority, *output.MergePriority)
+}

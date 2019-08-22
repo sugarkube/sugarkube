@@ -10,6 +10,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"math"
 	"sort"
+	"strings"
 )
 
 // Installs kapps with defined run units
@@ -21,7 +22,7 @@ func (r RunUnitInstaller) Name() string {
 	return RunUnit
 }
 
-// Search for a named run step in a list of them
+// Search for a named run step (with no run unit prefix) in a list of them
 func findStep(steps []structs.RunStep, name string) *structs.RunStep {
 	for i := range steps {
 		if steps[i].Name == name {
@@ -30,6 +31,60 @@ func findStep(steps []structs.RunStep, name string) *structs.RunStep {
 	}
 
 	return nil
+}
+
+// Searches for a run step in a specific run unit
+func findStepInRunUnits(runUnits map[string]structs.RunUnit, unitName string, stepName string) (*structs.RunStep, error) {
+	var targetStep *structs.RunStep
+	for _, v := range runUnits {
+		switch unitName {
+		case constants.PlanInstall:
+			targetStep = findStep(v.PlanInstall, stepName)
+		case constants.ApplyInstall:
+			targetStep = findStep(v.ApplyInstall, stepName)
+		case constants.PlanDelete:
+			targetStep = findStep(v.PlanDelete, stepName)
+		case constants.ApplyDelete:
+			targetStep = findStep(v.ApplyDelete, stepName)
+		case constants.Output:
+			targetStep = findStep(v.Output, stepName)
+		case constants.Clean:
+			targetStep = findStep(v.Clean, stepName)
+		}
+
+		if targetStep != nil {
+			break
+		}
+	}
+
+	if targetStep == nil {
+		return nil, fmt.Errorf("Unable to find run step '%s/%s'", unitName, stepName)
+	}
+
+	return targetStep, nil
+}
+
+// Returns all steps for the named run unit in a map of run units
+func getStepsInRunUnit(runUnits map[string]structs.RunUnit, unitName string) []structs.RunStep {
+	steps := make([]structs.RunStep, 0)
+	for _, v := range runUnits {
+		switch unitName {
+		case constants.PlanInstall:
+			steps = append(steps, v.PlanInstall...)
+		case constants.ApplyInstall:
+			steps = append(steps, v.ApplyInstall...)
+		case constants.PlanDelete:
+			steps = append(steps, v.PlanDelete...)
+		case constants.ApplyDelete:
+			steps = append(steps, v.ApplyDelete...)
+		case constants.Output:
+			steps = append(steps, v.Output...)
+		case constants.Clean:
+			steps = append(steps, v.Clean...)
+		}
+	}
+
+	return steps
 }
 
 // Replaces run steps that call another step with the actual step they refer to
@@ -41,50 +96,56 @@ func interpolateCalls(steps []structs.RunStep, runUnits map[string]structs.RunUn
 
 	for _, step := range steps {
 		if step.Call != "" {
-			// find the referenced step
-			var targetStep *structs.RunStep
-			for _, v := range runUnits {
-				targetStep = findStep(v.PlanInstall, step.Call)
+			if step.Command != "" {
+				return nil, fmt.Errorf("A run step cannot have 'call' and 'command' blocks")
+			}
 
-				if targetStep == nil {
-					targetStep = findStep(v.ApplyInstall, step.Call)
+			targetSteps := make([]structs.RunStep, 0)
+
+			// the step might either be the name of an entire run unit, or formatted 'unit/step' to refer to a single step
+			targetParts := strings.Split(step.Call, constants.CallSeparator)
+
+			if len(targetParts) == 1 {
+				// add all the steps from the target (which themselves may contain calls that need interpolating)
+				targetSteps = getStepsInRunUnit(runUnits, targetParts[0])
+			} else if len(targetParts) == 2 {
+				// add a single specific step
+				targetStep, err := findStepInRunUnits(runUnits, targetParts[0], targetParts[1])
+
+				if err != nil {
+					return nil, errors.WithStack(err)
 				}
-				if targetStep == nil {
-					targetStep = findStep(v.PlanDelete, step.Call)
+
+				targetSteps = append(targetSteps, *targetStep)
+			}
+
+			// massage all the steps we've found and add them to the array in place of the original call step
+			for _, targetStep := range targetSteps {
+				// overwrite the merge priority with the one on the call step if it's set
+				var priority *uint8
+				if step.MergePriority != nil {
+					priority = step.MergePriority
 				}
-				if targetStep == nil {
-					targetStep = findStep(v.ApplyDelete, step.Call)
+
+				// do a deep copy on the step so we can modify it
+				interpolatedStep := structs.RunStep{}
+				err := utils.DeepCopy(targetStep, &interpolatedStep)
+				if err != nil {
+					return nil, errors.WithStack(err)
 				}
 
-				if targetStep != nil {
-					break
+				if priority != nil {
+					interpolatedStep.MergePriority = priority
 				}
-			}
 
-			if targetStep == nil {
-				return nil, fmt.Errorf("Unable to find run step '%s'", step.Call)
+				interpolated = append(interpolated, interpolatedStep)
 			}
-
-			// overwrite the merge priority with the one on the call step if it's set
-			var priority *uint8
-			if step.MergePriority != nil {
-				priority = step.MergePriority
-			}
-
-			// do a deep copy on the step so we can modify it
-			step = structs.RunStep{}
-			err := utils.DeepCopy(*targetStep, &step)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
-
-			if priority != nil {
-				step.MergePriority = priority
-			}
+		} else {
+			interpolated = append(interpolated, step)
 		}
-
-		interpolated = append(interpolated, step)
 	}
+
+	// todo - recurse if any interpolated steps contain call blocks
 
 	return interpolated, nil
 }
@@ -198,6 +259,9 @@ func (r RunUnitInstaller) getRunSteps(installableObj interfaces.IInstallable,
 	// all templates in the run units will now have been evaluated. So e.g. conditions should
 	// just be a list of string boolean values, etc.
 	runUnits := installableObj.GetDescriptor().RunUnits
+
+	// todo - validate that there aren't multiple run steps with the same name for a given run unit (which would mess up calling
+	//  run steps)
 
 	runSteps, err := mergeRunUnits(runUnits, action, installableObj)
 	if err != nil {
