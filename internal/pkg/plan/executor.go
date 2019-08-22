@@ -706,7 +706,7 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 			return errors.WithStack(err)
 		}
 		err = utils.ExecCommand(step.Command, args, step.EnvVars, &stdoutBuf,
-			&stderrBuf, step.WorkingDir, step.Timeout, dryRun)
+			&stderrBuf, step.WorkingDir, step.Timeout, step.ExpectedExitCode, dryRun)
 
 		log.Logger.Infof("Stdout: %s", stdoutBuf.String())
 		log.Logger.Infof("Stderr: %s", stderrBuf.String())

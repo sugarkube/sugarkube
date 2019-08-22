@@ -132,7 +132,7 @@ func (p KopsProvisioner) clusterConfigExists() (bool, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", kopsCommandTimeoutSeconds, false)
+		&stderrBuf, "", kopsCommandTimeoutSeconds, 0, false)
 	if err != nil {
 		if errors.Cause(err) == context.DeadlineExceeded {
 			return false, errors.Wrap(err,
@@ -181,7 +181,7 @@ func (p KopsProvisioner) Create(dryRun bool) error {
 
 	log.Logger.Info("Creating Kops cluster config...")
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", kopsCommandTimeoutSecondsLong, dryRun)
+		&stderrBuf, "", kopsCommandTimeoutSecondsLong, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -241,7 +241,7 @@ func (p KopsProvisioner) Delete(approved bool, dryRun bool) error {
 		log.Logger.Infof("%sTesting deleting Kops cluster. Pass --yes to actually delete it", dryRunPrefix)
 	}
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", kopsCommandTimeoutSecondsLong, dryRun)
+		&stderrBuf, "", kopsCommandTimeoutSecondsLong, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -313,7 +313,7 @@ func (p KopsProvisioner) Update(dryRun bool) error {
 	log.Logger.Info("Running Kops rolling update...")
 	// this command might take a long time to complete so don't supply a timeout
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, envVars, &stdoutBuf, &stderrBuf,
-		"", 0, dryRun)
+		"", 0, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -362,7 +362,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 	log.Logger.Info("Downloading config for kops cluster...")
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
-		"", kopsCommandTimeoutSeconds, dryRun)
+		"", kopsCommandTimeoutSeconds, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -441,7 +441,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 	args = parameteriseValues(args, p.kopsConfig.Params.Replace)
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
-		"", kopsCommandTimeoutSeconds, dryRun)
+		"", kopsCommandTimeoutSeconds, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -476,7 +476,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 
 	// this command might take a long time to complete so don't supply a timeout
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
-		"", 0, dryRun)
+		"", 0, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -501,7 +501,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 	err := utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", kopsCommandTimeoutSeconds, dryRun)
+		&stderrBuf, "", kopsCommandTimeoutSeconds, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -561,7 +561,7 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 	args = parameteriseValues(args, kopsConfig.Params.Replace)
 
 	err = utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
-		"", kopsCommandTimeoutSeconds, dryRun)
+		"", kopsCommandTimeoutSeconds, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -797,7 +797,7 @@ func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args,
 		map[string]string{"KUBECONFIG": kubeConfigPath}, &stdoutBuf, &stderrBuf,
-		"", kopsSleepSecondsBeforeReadyCheck, false)
+		"", kopsSleepSecondsBeforeReadyCheck, 0, false)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
@@ -878,7 +878,7 @@ func getBastionHostname(stackConfig interfaces.IStackConfig) (string, error) {
 		"--query", query,
 		"--output", "text",
 	}, map[string]string{}, &stdoutBuf, &stderrBuf, "",
-		kopsCommandTimeoutSeconds, false)
+		kopsCommandTimeoutSeconds, 0, false)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}

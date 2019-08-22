@@ -179,28 +179,28 @@ func (a GitAcquirer) clone(dest string) error {
 
 	// git init
 	err = utils.ExecCommand(GitPath, []string{"init"}, map[string]string{},
-		&stdoutBuf, &stderrBuf, dest, 5, false)
+		&stdoutBuf, &stderrBuf, dest, 5, 0, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// add origin
 	err = utils.ExecCommand(GitPath, []string{"remote", "add", "origin", a.uri},
-		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 5, false)
+		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 5, 0, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// fetch
 	err = utils.ExecCommand(GitPath, []string{"fetch"}, map[string]string{},
-		&stdoutBuf, &stderrBuf, dest, 60, false)
+		&stdoutBuf, &stderrBuf, dest, 60, 0, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	// git configure sparse checkout
 	err = utils.ExecCommand(GitPath, []string{"config", "core.sparsecheckout", "true"},
-		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
+		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, 0, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -215,7 +215,7 @@ func (a GitAcquirer) clone(dest string) error {
 
 	// git checkout - this will put us in a detached head if the branch isn't master
 	err = utils.ExecCommand(GitPath, []string{"checkout", a.branch},
-		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
+		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, 0, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -234,7 +234,7 @@ func (a GitAcquirer) update(dest string) error {
 
 	// find out which branch is currently checked out
 	err = utils.ExecCommand(GitPath, []string{"branch", "--format", "%(refname:short)"},
-		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 2, false)
+		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 2, 0, false)
 
 	log.Logger.Debugf("Stdout=%s", stdoutBuf.String())
 	log.Logger.Debugf("Stderr=%s", stderrBuf.String())
@@ -261,7 +261,7 @@ func (a GitAcquirer) update(dest string) error {
 	}
 
 	err = utils.ExecCommand(GitPath, []string{"pull", "origin", a.branch},
-		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, false)
+		map[string]string{}, &stdoutBuf, &stderrBuf, dest, 90, 0, false)
 
 	log.Logger.Debugf("Stdout=%s", stdoutBuf.String())
 	log.Logger.Debugf("Stderr=%s", stderrBuf.String())

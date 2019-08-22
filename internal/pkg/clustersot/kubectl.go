@@ -54,7 +54,7 @@ func (c KubeCtlClusterSot) IsOnline() (bool, error) {
 
 	// poll `kubectl --context {{ kube_context }} get namespace`
 	err = utils.ExecCommand(kubectlPath, []string{"--context", context, "get", "namespace"},
-		envVars, &stdoutBuf, &stderrBuf, "", timeoutSeconds, false)
+		envVars, &stdoutBuf, &stderrBuf, "", timeoutSeconds, 0, false)
 	if err != nil {
 		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
 			log.Logger.Info("Cluster isn't online yet - kubectl not getting results")
@@ -94,7 +94,7 @@ func (c KubeCtlClusterSot) IsReady() (bool, error) {
 	}
 
 	err = utils.ExecCommand(kubectlPath, args, envVars, &stdoutBuf, &stderrBuf,
-		"", timeoutSeconds, false)
+		"", timeoutSeconds, 0, false)
 	if err != nil {
 		return false, errors.WithStack(err)
 	}

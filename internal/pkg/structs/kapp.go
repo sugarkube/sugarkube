@@ -58,9 +58,10 @@ type RunStep struct {
 	Stderr  string            // path to write stderr to
 	Print   string            `yaml:"print" mapstructure:"print"` // if 'verbose', stdout/stderr will be printed to the
 	// console when sugarkube is run with the verbose flag. Any other non-empty value will always cause output to be printed regardless
-	Conditions    []string
-	WorkingDir    string `yaml:"working_dir" mapstructure:"working_dir"`
-	MergePriority *uint8 `yaml:"merge_priority" mapstructure:"merge_priority"`
+	ExpectedExitCode int `yaml:"expected_exit_code" mapstructure:"expected_exit_code"` // sugarkube will only throw an error if a different exit code is returned
+	Conditions       []string
+	WorkingDir       string `yaml:"working_dir" mapstructure:"working_dir"`
+	MergePriority    *uint8 `yaml:"merge_priority" mapstructure:"merge_priority"`
 	// pointer so we can tell whether the user has actually set this value or not (otherwise it'd default to the zero value)
 	Call string
 	// instructs sugarkube to load and parse any outputs defined by the kapp after running

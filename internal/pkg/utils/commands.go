@@ -35,7 +35,7 @@ import (
 // is emitted instead.
 func ExecCommand(command string, args []string, envVars map[string]string,
 	stdoutBuf *bytes.Buffer, stderrBuf *bytes.Buffer, dir string,
-	timeoutSeconds int, dryRun bool) error {
+	timeoutSeconds int, expectedExitCode int, dryRun bool) error {
 
 	// reset the buffers in case they've already been used
 	stdoutBuf.Reset()
@@ -103,9 +103,26 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 			stdoutBuf.String(), stderrBuf.String())
 	}
 	if err != nil {
-		return errors.Wrapf(err, "Failed to run command in directory '%s':\n%s\n"+
-			"Stdout=%s\nStderr=%s", cmd.Dir, commandString, stdoutBuf.String(),
-			stderrBuf.String())
+		if exitError, ok := err.(*exec.ExitError); ok {
+			// if the command exited with an unexpected code, return a message
+			if exitError.ExitCode() != expectedExitCode {
+				return errors.Wrapf(err, "Failed to run command '%s' in directory '%s'. It exited with a code "+
+					"of '%d' but '%d' was expected.\n"+
+					"Stdout=%s\nStderr=%s", commandString, cmd.Dir, exitError.ExitCode(), expectedExitCode,
+					stdoutBuf.String(), stderrBuf.String())
+			}
+		} else {
+			return errors.Wrapf(err, "Failed to run command in directory '%s':\n%s\n"+
+				"Stdout=%s\nStderr=%s", cmd.Dir, commandString, stdoutBuf.String(),
+				stderrBuf.String())
+		}
+	} else {
+		// if it exits cleanly but we expected a different code, that's still an error
+		if cmd.ProcessState.ExitCode() != expectedExitCode {
+			return fmt.Errorf("The command '%s' executed in '%s' exited with a code "+
+				"of '%d', but '%d' was expected", commandString, cmd.Dir, cmd.ProcessState.ExitCode(),
+				expectedExitCode)
+		}
 	}
 
 	return nil

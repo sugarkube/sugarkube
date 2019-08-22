@@ -118,7 +118,7 @@ func (p MinikubeProvisioner) Create(dryRun bool) error {
 
 	log.Logger.Info("Launching Minikube cluster...")
 	err = utils.ExecCommand(p.minikubeConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", 0, dryRun)
+		&stderrBuf, "", 0, 0, dryRun)
 	if err != nil {
 		return errors.Wrap(err, "Failed to start a Minikube cluster")
 	}
@@ -155,7 +155,7 @@ func (p MinikubeProvisioner) Delete(approved bool, dryRun bool) error {
 
 	log.Logger.Infof("%sDeleting Minikube cluster...", dryRunPrefix)
 	err := utils.ExecCommand(p.minikubeConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", 0, dryRun)
+		&stderrBuf, "", 0, 0, dryRun)
 	if err != nil {
 		return errors.Wrap(err, "Failed to delete the Minikube cluster")
 	}
@@ -170,7 +170,7 @@ func (p MinikubeProvisioner) IsAlreadyOnline(dryRun bool) (bool, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	err := utils.ExecCommand(p.minikubeConfig.Binary, []string{"status"}, map[string]string{},
-		&stdoutBuf, &stderrBuf, "", 0, false)
+		&stdoutBuf, &stderrBuf, "", 0, 0, false)
 	if err != nil {
 		// assume no cluster is up if the command starts but doesn't complete successfully
 		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
