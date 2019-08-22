@@ -723,23 +723,23 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 				if stdout != "" {
 					stdout = fmt.Sprintf("\n\n%s", stdout)
 				} else {
-					stdout = "<no output>\n"
+					stdout = "<no output>\n\n"
 				}
 
 				stderr := stderrBuf.String()
 				if stderr != "" {
 					stderr = fmt.Sprintf("\n\n%s", stderr)
 				} else {
-					stderr = "<no output>\n"
+					stderr = "<no output>\n\n"
 				}
 
-				_, err := printer.Fprintf("\nStdout from '[white]%s[reset]' for '[white]%s[reset]': %s",
+				_, err := printer.Fprintf("\n[yellow]Stdout from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
 					step.Name, installableObj.FullyQualifiedId(), stdout)
 				if err != nil {
 					return errors.WithStack(err)
 				}
 
-				_, err = printer.Fprintf("\nStderr from '[white]%s[reset]' for '[white]%s[reset]': %s",
+				_, err = printer.Fprintf("\n[yellow]Stderr from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
 					step.Name, installableObj.FullyQualifiedId(), stderr)
 				if err != nil {
 					return errors.WithStack(err)
