@@ -249,3 +249,53 @@ func TestFindStepInRunUnits(t *testing.T) {
 	assert.Equal(t, expected.Command, output.Command)
 	assert.Equal(t, *expected.MergePriority, *output.MergePriority)
 }
+
+func TestGetStepsInRunUnit(t *testing.T) {
+	var highest uint8 = 0
+	var medium uint8 = 5
+	var low uint8 = 10
+
+	fixture := getFixtures()
+
+	output := getStepsInRunUnit(fixture, "plan-install")
+
+	expected := []structs.RunStep{
+		{
+			Name:          "plan-inst-3",
+			Command:       "plan-inst-comm3",
+			MergePriority: &low,
+		},
+		{
+			Name:          "st-1",
+			Command:       "plan-inst-1",
+			MergePriority: &highest,
+		},
+		{
+			Name:          "st-2",
+			Command:       "plan-inst-2",
+			MergePriority: &medium,
+		},
+	}
+
+	assert.NotNil(t, output)
+
+	found := false
+	for _, expectedStep := range expected {
+		found = false
+
+		// iterate through all the output steps because we don't care about ordering at this point
+		for _, outputStep := range output {
+			if expectedStep.Name == outputStep.Name {
+				found = true
+
+				assert.Equal(t, expectedStep.Name, outputStep.Name)
+				assert.Equal(t, expectedStep.Command, outputStep.Command)
+				assert.Equal(t, *expectedStep.MergePriority, *outputStep.MergePriority)
+			}
+		}
+
+		assert.True(t, found)
+	}
+
+	assert.True(t, found)
+}
