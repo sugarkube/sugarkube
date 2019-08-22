@@ -116,7 +116,7 @@ process before installing the selected kapps.
 
 	f := cmd.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
-	f.BoolVarP(&c.approved, constants.YES_FLAG, "y", false, "actually install kapps. If false, kapps will be expected to plan "+
+	f.BoolVarP(&c.approved, constants.YesFlag, "y", false, "actually install kapps. If false, kapps will be expected to plan "+
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
 	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp with 'APPROVED=false' then "+
 		"'APPROVED=true' to install kapps in a single pass")
@@ -242,7 +242,7 @@ func (c *installCmd) run() error {
 			return errors.WithStack(err)
 		}
 		_, err = printer.Fprintf("[white][bold]Note: [reset]No destructive changes were made. To actually "+
-			"install kapps, rerun this command passing [cyan][bold]--%s[reset]\n", constants.YES_FLAG)
+			"install kapps, rerun this command passing [cyan][bold]--%s[reset]\n", constants.YesFlag)
 		if err != nil {
 			return errors.WithStack(err)
 		}

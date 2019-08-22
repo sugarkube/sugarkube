@@ -196,7 +196,7 @@ func (c *deleteCmd) run() error {
 			return errors.WithStack(err)
 		}
 		_, err = printer.Fprintf("[white][bold]Note: [reset]No destructive changes were made. To actually "+
-			"delete kapps, rerun this command passing [cyan][bold]--%s[reset]\n", constants.YES_FLAG)
+			"delete kapps, rerun this command passing [cyan][bold]--%s[reset]\n", constants.YesFlag)
 		if err != nil {
 			return errors.WithStack(err)
 		}

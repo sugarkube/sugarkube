@@ -711,6 +711,42 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 		log.Logger.Infof("Stdout: %s", stdoutBuf.String())
 		log.Logger.Infof("Stderr: %s", stderrBuf.String())
 
+		if step.Print != "" {
+
+			shouldPrint := true
+			if step.Print == constants.Verbose && !config.CurrentConfig.Verbose {
+				shouldPrint = false
+			}
+
+			if shouldPrint {
+				stdout := stdoutBuf.String()
+				if stdout != "" {
+					stdout = fmt.Sprintf("\n\n%s", stdout)
+				} else {
+					stdout = "<no output>\n"
+				}
+
+				stderr := stderrBuf.String()
+				if stderr != "" {
+					stderr = fmt.Sprintf("\n\n%s", stderr)
+				} else {
+					stderr = "<no output>\n"
+				}
+
+				_, err := printer.Fprintf("\nStdout from '[white]%s[reset]' for '[white]%s[reset]': %s",
+					step.Name, installableObj.FullyQualifiedId(), stdout)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+
+				_, err = printer.Fprintf("\nStderr from '[white]%s[reset]' for '[white]%s[reset]': %s",
+					step.Name, installableObj.FullyQualifiedId(), stderr)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+			}
+		}
+
 		var err2 error
 
 		if step.Stdout != "" {

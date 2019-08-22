@@ -50,12 +50,14 @@ type Action struct {
 }
 
 type RunStep struct {
-	Name          string
-	Command       string
-	Args          string
-	EnvVars       map[string]string `yaml:"env_vars" mapstructure:"env_vars"`
-	Stdout        string            // path to write stdout to
-	Stderr        string            // path to write stderr to
+	Name    string
+	Command string
+	Args    string
+	EnvVars map[string]string `yaml:"env_vars" mapstructure:"env_vars"`
+	Stdout  string            // path to write stdout to
+	Stderr  string            // path to write stderr to
+	Print   string            `yaml:"print" mapstructure:"print"` // if 'verbose', stdout/stderr will be printed to the
+	// console when sugarkube is run with the verbose flag. Any other non-empty value will always cause output to be printed regardless
 	Conditions    []string
 	WorkingDir    string `yaml:"working_dir" mapstructure:"working_dir"`
 	MergePriority *uint8 `yaml:"merge_priority" mapstructure:"merge_priority"`

@@ -1,3 +1,4 @@
 package constants
 
-const YES_FLAG = "yes"
+const YesFlag = "yes"
+const Verbose = "verbose"

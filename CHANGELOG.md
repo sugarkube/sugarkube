@@ -1,6 +1,7 @@
 # Changelog
 ## 0.10.0
 * Kapp run steps now take a single string argument that's parsed similarly to shell commands for more flexibility. It no longer takes a list of arguments.
+* Add a setting to run steps to control whether the output of it should be printed to the console ('print')
 
 ## 0.9.0
 * Rename the 'cache' subcommand to 'workspace' because it wasn't clear that users should actually work inside cache directories (i.e. they're not temporary caches).
