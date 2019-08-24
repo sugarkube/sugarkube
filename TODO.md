@@ -66,8 +66,6 @@
   deploying changes. Use a ClusterSOT for that.~~
 * Create a cache manager whose job it is to organise where files are stored in a cache to enable the no-op provisioner to be used
 
-* Don't throw an error running `sugarkube version` if no config file could be loaded
-
 ## Other things to consider
 * Is being focussed on clusters a mistake? 
     * We could help provision other hosted services, e.g. ElastiCache, BigQuery, etc. 

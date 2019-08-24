@@ -1,3 +1,5 @@
+# Per-project config file. Copy this to the root of each of your projects.
+
 log_level: none
 #json_logs: false
 #no_color: true

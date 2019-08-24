@@ -1,0 +1,5 @@
+# Global Sugarkube config file. Copy this to `~/.sugarkube/sugarkube-conf.yaml`
+
+log_level: none
+#json_logs: false
+#no_color: true
