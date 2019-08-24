@@ -9,7 +9,7 @@ Check out the [sample project](https://github.com/sugarkube/sample-project) that
 launches a minikube cluster, installs nginx-ingress, cert-manager and 2 wordpress 
 sites, and loads different sample data into each of them. All this with 2 commands.
 
-Complete [documentation](docs/markdown).
+Complete [documentation](https://docs.sugarkube.io).
 
 **Create a cluster**
 ![Create a cluster](docs/svgs/cluster-create.svg)
@@ -32,9 +32,8 @@ manifests can be versioned and are fully declarative. They describe which
 versions of which applications or infrastructure should be deployed onto 
 whichever clusters/backends.
 
-Applications ("kapps") just need to be versionable and have a Makefile with 
-several standard targets to be compatible, which means if you can script it 
-you can run it as a kapp. 
+Applications ("kapps") just need to be versionable and have a `sugarkube.yaml` file 
+that configure it. If you can script something it you can run it as a kapp. 
 
 Kapps should create all the infrastructure they need depending on where they're 
 run. E.g. installing Chart Museum on a local Minikube cluster shouldn't create
@@ -124,8 +123,7 @@ git repos defined in the manifests used in `stacks.yaml`.
 
 # FAQ
 ### Does this depend on containers?
-No. Sugarkube just acquires and runs versioned Makefiles. It's up to you 
-what they do. 
+No. Sugarkube just runs commands. It's up to you what they do. 
 
 ### How does this compare to Helm?
 Helm installs individual applications (e.g. Wordpress) but doesn't let you 
@@ -174,11 +172,6 @@ kapps create the infrastructure they need, and manifests allow multiple kapps
 to be versioned alongside each other, you could either update your Wordpress
 kapp to create an RDS instance just for its own use, or create it in a shared 
 kapp for multiple Wordpress instances to use.
-
-Another benefit is that since Sugarkube delegates to `make`, Makefiles can be 
-written that don't create any infrastructure at all when running on local 
-minikube clusters, or that create smaller instances of, e.g. RDS databases while
-developing.
 
 ### What if I don't use Kubernetes?
 Sugarkube is really several things:
