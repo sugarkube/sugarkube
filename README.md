@@ -7,9 +7,9 @@ used as a production release pipeline. Not specific to Kubernetes or Helm.
 
 Check out the [sample project](https://github.com/sugarkube/sample-project) that 
 launches a minikube cluster, installs nginx-ingress, cert-manager and 2 wordpress 
-sites, and loads different sample data into each of them. All this with 2 commands.
+sites, and loads different sample data into each of them. All this with a few commands.
 
-Complete [documentation](https://docs.sugarkube.io).
+Read the [complete documentation](https://docs.sugarkube.io).
 
 **Create a cluster**
 ![Create a cluster](docs/svgs/cluster-create.svg)
