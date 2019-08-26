@@ -85,7 +85,6 @@ type RunUnit struct {
 // A struct for an actual sugarkube.yaml file
 type KappConfig struct {
 	State                string
-	Version              string
 	Requires             []string
 	PostInstallActions   []map[string]Action `yaml:"post_install_actions"`
 	PostDeleteActions    []map[string]Action `yaml:"post_delete_actions"`
