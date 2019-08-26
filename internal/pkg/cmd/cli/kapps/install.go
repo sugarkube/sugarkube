@@ -118,8 +118,8 @@ process before installing the selected kapps.
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVarP(&c.approved, constants.YesFlag, "y", false, "actually install kapps. If false, kapps will be expected to plan "+
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
-	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp with 'APPROVED=false' then "+
-		"'APPROVED=true' to install kapps in a single pass")
+	f.BoolVar(&c.oneShot, "one-shot", false, "invoke each kapp as if --yes hadn't been given then immediately again as if it had "+
+		"to plan and install kapps in a single pass")
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/delete all the kapps "+
 	//	"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
