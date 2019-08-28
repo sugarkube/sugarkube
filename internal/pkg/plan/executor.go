@@ -722,27 +722,39 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 				stdout := stdoutBuf.String()
 				if stdout != "" {
 					stdout = fmt.Sprintf("\n\n%s", stdout)
-				} else {
-					stdout = "<no output>\n\n"
 				}
 
 				stderr := stderrBuf.String()
 				if stderr != "" {
 					stderr = fmt.Sprintf("\n\n%s", stderr)
+				}
+
+				if len(stdout) > 0 {
+					_, err := printer.Fprintf("\n[yellow]Stdout from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
+						step.Name, installableObj.FullyQualifiedId(), stdout)
+					if err != nil {
+						return errors.WithStack(err)
+					}
 				} else {
-					stderr = "<no output>\n\n"
+					_, err := printer.Fprintf("\n[yellow]No stdout was written by[reset] '[white]%s[reset]' for '[white]%s[reset]'",
+						step.Name, installableObj.FullyQualifiedId())
+					if err != nil {
+						return errors.WithStack(err)
+					}
 				}
 
-				_, err := printer.Fprintf("\n[yellow]Stdout from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
-					step.Name, installableObj.FullyQualifiedId(), stdout)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-
-				_, err = printer.Fprintf("\n[yellow]Stderr from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
-					step.Name, installableObj.FullyQualifiedId(), stderr)
-				if err != nil {
-					return errors.WithStack(err)
+				if len(stderr) > 0 {
+					_, err = printer.Fprintf("\n[yellow]Stderr from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
+						step.Name, installableObj.FullyQualifiedId(), stderr)
+					if err != nil {
+						return errors.WithStack(err)
+					}
+				} else {
+					_, err := printer.Fprintf("\n[yellow]No stderr was written by[reset] '[white]%s[reset]' for '[white]%s[reset]'\n\n",
+						step.Name, installableObj.FullyQualifiedId())
+					if err != nil {
+						return errors.WithStack(err)
+					}
 				}
 			}
 		}
