@@ -99,8 +99,8 @@ programs:
       run_terraform: true    # none of these units will be run for a kapp if this is false because of the associated condition
       terraform: terraform   # path to the terraform binary to run. This allows version pinning if you have multiple versions of terraform on your machine.
       terraform_dir: "{{ .kapp.cacheRoot }}/{{ .kapp.vars.main_kapp_dir }}/terraform_{{ .stack.provider }}"
-      tf_output_path: _generated_terraform_output.json
-      tf_plan_path: _generated_plan.tfplan
+      tf_output_path: "{{ .kapp.cacheRoot }}/{{ .kapp.vars.main_kapp_dir }}/terraform_{{ .stack.provider }}/_generated_terraform_output.json"
+      tf_plan_path: "{{ .kapp.cacheRoot }}/{{ .kapp.vars.main_kapp_dir }}/terraform_{{ .stack.provider }}/_generated_plan.tfplan"
       # Dynamically searches for terraform tfvars files based on the current stack provider and various properties of the
       # stack (e.g. name, region, etc.) as well as any generated files. All files found are prepended by `-var-file`
       tf_params: >-
