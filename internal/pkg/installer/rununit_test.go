@@ -170,15 +170,15 @@ func getFixtures() map[string]structs.RunUnit {
 			ApplyInstall: nil,
 			PlanDelete: []structs.RunStep{
 				{
-					Call:          "plan-install", // this should be replaced by all steps from `plan-install`
-					MergePriority: &low,           // all merged steps should have this priority
+					Call:          constants.PlanInstall, // this should be replaced by all steps from `plan-install`
+					MergePriority: &low,                  // all merged steps should have this priority
 				},
 			},
 			ApplyDelete: nil,
 			Output:      nil,
 			Clean: []structs.RunStep{
 				{
-					Call: "apply-delete", // this step itself has calls to be interpolated
+					Call: constants.ApplyDelete, // this step itself has calls to be interpolated
 				},
 			},
 		},
@@ -197,7 +197,7 @@ func getFixtures() map[string]structs.RunUnit {
 				},
 			},
 			ApplyInstall: []structs.RunStep{
-				{Call: "plan-install"},
+				{Call: constants.PlanInstall},
 			},
 			PlanDelete: nil,
 			ApplyDelete: []structs.RunStep{
@@ -207,7 +207,7 @@ func getFixtures() map[string]structs.RunUnit {
 					MergePriority: &medium,
 				},
 				{
-					Call:          "plan-install/plan-inst-3", // only a single step should replace this
+					Call:          "plan_install/plan-inst-3", // only a single step should replace this
 					MergePriority: &low,
 				},
 			},
@@ -243,7 +243,7 @@ func TestFindStepInRunUnits(t *testing.T) {
 
 	fixture := getFixtures()
 
-	output, err := findStepInRunUnits(fixture, "plan-install", "plan-inst-3")
+	output, err := findStepInRunUnits(fixture, constants.PlanInstall, "plan-inst-3")
 	assert.Nil(t, err)
 
 	expected := structs.RunStep{
@@ -268,7 +268,7 @@ func TestGetStepsInRunUnit(t *testing.T) {
 
 	fixture := getFixtures()
 
-	output := getStepsInRunUnit(fixture, "plan-install")
+	output := getStepsInRunUnit(fixture, constants.PlanInstall)
 
 	expected := []structs.RunStep{
 		{

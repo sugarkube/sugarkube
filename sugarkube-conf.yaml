@@ -145,7 +145,7 @@ programs:
           - call: output      # call the whole 'output' unit
             merge_priority: 15         # apply terraform *before* installing a helm chart
         plan_delete:
-          - call: plan-install/tf-init       # call the tf-init step defined under `plan_install`
+          - call: plan_install/tf-init       # call the tf-init step defined under `plan_install`
             merge_priority: 25  # this needs to be merged after helm has run
           - name: tf-destroy
             print: true
@@ -153,14 +153,14 @@ programs:
             command: "{{ .kapp.vars.terraform }}"           # command not auto-approved
             args: destroy {{ .kapp.vars.tf_params }}
         apply_delete:
-          - call: plan-install/tf-init       # call the tf-init step defined under `plan_install`
+          - call: plan_install/tf-init       # call the tf-init step defined under `plan_install`
             merge_priority: 25  # this needs to be merged after helm has run
           - name: tf-destroy
             command: "{{ .kapp.vars.terraform }}"
             args: destroy -auto-approve {{ .kapp.vars.tf_params }}      # command auto-approved
             merge_priority: 30         # delete terraform *after* deleting a helm chart
         output:         # todo - we'll probably need the ability to add conditions to entire run units, e.g. gt 0 len(.kapp.output)
-          - call: plan-install/tf-init       # call the tf-init step defined under `plan_install`
+          - call: plan_install/tf-init       # call the tf-init step defined under `plan_install`
           - name: tf-refresh
             command: "{{ .kapp.vars.terraform }}"
             args: refresh {{ .kapp.vars.tf_params }}
