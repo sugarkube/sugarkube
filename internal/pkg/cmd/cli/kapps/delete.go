@@ -34,8 +34,8 @@ type deleteCmd struct {
 	oneShot             bool
 	ignoreErrors        bool
 	skipTemplating      bool
-	skipPreActions      bool
-	skipPostActions     bool
+	runPreActions       bool
+	runPostActions      bool
 	establishConnection bool
 	includeParents      bool
 	stackName           string
@@ -102,8 +102,8 @@ process before deleting the selected kapps.
 	f.BoolVar(&c.ignoreErrors, "ignore-errors", false, "ignore errors deleting kapps")
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before deleting them")
-	f.BoolVar(&c.skipPreActions, "no-pre-actions", false, "skip running pre actions in kapps")
-	f.BoolVar(&c.skipPostActions, "no-post-actions", false, "skip running post actions in kapps - useful to quickly tear down a cluster")
+	f.BoolVar(&c.runPreActions, "run-pre-actions", false, "run pre actions in kapps")
+	f.BoolVar(&c.runPostActions, "run-post-actions", false, "run post actions in kapps")
 	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
@@ -179,8 +179,8 @@ func (c *deleteCmd) run() error {
 		}
 	}
 
-	err = dagObj.Execute(constants.DagActionDelete, stackObj, shouldPlan, approved, c.skipPreActions,
-		c.skipPostActions, c.ignoreErrors, c.dryRun)
+	err = dagObj.Execute(constants.DagActionDelete, stackObj, shouldPlan, approved, !c.runPreActions,
+		!c.runPostActions, c.ignoreErrors, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
