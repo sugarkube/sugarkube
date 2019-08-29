@@ -4,9 +4,11 @@
 * Code of conduct
 
 ## Top priorities
+* Tearing down a kops cluster sometimes makes sugarkube use 200% of the system CPU 😳
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp.
 * The kapps validate command should make sure that all run steps are uniquely named to avoid issues calling different ones
 * Maybe the validate command should be implicitly run before `kapps install/delete`. The problem is with executing actions - if we default to running them it's dangerous, and if we default to not running them then perhaps config changes might also accidentally be applied perhaps or the commands run as expected. I think we should make `validate` search for run actions. If any are found we should require users to explictly either pass `--run-actions/--run-*-actions` or `--skip-*-actions` so they're actively choosing what to do.
+* The `kapps validate` command should be strict and throw an error if any unexpected yaml keys are present 
 * The Wordpress kapp should provide control over whether to install fixtures or not. Maybe by default it should only do it when the kapp is first installed, since after that it fails...
 * Update the prometheus-operator kapp to delete its CRDs when it's deleted
 * Support adding some regexes to resolve whether to throw an error if certain directories/templates/outputs exist

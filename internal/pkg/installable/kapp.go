@@ -27,6 +27,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
@@ -692,17 +693,28 @@ func (k Kapp) GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{
 		dryRunPrefix = "[Dry run] "
 	}
 
+	var err error
+
 	for _, output := range k.mergedDescriptor.Outputs {
 		// if the output exists, parse it as the declared type and put it in the map
-		path, err := filepath.Abs(filepath.Join(k.configFileDir, output.Path))
-		if err != nil {
-			return nil, errors.WithStack(err)
+		path := output.Path
+
+		// prepend the config directory if a relative path was given
+		if !strings.HasPrefix(path, "/") {
+			path, err = filepath.Abs(filepath.Join(k.configFileDir, output.Path))
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
 		}
 
 		if !dryRun {
 			if _, err = os.Stat(path); err != nil {
 				if ignoreMissing {
-					log.Logger.Infof("Ignoring missing output '%s'", path)
+					_, err := printer.Fprintf("[yellow]Ignoring missing output '%s' for kapp "+
+						"'[bold]%s[reset][yellow]'\n", path, k.FullyQualifiedId())
+					if err != nil {
+						return nil, errors.WithStack(err)
+					}
 					outputs[output.Id] = nil
 					continue
 				} else {
