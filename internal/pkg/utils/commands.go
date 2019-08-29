@@ -104,6 +104,8 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 	}
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
+			log.Logger.Infof("Command '%s' exited with a '%d', expected '%d'", commandString,
+				exitError.ExitCode(), expectedExitCode)
 			// if the command exited with an unexpected code, return a message
 			if exitError.ExitCode() != expectedExitCode {
 				return errors.Wrapf(err, "Failed to run command '%s' in directory '%s'. It exited with a code "+
@@ -117,6 +119,8 @@ func ExecCommand(command string, args []string, envVars map[string]string,
 				stderrBuf.String())
 		}
 	} else {
+		log.Logger.Infof("Command '%s' exited with a '%d', expected '%d'", commandString,
+			cmd.ProcessState.ExitCode(), expectedExitCode)
 		// if it exits cleanly but we expected a different code, that's still an error
 		if cmd.ProcessState.ExitCode() != expectedExitCode {
 			return fmt.Errorf("The command '%s' executed in '%s' exited with a code "+

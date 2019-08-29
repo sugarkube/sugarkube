@@ -199,7 +199,8 @@ func (c *installCmd) run() error {
 		shouldPlan = true
 		approved = true
 
-		_, err = printer.Fprintf("[yellow]Running installers for selected kapps in a single pass (one shot)\n")
+		_, err = printer.Fprintf("[yellow]Running installers for selected kapps in a single pass " +
+			"([bold]one shot[reset][yellow])\n")
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -220,7 +221,7 @@ func (c *installCmd) run() error {
 		}
 	}
 
-	_, err = printer.Fprintf("Enable logging to see the exact parameters passed to each kapp\n\n")
+	_, err = printer.Fprintf("Enable logging to see the exact parameters passed to each kapp (with `-l info`)\n\n")
 	if err != nil {
 		return errors.WithStack(err)
 	}

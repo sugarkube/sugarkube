@@ -55,7 +55,7 @@ func findStepInRunUnits(runUnits map[string]structs.RunUnit, unitName string, st
 		}
 
 		if targetStep != nil {
-			intermediate := setWorkingDir(v, []structs.RunStep{*targetStep})
+			intermediate := setRunUnitDefaults(v, []structs.RunStep{*targetStep})
 			if len(intermediate) != 1 {
 				return nil, fmt.Errorf("Error setting working directory on run step: %#v", *targetStep)
 			}
@@ -92,7 +92,7 @@ func getStepsInRunUnit(runUnits map[string]structs.RunUnit, unitName string) []s
 			steps = v.Clean
 		}
 
-		steps = setWorkingDir(v, steps)
+		steps = setRunUnitDefaults(v, steps)
 
 		result = append(result, steps...)
 	}
@@ -186,13 +186,21 @@ func callsToInterpolate(runSteps []structs.RunStep) bool {
 	return false
 }
 
-// Default to the run unit's working dir if the step doesn't define its own
-func setWorkingDir(runUnit structs.RunUnit, runSteps []structs.RunStep) []structs.RunStep {
+// Default to the run unit's working dir if the step doesn't define its own and also
+// merge any env vars defined on the run unit
+func setRunUnitDefaults(runUnit structs.RunUnit, runSteps []structs.RunStep) []structs.RunStep {
 
 	// use the unit's working dir if none was defined on the step itself
 	for i := range runSteps {
 		if runSteps[i].WorkingDir == "" {
 			runSteps[i].WorkingDir = runUnit.WorkingDir
+		}
+
+		for k, v := range runUnit.EnvVars {
+			// don't replace keys already set in the step itself
+			if _, ok := runSteps[i].EnvVars[k]; !ok {
+				runSteps[i].EnvVars[k] = v
+			}
 		}
 	}
 
@@ -229,16 +237,16 @@ func mergeRunUnits(runUnits map[string]structs.RunUnit, action string,
 
 		switch action {
 		case constants.PlanInstall:
-			runSteps := setWorkingDir(v, v.PlanInstall)
+			runSteps := setRunUnitDefaults(v, v.PlanInstall)
 			steps = append(steps, runSteps...)
 		case constants.ApplyInstall:
-			runSteps := setWorkingDir(v, v.ApplyInstall)
+			runSteps := setRunUnitDefaults(v, v.ApplyInstall)
 			steps = append(steps, runSteps...)
 		case constants.PlanDelete:
-			runSteps := setWorkingDir(v, v.PlanDelete)
+			runSteps := setRunUnitDefaults(v, v.PlanDelete)
 			steps = append(steps, runSteps...)
 		case constants.ApplyDelete:
-			runSteps := setWorkingDir(v, v.ApplyDelete)
+			runSteps := setRunUnitDefaults(v, v.ApplyDelete)
 			steps = append(steps, runSteps...)
 		}
 	}

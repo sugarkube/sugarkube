@@ -705,7 +705,7 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		err = utils.ExecCommand(step.Command, args, step.EnvVars, &stdoutBuf,
+		cmdErr := utils.ExecCommand(step.Command, args, step.EnvVars, &stdoutBuf,
 			&stderrBuf, step.WorkingDir, step.Timeout, step.ExpectedExitCode, dryRun)
 
 		log.Logger.Infof("Stdout: %s", stdoutBuf.String())
@@ -730,7 +730,7 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 				}
 
 				if len(stdout) > 0 {
-					_, err := printer.Fprintf("\n[yellow]Stdout from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
+					_, err := printer.Fprintf("\n[yellow][bold]Stdout[reset][yellow] from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
 						step.Name, installableObj.FullyQualifiedId(), stdout)
 					if err != nil {
 						return errors.WithStack(err)
@@ -744,7 +744,7 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 				}
 
 				if len(stderr) > 0 {
-					_, err = printer.Fprintf("\n[yellow]Stderr from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
+					_, err = printer.Fprintf("\n[yellow][bold]Stderr[reset][yellow] from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
 						step.Name, installableObj.FullyQualifiedId(), stderr)
 					if err != nil {
 						return errors.WithStack(err)
@@ -771,8 +771,8 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 
 		// the original error is more important to return, so return that. We should write files
 		// before returning it though
-		if err != nil {
-			return errors.WithStack(err)
+		if cmdErr != nil {
+			return errors.WithStack(cmdErr)
 		}
 
 		if err2 != nil {

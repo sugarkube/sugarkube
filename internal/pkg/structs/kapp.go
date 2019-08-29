@@ -74,12 +74,13 @@ type RunStep struct {
 type RunUnit struct {
 	WorkingDir   string `yaml:"working_dir" mapstructure:"working_dir"`
 	Conditions   []string
-	PlanInstall  []RunStep `yaml:"plan_install" mapstructure:"plan_install"`
-	ApplyInstall []RunStep `yaml:"apply_install" mapstructure:"apply_install"`
-	PlanDelete   []RunStep `yaml:"plan_delete" mapstructure:"plan_delete"`
-	ApplyDelete  []RunStep `yaml:"apply_delete" mapstructure:"apply_delete"`
-	Output       []RunStep `yaml:"output" mapstructure:"output"`
-	Clean        []RunStep `yaml:"clean" mapstructure:"clean"`
+	EnvVars      map[string]string `yaml:"env_vars" mapstructure:"env_vars"`
+	PlanInstall  []RunStep         `yaml:"plan_install" mapstructure:"plan_install"`
+	ApplyInstall []RunStep         `yaml:"apply_install" mapstructure:"apply_install"`
+	PlanDelete   []RunStep         `yaml:"plan_delete" mapstructure:"plan_delete"`
+	ApplyDelete  []RunStep         `yaml:"apply_delete" mapstructure:"apply_delete"`
+	Output       []RunStep         `yaml:"output" mapstructure:"output"`
+	Clean        []RunStep         `yaml:"clean" mapstructure:"clean"`
 }
 
 // A struct for an actual sugarkube.yaml file
