@@ -596,10 +596,15 @@ func parameteriseValues(args []string, valueMap map[string]string) []string {
 		}
 
 		key := strings.Replace(k, "_", "-", -1)
-		args = append(args, "--"+key)
 
-		if fmt.Sprintf("%v", v) != "" {
-			args = append(args, fmt.Sprintf("%v", v))
+		value := fmt.Sprintf("%v", v)
+		if value != "" {
+			value = fmt.Sprintf("%v", v)
+			// we need to separate keys & values with equals signs so kops doesn't
+			// get tripped up with `--bastion true`
+			args = append(args, fmt.Sprintf("--%s=%s", key, value))
+		} else {
+			args = append(args, "--"+key)
 		}
 	}
 
