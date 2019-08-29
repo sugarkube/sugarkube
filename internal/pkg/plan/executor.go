@@ -730,7 +730,7 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 				}
 
 				if len(stdout) > 0 {
-					_, err := printer.Fprintf("\n[yellow][bold]Stdout[reset][yellow] from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
+					_, err := printer.Fprintf("\n[yellow][bold]Stdout[reset][yellow] from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s\n",
 						step.Name, installableObj.FullyQualifiedId(), stdout)
 					if err != nil {
 						return errors.WithStack(err)
@@ -744,7 +744,7 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 				}
 
 				if len(stderr) > 0 {
-					_, err = printer.Fprintf("\n[yellow][bold]Stderr[reset][yellow] from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s",
+					_, err = printer.Fprintf("\n[yellow][bold]Stderr[reset][yellow] from[reset] '[white]%s[reset]' for '[white]%s[reset]': %s\n",
 						step.Name, installableObj.FullyQualifiedId(), stderr)
 					if err != nil {
 						return errors.WithStack(err)
