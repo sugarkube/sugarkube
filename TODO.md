@@ -6,10 +6,9 @@
 ## Top priorities
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp.
 * The kapps validate command should make sure that all run steps are uniquely named to avoid issues calling different ones
+* Maybe the validate command should be implicitly run before `kapps install/delete`. The problem is with executing actions - if we default to running them it's dangerous, and if we default to not running them then perhaps config changes might also accidentally be applied perhaps or the commands run as expected. I think we should make `validate` search for run actions. If any are found we should require users to explictly either pass `--run-actions/--run-*-actions` or `--skip-*-actions` so they're actively choosing what to do.
 * The Wordpress kapp should provide control over whether to install fixtures or not. Maybe by default it should only do it when the kapp is first installed, since after that it fails...
 * Update the prometheus-operator kapp to delete its CRDs when it's deleted
-* Documentation!! 
-  * Format docs using this hugo theme: https://learn.netlify.com/en/
 * Support adding some regexes to resolve whether to throw an error if certain directories/templates/outputs exist
   depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a kapp with the local provider because it hasn't e.g. written terraform output to a path that it would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for remote providers, not the local one
   * Use `conditions`
@@ -27,11 +26,10 @@
 * Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
 * It should be possible to set kapp vars that are maps
 * Think of a good way of declaring per-project names that can be used for namespacing (i.e. to allow multiple clusters to be brought up for different reasons)
-* Add a flag on the 'kapps install' command to print out what it would execute for each step to make it easier to debug what would happen
+* Add a flag on the 'kapps install' command to print out what it would execute for each step to make it easier to debug what would happen (so users don't need to enable logging to see the commands that would be executed)
 
 ### Cluster updates
 * It should be easy to see what changes will be applied by kops - perhaps go to a two-stage approach with a '--yes' flag, to make a distinction between --dry-run and staging changes.
-* If a kapp uses actions to create/update clusters, warn users if the cluster config would be altered while they're planning it, and get them to pass an extra flag to confirm the config change (to avoid accidental cluster config changes)
 
 ### Merging kapp configs
 * Support passing kapp vars on the command line when only one is selected

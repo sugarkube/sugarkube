@@ -507,11 +507,14 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	installableObj := node.installableObj
 
 	var runSteps []structs.RunStep
-	var actionName string
 	var installerMethod func(installableObj interfaces.IInstallable, stack interfaces.IStack, dryRun bool) ([]structs.RunStep, error)
 	var preActions []structs.Action
 	var postActions []structs.Action
 
+	actionName := constants.DagActionInstall
+	if !install {
+		actionName = constants.DagActionDelete
+	}
 	installerVars := installerImpl.GetVars(actionName, dryRun)
 
 	// render templates in case any are used as outputs for some reason
@@ -559,23 +562,32 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 		skipInstallerMethod := false
 
 		// only execute pre actions if approved==true
-		if approved && !skipPreActions {
-			if install {
-				preActions = installableObj.PreInstallActions()
+		if approved {
+			if skipPreActions {
+				_, err = printer.Fprintf("[yellow]Not executing %d pre actions for '[bold]%s[reset][yellow]'. Pass "+
+					"`[bold]--%s[reset][yellow]` to execute them\n", len(preActions), installableObj.FullyQualifiedId(), constants.RunPreActions)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+					return
+				}
 			} else {
-				preActions = installableObj.PreDeleteActions()
-			}
+				if install {
+					preActions = installableObj.PreInstallActions()
+				} else {
+					preActions = installableObj.PreDeleteActions()
+				}
 
-			log.Logger.Infof("Will run %d pre %s actions", len(preActions), actionName)
+				log.Logger.Infof("Will run %d pre %s actions", len(preActions), actionName)
 
-			for _, action := range preActions {
-				switch action.Id {
-				case constants.ActionSkip:
-					log.Logger.Infof("Marking that we should skip running '%s' on installable '%s'",
-						actionName, installableObj.FullyQualifiedId())
-					skipInstallerMethod = true
-				default:
-					executeAction(action, installableObj, stackObj, errCh, dryRun)
+				for _, action := range preActions {
+					switch action.Id {
+					case constants.ActionSkip:
+						log.Logger.Infof("Marking that we should skip running '%s' on installable '%s'",
+							actionName, installableObj.FullyQualifiedId())
+						skipInstallerMethod = true
+					default:
+						executeAction(action, installableObj, stackObj, errCh, dryRun)
+					}
 				}
 			}
 		}
@@ -642,17 +654,26 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	}
 
 	// only execute post actions if approved==true
-	if node.marked && approved && !skipPostActions {
-		log.Logger.Infof("Will run %d post %s actions", len(postActions), actionName)
-
-		if install {
-			postActions = installableObj.PostInstallActions()
+	if node.marked && approved {
+		if skipPostActions {
+			_, err = printer.Fprintf("[yellow]Not executing %d post actions for '[bold]%s[reset][yellow]'. Pass "+
+				"`[bold]--%s[reset][yellow]` to execute them\n", len(postActions), installableObj.FullyQualifiedId(), constants.RunPostActions)
+			if err != nil {
+				errCh <- errors.WithStack(err)
+				return
+			}
 		} else {
-			postActions = installableObj.PostDeleteActions()
-		}
+			log.Logger.Infof("Will run %d post %s actions", len(postActions), actionName)
 
-		for _, action := range postActions {
-			executeAction(action, installableObj, stackObj, errCh, dryRun)
+			if install {
+				postActions = installableObj.PostInstallActions()
+			} else {
+				postActions = installableObj.PostDeleteActions()
+			}
+
+			for _, action := range postActions {
+				executeAction(action, installableObj, stackObj, errCh, dryRun)
+			}
 		}
 	}
 }
