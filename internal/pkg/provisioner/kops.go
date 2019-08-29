@@ -420,7 +420,6 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 	}
 
 	defer tmpfile.Close()
-	defer os.Remove(tmpfile.Name()) // clean up
 
 	if _, err := tmpfile.Write([]byte(yamlString)); err != nil {
 		return errors.WithStack(err)
@@ -442,6 +441,12 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", kopsCommandTimeoutSeconds, 0, dryRun)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// we don't just defer this because it's useful to inspect it if the above command fails
+	err = os.Remove(tmpfile.Name()) // clean up
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -539,7 +544,6 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 	}
 
 	defer tmpfile.Close()
-	defer os.Remove(tmpfile.Name()) // clean up
 
 	if _, err := tmpfile.Write([]byte(yamlString)); err != nil {
 		return errors.WithStack(err)
@@ -562,6 +566,12 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 
 	err = utils.ExecCommand(kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
 		"", kopsCommandTimeoutSeconds, 0, dryRun)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	// we don't just defer this because it's useful to inspect it if the above command fails
+	err = os.Remove(tmpfile.Name()) // clean up
 	if err != nil {
 		return errors.WithStack(err)
 	}

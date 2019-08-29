@@ -564,7 +564,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 		// only execute pre actions if approved==true
 		if approved {
 			if skipPreActions {
-				_, err = printer.Fprintf("[yellow]Not executing %d pre actions for '[bold]%s[reset][yellow]'. Pass "+
+				_, err = printer.Fprintf("[yellow]Not executing %d pre actions for '[bold][white]%s[reset][yellow]'. Pass "+
 					"`[bold]--%s[reset][yellow]` to execute them\n", len(preActions), installableObj.FullyQualifiedId(), constants.RunPreActions)
 				if err != nil {
 					errCh <- errors.WithStack(err)
@@ -656,7 +656,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	// only execute post actions if approved==true
 	if node.marked && approved {
 		if skipPostActions {
-			_, err = printer.Fprintf("[yellow]Not executing %d post actions for '[bold]%s[reset][yellow]'. Pass "+
+			_, err = printer.Fprintf("[yellow]Not executing %d post actions for '[bold][white]%s[reset][yellow]'. Pass "+
 				"`[bold]--%s[reset][yellow]` to execute them\n", len(postActions), installableObj.FullyQualifiedId(), constants.RunPostActions)
 			if err != nil {
 				errCh <- errors.WithStack(err)

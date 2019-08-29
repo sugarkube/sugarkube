@@ -22,6 +22,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"time"
 )
 
@@ -119,8 +120,11 @@ func WaitForClusterReadiness(p interfaces.IProvisioner) error {
 		}
 
 		if !connected {
-			log.Logger.Infof("Couldn't establish a connection to the " +
-				"cluster. Sleeping before retrying...")
+			_, err = printer.Fprintf("[yellow]Couldn't establish a connection to the " +
+				"cluster. Sleeping before retrying...\n")
+			if err != nil {
+				return errors.WithStack(err)
+			}
 			time.Sleep(shortSleepTime * time.Second)
 			continue
 		}
