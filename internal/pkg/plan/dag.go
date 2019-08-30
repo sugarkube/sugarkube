@@ -23,6 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
@@ -49,7 +50,6 @@ type Dag struct {
 // Defines a node that should be created in the graph, along with parent dependencies. This is
 // just a descriptor of a node, not an actual graph node
 type nodeDescriptor struct {
-	dependsOn      []string
 	installableObj interfaces.IInstallable
 }
 
@@ -74,8 +74,11 @@ type nodeStatus struct {
 
 // Creates a DAG for installables in the given manifests. If a list of selected installable IDs is
 // given a subgraph will be returned containing only those installables and their ancestors.
-func Create(manifests []interfaces.IManifest, selectedInstallableIds []string,
+func Create(stackObj interfaces.IStack, selectedInstallableIds []string,
 	includeParents bool) (*Dag, error) {
+
+	manifests := stackObj.GetConfig().Manifests()
+
 	manifestIds := make([]string, 0)
 	for _, manifest := range manifests {
 		manifestIds = append(manifestIds, manifest.Id())
@@ -83,8 +86,12 @@ func Create(manifests []interfaces.IManifest, selectedInstallableIds []string,
 
 	log.Logger.Debugf("Creating DAG for installables '%s' in manifests %s",
 		strings.Join(selectedInstallableIds, ", "), strings.Join(manifestIds, ", "))
-	descriptors := findDependencies(manifests)
-	dag, err := build(descriptors)
+	descriptors, err := findDependencies(manifests)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	dag, err := build(descriptors, stackObj)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -102,29 +109,60 @@ func Create(manifests []interfaces.IManifest, selectedInstallableIds []string,
 // Builds a graph from a map of descriptors that contain a string node ID plus a list of
 // IDs of nodes that node depends on (i.e. parents).
 // An error will be returned if the resulting graph is cyclical.
-func build(descriptors map[string]nodeDescriptor) (*Dag, error) {
+func build(descriptors map[string]nodeDescriptor, stackObj interfaces.IStack) (*Dag, error) {
 	graphObj := simple.NewDirectedGraph()
 	nodesByName := make(map[string]NamedNode, 0)
 
 	// add each descriptor to the graph
 	for descriptorId, descriptor := range descriptors {
-		descriptorNode := addNode(graphObj, nodesByName, descriptorId,
-			descriptor.installableObj, true)
+		installableObj := descriptor.installableObj
 
-		if descriptor.dependsOn != nil {
-			// add each dependency to the graph if it's not yet in it
-			for _, dependencyId := range descriptor.dependsOn {
-				_, ok := descriptors[dependencyId]
-				if !ok {
-					return nil, fmt.Errorf("descriptor '%s' depends on a graph "+
-						"descriptor that doesn't exist: %s", descriptorId, dependencyId)
+		// template the installable's descriptor
+		templatedVars, err := stackObj.GetTemplatedVars(installableObj, map[string]interface{}{})
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		err = installableObj.TemplateDescriptor(templatedVars)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		descriptorNode := addNode(graphObj, nodesByName, descriptorId,
+			installableObj, true)
+
+		dependencies := installableObj.GetDescriptor().DependsOn
+
+		if dependencies != nil {
+			// add each dependency to the graph if it's not yet in it, provided all its conditions are met (if any)
+			for _, dependency := range dependencies {
+				// check its conditions are all true if it has any
+				if len(dependency.Conditions) > 0 {
+					log.Logger.Tracef("Evaluating conditions for dependency '%s': %#v", dependency.Id,
+						dependency.Conditions)
+					conditionsPassed, err := utils.All(dependency.Conditions)
+					if err != nil {
+						return nil, errors.WithStack(err)
+					}
+
+					if !conditionsPassed {
+						log.Logger.Infof("Dependency '%s' has failed conditions. Won't add it to the DAG",
+							dependency.Id)
+						continue
+					}
 				}
 
-				dependency := descriptors[dependencyId]
-				parentNode := addNode(graphObj, nodesByName, dependencyId,
-					dependency.installableObj, true)
+				_, ok := descriptors[dependency.Id]
+				if !ok {
+					return nil, fmt.Errorf("descriptor '%s' depends on a graph "+
+						"descriptor that doesn't exist: %s", descriptorId, dependency.Id)
+				}
 
-				log.Logger.Debugf("Creating edge from  '%s' to '%s'", dependencyId, descriptorId)
+				dependentNode := descriptors[dependency.Id]
+				parentNode := addNode(graphObj, nodesByName, dependency.Id,
+					dependentNode.installableObj, true)
+
+				log.Logger.Debugf("Creating edge from  '%s' to '%s'", dependency.Id, descriptorId)
 
 				// return an error instead of creating a loop
 				if parentNode.node == descriptorNode.node {

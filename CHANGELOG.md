@@ -3,6 +3,7 @@
 * Kapp run steps now take a single string argument that's parsed similarly to shell commands for more flexibility. It no longer takes a list of arguments.
 * Add a setting to run steps to control whether the output of it should be printed to the console ('print')
 * Change the flags on `kapps install` and `kapps delete` from `--no-pre-actions` -> `--run-pre-actions` and from `--no-post-actions` -> `--run-post-actions` for safety 
+* Breaking change: Changed the format of dependencies and added support for them being conditional based on other attributes of the target stack. Please see the docs.
 
 ## 0.9.0
 * Rename the 'cache' subcommand to 'workspace' because it wasn't clear that users should actually work inside cache directories (i.e. they're not temporary caches).

@@ -289,8 +289,7 @@ func BuildDagForSelected(stackObj interfaces.IStack, workspaceDir string, includ
 		}
 	}
 
-	dagObj, err := plan.Create(stackObj.GetConfig().Manifests(), filteredInstallableIds,
-		includeParents)
+	dagObj, err := plan.Create(stackObj, filteredInstallableIds, includeParents)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

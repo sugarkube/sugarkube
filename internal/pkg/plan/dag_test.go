@@ -19,7 +19,11 @@ package plan
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/installable"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"sync"
 	"testing"
@@ -29,24 +33,46 @@ func init() {
 	log.ConfigureLogger("trace", false)
 }
 
-func getDescriptors() map[string]nodeDescriptor {
+func kapp(t *testing.T, dependencies []string) interfaces.IInstallable {
+	deps := make([]structs.Dependency, 0)
+
+	for _, dep := range dependencies {
+		deps = append(deps, structs.Dependency{Id: dep})
+	}
+
+	kapp, err := installable.New("example-manifest", []structs.KappDescriptorWithMaps{
+		{
+			Id:         "example-kapp",
+			KappConfig: structs.KappConfig{DependsOn: deps},
+		},
+	})
+
+	assert.Nil(t, err)
+
+	return kapp
+}
+
+func getDescriptors(t *testing.T) map[string]nodeDescriptor {
 	return map[string]nodeDescriptor{
 		// this depends on nothing and nothing depends on it
-		"independent":     {dependsOn: nil},
-		"cluster":         {dependsOn: []string{}},
-		"tiller":          {dependsOn: []string{"cluster"}},
-		"externalIngress": {dependsOn: []string{"tiller"}},
-		"sharedRds":       {dependsOn: nil},
-		"wordpress1":      {dependsOn: []string{"sharedRds", "externalIngress"}},
-		"wordpress2":      {dependsOn: []string{"sharedRds", "externalIngress"}},
-		"varnish":         {dependsOn: []string{"wordpress2"}},
+		"independent":     {installableObj: kapp(t, nil)},
+		"cluster":         {installableObj: kapp(t, []string{})},
+		"tiller":          {installableObj: kapp(t, []string{"cluster"})},
+		"externalIngress": {installableObj: kapp(t, []string{"tiller"})},
+		"sharedRds":       {installableObj: kapp(t, nil)},
+		"wordpress1":      {installableObj: kapp(t, []string{"sharedRds", "externalIngress"})},
+		"wordpress2":      {installableObj: kapp(t, []string{"sharedRds", "externalIngress"})},
+		"varnish":         {installableObj: kapp(t, []string{"wordpress2"})},
 	}
 }
 
 // Tests that DAGs are created correctly
 func TestBuildDag(t *testing.T) {
-	input := getDescriptors()
-	dag, err := build(input)
+	input := getDescriptors(t)
+
+	stackConfig, err := stack.BuildStack("large", "../../testdata/stacks.yaml", &structs.StackFile{})
+	assert.Nil(t, err)
+	dag, err := build(input, stackConfig)
 	assert.Nil(t, err)
 
 	nodes := dag.graph.Nodes()
@@ -59,7 +85,9 @@ func TestBuildDag(t *testing.T) {
 		// assert that each node has edges from any dependencies to itself
 		to := dag.graph.To(node.ID())
 
-		if descriptor.dependsOn == nil || len(descriptor.dependsOn) == 0 {
+		dependencies := descriptor.installableObj.GetDescriptor().DependsOn
+
+		if dependencies == nil || len(dependencies) == 0 {
 			assert.Equal(t, 0, to.Len())
 			log.Logger.Debugf("'%s' (node %v) has no dependencies", node.name, node)
 		} else {
@@ -74,13 +102,13 @@ func TestBuildDag(t *testing.T) {
 				node.name, node, actualDependencies)
 
 			// make sure the lists are the same length
-			assert.Equal(t, len(descriptor.dependsOn), len(actualDependencies))
+			assert.Equal(t, len(dependencies), len(actualDependencies))
 
 			// make sure each dependency is an actual dependency
-			for _, dependencyName := range descriptor.dependsOn {
-				_, ok := actualDependencies[dependencyName]
+			for _, dependency := range dependencies {
+				_, ok := actualDependencies[dependency.Id]
 				assert.True(t, ok, fmt.Sprintf("'%s' is missing a dependency: '%+v' not found in "+
-					"in %v", node.name, dependencyName, actualDependencies))
+					"in %v", node.name, dependency, actualDependencies))
 			}
 		}
 	}
@@ -89,28 +117,34 @@ func TestBuildDag(t *testing.T) {
 // Makes sure an error is returned when trying to create loops
 func TestBuildDagLoops(t *testing.T) {
 	input := map[string]nodeDescriptor{
-		"entry1": {dependsOn: []string{"entry1"}},
+		"entry1": {installableObj: kapp(t, []string{"entry1"})},
 	}
 
-	_, err := build(input)
+	stackConfig, err := stack.BuildStack("large", "../../testdata/stacks.yaml", &structs.StackFile{})
+	assert.Nil(t, err)
+	_, err = build(input, stackConfig)
 	assert.Error(t, err)
 }
 
 // Tests that we can spot a cyclic graph
 func TestIsAcyclic(t *testing.T) {
 	input := map[string]nodeDescriptor{
-		"entry1": {dependsOn: []string{"entry2"}},
-		"entry2": {dependsOn: []string{"entry1"}},
-		"entry3": {dependsOn: nil},
+		"entry1": {installableObj: kapp(t, []string{"entry2"})},
+		"entry2": {installableObj: kapp(t, []string{"entry1"})},
+		"entry3": {installableObj: kapp(t, nil)},
 	}
 
-	_, err := build(input)
+	stackConfig, err := stack.BuildStack("large", "../../testdata/stacks.yaml", &structs.StackFile{})
+	assert.Nil(t, err)
+	_, err = build(input, stackConfig)
 	assert.NotNil(t, err)
 }
 
 func TestTraverse(t *testing.T) {
-	input := getDescriptors()
-	dag, err := build(input)
+	input := getDescriptors(t)
+	stackConfig, err := stack.BuildStack("large", "../../testdata/stacks.yaml", &structs.StackFile{})
+	assert.Nil(t, err)
+	dag, err := build(input, stackConfig)
 	assert.Nil(t, err)
 
 	// IDs of nodes which could be the first to be run
@@ -173,8 +207,10 @@ func TestTraverse(t *testing.T) {
 
 // Test we can extract subgraphs of the node
 func TestSubGraph(t *testing.T) {
-	input := getDescriptors()
-	dag, err := build(input)
+	input := getDescriptors(t)
+	stackConfig, err := stack.BuildStack("large", "../../testdata/stacks.yaml", &structs.StackFile{})
+	assert.Nil(t, err)
+	dag, err := build(input, stackConfig)
 	assert.Nil(t, err)
 
 	nodeNames := []string{"wordpress1", "independent"}
@@ -198,15 +234,20 @@ func assertDependencies(t *testing.T, graphObj *Dag, descriptors map[string]node
 
 	parents := graphObj.graph.To(node.ID())
 
-	dependencyNames := descriptors[nodeName].dependsOn
+	dependencies := descriptors[nodeName].installableObj.GetDescriptor().DependsOn
 
-	assert.Equal(t, len(dependencyNames), parents.Len())
+	assert.Equal(t, len(dependencies), parents.Len())
 	if parents.Len() > 0 {
+		dependencyNames := make([]string, 0)
+		for _, dependency := range dependencies {
+			dependencyNames = append(dependencyNames, dependency.Id)
+		}
+
 		// make sure the parents are the ones we want
 		for parents.Next() {
 			parent := parents.Node().(NamedNode)
 			assert.True(t, utils.InStringArray(dependencyNames, parent.name),
-				"%s is not in %s", parent.name, dependencyNames)
+				"%s is not in %s", parent.name, dependencies)
 			assertDependencies(t, graphObj, descriptors, nodesByName, parent.name, false)
 		}
 

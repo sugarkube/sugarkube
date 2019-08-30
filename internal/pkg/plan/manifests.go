@@ -17,14 +17,16 @@
 package plan
 
 import (
+	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"strings"
 )
 
 // Determines dependencies between kapps in a set of manifests
-func findDependencies(manifests []interfaces.IManifest) map[string]nodeDescriptor {
+func findDependencies(manifests []interfaces.IManifest) (map[string]nodeDescriptor, error) {
 	descriptors := make(map[string]nodeDescriptor, 0)
 
 	var previousInstallable string
@@ -32,7 +34,7 @@ func findDependencies(manifests []interfaces.IManifest) map[string]nodeDescripto
 	for _, manifest := range manifests {
 		previousInstallable = ""
 		for _, installableObj := range manifest.Installables() {
-			dependencies := make([]string, 0)
+			dependencies := make([]structs.Dependency, 0)
 
 			log.Logger.Tracef("Candidate dependency: %#v", installableObj)
 
@@ -42,14 +44,14 @@ func findDependencies(manifests []interfaces.IManifest) map[string]nodeDescripto
 				if previousInstallable != "" {
 					log.Logger.Tracef("Adding previous installable '%s' as a dependency",
 						previousInstallable)
-					dependencies = append(dependencies, previousInstallable)
+					dependencies = append(dependencies, structs.Dependency{Id: previousInstallable})
 				} else if len(installableObj.GetDescriptor().DependsOn) > 0 {
 					log.Logger.Tracef("Installable '%s' depends on %v", installableObj.FullyQualifiedId(),
 						installableObj.GetDescriptor().DependsOn)
 					for _, dependency := range installableObj.GetDescriptor().DependsOn {
 						// fully-qualify the dependency if it's not already
-						if !strings.Contains(dependency, constants.NamespaceSeparator) {
-							dependency = strings.Join([]string{installableObj.ManifestId(), dependency},
+						if !strings.Contains(dependency.Id, constants.NamespaceSeparator) {
+							dependency.Id = strings.Join([]string{installableObj.ManifestId(), dependency.Id},
 								constants.NamespaceSeparator)
 						}
 						dependencies = append(dependencies, dependency)
@@ -64,16 +66,26 @@ func findDependencies(manifests []interfaces.IManifest) map[string]nodeDescripto
 					installableObj.GetDescriptor().DependsOn)
 				for _, dependency := range installableObj.GetDescriptor().DependsOn {
 					// fully-qualify the dependency if it's not already
-					if !strings.Contains(dependency, constants.NamespaceSeparator) {
-						dependency = strings.Join([]string{installableObj.ManifestId(), dependency},
+					if !strings.Contains(dependency.Id, constants.NamespaceSeparator) {
+						dependency.Id = strings.Join([]string{installableObj.ManifestId(), dependency.Id},
 							constants.NamespaceSeparator)
 					}
 					dependencies = append(dependencies, dependency)
 				}
 			}
 
+			// push a new descriptor into the kapp to update its list of dependencies
+			configDescriptor := structs.KappDescriptorWithMaps{
+				KappConfig: structs.KappConfig{
+					DependsOn: dependencies,
+				},
+			}
+			err := installableObj.AddDescriptor(configDescriptor, false)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+
 			descriptors[installableObj.FullyQualifiedId()] = nodeDescriptor{
-				dependsOn:      dependencies,
 				installableObj: installableObj,
 			}
 
@@ -81,5 +93,5 @@ func findDependencies(manifests []interfaces.IManifest) map[string]nodeDescripto
 		}
 	}
 
-	return descriptors
+	return descriptors, nil
 }

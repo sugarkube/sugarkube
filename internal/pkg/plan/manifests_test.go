@@ -54,15 +54,16 @@ func TestFindDependencies(t *testing.T) {
 		manifests = append(manifests, manifest)
 	}
 
-	descriptors := findDependencies(manifests)
+	descriptors, err := findDependencies(manifests)
+	assert.Nil(t, err)
 
 	expected := map[string]nodeDescriptor{
-		"manifest2:kappC": {dependsOn: []string{}, installableObj: manifests[0].Installables()[0]},
-		"manifest2:kappB": {dependsOn: []string{"manifest2:kappC"}, installableObj: manifests[0].Installables()[1]},
-		"manifest2:kappD": {dependsOn: []string{"manifest2:kappB"}, installableObj: manifests[0].Installables()[2]},
-		"manifest2:kappA": {dependsOn: []string{"manifest2:kappD"}, installableObj: manifests[0].Installables()[3]},
-		"manifest3:kappX": {dependsOn: []string{}, installableObj: manifests[1].Installables()[0]},
-		"manifest3:kappY": {dependsOn: []string{}, installableObj: manifests[1].Installables()[1]},
+		"manifest2:kappC": {installableObj: manifests[0].Installables()[0]},
+		"manifest2:kappB": {installableObj: manifests[0].Installables()[1]},
+		"manifest2:kappD": {installableObj: manifests[0].Installables()[2]},
+		"manifest2:kappA": {installableObj: manifests[0].Installables()[3]},
+		"manifest3:kappX": {installableObj: manifests[1].Installables()[0]},
+		"manifest3:kappY": {installableObj: manifests[1].Installables()[1]},
 	}
 
 	assert.Equal(t, expected, descriptors)
