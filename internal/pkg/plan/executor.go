@@ -235,7 +235,15 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 			return
 		}
 
-		err = addInstallableLocalRegistry(node.installableObj, outputs)
+		// add outputs to the kapp
+		err = addOutputsToRegistry(installableObj, outputs, installableObj.GetLocalRegistry(), true)
+		if err != nil {
+			errCh <- errors.WithStack(err)
+			return
+		}
+
+		// and also to the stack's registry (but only with fully-qualified keys)
+		err = addOutputsToRegistry(installableObj, outputs, stackObj.GetRegistry(), false)
 		if err != nil {
 			errCh <- errors.WithStack(err)
 			return
@@ -311,7 +319,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 					return
 				}
 
-				err = executeRunSteps(constants.Clean, runSteps, installableObj, dryRun)
+				err = executeRunSteps(constants.Clean, runSteps, installableObj, stackObj, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 					return
@@ -334,7 +342,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 					return
 				}
 
-				err = executeRunSteps(constants.Output, runSteps, installableObj, dryRun)
+				err = executeRunSteps(constants.Output, runSteps, installableObj, stackObj, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 					return
@@ -378,7 +386,15 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 				return
 			}
 
-			err = addInstallableLocalRegistry(node.installableObj, outputs)
+			// add outputs to the kapp
+			err = addOutputsToRegistry(installableObj, outputs, installableObj.GetLocalRegistry(), true)
+			if err != nil {
+				errCh <- errors.WithStack(err)
+				return
+			}
+
+			// and also to the stack's registry (but only with fully-qualified keys)
+			err = addOutputsToRegistry(installableObj, outputs, stackObj.GetRegistry(), false)
 			if err != nil {
 				errCh <- errors.WithStack(err)
 				return
@@ -547,7 +563,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				return
 			}
 
-			err = executeRunSteps(unitName, runSteps, installableObj, dryRun)
+			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
@@ -613,7 +629,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				return
 			}
 
-			err = executeRunSteps(unitName, runSteps, installableObj, dryRun)
+			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
@@ -640,7 +656,14 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	}
 
 	// build the kapp's local registry
-	err = addInstallableLocalRegistry(node.installableObj, outputs)
+	err = addOutputsToRegistry(installableObj, outputs, installableObj.GetLocalRegistry(), true)
+	if err != nil {
+		errCh <- errors.WithStack(err)
+		return
+	}
+
+	// and also to the stack's registry (but only with fully-qualified keys)
+	err = addOutputsToRegistry(installableObj, outputs, stackObj.GetRegistry(), false)
 	if err != nil {
 		errCh <- errors.WithStack(err)
 		return
@@ -679,7 +702,8 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 }
 
 // Executes a list of run steps
-func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj interfaces.IInstallable, dryRun bool) error {
+func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj interfaces.IInstallable,
+	stackObj interfaces.IStack, dryRun bool) error {
 
 	dryRunPrefix := ""
 	if dryRun {
@@ -807,7 +831,14 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 				return errors.Wrapf(err, "Error loading the output of kapp '%s'", installableObj.Id())
 			}
 
-			err = addInstallableLocalRegistry(installableObj, outputs)
+			// add outputs to the kapp's registry
+			err = addOutputsToRegistry(installableObj, outputs, installableObj.GetLocalRegistry(), true)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			// and also to the stack's registry (but only with fully-qualified keys)
+			err = addOutputsToRegistry(installableObj, outputs, stackObj.GetRegistry(), false)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -830,7 +861,7 @@ func getOutputs(installableObj interfaces.IInstallable, stackObj interfaces.ISta
 			return nil, errors.Wrapf(err, "Error writing output for kapp '%s'", installableObj.Id())
 		}
 
-		err = executeRunSteps(constants.Output, runSteps, installableObj, dryRun)
+		err = executeRunSteps(constants.Output, runSteps, installableObj, stackObj, dryRun)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 		}
@@ -888,23 +919,6 @@ func addParentRegistries(dagObj *Dag, node NamedNode, errCh chan<- error) {
 	}
 
 	node.installableObj.SetLocalRegistry(localRegistry)
-}
-
-// Add outputs to the kapp's local registry
-func addInstallableLocalRegistry(installableObj interfaces.IInstallable, outputs map[string]interface{}) error {
-
-	localRegistry := installableObj.GetLocalRegistry()
-
-	// only add outputs if any were passed in
-	if outputs != nil && len(outputs) > 0 {
-		err := addOutputsToRegistry(installableObj, outputs, localRegistry)
-		if err != nil {
-			return errors.WithStack(err)
-		}
-	}
-
-	installableObj.SetLocalRegistry(localRegistry)
-	return nil
 }
 
 // Executes post actions
@@ -971,8 +985,10 @@ func deleteSpecialThisOutput(registry interfaces.IRegistry) {
 }
 
 // Adds output from an installable to the registry
+// If `includeLocalKeys` is true, additional keys will be added to the registry for access from within a kapp (e.g.
+// `.outputs.this`, etc.
 func addOutputsToRegistry(installableObj interfaces.IInstallable, outputs map[string]interface{},
-	registry interfaces.IRegistry) error {
+	registry interfaces.IRegistry, includeLocalKeys bool) error {
 
 	// We convert kapp IDs to have underscores because Go's templating library throws its toys out
 	// the pram when it find a map key with a hyphen in. K8s is the opposite, so this seems like
@@ -982,16 +998,21 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, outputs map[st
 	underscoredInstallableFQId = strings.Replace(underscoredInstallableFQId, constants.NamespaceSeparator,
 		constants.TemplateNamespaceSeparator, -1)
 
-	prefixes := []string{
+	prefixes := make([]string, 0)
+
+	if includeLocalKeys {
 		// "outputs.this"
-		strings.Join([]string{constants.RegistryKeyOutputs, constants.RegistryKeyThis}, constants.RegistryFieldSeparator),
+		prefixes = append(prefixes, strings.Join([]string{constants.RegistryKeyOutputs, constants.RegistryKeyThis},
+			constants.RegistryFieldSeparator))
+
 		// short prefix - can be used by other kapps in the manifest
-		strings.Join([]string{constants.RegistryKeyOutputs, underscoredInstallableId},
-			constants.RegistryFieldSeparator),
-		// fully-qualified prefix - can be used by kapps in other manifests
-		strings.Join([]string{constants.RegistryKeyOutputs,
-			underscoredInstallableFQId}, constants.RegistryFieldSeparator),
+		prefixes = append(prefixes, strings.Join([]string{constants.RegistryKeyOutputs, underscoredInstallableId},
+			constants.RegistryFieldSeparator))
 	}
+
+	// always add keys for the fully-qualified kapp ID
+	prefixes = append(prefixes, strings.Join([]string{constants.RegistryKeyOutputs, underscoredInstallableFQId},
+		constants.RegistryFieldSeparator))
 
 	// store the output under various keys
 	for outputId, output := range outputs {
@@ -1052,7 +1073,7 @@ func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.I
 		},
 	}
 
-	log.Logger.Debugf("Merging rendered template paths into stack config: %#v",
+	log.Logger.Debugf("Merging rendered template paths into vars map: %#v",
 		renderedTemplatePaths)
 
 	err = mergo.Merge(&templatedVars, renderedTemplatesMap, mergo.WithOverride)

@@ -4,7 +4,9 @@
 * Code of conduct
 
 ## Top priorities
-* Tearing down a kops cluster sometimes makes sugarkube use 200% of the system CPU 😳
+* Support conditions on `depends_on` blocks to control them depending on other attributes of the stack (e.g. exclude dependencies based on the provider)
+* The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
+* Creating or tearing down a kops cluster sometimes makes sugarkube use 200% of the system CPU 😳
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp.
 * The kapps validate command should make sure that all run steps are uniquely named to avoid issues calling different ones
 * Maybe the validate command should be implicitly run before `kapps install/delete`. The problem is with executing actions - if we default to running them it's dangerous, and if we default to not running them then perhaps config changes might also accidentally be applied perhaps or the commands run as expected. I think we should make `validate` search for run actions. If any are found we should require users to explictly either pass `--run-actions/--run-*-actions` or `--skip-*-actions` so they're actively choosing what to do.
@@ -29,6 +31,7 @@
 * It should be possible to set kapp vars that are maps
 * Think of a good way of declaring per-project names that can be used for namespacing (i.e. to allow multiple clusters to be brought up for different reasons)
 * Add a flag on the 'kapps install' command to print out what it would execute for each step to make it easier to debug what would happen (so users don't need to enable logging to see the commands that would be executed)
+* `ws create` should support `-i/-x` selectors to support selectively updating kapps
 
 ### Cluster updates
 * It should be easy to see what changes will be applied by kops - perhaps go to a two-stage approach with a '--yes' flag, to make a distinction between --dry-run and staging changes.

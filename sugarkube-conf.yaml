@@ -108,6 +108,10 @@ programs:
         {{ mapPrintF (mapPrintF "terraform_%s/.*%%s\\.tfvars$" (listString .stack.provider) | join "") (.sugarkube.defaultVars | removeEmpty) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
         {{ mapPrintF "terraform_%s/.*_generated_.*\\.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
 
+    templates:
+      - source: terraform/backend.tf
+        dest: terraform_{{ .stack.provider }}/_generated_backend.tf
+
     run_units:
       terraform:
         working_dir: "{{ .kapp.vars.terraform_dir }}"       # directory to use as the working directory

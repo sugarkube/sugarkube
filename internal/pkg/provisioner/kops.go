@@ -27,6 +27,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -179,7 +180,11 @@ func (p KopsProvisioner) Create(dryRun bool) error {
 
 	var stdoutBuf, stderrBuf bytes.Buffer
 
-	log.Logger.Info("Creating Kops cluster config...")
+	_, err = printer.Fprintf("Creating kops cluster config...\n")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf,
 		&stderrBuf, "", kopsCommandTimeoutSecondsLong, 0, dryRun)
 	if err != nil {
@@ -428,8 +433,12 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 		return errors.WithStack(err)
 	}
 
+	_, err = printer.Fprintf("Replacing kops cluster config...\n")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	// Replace the cluster config
-	log.Logger.Info("Replacing kops cluster config...")
 	args = []string{
 		"replace",
 		"-f",
@@ -477,7 +486,10 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 	args = parameteriseValues(args, p.kopsConfig.Params.Global)
 	args = parameteriseValues(args, p.kopsConfig.Params.UpdateCluster)
 
-	log.Logger.Info("Updating Kops cluster...")
+	_, err = printer.Fprintf("Updating kops cluster...\n")
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	// this command might take a long time to complete so don't supply a timeout
 	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
@@ -717,8 +729,11 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 		return false, nil
 	}
 
-	log.Logger.Infof("Setting up SSH port forwarding via the bastion to " +
-		"the internal API server...")
+	_, err = printer.Fprintf("Setting up SSH port forwarding via the bastion to " +
+		"the internal API server...\n")
+	if err != nil {
+		return false, errors.WithStack(err)
+	}
 
 	config := p.stack.GetConfig()
 
@@ -785,7 +800,11 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 		sshPortForwardingDelaySeconds)
 	time.Sleep(sshPortForwardingDelaySeconds * time.Second)
 
-	fmt.Printf("SSH port forwarding established. Use KUBECONFIG=%s\n", kubeConfigPathStr)
+	_, err = printer.Fprintf("[green]SSH port forwarding established. Use [bold]KUBECONFIG=%s[reset]\n\n",
+		kubeConfigPathStr)
+	if err != nil {
+		return true, errors.WithStack(err)
+	}
 
 	return true, nil
 }
