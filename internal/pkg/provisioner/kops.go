@@ -875,16 +875,9 @@ func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string,
 	tunnel.Config.Timeout = time.Duration(5 * time.Second)
 
 	go func() {
-		// retry up to a certain number of times
-		var err error
-		for i := 5; i >= 0; i-- {
-			err = tunnel.Start()
-			if err != nil {
-				log.Logger.Warnf("Error creating local SSH server for port forwarding: %s", err)
-				log.Logger.Infof("Sleeping before trying again (%d tries left)", i)
-				// sleep and retry
-				time.Sleep(1 * time.Second)
-			}
+		err := tunnel.Start()
+		if err != nil {
+			panic(fmt.Sprintf("Error creating local SSH server for port forwarding: %s", err))
 		}
 	}()
 

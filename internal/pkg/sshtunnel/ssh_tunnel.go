@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"time"
 )
 
 type SSHTunnel struct {
@@ -42,18 +43,33 @@ func (tunnel *SSHTunnel) Start() error {
 }
 
 func (tunnel *SSHTunnel) forward(localConn net.Conn) {
-	serverConn, err := ssh.Dial("tcp", tunnel.Server.String(), tunnel.Config)
-	if err != nil {
-		tunnel.logf("server dial error: %s", err)
-		return
+
+	var serverConn *ssh.Client
+	var err error
+
+	for i := 5; i >= 0; i-- {
+		serverConn, err = ssh.Dial("tcp", tunnel.Server.String(), tunnel.Config)
+		if err != nil {
+			tunnel.logf("server dial error (%d retries left): %s", i, err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		break
 	}
 
 	tunnel.logf("connected to %s (1 of 2)\n", tunnel.Server.String())
 
-	remoteConn, err := serverConn.Dial("tcp", tunnel.Remote.String())
-	if err != nil {
-		tunnel.logf("remote dial error: %s", err)
-		return
+	var remoteConn net.Conn
+	for i := 5; i >= 0; i-- {
+		remoteConn, err = serverConn.Dial("tcp", tunnel.Remote.String())
+		if err != nil {
+			tunnel.logf("remote dial error (%d retries left): %s", i, err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		break
 	}
 
 	tunnel.logf("connected to %s (2 of 2)\n", tunnel.Remote.String())
