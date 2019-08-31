@@ -886,6 +886,7 @@ func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string,
 
 	log.Logger.Debugf("Setting up SSH port forwarding with: %s %s", sshPath, strings.Join(args, " "))
 
+	// todo - add retries with sleeps in case the bastion hostname doesn't resolve
 	sshCommand := exec.Command(sshPath, args...)
 	sshCommand.Stdout = &stdoutBuf
 	sshCommand.Stderr = &stderrBuf

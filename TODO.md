@@ -9,37 +9,37 @@
 * The kapps validate command should make sure that all run steps are uniquely named to avoid issues calling different ones
 * Maybe the validate command should be implicitly run before `kapps install/delete`. The problem is with executing actions - if we default to running them it's dangerous, and if we default to not running them then perhaps config changes might also accidentally be applied perhaps or the commands run as expected. I think we should make `validate` search for run actions. If any are found we should require users to explictly either pass `--run-actions/--run-*-actions` or `--skip-*-actions` so they're actively choosing what to do.
 * The `kapps validate` command should be strict and throw an error if any unexpected yaml keys are present 
+* Add a setting to throw an error/make kapps validate print an error if kapp IDs aren't globally unique. We don't care, but terraform does with our sample naming convention. The options are either to add the manifest ID to the TF state path which stops people reorganising, or making kapp IDs globally unique, otherwise e.g. 2 wordpress instances in different manifests could clobber each other  
+* Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
+* Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
+* Add a flag on the 'kapps install' command to print out what it would execute for each step to make it easier to debug what would happen (so users don't need to enable logging to see the commands that would be executed)
+* `ws create` should support `-i/-x` selectors to support selectively updating kapps
+
+* Add a way of replacing kapp settings in stack configs (e.g. to replace dependencies)
+* Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
+
 * The Wordpress kapp should provide control over whether to install fixtures or not. Maybe by default it should only do it when the kapp is first installed, since after that it fails...
 * Update the prometheus-operator kapp to delete its CRDs when it's deleted
+
+* It should be possible to set kapp vars that are maps
 * Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
 * Only run a kops update if the spec has changed (diff the new spec with the existing one)
 * Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity) (created https://github.com/kubernetes/kops/issues/7393)
 * Documentation
   * Document the dangers of adding provider vars dirs (i.e. that the next time sugarkube is run it'll replace the config). It should only be used in certain situations (and probably never in prod)
-* Add a way of replacing kapp settings in stack configs (e.g. to replace dependencies)
-* Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
-* Add a setting to throw an error if kapp IDs aren't globally unique. We don't care, but terraform does with our sample naming convention. The options are either to add the manifest ID to the TF state path which stops people reorganising, or making kapp IDs globally unique, otherwise e.g. 2 wordpress instances in different manifests could clobber each other  
 * Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
 * Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them)
-* Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
-* Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
-* It should be possible to set kapp vars that are maps
 * Think of a good way of declaring per-project names that can be used for namespacing (i.e. to allow multiple clusters to be brought up for different reasons)
-* Add a flag on the 'kapps install' command to print out what it would execute for each step to make it easier to debug what would happen (so users don't need to enable logging to see the commands that would be executed)
-* `ws create` should support `-i/-x` selectors to support selectively updating kapps
+* Retry setting up SSH port forwarding in case the bastion hostname doesn't resolve
 
 ### Cluster updates
 * It should be easy to see what changes will be applied by kops - perhaps go to a two-stage approach with a '--yes' flag, to make a distinction between --dry-run and staging changes.
-
-### Merging kapp configs
-* Support passing kapp vars on the command line when only one is selected
 
 ### Kapp output
 * We also need to allow access to vars from other kapps. E.g. if one kapp sets a particular variable, 
   'vars' blocks for other kapps should be able to refer to them (e.g. myvar: "{{ .kapps.somekapp.var.thevar }}")
 * Provide a 'varsTemplate' field to allow for templating before parsing vars. That'll help with things like reassigning
   a map. Template this block then parse it as yaml and merge it with the other vars.
-* It should be possible to load terraform outputs and use them to template other files in the kapp before installing them, without jumping through hoops with running a script to add them to the environment (a la keycloak)
 
 ### Developer experience
 * Stream console output in real-time - see stern for an example of streaming logs from multiple processes in parallel. Add a flag to enable this.
