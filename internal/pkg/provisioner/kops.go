@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/elliotchance/sshtunnel"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -30,6 +29,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
+	"github.com/sugarkube/sugarkube/internal/pkg/sshtunnel"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -51,7 +51,6 @@ const kopsCommandTimeoutSecondsLong = 300
 // number of seconds to sleep after the cluster has come online before checking whether
 // it's ready
 const kopsSleepSecondsBeforeReadyCheck = 60
-const sshPortForwardingDelaySeconds = 5
 
 // todo - catch errors accessing each of these
 const configKeyKopsSpecs = "specs"
@@ -73,7 +72,6 @@ type KopsProvisioner struct {
 	stack                interfaces.IStack
 	kopsConfig           KopsConfig
 	portForwardingActive bool
-	sshCommand           *exec.Cmd
 }
 
 type KopsConfig struct {
@@ -241,7 +239,7 @@ func (p KopsProvisioner) Delete(approved bool, dryRun bool) error {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	if approved {
-		_, err = printer.Fprintf("%Deleting kops cluster...\n", dryRunPrefix)
+		_, err = printer.Fprintf("%sDeleting kops cluster...\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -853,18 +851,19 @@ func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string,
 
 	privateKey = utils.ExpandUser(privateKey)
 
-	connectionString := fmt.Sprintf("%s:%d", remoteAddress, remotePort)
-
-	userHost := strings.Join([]string{sshUser, sshHost}, "@")
+	// the bastion
+	intermediateUserHost := strings.Join([]string{sshUser, sshHost}, "@")
+	// the API server only accessible via the bastion
+	remoteUserHost := fmt.Sprintf("%s:%d", remoteAddress, remotePort)
 
 	log.Logger.Infof("Setting up SSH port forwarding for '%s' to '%s' with private SSH key '%s'",
-		connectionString, userHost, privateKey)
+		remoteUserHost, intermediateUserHost, privateKey)
 
 	// Setup the tunnel, but do not yet start it yet.
 	tunnel := sshtunnel.NewSSHTunnel(
-		userHost,
+		intermediateUserHost,
 		sshtunnel.PrivateKeyFile(privateKey),
-		connectionString,
+		remoteUserHost,
 	)
 
 	// configure logging for SSH tunnel if logging is enabled at certain levels
@@ -872,12 +871,26 @@ func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string,
 		tunnel.Log = log2.New(os.Stderr, "sshtunnel ", log2.Ldate|log2.Lmicroseconds)
 	}
 
-	go tunnel.Start()
-	log.Logger.Infof("Sleeping for %ds while setting up SSH port forwarding",
-		sshPortForwardingDelaySeconds)
-	time.Sleep(sshPortForwardingDelaySeconds * time.Second)
+	// maximum amount of time for the TCP connection to establish
+	tunnel.Config.Timeout = time.Duration(5 * time.Second)
 
-	log.Logger.Infof("Port forwarding set up on local port: %d", tunnel.Local.Port)
+	go func() {
+		// retry up to a certain number of times
+		var err error
+		for i := 5; i >= 0; i-- {
+			err = tunnel.Start()
+			if err != nil {
+				log.Logger.Warnf("Error creating local SSH server for port forwarding: %s", err)
+				log.Logger.Infof("Sleeping before trying again (%d tries left)", i)
+				// sleep and retry
+				time.Sleep(1 * time.Second)
+			}
+		}
+	}()
+
+	// sleep a little to bind to the local port
+	time.Sleep(500 * time.Millisecond)
+	log.Logger.Infof("Port forwarding server listening on local port: %d", tunnel.Local.Port)
 
 	return tunnel.Local.Port
 }
@@ -940,18 +953,9 @@ func assertInHostsFile(ip string, domain string) error {
 	return nil
 }
 
-// Shutdown SSH port forwarding if it's been set up
+// Delete the downloaded kubeconfig file if we set up and ssh tunnel
 func (p KopsProvisioner) Close() error {
-	if p.sshCommand != nil {
-		log.Logger.Info("Terminating SSH port forwarding...")
-
-		err := p.sshCommand.Process.Kill()
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		log.Logger.Debug("SSH port forwarding terminated")
-
+	if p.portForwardingActive {
 		// delete the downloaded kubeconfig file
 		kubeConfigPathInterface, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
 		kubeConfigPath := kubeConfigPathInterface.(string)
