@@ -38,13 +38,11 @@ const (
 )
 
 const markedNodeStr = "*"
-const defaultSleepInterval = 5 // milliseconds
-const progressInterval = 30    // seconds
+const progressInterval = 30 // seconds
 
 // Wrapper around a directed graph so we can define our own methods on it
 type Dag struct {
-	graph         *simple.DirectedGraph
-	SleepInterval time.Duration // time to wait after reaching the end of the graph before doing another pass
+	graph *simple.DirectedGraph
 }
 
 // Defines a node that should be created in the graph, along with parent dependencies. This is
@@ -182,8 +180,7 @@ func build(descriptors map[string]nodeDescriptor, stackObj interfaces.IStack) (*
 	}
 
 	dag := Dag{
-		graph:         graphObj,
-		SleepInterval: defaultSleepInterval * time.Millisecond,
+		graph: graphObj,
 	}
 
 	return &dag, nil
@@ -269,8 +266,7 @@ func (g *Dag) subGraph(nodeNames []string, includeParents bool) (*Dag, error) {
 	}
 
 	dag := Dag{
-		graph:         outputGraph,
-		SleepInterval: defaultSleepInterval * time.Millisecond,
+		graph: outputGraph,
 	}
 
 	log.Logger.Debugf("Finished extracting sub-graph")
@@ -363,6 +359,14 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 
 	finishedCh := make(chan bool)
 
+	// run the process method once here to send the initial nodes for processing to the processing channel.
+	// We pass a copy of the nodeStatusesById map to avoid a data race
+	nodeStatusesCopy := make(map[int64]nodeStatus, 0)
+	for k, v := range nodeStatusesById {
+		nodeStatusesCopy[k] = v
+	}
+	go g.processEligibleNodes(nodeStatusesCopy, processCh, down)
+
 	go func() {
 		// create a ticker to display progress
 		progressTicker := time.NewTicker(progressInterval * time.Second)
@@ -378,6 +382,17 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 					nodeItem := nodeStatusesById[namedNode.node.ID()]
 					nodeItem.status = finished
 					nodeStatusesById[namedNode.node.ID()] = nodeItem
+
+					// reprocess nodes again since there's been a state change
+					g.processEligibleNodes(nodeStatusesById, processCh, down)
+
+					if allDone(nodeStatusesById) {
+						log.Logger.Infof("DAG fully processed")
+						close(finishedCh)
+						close(doneCh)
+						close(processCh)
+						break
+					}
 				}
 			case <-progressTicker.C:
 				inProgressNodes := make([]string, 0)
@@ -391,57 +406,46 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 				if len(inProgressNodes) > 0 {
 					_, _ = printer.Fprintf("[yellow]Waiting on: %s...\n", strings.Join(inProgressNodes, ", "))
 				}
-			default:
-				// todo - we probably don't need to continually loop over this, but run it once
-				//  before this goroutine runs to initialise it, and then run this every time something's
-				//  received on the done channel. We could avoid sleeping then.
-				for node, nodeStatus := range nodeStatusesById {
-					namedNode := nodeStatusesById[node]
-
-					// only consider unprocessed nodes
-					if nodeStatus.status != unprocessed {
-						//log.Logger.Tracef("Skipping node '%s' with status '%v' on this pass...",
-						//	namedNode.node.name, nodeStatus.status)
-						continue
-					}
-
-					var dependencies graph.Nodes
-					if down {
-						dependencies = g.graph.To(nodeStatus.node.ID())
-					} else {
-						dependencies = g.graph.From(nodeStatus.node.ID())
-					}
-
-					// we have a node that needs to be processed. Check to see if its dependencies have
-					// been satisfied
-					if dependenciesSatisfied(dependencies, nodeStatusesById) {
-						log.Logger.Debugf("All dependencies satisfied for '%s', adding it to the "+
-							"processing queue", namedNode.node.name)
-						// update the status to running so we don't keep requeuing completed nodes
-						namedNode.status = running
-						nodeStatusesById[node] = namedNode
-						processCh <- namedNode.node
-					} else {
-						log.Logger.Tracef("Dependencies not satisfied for %s", namedNode.node.name)
-					}
-				}
-
-				if allDone(nodeStatusesById) {
-					log.Logger.Infof("DAG fully processed")
-					close(finishedCh)
-					close(doneCh)
-					close(processCh)
-					break
-				} else {
-					// sleep a little bit to give jobs a chance to complete
-					log.Logger.Tracef("DAG still processing. Sleeping for %s...", g.SleepInterval)
-					time.Sleep(g.SleepInterval)
-				}
 			}
 		}
 	}()
 
 	return finishedCh
+}
+
+// Adds any nodes whose dependencies have all been satisfied into a channel for processing by workers
+func (g *Dag) processEligibleNodes(nodeStatusesById map[int64]nodeStatus, processCh chan<- NamedNode,
+	down bool) {
+	for node, nodeStatus := range nodeStatusesById {
+		namedNode := nodeStatusesById[node]
+
+		// only consider unprocessed nodes
+		if nodeStatus.status != unprocessed {
+			//log.Logger.Tracef("Skipping node '%s' with status '%v' on this pass...",
+			//	namedNode.node.name, nodeStatus.status)
+			continue
+		}
+
+		var dependencies graph.Nodes
+		if down {
+			dependencies = g.graph.To(nodeStatus.node.ID())
+		} else {
+			dependencies = g.graph.From(nodeStatus.node.ID())
+		}
+
+		// we have a node that needs to be processed. Check to see if its dependencies have
+		// been satisfied
+		if dependenciesSatisfied(dependencies, nodeStatusesById) {
+			log.Logger.Debugf("All dependencies satisfied for '%s', adding it to the "+
+				"processing queue", namedNode.node.name)
+			// update the status to running so we don't keep requeuing completed nodes
+			namedNode.status = running
+			nodeStatusesById[node] = namedNode
+			processCh <- namedNode.node
+		} else {
+			log.Logger.Tracef("Dependencies not satisfied for %s", namedNode.node.name)
+		}
+	}
 }
 
 // Prints out the DAG to the writer

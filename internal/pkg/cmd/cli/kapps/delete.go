@@ -24,7 +24,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"time"
 )
 
 type deleteCmd struct {
@@ -154,9 +153,6 @@ func (c *deleteCmd) run() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-
-	// this increase the sleep interval since this may take a while
-	dagObj.SleepInterval = 500 * time.Millisecond
 
 	if c.establishConnection {
 		err = establishConnection(c.dryRun, dryRunPrefix)

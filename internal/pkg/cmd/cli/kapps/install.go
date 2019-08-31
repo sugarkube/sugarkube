@@ -28,7 +28,6 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
-	"time"
 )
 
 type installCmd struct {
@@ -181,9 +180,6 @@ func (c *installCmd) run() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-
-	// this increase the sleep interval since this may take a while
-	dagObj.SleepInterval = 500 * time.Millisecond
 
 	if c.establishConnection {
 		err = establishConnection(c.dryRun, dryRunPrefix)
