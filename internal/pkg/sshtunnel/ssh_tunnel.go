@@ -51,7 +51,7 @@ func (tunnel *SSHTunnel) forward(localConn net.Conn) {
 		serverConn, err = ssh.Dial("tcp", tunnel.Server.String(), tunnel.Config)
 		if err != nil {
 			tunnel.logf("server dial error (%d retries left): %s", i, err)
-			time.Sleep(1 * time.Second)
+			time.Sleep(3 * time.Second)
 			continue
 		}
 
@@ -65,7 +65,7 @@ func (tunnel *SSHTunnel) forward(localConn net.Conn) {
 		remoteConn, err = serverConn.Dial("tcp", tunnel.Remote.String())
 		if err != nil {
 			tunnel.logf("remote dial error (%d retries left): %s", i, err)
-			time.Sleep(1 * time.Second)
+			time.Sleep(3 * time.Second)
 			continue
 		}
 
