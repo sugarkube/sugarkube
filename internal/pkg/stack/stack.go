@@ -25,6 +25,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/provider"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/templater"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"github.com/sugarkube/sugarkube/internal/pkg/vars"
 	"gopkg.in/yaml.v2"
 	"os"
@@ -130,11 +131,17 @@ func (s *Stack) GetTemplatedVars(installableObj interfaces.IInstallable,
 		"sugarkube": installerVars,
 	})
 
-	configFragments = append(configFragments, stackConfig.GetProviderVars())
+	providerVars := stackConfig.GetProviderVars()
+	configFragments = append(configFragments, providerVars)
 
-	// merge in values from the registry
-	log.Logger.Tracef("Merging stack vars with global registry: %v", s.registry)
-	configFragments = append(configFragments, s.registry.AsMap())
+	// merge in values from the registry (we need to copy it to prevent data races)
+	var registryCopy map[string]interface{}
+	err := utils.DeepCopy(s.registry.AsMap(), &registryCopy)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	log.Logger.Tracef("Merging stack vars with global registry: %v", registryCopy)
+	configFragments = append(configFragments, registryCopy)
 
 	if installableObj != nil {
 		installableVars, err := installableObj.Vars(s)
@@ -146,7 +153,7 @@ func (s *Stack) GetTemplatedVars(installableObj interfaces.IInstallable,
 	}
 
 	mergedVars := map[string]interface{}{}
-	err := vars.MergeFragments(&mergedVars, configFragments...)
+	err = vars.MergeFragments(&mergedVars, configFragments...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

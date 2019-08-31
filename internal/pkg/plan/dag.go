@@ -361,12 +361,14 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 	numNodes := g.graph.Nodes().Len()
 	log.Logger.Debugf("Graph has %d nodes", numNodes)
 
-	// spawn a goroutine to listen to the doneCh to update the statuses of completed nodes
+	finishedCh := make(chan bool)
+
 	go func() {
 		// create a ticker to display progress
 		progressTicker := time.NewTicker(progressInterval * time.Second)
 		defer progressTicker.Stop()
 
+		// loop until there are no nodes left which haven't been processed
 		for {
 			select {
 			case namedNode, ok := <-doneCh:
@@ -389,56 +391,52 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 				if len(inProgressNodes) > 0 {
 					_, _ = printer.Fprintf("[yellow]Waiting on: %s...\n", strings.Join(inProgressNodes, ", "))
 				}
-			}
-		}
-	}()
+			default:
+				// todo - we probably don't need to continually loop over this, but run it once
+				//  before this goroutine runs to initialise it, and then run this every time something's
+				//  received on the done channel. We could avoid sleeping then.
+				for node, nodeStatus := range nodeStatusesById {
+					namedNode := nodeStatusesById[node]
 
-	finishedCh := make(chan bool)
+					// only consider unprocessed nodes
+					if nodeStatus.status != unprocessed {
+						//log.Logger.Tracef("Skipping node '%s' with status '%v' on this pass...",
+						//	namedNode.node.name, nodeStatus.status)
+						continue
+					}
 
-	go func() {
-		// loop until there are no nodes left which haven't been processed
-		for {
-			for node, nodeStatus := range nodeStatusesById {
-				namedNode := nodeStatusesById[node]
+					var dependencies graph.Nodes
+					if down {
+						dependencies = g.graph.To(nodeStatus.node.ID())
+					} else {
+						dependencies = g.graph.From(nodeStatus.node.ID())
+					}
 
-				// only consider unprocessed nodes
-				if nodeStatus.status != unprocessed {
-					//log.Logger.Tracef("Skipping node '%s' with status '%v' on this pass...",
-					//	namedNode.node.name, nodeStatus.status)
-					continue
+					// we have a node that needs to be processed. Check to see if its dependencies have
+					// been satisfied
+					if dependenciesSatisfied(dependencies, nodeStatusesById) {
+						log.Logger.Debugf("All dependencies satisfied for '%s', adding it to the "+
+							"processing queue", namedNode.node.name)
+						// update the status to running so we don't keep requeuing completed nodes
+						namedNode.status = running
+						nodeStatusesById[node] = namedNode
+						processCh <- namedNode.node
+					} else {
+						log.Logger.Tracef("Dependencies not satisfied for %s", namedNode.node.name)
+					}
 				}
 
-				var dependencies graph.Nodes
-				if down {
-					dependencies = g.graph.To(nodeStatus.node.ID())
+				if allDone(nodeStatusesById) {
+					log.Logger.Infof("DAG fully processed")
+					close(finishedCh)
+					close(doneCh)
+					close(processCh)
+					break
 				} else {
-					dependencies = g.graph.From(nodeStatus.node.ID())
+					// sleep a little bit to give jobs a chance to complete
+					log.Logger.Tracef("DAG still processing. Sleeping for %s...", g.SleepInterval)
+					time.Sleep(g.SleepInterval)
 				}
-
-				// we have a node that needs to be processed. Check to see if its dependencies have
-				// been satisfied
-				if dependenciesSatisfied(dependencies, nodeStatusesById) {
-					log.Logger.Debugf("All dependencies satisfied for '%s', adding it to the "+
-						"processing queue", namedNode.node.name)
-					// update the status to running so we don't keep requeuing completed nodes
-					namedNode.status = running
-					nodeStatusesById[node] = namedNode
-					processCh <- namedNode.node
-				} else {
-					log.Logger.Tracef("Dependencies not satisfied for %s", namedNode.node.name)
-				}
-			}
-
-			if allDone(nodeStatusesById) {
-				log.Logger.Infof("DAG fully processed")
-				close(finishedCh)
-				close(doneCh)
-				close(processCh)
-				break
-			} else {
-				// sleep a little bit to give jobs a chance to complete
-				log.Logger.Tracef("DAG still processing. Sleeping for %s...", g.SleepInterval)
-				time.Sleep(g.SleepInterval)
 			}
 		}
 	}()
