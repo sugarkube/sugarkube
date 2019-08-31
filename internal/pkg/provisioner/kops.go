@@ -23,6 +23,7 @@ import (
 	"github.com/elliotchance/sshtunnel"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
@@ -865,7 +866,11 @@ func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string,
 		sshtunnel.PrivateKeyFile(privateKey),
 		connectionString,
 	)
-	tunnel.Log = log2.New(os.Stderr, "sshtunnel ", log2.Ldate|log2.Lmicroseconds)
+
+	// configure logging for SSH tunnel if logging is enabled at certain levels
+	if log.Logger.Level == logrus.TraceLevel || log.Logger.Level == logrus.DebugLevel {
+		tunnel.Log = log2.New(os.Stderr, "sshtunnel ", log2.Ldate|log2.Lmicroseconds)
+	}
 
 	go tunnel.Start()
 	log.Logger.Infof("Sleeping for %ds while setting up SSH port forwarding",

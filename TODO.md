@@ -43,7 +43,7 @@
 
 ### Developer experience
 * Stream console output in real-time - see stern for an example of streaming logs from multiple processes in parallel. Add a flag to enable this.
-* Make SSH connections more robust (reconnect on dropped connections, etc)
+* Make SSH connections more robust (reconnect on dropped connections (but not when tearing down the cluster), etc)
 * Improve the UX around using caches/workspaces, especially re updating while working on a change (sugarkube shouldn't bomb out but should update whatever it can)
   
 ### Everything else
