@@ -21,6 +21,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io/ioutil"
 	"os"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -135,4 +136,21 @@ func FindFilesByPattern(rootDir string, pattern string, recursive bool,
 func StripExtension(path string) string {
 	extension := filepath.Ext(path)
 	return strings.TrimSuffix(path, extension)
+}
+
+// Replace a leading '~' in a string with the user's home directory
+func ExpandUser(path string) string {
+	usr, _ := user.Current()
+	dir := usr.HomeDir
+
+	if path == "~" {
+		// In case of "~", which won't be caught by the "else if"
+		path = dir
+	} else if strings.HasPrefix(path, "~/") {
+		// Use strings.HasPrefix so we don't match paths like
+		// "/something/~/something/"
+		path = filepath.Join(dir, path[2:])
+	}
+
+	return path
 }

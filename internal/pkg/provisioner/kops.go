@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/elliotchance/sshtunnel"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
@@ -31,10 +32,10 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	log2 "log"
 	"os"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -61,9 +62,7 @@ const configKeyBastion = "bastion"
 const configKeyClusterName = "name"
 
 const awsCliPath = "aws"
-const sshPath = "ssh"
 
-const defaultLocalPortForwardingPort = 8443
 const localhost = "127.0.0.1"
 const etcHostsPath = "/etc/hosts"
 const kubernetesLocalHostname = "kubernetes.default.svc.cluster.local"
@@ -671,11 +670,6 @@ func parseKopsConfig(stack interfaces.IStack) (*KopsConfig, error) {
 
 	kopsConfig.clusterName = kopsConfig.Params.Global[configKeyClusterName]
 
-	if kopsConfig.LocalPortForwardingPort == 0 {
-		// set a default value if it's not set
-		kopsConfig.LocalPortForwardingPort = defaultLocalPortForwardingPort
-	}
-
 	return &kopsConfig, nil
 }
 
@@ -755,11 +749,17 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 		return false, errors.WithStack(err)
 	}
 
-	localPort := p.kopsConfig.LocalPortForwardingPort
 	apiDomain := fmt.Sprintf("api.%s", p.kopsConfig.clusterName)
 
 	var kubeConfigPathStr string
 	kubeConfigPathInterface, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
+
+	localSSHPort := p.setupPortForwarding(p.kopsConfig.SshPrivateKey, p.kopsConfig.BastionUser,
+		bastionHostname, apiDomain, 443)
+
+	p.kopsConfig.LocalPortForwardingPort = localSSHPort
+
+	p.portForwardingActive = true
 
 	if kubeConfigPathInterface != "" {
 		kubeConfigPathStr = kubeConfigPathInterface.(string)
@@ -781,27 +781,12 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 		}
 
 		// modify the host name in the file to point to the local k8s server domain
-		err = replaceAllInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),
+		err = replaceAllInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localSSHPort),
 			kubeConfigPathStr)
 		if err != nil {
 			return false, errors.WithStack(err)
 		}
 	}
-
-	// todo - improve error handling
-	go func() {
-		err = p.setupPortForwarding(p.kopsConfig.SshPrivateKey, p.kopsConfig.BastionUser,
-			bastionHostname, localPort, apiDomain, 443)
-		if err != nil {
-			log.Logger.Fatalf("An error occurred with SSH port forwarding: %v", err)
-		}
-
-		p.portForwardingActive = true
-	}()
-
-	log.Logger.Infof("Sleeping for %ds while setting up SSH port forwarding",
-		sshPortForwardingDelaySeconds)
-	time.Sleep(sshPortForwardingDelaySeconds * time.Second)
 
 	_, err = printer.Fprintf("[green]SSH port forwarding established. Use [bold]KUBECONFIG=%s[reset]\n\n",
 		kubeConfigPathStr)
@@ -863,41 +848,33 @@ func replaceAllInFile(search string, replacement string, path string) error {
 
 // Sets up SSH port forwarding
 func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string, sshHost string,
-	localPort int, remoteAddress string, remotePort int) error {
+	remoteAddress string, remotePort int) int {
 
-	connectionString := strings.Join([]string{localhost,
-		strconv.Itoa(localPort), remoteAddress,
-		strconv.Itoa(remotePort)}, ":")
+	privateKey = utils.ExpandUser(privateKey)
+
+	connectionString := fmt.Sprintf("%s:%d", remoteAddress, remotePort)
 
 	userHost := strings.Join([]string{sshUser, sshHost}, "@")
 
 	log.Logger.Infof("Setting up SSH port forwarding for '%s' to '%s' with private SSH key '%s'",
 		connectionString, userHost, privateKey)
 
-	var stdoutBuf, stderrBuf bytes.Buffer
-	args := []string{
-		// todo - make StrictHostKeyChecking configurable. Ideally users should push a known host key onto the bastion via metadata
-		"-o", "StrictHostKeyChecking no",
-		"-i", privateKey,
-		"-v", "-NL",
-		connectionString,
+	// Setup the tunnel, but do not yet start it yet.
+	tunnel := sshtunnel.NewSSHTunnel(
 		userHost,
-	}
+		sshtunnel.PrivateKeyFile(privateKey),
+		connectionString,
+	)
+	tunnel.Log = log2.New(os.Stderr, "sshtunnel ", log2.Ldate|log2.Lmicroseconds)
 
-	log.Logger.Debugf("Setting up SSH port forwarding with: %s %s", sshPath, strings.Join(args, " "))
+	go tunnel.Start()
+	log.Logger.Infof("Sleeping for %ds while setting up SSH port forwarding",
+		sshPortForwardingDelaySeconds)
+	time.Sleep(sshPortForwardingDelaySeconds * time.Second)
 
-	sshCommand := exec.Command(sshPath, args...)
-	sshCommand.Stdout = &stdoutBuf
-	sshCommand.Stderr = &stderrBuf
+	log.Logger.Infof("Port forwarding set up on local port: %d", tunnel.Local.Port)
 
-	p.sshCommand = sshCommand
-
-	err := sshCommand.Start()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
+	return tunnel.Local.Port
 }
 
 // Returns the hostname of the bastion or an empty string if it can't be found

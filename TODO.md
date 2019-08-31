@@ -4,9 +4,7 @@
 * Code of conduct
 
 ## Top priorities
-* Support conditions on `depends_on` blocks to control them depending on other attributes of the stack (e.g. exclude dependencies based on the provider)
 * The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
-* Creating or tearing down a kops cluster sometimes makes sugarkube use 200% of the system CPU 😳
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp.
 * The kapps validate command should make sure that all run steps are uniquely named to avoid issues calling different ones
 * Maybe the validate command should be implicitly run before `kapps install/delete`. The problem is with executing actions - if we default to running them it's dangerous, and if we default to not running them then perhaps config changes might also accidentally be applied perhaps or the commands run as expected. I think we should make `validate` search for run actions. If any are found we should require users to explictly either pass `--run-actions/--run-*-actions` or `--skip-*-actions` so they're actively choosing what to do.
@@ -45,9 +43,7 @@
 
 ### Developer experience
 * Stream console output in real-time - see stern for an example of streaming logs from multiple processes in parallel. Add a flag to enable this.
-* use ps (https://github.com/shirou/gopsutil/) to check whether SSH port forwarding is actually set up, and 
-  if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
-* Or do ssh using a golang library so we can make it more robust (reconnecting on dropped connections, etc)
+* Make SSH connections more robust (reconnect on dropped connections, etc)
 * Improve the UX around using caches/workspaces, especially re updating while working on a change (sugarkube shouldn't bomb out but should update whatever it can)
   
 ### Everything else
