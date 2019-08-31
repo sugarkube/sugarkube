@@ -20,7 +20,6 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
 	gonum.org/v1/gonum v0.0.0-20190430210020-9827ae2933ff
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v2 v2.2.2

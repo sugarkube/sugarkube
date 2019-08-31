@@ -43,7 +43,9 @@
 
 ### Developer experience
 * Stream console output in real-time - see stern for an example of streaming logs from multiple processes in parallel. Add a flag to enable this.
-* Make SSH connections more robust (reconnect on dropped connections (but not when tearing down the cluster), etc)
+* use ps (https://github.com/shirou/gopsutil/) to check whether SSH port forwarding is actually set up, and 
+  if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
+* Or do ssh using a golang library so we can make it more robust (reconnecting on dropped connections, etc)
 * Improve the UX around using caches/workspaces, especially re updating while working on a change (sugarkube shouldn't bomb out but should update whatever it can)
   
 ### Everything else
