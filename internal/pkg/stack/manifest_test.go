@@ -226,6 +226,7 @@ kapps:
 								"example/dest.txt",
 								"",
 								false,
+								nil,
 							},
 						},
 						Vars: map[string]interface{}{},

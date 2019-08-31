@@ -13,9 +13,6 @@
 * The `kapps validate` command should be strict and throw an error if any unexpected yaml keys are present 
 * The Wordpress kapp should provide control over whether to install fixtures or not. Maybe by default it should only do it when the kapp is first installed, since after that it fails...
 * Update the prometheus-operator kapp to delete its CRDs when it's deleted
-* Support adding some regexes to resolve whether to throw an error if certain directories/templates/outputs exist
-  depending on e.g. the provider being used. Sometimes it doesn't make sense to fail if running a kapp with the local provider because it hasn't e.g. written terraform output to a path that it would do when running with AWS, etc. Some templates (e.g. terraform backends) should only be run for remote providers, not the local one
-  * Use `conditions`
 * Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
 * Only run a kops update if the spec has changed (diff the new spec with the existing one)
 * Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity) (created https://github.com/kubernetes/kops/issues/7393)

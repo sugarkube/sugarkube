@@ -109,8 +109,11 @@ programs:
         {{ mapPrintF "terraform_%s/.*_generated_.*\\.tfvars$" (listString .stack.provider) | findFiles .kapp.cacheRoot | mapPrintF "-var-file %s" | uniq | join " " | trim }}
 
     templates:
-      - source: terraform/backend.tf
+      backend:
+        source: terraform/backend.tf
         dest: terraform_{{ .stack.provider }}/_generated_backend.tf
+        conditions:
+          - "{{ exists \"d\" .kapp.vars.terraform_dir }}"   # only render this template if a terraform directory exists
 
     run_units:
       terraform:

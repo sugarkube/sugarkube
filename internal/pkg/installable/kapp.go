@@ -591,6 +591,20 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 	renderedTemplates := make(map[string]structs.Template, 0)
 
 	for templateId, templateDefinition := range k.mergedDescriptor.Templates {
+		// make sure that if any conditions are declared that they're all true
+		if len(templateDefinition.Conditions) > 0 {
+			allOk, err := utils.All(templateDefinition.Conditions)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			if !allOk {
+				log.Logger.Infof("Skipping rendering template '%s' for kapp '%s' because some conditions "+
+					"evaluated to false", templateId, k.FullyQualifiedId())
+				continue
+			}
+		}
+
 		rawTemplateSource := templateDefinition.Source
 
 		if rawTemplateSource == "" {
