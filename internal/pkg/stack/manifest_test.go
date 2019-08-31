@@ -187,8 +187,9 @@ kapps:
 - id: example1
   state: present
   templates:
-  - source: example/template1.tpl
-    dest: example/dest.txt
+    template1:
+      source: example/template1.tpl
+      dest: example/dest.txt
   sources:
   - id: pathASpecial
     uri: git@github.com:exampleA/repoA.git//example/pathA#branchA
@@ -219,10 +220,11 @@ kapps:
 					Id: "example1",
 					KappConfig: structs.KappConfig{
 						State: "present",
-						Templates: []structs.Template{
-							{
+						Templates: map[string]structs.Template{
+							"template1": {
 								"example/template1.tpl",
 								"example/dest.txt",
+								"",
 								false,
 							},
 						},

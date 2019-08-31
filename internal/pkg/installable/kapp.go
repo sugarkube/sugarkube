@@ -135,6 +135,13 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 		return errors.WithStack(err)
 	}
 
+	// set placeholder values for rendered paths of any templates
+	for k, _ := range config.Templates {
+		template := config.Templates[k]
+		template.RenderedPath = constants.KappGeneratedPlaceholder
+		config.Templates[k] = template
+	}
+
 	if prepend {
 		k.descriptorLayers = append([]structs.KappDescriptorWithMaps{configCopy}, configLayers...)
 	} else {
@@ -411,14 +418,21 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 	// in certain situations. We'll have to see
 	kappIntrinsicDataConverted[constants.KappVarsVarsKey] = kappVars
 
-	// add placeholders templated paths so kapps that use them work when running
-	// `kapp vars`, etc.
-	templatePlaceholders := make([]string, len(k.mergedDescriptor.Templates))
-
-	for i, _ := range k.mergedDescriptor.Templates {
-		templatePlaceholders[i] = "<generated>"
+	// convert the map of structs to a plain map. This is necessary due to an apparent bug in text/template that was
+	// causing all struct fields to have '<no value>'. It also has the benefit of meaning we can key by lower snake_cased
+	// field names which is less confusing.
+	templatesMap := make(map[string]interface{}, 0)
+	for k, template := range k.mergedDescriptor.Templates {
+		templateMap := map[string]interface{}{
+			"source":        template.Source,
+			"dest":          template.Dest,
+			"rendered_path": template.RenderedPath,
+			"sensitive":     template.Sensitive,
+		}
+		templatesMap[k] = templateMap
 	}
-	kappIntrinsicDataConverted[constants.KappVarsTemplatesKey] = templatePlaceholders
+
+	kappIntrinsicDataConverted[constants.KappVarsTemplatesKey] = templatesMap
 
 	namespacedKappMap := map[string]interface{}{
 		constants.KappVarsKappKey: kappIntrinsicDataConverted,
@@ -553,7 +567,7 @@ func (k Kapp) findVarsFiles(stackConfig interfaces.IStackConfig) ([]string, erro
 
 // Renders templates for the kapp and returns the paths they were written to
 func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig interfaces.IStackConfig,
-	dryRun bool) ([]string, error) {
+	dryRun bool) error {
 
 	dryRunPrefix := ""
 	if dryRun {
@@ -562,32 +576,33 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 
 	// make sure the cache dir exists
 	if _, err := os.Stat(k.GetCacheDir()); err != nil {
-		return nil, errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
+		return errors.New(fmt.Sprintf("Cache dir '%s' doesn't exist",
 			k.GetCacheDir()))
 	}
 
-	renderedPaths := make([]string, 0)
-
 	if len(k.mergedDescriptor.Templates) == 0 {
 		log.Logger.Infof("%sNo templates to render for kapp '%s'", dryRunPrefix, k.FullyQualifiedId())
-		return renderedPaths, nil
+		return nil
 	}
 
 	log.Logger.Infof("%sRendering templates for kapp '%s'", dryRunPrefix, k.FullyQualifiedId())
 
-	for _, templateDefinition := range k.mergedDescriptor.Templates {
+	// build a list of rendered templates so we can add a new config descriptor that will contain the rendered paths
+	renderedTemplates := make(map[string]structs.Template, 0)
+
+	for templateId, templateDefinition := range k.mergedDescriptor.Templates {
 		rawTemplateSource := templateDefinition.Source
 
 		if rawTemplateSource == "" {
-			return nil, errors.New(fmt.Sprintf("Template has an empty source: %+v", templateDefinition))
+			return errors.New(fmt.Sprintf("Template %s has an empty source: %+v", templateId, templateDefinition))
 		}
 
-		log.Logger.Debugf("Template definition: %+v", templateDefinition)
+		log.Logger.Debugf("Template '%s' has a definition: %+v", templateId, templateDefinition)
 
 		// run the source path through the templater in case it contains variables
 		templateSource, err := templater.RenderTemplate(rawTemplateSource, templateVars)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return errors.WithStack(err)
 		}
 
 		if !filepath.IsAbs(templateSource) {
@@ -619,7 +634,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 			if foundTemplate {
 				log.Logger.Debugf("Found template at %s", templateSource)
 			} else {
-				return renderedPaths, errors.New(fmt.Sprintf("Failed to find template '%s' "+
+				return errors.New(fmt.Sprintf("Failed to find template '%s' "+
 					"in any of the defined template directories: %s", templateSource,
 					strings.Join(stackConfig.TemplateDirs(), ", ")))
 			}
@@ -628,7 +643,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		if !filepath.IsAbs(templateSource) {
 			templateSource, err = filepath.Abs(templateSource)
 			if err != nil {
-				return renderedPaths, errors.WithStack(err)
+				return errors.WithStack(err)
 			}
 		}
 
@@ -639,7 +654,7 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		// run the dest path through the templater in case it contains variables
 		destPath, err := templater.RenderTemplate(rawDestPath, templateVars)
 		if err != nil {
-			return nil, errors.WithStack(err)
+			return errors.WithStack(err)
 		}
 
 		if !filepath.IsAbs(destPath) {
@@ -657,14 +672,14 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		destDir := filepath.Dir(destPath)
 		if _, err := os.Stat(destDir); os.IsNotExist(err) {
 			log.Logger.Infof("Destination template directory '%s' doesn't exist", destDir)
-			return renderedPaths, errors.New(fmt.Sprintf("Can't write template to non-existent directory: %s", destDir))
+			return errors.New(fmt.Sprintf("Can't write template '%s' to non-existent directory: %s", templateId, destDir))
 		}
 
 		var outBuf bytes.Buffer
 
 		err = templater.TemplateFile(templateSource, &outBuf, templateVars)
 		if err != nil {
-			return renderedPaths, errors.WithStack(err)
+			return errors.WithStack(err)
 		}
 
 		log.Logger.Infof("%sWriting rendered template '%s' for kapp "+
@@ -674,14 +689,33 @@ func (k *Kapp) RenderTemplates(templateVars map[string]interface{}, stackConfig 
 		if !dryRun {
 			err := ioutil.WriteFile(destPath, outBuf.Bytes(), 0644)
 			if err != nil {
-				return renderedPaths, errors.WithStack(err)
+				return errors.WithStack(err)
 			}
 		}
 
-		renderedPaths = append(renderedPaths, destPath)
+		template := structs.Template{
+			Source:       templateDefinition.Source,
+			Dest:         templateDefinition.Dest,
+			RenderedPath: destPath,
+			Sensitive:    templateDefinition.Sensitive,
+		}
+
+		renderedTemplates[templateId] = template
 	}
 
-	return renderedPaths, nil
+	descriptor := structs.KappDescriptorWithMaps{
+		KappConfig: structs.KappConfig{
+			Templates: renderedTemplates,
+		},
+	}
+
+	// add a new descriptor containing the rendered template paths
+	err := k.AddDescriptor(descriptor, false)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
 }
 
 // Loads outputs for the kapp, parses and returns them

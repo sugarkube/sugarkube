@@ -67,8 +67,8 @@ func (m MockInstallable) Vars(stack interfaces.IStack) (map[string]interface{}, 
 func (m MockInstallable) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool) error {
 	return nil
 }
-func (m MockInstallable) RenderTemplates(templateVars map[string]interface{}, stackConfig interfaces.IStackConfig, dryRun bool) ([]string, error) {
-	return nil, nil
+func (m MockInstallable) RenderTemplates(templateVars map[string]interface{}, stackConfig interfaces.IStackConfig, dryRun bool) error {
+	return nil
 }
 func (m MockInstallable) GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{}, error) {
 	return nil, nil

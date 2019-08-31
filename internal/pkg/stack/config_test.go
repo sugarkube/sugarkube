@@ -303,7 +303,7 @@ func TestGetKappVarsFromFiles(t *testing.T) {
   cacheRoot: ""
   id: kappA
   state: absent
-  templates: []
+  templates: {}
   vars:
     colours:
     - red

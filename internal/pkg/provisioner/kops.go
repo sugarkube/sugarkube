@@ -241,7 +241,10 @@ func (p KopsProvisioner) Delete(approved bool, dryRun bool) error {
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	if approved {
-		log.Logger.Infof("%sDeleting Kops cluster...", dryRunPrefix)
+		_, err = printer.Fprintf("%Deleting kops cluster...\n", dryRunPrefix)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	} else {
 		log.Logger.Infof("%sTesting deleting Kops cluster. Pass --yes to actually delete it", dryRunPrefix)
 	}

@@ -42,7 +42,7 @@ type IInstallable interface {
 	Vars(stack IStack) (map[string]interface{}, error)
 	AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool) error
 	RenderTemplates(templateVars map[string]interface{}, stackConfig IStackConfig,
-		dryRun bool) ([]string, error)
+		dryRun bool) error
 	GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{}, error)
 	HasOutputs() bool
 	GetLocalRegistry() IRegistry

@@ -19,9 +19,10 @@ package structs
 // Structs to load a kapp's sugarkube.yaml file
 
 type Template struct {
-	Source    string
-	Dest      string
-	Sensitive bool // sensitive templates will be templated just-in-time then deleted immediately after
+	Source       string
+	Dest         string
+	RenderedPath string // path to the rendered template
+	Sensitive    bool   // sensitive templates will be templated just-in-time then deleted immediately after
 	// executing the kapp. This provides a way of passing secrets to kapps while keeping them off
 	// disk as much as possible.
 }
@@ -96,7 +97,7 @@ type KappConfig struct {
 	PostDeleteActions    []map[string]Action `yaml:"post_delete_actions"`
 	PreInstallActions    []map[string]Action `yaml:"pre_install_actions"`
 	PreDeleteActions     []map[string]Action `yaml:"pre_delete_actions"`
-	Templates            []Template
+	Templates            map[string]Template
 	Vars                 map[string]interface{}
 	RunUnits             map[string]RunUnit `yaml:"run_units" mapstructure:"run_units"`
 	DependsOn            []Dependency       `yaml:"depends_on"`             // fully qualified IDs of other kapps this depends on

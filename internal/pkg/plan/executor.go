@@ -1051,40 +1051,33 @@ func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.I
 		return errors.WithStack(err)
 	}
 
-	renderedTemplatePaths, err := installableObj.RenderTemplates(templatedVars, stackObj.GetConfig(),
+	err = installableObj.RenderTemplates(templatedVars, stackObj.GetConfig(),
 		dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	if config.CurrentConfig.Verbose && printMessage {
-		_, err := printer.Fprintf("  Rendered templates for '[white][bold]%s[reset]' to '%s'\n",
-			installableObj.FullyQualifiedId(), strings.Join(renderedTemplatePaths, "', '"))
-		if err != nil {
-			return errors.WithStack(err)
-		}
-	}
-
-	// merge renderedTemplates into the templatedVars under the "kapp.templates" key. This will
-	// allow us to support writing files to temporary (dynamic) locations later if we like
-	renderedTemplatesMap := map[string]interface{}{
-		constants.KappVarsKappKey: map[string]interface{}{
-			constants.KappVarsTemplatesKey: renderedTemplatePaths,
-		},
-	}
-
-	log.Logger.Debugf("Merging rendered template paths into vars map: %#v",
-		renderedTemplatePaths)
-
-	err = mergo.Merge(&templatedVars, renderedTemplatesMap, mergo.WithOverride)
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	log.Logger.Tracef("Vars after merging template paths: %#v", templatedVars)
 
 	// remerge and template the kapp's descriptor so it can access the paths of any rendered templates
 	err = installableObj.TemplateDescriptor(templatedVars)
 	if err != nil {
 		return errors.WithStack(err)
+	}
+
+	log.Logger.Tracef("Template descriptor after merging template paths: %#v", installableObj.GetDescriptor())
+
+	templatedPaths := make([]string, 0)
+	for _, template := range installableObj.GetDescriptor().Templates {
+		templatedPaths = append(templatedPaths, template.RenderedPath)
+	}
+
+	if config.CurrentConfig.Verbose && printMessage {
+		_, err := printer.Fprintf("  Rendered templates for '[white][bold]%s[reset]' to '%s'\n",
+			installableObj.FullyQualifiedId(), strings.Join(templatedPaths, "', '"))
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil
