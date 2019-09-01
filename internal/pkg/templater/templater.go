@@ -71,7 +71,8 @@ func TemplateString(src string, outBuf *bytes.Buffer, vars map[string]interface{
 		return errors.WithStack(err)
 	}
 
-	log.Logger.Tracef("Successfully rendered input template '%s'", src)
+	log.Logger.Tracef("Successfully rendered input template: %s\n to\n %s",
+		src, rendered)
 
 	return nil
 }

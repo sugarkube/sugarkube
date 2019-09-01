@@ -375,6 +375,12 @@ func (k *Kapp) TemplateDescriptor(templateVars map[string]interface{}) error {
 
 	templateString := string(configTemplate[:])
 
+	// todo - we should probably template the vars first, then template the descriptor in case
+	//  variables are referenced from the rest of the descriptor (there was an error when
+	//  a variable contained the value of the rendered path of a template, and the descriptor
+	//  referenced that variable. The `templated_path` var's value was being set, but the descriptor's
+	//  use of it was blank. Even using the iterative templater didn't work...
+
 	var outBuf bytes.Buffer
 	err = templater.TemplateString(templateString, &outBuf, templateVars)
 	if err != nil {
