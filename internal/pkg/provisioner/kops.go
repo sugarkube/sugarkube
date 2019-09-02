@@ -313,7 +313,7 @@ func (p KopsProvisioner) Update(dryRun bool) error {
 
 	kubeConfig, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
 	envVars := map[string]string{
-		"KUBECONFIG": kubeConfig.(string),
+		constants.KubeConfigEnvVar: kubeConfig.(string),
 	}
 
 	var stdoutBuf, stderrBuf bytes.Buffer
@@ -793,7 +793,7 @@ func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
 	args = parameteriseValues(args, p.kopsConfig.Params.Global)
 
 	err = utils.ExecCommand(p.kopsConfig.Binary, args,
-		map[string]string{"KUBECONFIG": kubeConfigPath}, &stdoutBuf, &stderrBuf,
+		map[string]string{constants.KubeConfigEnvVar: kubeConfigPath}, &stdoutBuf, &stderrBuf,
 		"", kopsSleepSecondsBeforeReadyCheck, 0, false)
 	if err != nil {
 		return "", errors.WithStack(err)

@@ -49,7 +49,7 @@ func (c KubeCtlClusterSot) IsOnline() (bool, error) {
 
 	kubeConfig, _ := c.iStack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
 	envVars := map[string]string{
-		"KUBECONFIG": kubeConfig.(string),
+		constants.KubeConfigEnvVar: kubeConfig.(string),
 	}
 
 	// poll `kubectl --context {{ kube_context }} get namespace`
@@ -90,7 +90,7 @@ func (c KubeCtlClusterSot) IsReady() (bool, error) {
 	}
 
 	envVars := map[string]string{
-		"KUBECONFIG": kubeConfig.(string),
+		constants.KubeConfigEnvVar: kubeConfig.(string),
 	}
 
 	err = utils.ExecCommand(kubectlPath, args, envVars, &stdoutBuf, &stderrBuf,

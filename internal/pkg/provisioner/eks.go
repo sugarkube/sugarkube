@@ -29,8 +29,10 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"os/exec"
+	"regexp"
 )
 
 const eksProvisionerName = "eks"
@@ -217,11 +219,61 @@ func (p EksProvisioner) Create(dryRun bool) error {
 
 	if !dryRun {
 		log.Logger.Infof("EKS cluster created")
+
+		err = p.renameKubeContext()
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	p.stack.GetStatus().SetStartedThisRun(true)
 	// only sleep before checking the cluster fo readiness if we started it
 	p.stack.GetStatus().SetSleepBeforeReadyCheck(eksSleepSecondsBeforeReadyCheck)
+
+	return nil
+}
+
+// When eksctl downloads a kubeconfig file for a cluster it uses the IAM username as the
+// name of the kubecontext. This would complicate configuring the kubecontext, so let's
+// just strip the username from the kubecontext
+func (p EksProvisioner) renameKubeContext() error {
+	log.Logger.Debugf("Renaming kube context for EKS cluster '%s'", p.eksConfig.clusterName)
+
+	pathOptions := clientcmd.NewDefaultPathOptions()
+	kubeConfig, err := pathOptions.GetStartingConfig()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	clusterName := p.eksConfig.clusterName
+
+	clusterNameRe := regexp.MustCompile(fmt.Sprintf(".*@%s", clusterName))
+	contextName := ""
+
+	for name, _ := range kubeConfig.Contexts {
+		if clusterNameRe.MatchString(name) {
+			log.Logger.Debugf("Kubeconfig context '%s' matches regex '%s'", name, clusterNameRe.String())
+			contextName = name
+		}
+	}
+
+	if contextName != "" {
+		log.Logger.Infof("Renaming EKS cluster contex† from '%s' to '%s' in kubeconfig file",
+			contextName, clusterName)
+
+		kubeConfig.Contexts[clusterName] = kubeConfig.Contexts[contextName]
+		delete(kubeConfig.Contexts, contextName)
+
+		// also set the renamed cluster as the default context
+		kubeConfig.CurrentContext = clusterName
+
+		err = clientcmd.ModifyConfig(pathOptions, *kubeConfig, false)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
+		log.Logger.Infof("Not renaming cluster context for EKS cluster '%s'", clusterName)
+	}
 
 	return nil
 }
@@ -338,7 +390,7 @@ func (p EksProvisioner) Update(dryRun bool) error {
 
 	kubeConfig, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
 	envVars := map[string]string{
-		"KUBECONFIG": kubeConfig.(string),
+		constants.KubeConfigEnvVar: kubeConfig.(string),
 	}
 
 	log.Logger.Info("Running eksctl update...")
@@ -389,71 +441,15 @@ func parseEksConfig(stack interfaces.IStack) (*EksConfig, error) {
 			eksDefaultBinary)
 	}
 
-	eksConfig.clusterName = eksConfig.Params.Global[configKeyEKSClusterName]
+	eksConfig.clusterName = eksConfig.Params.GetCluster[configKeyEKSClusterName]
 
 	return &eksConfig, nil
 }
 
-// Downloads the kubeconfig file for the cluster
+// Don't need to do anything here assuming the kubeconfig file was downloaded when
+// the cluster was created
 func (p *EksProvisioner) EnsureClusterConnectivity() (bool, error) {
-	var kubeConfigPathStr string
-	kubeConfigPathInterface, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
-
-	if kubeConfigPathInterface != "" {
-		kubeConfigPathStr = kubeConfigPathInterface.(string)
-		log.Logger.Debugf("Using kubeconfig file at '%s'", kubeConfigPathStr)
-		if _, err := os.Stat(kubeConfigPathStr); err != nil {
-			log.Logger.Errorf("Kubeconfig file '%s' doesn't exist", kubeConfigPathStr)
-			return false, fmt.Errorf("Kubeconfig file '%s' doesn't exist! If you have a "+
-				"KUBECONFIG environment variable set, delete it and try again.", kubeConfigPathStr)
-		}
-	} else {
-		kubeConfigPathStr, err := p.downloadKubeConfigFile()
-		if err != nil {
-			return false, errors.WithStack(err)
-		}
-
-		err = p.stack.GetRegistry().Set(constants.RegistryKeyKubeConfig, kubeConfigPathStr)
-		if err != nil {
-			return false, errors.WithStack(err)
-		}
-	}
-
 	return true, nil
-}
-
-// Downloads the kubeconfig file for the cluster to a temporary location and
-// returns the path to it
-func (p EksProvisioner) downloadKubeConfigFile() (string, error) {
-
-	log.Logger.Debugf("Downloading kubeconfig file for '%s'...",
-		p.eksConfig.clusterName)
-
-	pattern := fmt.Sprintf("kubeconfig-%s-*", p.GetStack().GetConfig().GetCluster())
-
-	tmpfile, err := ioutil.TempFile("", pattern)
-	if err != nil {
-		return "", errors.WithStack(err)
-	}
-
-	kubeConfigPath := tmpfile.Name()
-
-	var stdoutBuf, stderrBuf bytes.Buffer
-	args := []string{"utils", "write-kubeconfig"}
-	args = parameteriseValues(args, p.eksConfig.Params.Global)
-	args = parameteriseValues(args, p.eksConfig.Params.Utils.WriteKubeConfig)
-	args = append(args, []string{"--kubeconfig", kubeConfigPath}...)
-
-	err = utils.ExecCommand(p.eksConfig.Binary, args,
-		nil, &stdoutBuf, &stderrBuf,
-		"", eksSleepSecondsBeforeReadyCheck, 0, false)
-	if err != nil {
-		return "", errors.WithStack(err)
-	}
-
-	log.Logger.Infof("Kubeconfig file downloaded to '%s'", kubeConfigPath)
-
-	return kubeConfigPath, nil
 }
 
 // Nothing to do for this provisioner
