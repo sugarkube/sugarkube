@@ -7,6 +7,7 @@
 * Breaking change: Templates are now declared as a map of templates keyed by an ID
 * Templates can now also take a list of conditions that determines whether they should be rendered or not
 * Refactored to prevent some data races
+* EKS support
 
 ## 0.9.0
 * Rename the 'cache' subcommand to 'workspace' because it wasn't clear that users should actually work inside cache directories (i.e. they're not temporary caches).
