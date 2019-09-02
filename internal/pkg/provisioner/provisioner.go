@@ -38,31 +38,32 @@ func New(name string, stack interfaces.IStack, clusterSot interfaces.IClusterSot
 		return nil, errors.New("Stack parameter can't be nil")
 	}
 
-	if name == MinikubeProvisionerName {
+	switch name {
+	case MinikubeProvisionerName:
 		minikubeProvisioner, err := newMinikubeProvisioner(stack, clusterSot)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-
 		return *minikubeProvisioner, nil
-	}
-
-	if name == kopsProvisionerName {
+	case kopsProvisionerName:
 		kopsProvisioner, err := newKopsProvisioner(stack, clusterSot)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-
 		return kopsProvisioner, nil
-	}
-
-	if name == NoopProvisionerName {
+	case eksProvisionerName:
+		eksProvisioner, err := newEksProvisioner(stack, clusterSot)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		return eksProvisioner, nil
+	case NoopProvisionerName:
 		return NoOpProvisioner{
 			stack: stack,
 		}, nil
+	default:
+		return nil, errors.New(fmt.Sprintf("Provisioner '%s' doesn't exist", name))
 	}
-
-	return nil, errors.New(fmt.Sprintf("Provisioner '%s' doesn't exist", name))
 }
 
 // Return whether the cluster is already online
