@@ -29,6 +29,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"os"
 	"os/exec"
 )
 
@@ -40,7 +41,7 @@ const eksCommandTimeoutSecondsLong = 300
 
 // number of seconds to sleep after the cluster has come online before checking whether
 // it's ready
-const eksSleepSecondsBeforeReadyCheck = 60
+const eksSleepSecondsBeforeReadyCheck = 15
 
 // todo - catch errors accessing these
 const configKeyEKSClusterName = "name"
@@ -53,15 +54,20 @@ type EksProvisioner struct {
 	sshCommand           *exec.Cmd
 }
 
+type EksUtilsConfig struct {
+	WriteKubeConfig map[string]string `yaml:"write_kubeconfig"`
+}
+
 type EksConfig struct {
 	clusterName string // set after parsing the eks YAML
 	Binary      string // path to the eksctl binary
 	Params      struct {
 		Global        map[string]string
-		GetCluster    map[string]string      `yaml:"get_cluster"`
-		CreateCluster map[string]string      `yaml:"create_cluster"`
-		DeleteCluster map[string]string      `yaml:"delete_cluster"`
-		UpdateCluster map[string]string      `yaml:"update_cluster"`
+		GetCluster    map[string]string `yaml:"get_cluster"`
+		CreateCluster map[string]string `yaml:"create_cluster"`
+		DeleteCluster map[string]string `yaml:"delete_cluster"`
+		UpdateCluster map[string]string `yaml:"update_cluster"`
+		Utils         EksUtilsConfig
 		ConfigFile    map[string]interface{} `yaml:"config_file"`
 	}
 }
@@ -198,21 +204,18 @@ func (p EksProvisioner) Create(dryRun bool) error {
 		args = append(args, []string{"-f", configFilePath}...)
 	}
 
-	var stdoutBuf, stderrBuf bytes.Buffer
-
 	_, err = printer.Fprintf("Creating EKS cluster (this may take some time)...\n")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = utils.ExecCommand(p.eksConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", 0, 0, dryRun)
+	err = utils.ExecCommandUnbuffered(p.eksConfig.Binary, args, map[string]string{},
+		os.Stdout, os.Stderr, "", 0, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	if !dryRun {
-		log.Logger.Debugf("EKS returned:\n%s", stdoutBuf.String())
 		log.Logger.Infof("EKS cluster created")
 	}
 
@@ -249,31 +252,35 @@ func (p EksProvisioner) Delete(approved bool, dryRun bool) error {
 	args = parameteriseValues(args, p.eksConfig.Params.Global)
 	args = parameteriseValues(args, p.eksConfig.Params.DeleteCluster)
 
-	if approved {
-		args = append(args, "--yes")
+	configFilePath, err := p.writeConfigFile()
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
-	var stdoutBuf, stderrBuf bytes.Buffer
+	if configFilePath != "" {
+		args = append(args, []string{"-f", configFilePath}...)
+	}
 
 	if approved {
 		_, err = printer.Fprintf("%sDeleting EKS cluster...\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
 		}
+
+		err = utils.ExecCommandUnbuffered(p.eksConfig.Binary, args, map[string]string{}, os.Stdout,
+			os.Stderr, "", eksCommandTimeoutSecondsLong, 0, dryRun)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	} else {
-		log.Logger.Infof("%sTesting deleting EKS cluster. Pass --yes to actually delete it", dryRunPrefix)
-	}
-	err = utils.ExecCommand(p.eksConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", eksCommandTimeoutSecondsLong, 0, dryRun)
-	if err != nil {
-		return errors.WithStack(err)
+		log.Logger.Infof("%sNo way to test deleting EKS clusters with eksctl. Pass --yes to actually delete it", dryRunPrefix)
 	}
 
 	if approved {
 		log.Logger.Infof("%sEKS cluster deleted...", dryRunPrefix)
 	} else {
-		log.Logger.Infof("%sEKS deletion test succeeded. Run with --yes to actually delete "+
-			"the eks cluster", dryRunPrefix)
+		log.Logger.Infof("%sEKS cluster deletions cannot be tested. Run with --yes to actually delete "+
+			"the cluster", dryRunPrefix)
 	}
 
 	return nil
@@ -328,18 +335,15 @@ func (p EksProvisioner) Update(dryRun bool) error {
 		"KUBECONFIG": kubeConfig.(string),
 	}
 
-	var stdoutBuf, stderrBuf bytes.Buffer
-
 	log.Logger.Info("Running eksctl update...")
 	// this command might take a long time to complete so don't supply a timeout
-	err := utils.ExecCommand(p.eksConfig.Binary, args, envVars, &stdoutBuf, &stderrBuf,
-		"", 0, 0, dryRun)
+	err := utils.ExecCommandUnbuffered(p.eksConfig.Binary, args, envVars, os.Stdout,
+		os.Stderr, "", 0, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	if !dryRun {
-		log.Logger.Debugf("eksctl returned:\n%s", stdoutBuf.String())
 		log.Logger.Infof("EKS cluster updated")
 	}
 
@@ -384,8 +388,31 @@ func parseEksConfig(stack interfaces.IStack) (*EksConfig, error) {
 	return &eksConfig, nil
 }
 
-// No special connectivity is required for this provisioner
+// Downloads the kubeconfig file for the cluster
 func (p *EksProvisioner) EnsureClusterConnectivity() (bool, error) {
+	var kubeConfigPathStr string
+	kubeConfigPathInterface, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
+
+	if kubeConfigPathInterface != "" {
+		kubeConfigPathStr = kubeConfigPathInterface.(string)
+		log.Logger.Debugf("Using kubeconfig file at '%s'", kubeConfigPathStr)
+		if _, err := os.Stat(kubeConfigPathStr); err != nil {
+			log.Logger.Errorf("Kubeconfig file '%s' doesn't exist", kubeConfigPathStr)
+			return false, fmt.Errorf("Kubeconfig file '%s' doesn't exist! If you have a "+
+				"KUBECONFIG environment variable set, delete it and try again.", kubeConfigPathStr)
+		}
+	} else {
+		kubeConfigPathStr, err := p.downloadKubeConfigFile()
+		if err != nil {
+			return false, errors.WithStack(err)
+		}
+
+		err = p.stack.GetRegistry().Set(constants.RegistryKeyKubeConfig, kubeConfigPathStr)
+		if err != nil {
+			return false, errors.WithStack(err)
+		}
+	}
+
 	return true, nil
 }
 
@@ -408,6 +435,7 @@ func (p EksProvisioner) downloadKubeConfigFile() (string, error) {
 	var stdoutBuf, stderrBuf bytes.Buffer
 	args := []string{"utils", "write-kubeconfig"}
 	args = parameteriseValues(args, p.eksConfig.Params.Global)
+	args = parameteriseValues(args, p.eksConfig.Params.Utils.WriteKubeConfig)
 	args = append(args, []string{"--kubeconfig", kubeConfigPath}...)
 
 	err = utils.ExecCommand(p.eksConfig.Binary, args,

@@ -96,6 +96,11 @@ func (c *deleteCmd) run() error {
 		return errors.WithStack(err)
 	}
 
+	err = stackObj.GetProvisioner().Delete(c.approved, c.dryRun)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	if c.approved {
 		_, err = printer.Fprintf("%s[green]Cluster '%s' successfully deleted.\n",
 			dryRunPrefix, stackObj.GetConfig().GetCluster())
@@ -108,11 +113,6 @@ func (c *deleteCmd) run() error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
-	}
-
-	err = stackObj.GetProvisioner().Delete(c.approved, c.dryRun)
-	if err != nil {
-		return errors.WithStack(err)
 	}
 
 	return nil

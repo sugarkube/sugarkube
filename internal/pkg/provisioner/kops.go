@@ -451,7 +451,7 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 	args = parameteriseValues(args, p.kopsConfig.Params.Global)
 	args = parameteriseValues(args, p.kopsConfig.Params.Replace)
 
-	err = utils.ExecCommand(p.kopsConfig.Binary, args, map[string]string{}, &stdoutBuf, &stderrBuf,
+	err = utils.ExecCommandUnbuffered(p.kopsConfig.Binary, args, map[string]string{}, os.Stdout, os.Stderr,
 		"", kopsCommandTimeoutSeconds, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
