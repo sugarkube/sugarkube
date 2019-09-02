@@ -35,8 +35,6 @@ import (
 const eksProvisionerName = "eks"
 const eksDefaultBinary = "eksctl"
 
-const configKeyEKSClusterName = "name"
-
 const eksCommandTimeoutSeconds = 30
 const eksCommandTimeoutSecondsLong = 300
 
@@ -44,8 +42,8 @@ const eksCommandTimeoutSecondsLong = 300
 // it's ready
 const eksSleepSecondsBeforeReadyCheck = 60
 
-// todo - catch errors accessing this
-const configKeyEksSpecs = "specs"
+// todo - catch errors accessing these
+const configKeyEKSClusterName = "name"
 
 type EksProvisioner struct {
 	clusterSot           interfaces.IClusterSot
@@ -64,6 +62,7 @@ type EksConfig struct {
 		CreateCluster map[string]string `yaml:"create_cluster"`
 		DeleteCluster map[string]string `yaml:"delete_cluster"`
 		UpdateCluster map[string]string `yaml:"update_cluster"`
+		ConfigFile    map[string]string `yaml:"config_file"`
 	}
 }
 
@@ -124,6 +123,44 @@ func (p EksProvisioner) clusterExists() (bool, error) {
 	}
 
 	return true, nil
+}
+
+// Writes any configuration for a config file to a temporary file and returns it. If
+// that key doesn't exist, an empty path is returned.
+func (p EksProvisioner) writeConfigFile() (string, error) {
+	if len(p.eksConfig.Params.ConfigFile) > 0 {
+
+		// marshal the struct to YAML
+		yamlBytes, err := yaml.Marshal(&p.eksConfig.Params.ConfigFile)
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+
+		yamlString := string(yamlBytes[:])
+
+		// write the config to a temporary file
+		tmpfile, err := ioutil.TempFile("", "eks.*.yaml")
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+
+		defer tmpfile.Close()
+
+		if _, err := tmpfile.Write([]byte(yamlString)); err != nil {
+			return "", errors.WithStack(err)
+		}
+		if err := tmpfile.Close(); err != nil {
+			return "", errors.WithStack(err)
+		}
+
+		return tmpfile.Name(), nil
+
+	} else {
+		log.Logger.Infof("No EKS config file data configured. No config file path will be passed " +
+			"to eksctl commands")
+
+		return "", nil
+	}
 }
 
 // Creates a Eks cluster config. Note: This doesn't actually launch a Eks cluster,
