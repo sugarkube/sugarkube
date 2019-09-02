@@ -245,34 +245,37 @@ func (p EksProvisioner) renameKubeContext() error {
 		return errors.WithStack(err)
 	}
 
-	clusterName := p.eksConfig.clusterName
+	shortClusterName := p.eksConfig.clusterName
 
-	clusterNameRe := regexp.MustCompile(fmt.Sprintf(".*@%s", clusterName))
+	clusterNameRe := regexp.MustCompile(fmt.Sprintf(".*@%s.%s.eksctl.io", shortClusterName,
+		p.stack.GetConfig().GetRegion()))
 	contextName := ""
+	fullClusterName := ""
 
-	for name, _ := range kubeConfig.Contexts {
+	for name, ctx := range kubeConfig.Contexts {
 		if clusterNameRe.MatchString(name) {
 			log.Logger.Debugf("Kubeconfig context '%s' matches regex '%s'", name, clusterNameRe.String())
 			contextName = name
+			fullClusterName = ctx.Cluster
 		}
 	}
 
 	if contextName != "" {
 		log.Logger.Infof("Renaming EKS cluster contex† from '%s' to '%s' in kubeconfig file",
-			contextName, clusterName)
+			contextName, fullClusterName)
 
-		kubeConfig.Contexts[clusterName] = kubeConfig.Contexts[contextName]
+		kubeConfig.Contexts[fullClusterName] = kubeConfig.Contexts[contextName]
 		delete(kubeConfig.Contexts, contextName)
 
 		// also set the renamed cluster as the default context
-		kubeConfig.CurrentContext = clusterName
+		kubeConfig.CurrentContext = fullClusterName
 
 		err = clientcmd.ModifyConfig(pathOptions, *kubeConfig, false)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	} else {
-		log.Logger.Infof("Not renaming cluster context for EKS cluster '%s'", clusterName)
+		log.Logger.Infof("Not renaming cluster context for EKS cluster '%s'", shortClusterName)
 	}
 
 	return nil
