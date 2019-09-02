@@ -319,16 +319,22 @@ func (p EksProvisioner) IsAlreadyOnline(dryRun bool) (bool, error) {
 func (p EksProvisioner) Update(dryRun bool) error {
 
 	log.Logger.Infof("Updating EKS cluster '%s'...", p.eksConfig.clusterName)
-	// todo make the --yes flag configurable, perhaps through a CLI arg so people can verify their
-	// changes before applying them
 	args := []string{
 		"update",
 		"cluster",
-		"--yes",
 	}
 
 	args = parameteriseValues(args, p.eksConfig.Params.Global)
 	args = parameteriseValues(args, p.eksConfig.Params.UpdateCluster)
+
+	configFilePath, err := p.writeConfigFile()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if configFilePath != "" {
+		args = append(args, []string{"-f", configFilePath}...)
+	}
 
 	kubeConfig, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
 	envVars := map[string]string{
@@ -337,7 +343,7 @@ func (p EksProvisioner) Update(dryRun bool) error {
 
 	log.Logger.Info("Running eksctl update...")
 	// this command might take a long time to complete so don't supply a timeout
-	err := utils.ExecCommandUnbuffered(p.eksConfig.Binary, args, envVars, os.Stdout,
+	err = utils.ExecCommandUnbuffered(p.eksConfig.Binary, args, envVars, os.Stdout,
 		os.Stderr, "", 0, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
