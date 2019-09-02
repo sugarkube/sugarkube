@@ -58,11 +58,11 @@ type EksConfig struct {
 	Binary      string // path to the eksctl binary
 	Params      struct {
 		Global        map[string]string
-		GetCluster    map[string]string `yaml:"get_cluster"`
-		CreateCluster map[string]string `yaml:"create_cluster"`
-		DeleteCluster map[string]string `yaml:"delete_cluster"`
-		UpdateCluster map[string]string `yaml:"update_cluster"`
-		ConfigFile    map[string]string `yaml:"config_file"`
+		GetCluster    map[string]string      `yaml:"get_cluster"`
+		CreateCluster map[string]string      `yaml:"create_cluster"`
+		DeleteCluster map[string]string      `yaml:"delete_cluster"`
+		UpdateCluster map[string]string      `yaml:"update_cluster"`
+		ConfigFile    map[string]interface{} `yaml:"config_file"`
 	}
 }
 
@@ -88,7 +88,7 @@ func (p EksProvisioner) ClusterSot() interfaces.IClusterSot {
 	return p.clusterSot
 }
 
-// Returns a bool indicating whether the cluster exists
+// Returns a bool indicating whether the cluster exists (but it may not yet respond to kubectl commands)
 func (p EksProvisioner) clusterExists() (bool, error) {
 
 	templatedVars, err := p.stack.GetTemplatedVars(nil, map[string]interface{}{})
@@ -109,16 +109,16 @@ func (p EksProvisioner) clusterExists() (bool, error) {
 	if err != nil {
 		if errors.Cause(err) == context.DeadlineExceeded {
 			return false, errors.Wrap(err,
-				"Timed out trying to retrieve eks cluster config. "+
+				"Timed out trying to retrieve EKS cluster config. "+
 					"Check your credentials.")
 		}
 
 		// todo - catch errors due to missing/expired AWS credentials and throw an error
 		if _, ok := errors.Cause(err).(*exec.ExitError); ok {
-			log.Logger.Info("Eks cluster config doesn't exist")
+			log.Logger.Info("EKS cluster doesn't exist")
 			return false, nil
 		} else {
-			return false, errors.Wrap(err, "Error fetching eks clusters")
+			return false, errors.Wrap(err, "Error fetching EKS clusters")
 		}
 	}
 
@@ -153,6 +153,8 @@ func (p EksProvisioner) writeConfigFile() (string, error) {
 			return "", errors.WithStack(err)
 		}
 
+		log.Logger.Debugf("EKS config file written to: %s", tmpfile.Name())
+
 		return tmpfile.Name(), nil
 
 	} else {
@@ -163,8 +165,7 @@ func (p EksProvisioner) writeConfigFile() (string, error) {
 	}
 }
 
-// Creates a Eks cluster config. Note: This doesn't actually launch a Eks cluster,
-// that only happens when 'eks update' is run.
+// Creates an EKS cluster.
 func (p EksProvisioner) Create(dryRun bool) error {
 
 	clusterExists, err := p.clusterExists()
@@ -188,6 +189,15 @@ func (p EksProvisioner) Create(dryRun bool) error {
 	args = parameteriseValues(args, p.eksConfig.Params.Global)
 	args = parameteriseValues(args, p.eksConfig.Params.CreateCluster)
 
+	configFilePath, err := p.writeConfigFile()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if configFilePath != "" {
+		args = append(args, []string{"-f", configFilePath}...)
+	}
+
 	var stdoutBuf, stderrBuf bytes.Buffer
 
 	_, err = printer.Fprintf("Creating EKS cluster (this may take some time)...\n")
@@ -196,7 +206,7 @@ func (p EksProvisioner) Create(dryRun bool) error {
 	}
 
 	err = utils.ExecCommand(p.eksConfig.Binary, args, map[string]string{}, &stdoutBuf,
-		&stderrBuf, "", eksCommandTimeoutSecondsLong, 0, dryRun)
+		&stderrBuf, "", 0, 0, dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -298,7 +308,7 @@ func (p EksProvisioner) IsAlreadyOnline(dryRun bool) (bool, error) {
 	return online, nil
 }
 
-// No-op function, required to fully implement the Provisioner interface
+// Updates the cluster
 func (p EksProvisioner) Update(dryRun bool) error {
 
 	log.Logger.Infof("Updating EKS cluster '%s'...", p.eksConfig.clusterName)
