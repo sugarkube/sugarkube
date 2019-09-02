@@ -73,5 +73,7 @@ func IterativelyTemplate(vars map[string]interface{}) (map[string]interface{}, e
 		previousBytes = currentBytes
 	}
 
+	log.Logger.Tracef("Iteratively templated variables as: %#v", vars)
+
 	return vars, nil
 }

@@ -55,10 +55,10 @@ const sshPortForwardingDelaySeconds = 5
 const configKeyKopsSpecs = "specs"
 const configKeyKopsCluster = "cluster"
 const configKeyKopsInstanceGroups = "instanceGroups"
-const configKeyApiLoadBalancerType = "api_loadbalancer_type"
-const configKeyCreateCluster = "create_cluster"
-const configKeyBastion = "bastion"
-const configKeyClusterName = "name"
+const configKeyKopsApiLoadBalancerType = "api_loadbalancer_type"
+const configKeyKopsCreateCluster = "create_cluster"
+const configKeyKopsClusterName = "name"
+const configKeyKopsBastion = "bastion"
 
 const awsCliPath = "aws"
 const sshPath = "ssh"
@@ -596,46 +596,6 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 	return nil
 }
 
-// Converts an array of key-value parameters to CLI args
-func parameteriseValues(args []string, valueMap map[string]string) []string {
-	// In kops, booleans can only indicate truth. Passing e.g. `--bastion false`
-	// trips it up. So we need to explicitly filter out such keys if they have
-	// the corresponding values
-	excludeBooleans := map[string]string{
-		"bastion": "false",
-	}
-
-	for k, v := range valueMap {
-		ignoreValue := false
-
-		for excludeK, excludeV := range excludeBooleans {
-			if k == excludeK && v == excludeV {
-				log.Logger.Tracef("Ignoring kops parameter '%s' (which is '%v')",
-					excludeK, excludeV)
-				ignoreValue = true
-			}
-		}
-
-		if ignoreValue {
-			continue
-		}
-
-		key := strings.Replace(k, "_", "-", -1)
-
-		value := fmt.Sprintf("%v", v)
-		if value != "" {
-			value = fmt.Sprintf("%v", v)
-			// we need to separate keys & values with equals signs so kops doesn't
-			// get tripped up with `--bastion true`
-			args = append(args, fmt.Sprintf("--%s=%s", key, value))
-		} else {
-			args = append(args, "--"+key)
-		}
-	}
-
-	return args
-}
-
 // Parses the Kops provisioner config
 func parseKopsConfig(stack interfaces.IStack) (*KopsConfig, error) {
 	templatedVars, err := stack.GetTemplatedVars(nil, map[string]interface{}{})
@@ -669,7 +629,7 @@ func parseKopsConfig(stack interfaces.IStack) (*KopsConfig, error) {
 			kopsDefaultBinary)
 	}
 
-	kopsConfig.clusterName = kopsConfig.Params.Global[configKeyClusterName]
+	kopsConfig.clusterName = kopsConfig.Params.Global[configKeyKopsClusterName]
 
 	if kopsConfig.LocalPortForwardingPort == 0 {
 		// set a default value if it's not set
@@ -685,21 +645,21 @@ func (p KopsProvisioner) needApiAccessViaBastion() bool {
 
 	// if the API load balancer type is internal and there's a bastion, we need
 	// to set up port forwarding
-	apiLoadBalancerType, ok := p.kopsConfig.Params.CreateCluster[configKeyApiLoadBalancerType]
+	apiLoadBalancerType, ok := p.kopsConfig.Params.CreateCluster[configKeyKopsApiLoadBalancerType]
 	if !ok {
 		log.Logger.Infof("No `%s` key under the kops `%s` key. Assuming we "+
 			"don't need to set up SSH port forwarding to access the API server",
-			configKeyApiLoadBalancerType, configKeyCreateCluster)
+			configKeyKopsApiLoadBalancerType, configKeyKopsCreateCluster)
 		return false
 	}
 
 	apiLoadBalancerType = strings.ToLower(apiLoadBalancerType)
 
-	bastionValue, ok := p.kopsConfig.Params.CreateCluster[configKeyBastion]
+	bastionValue, ok := p.kopsConfig.Params.CreateCluster[configKeyKopsBastion]
 	if !ok {
 		log.Logger.Infof("No `%s` key under the kops `%s` key. Won't set up "+
-			"SSH port forwarding to access the API server", configKeyBastion,
-			configKeyCreateCluster)
+			"SSH port forwarding to access the API server", configKeyKopsBastion,
+			configKeyKopsCreateCluster)
 	}
 
 	bastionValue = strings.ToLower(bastionValue)
@@ -781,7 +741,7 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 		}
 
 		// modify the host name in the file to point to the local k8s server domain
-		err = replaceAllInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),
+		err = utils.ReplaceAllInFile(apiDomain, fmt.Sprintf("%s:%d", kubernetesLocalHostname, localPort),
 			kubeConfigPathStr)
 		if err != nil {
 			return false, errors.WithStack(err)
@@ -842,23 +802,6 @@ func (p KopsProvisioner) downloadKubeConfigFile() (string, error) {
 	log.Logger.Infof("Kubeconfig file downloaded to '%s'", kubeConfigPath)
 
 	return kubeConfigPath, nil
-}
-
-// Replace all occurrences of a string in a file
-func replaceAllInFile(search string, replacement string, path string) error {
-	contents, err := ioutil.ReadFile(path)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	updated := strings.Replace(string(contents), search, replacement, -1)
-
-	err = ioutil.WriteFile(path, []byte(updated), 0)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	return nil
 }
 
 // Sets up SSH port forwarding

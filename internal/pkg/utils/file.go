@@ -136,3 +136,20 @@ func StripExtension(path string) string {
 	extension := filepath.Ext(path)
 	return strings.TrimSuffix(path, extension)
 }
+
+// Replace all occurrences of a string in a file
+func ReplaceAllInFile(search string, replacement string, path string) error {
+	contents, err := ioutil.ReadFile(path)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	updated := strings.Replace(string(contents), search, replacement, -1)
+
+	err = ioutil.WriteFile(path, []byte(updated), 0)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
