@@ -737,19 +737,21 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 			continue
 		}
 
+		args, err := shellwords.Parse(step.Args)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
 		if config.CurrentConfig.Verbose {
-			_, err := printer.Fprintf("* %s[white]%s[reset] - Executing run step '[white]%s[default]'...\n",
-				dryRunPrefix, installableObj.FullyQualifiedId(), step.Name)
+			_, err := printer.Fprintf("* %s[white]%s[reset] - Executing command for run step "+
+				"'[white]%s[default]':\n%s %s\n\n",
+				dryRunPrefix, installableObj.FullyQualifiedId(), step.Name, step.Command, strings.Join(args, " "))
 			if err != nil {
 				return errors.WithStack(err)
 			}
 		}
 
 		var stdoutBuf, stderrBuf bytes.Buffer
-		args, err := shellwords.Parse(step.Args)
-		if err != nil {
-			return errors.WithStack(err)
-		}
 		cmdErr := utils.ExecCommand(step.Command, args, step.EnvVars, &stdoutBuf,
 			&stderrBuf, step.WorkingDir, step.Timeout, step.ExpectedExitCode, dryRun)
 

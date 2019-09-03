@@ -12,7 +12,6 @@
 * Add a setting to throw an error/make kapps validate print an error if kapp IDs aren't globally unique. We don't care, but terraform does with our sample naming convention. The options are either to add the manifest ID to the TF state path which stops people reorganising, or making kapp IDs globally unique, otherwise e.g. 2 wordpress instances in different manifests could clobber each other  
 * Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
 * Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
-* Add a flag on the 'kapps install' command to print out what it would execute for each step to make it easier to debug what would happen (so users don't need to enable logging to see the commands that would be executed)
 * `ws create` should support `-i/-x` selectors to support selectively updating kapps
 
 * Add a way of replacing kapp settings in stack configs (e.g. to replace dependencies)
@@ -21,7 +20,7 @@
 * The Wordpress kapp should provide control over whether to install fixtures or not. Maybe by default it should only do it when the kapp is first installed, since after that it fails...
 * Update the prometheus-operator kapp to delete its CRDs when it's deleted
 
-* It should be possible to set kapp vars that are maps
+* It should be possible to set kapp vars that are maps and lists
 * Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
 * Only run a kops update if the spec has changed (diff the new spec with the existing one)
 * Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity) (created https://github.com/kubernetes/kops/issues/7393)
