@@ -749,6 +749,13 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 			if err != nil {
 				return errors.WithStack(err)
 			}
+		} else {
+			_, err := printer.Fprintf("* %s[white]%s[reset] - Executing run step "+
+				"'[white]%s[default]'...\n",
+				dryRunPrefix, installableObj.FullyQualifiedId(), step.Name)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
 
 		var stdoutBuf, stderrBuf bytes.Buffer
