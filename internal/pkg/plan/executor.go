@@ -579,20 +579,22 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 
 		// only execute pre actions if approved==true
 		if approved {
+			if install {
+				preActions = installableObj.PreInstallActions()
+			} else {
+				preActions = installableObj.PreDeleteActions()
+			}
+
 			if skipPreActions {
-				_, err = printer.Fprintf("[yellow]Not executing %d pre actions for '[bold][white]%s[reset][yellow]'. Pass "+
-					"`[bold]--%s[reset][yellow]` to execute them\n", len(preActions), installableObj.FullyQualifiedId(), constants.RunPreActions)
-				if err != nil {
-					errCh <- errors.WithStack(err)
-					return
+				if len(preActions) > 0 {
+					_, err = printer.Fprintf("[yellow]Not executing %d pre actions for '[bold][white]%s[reset][yellow]'. Pass "+
+						"`[bold]--%s[reset][yellow]` to execute them\n", len(preActions), installableObj.FullyQualifiedId(), constants.RunPreActions)
+					if err != nil {
+						errCh <- errors.WithStack(err)
+						return
+					}
 				}
 			} else {
-				if install {
-					preActions = installableObj.PreInstallActions()
-				} else {
-					preActions = installableObj.PreDeleteActions()
-				}
-
 				log.Logger.Infof("Will run %d pre %s actions", len(preActions), actionName)
 
 				for _, action := range preActions {
@@ -678,21 +680,23 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 
 	// only execute post actions if approved==true
 	if node.marked && approved {
+		if install {
+			postActions = installableObj.PostInstallActions()
+		} else {
+			postActions = installableObj.PostDeleteActions()
+		}
+
 		if skipPostActions {
-			_, err = printer.Fprintf("[yellow]Not executing %d post actions for '[bold][white]%s[reset][yellow]'. Pass "+
-				"`[bold]--%s[reset][yellow]` to execute them\n", len(postActions), installableObj.FullyQualifiedId(), constants.RunPostActions)
-			if err != nil {
-				errCh <- errors.WithStack(err)
-				return
+			if len(postActions) > 0 {
+				_, err = printer.Fprintf("[yellow]Not executing %d post actions for '[bold][white]%s[reset][yellow]'. Pass "+
+					"`[bold]--%s[reset][yellow]` to execute them\n", len(postActions), installableObj.FullyQualifiedId(), constants.RunPostActions)
+				if err != nil {
+					errCh <- errors.WithStack(err)
+					return
+				}
 			}
 		} else {
 			log.Logger.Infof("Will run %d post %s actions", len(postActions), actionName)
-
-			if install {
-				postActions = installableObj.PostInstallActions()
-			} else {
-				postActions = installableObj.PostDeleteActions()
-			}
 
 			for _, action := range postActions {
 				executeAction(action, installableObj, stackObj, errCh, dryRun)
