@@ -368,6 +368,8 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 	}
 	go g.processEligibleNodes(nodeStatusesCopy, processCh, nodeUpdateCh, down)
 
+	channelsClosed := false
+
 	go func() {
 		// create a ticker to display progress
 		progressTicker := time.NewTicker(progressInterval * time.Second)
@@ -389,9 +391,14 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 
 					if allDone(nodeStatusesById) {
 						log.Logger.Infof("DAG fully processed")
-						close(finishedCh)
-						close(doneCh)
-						close(processCh)
+						// keep track of whether we've closed the channels (possibly in another goroutine)
+						if !channelsClosed {
+							close(finishedCh)
+							close(doneCh)
+							close(processCh)
+							close(nodeUpdateCh)
+							channelsClosed = true
+						}
 						break
 					}
 				}

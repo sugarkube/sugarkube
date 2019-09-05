@@ -55,7 +55,7 @@ type RunStep struct {
 	Name    string            `yaml:",omitempty"`
 	Command string            `yaml:",omitempty"`
 	Args    string            `yaml:",omitempty"`
-	EnvVars map[string]string `yaml:"env_vars,omitempty" mapstructure:"env_vars"`
+	EnvVars map[string]string `yaml:"env_vars" mapstructure:"env_vars"`
 	Stdout  string            `yaml:",omitempty"`                           // path to write stdout to
 	Stderr  string            `yaml:",omitempty"`                           // path to write stderr to
 	Print   string            `yaml:"print,omitempty" mapstructure:"print"` // if 'verbose', stdout/stderr will be printed to the
@@ -76,7 +76,7 @@ type RunStep struct {
 type RunUnit struct {
 	WorkingDir   string            `yaml:"working_dir" mapstructure:"working_dir"`
 	Conditions   []string          `yaml:",omitempty"`
-	EnvVars      map[string]string `yaml:"env_vars,omitempty" mapstructure:"env_vars"`
+	EnvVars      map[string]string `yaml:"env_vars" mapstructure:"env_vars"`
 	PlanInstall  []RunStep         `yaml:"plan_install,omitempty" mapstructure:"plan_install"`
 	ApplyInstall []RunStep         `yaml:"apply_install,omitempty" mapstructure:"apply_install"`
 	PlanDelete   []RunStep         `yaml:"plan_delete,omitempty" mapstructure:"plan_delete"`
