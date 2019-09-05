@@ -358,6 +358,7 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 	log.Logger.Debugf("Graph has %d nodes", numNodes)
 
 	finishedCh := make(chan bool)
+	nodeUpdateCh := make(chan nodeStatus, len(nodeStatusesById))
 
 	// run the process method once here to send the initial nodes for processing to the processing channel.
 	// We pass a copy of the nodeStatusesById map to avoid a data race
@@ -365,7 +366,7 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 	for k, v := range nodeStatusesById {
 		nodeStatusesCopy[k] = v
 	}
-	go g.processEligibleNodes(nodeStatusesCopy, processCh, down)
+	go g.processEligibleNodes(nodeStatusesCopy, processCh, nodeUpdateCh, down)
 
 	go func() {
 		// create a ticker to display progress
@@ -384,7 +385,7 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 					nodeStatusesById[namedNode.node.ID()] = nodeItem
 
 					// reprocess nodes again since there's been a state change
-					g.processEligibleNodes(nodeStatusesById, processCh, down)
+					g.processEligibleNodes(nodeStatusesById, processCh, nodeUpdateCh, down)
 
 					if allDone(nodeStatusesById) {
 						log.Logger.Infof("DAG fully processed")
@@ -393,6 +394,11 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 						close(processCh)
 						break
 					}
+				}
+			case namedNode, ok := <-nodeUpdateCh:
+				if ok {
+					log.Logger.Tracef("Updating status of node: %v", namedNode)
+					nodeStatusesById[namedNode.node.ID()] = namedNode
 				}
 			case <-progressTicker.C:
 				inProgressNodes := make([]string, 0)
@@ -415,7 +421,7 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 
 // Adds any nodes whose dependencies have all been satisfied into a channel for processing by workers
 func (g *Dag) processEligibleNodes(nodeStatusesById map[int64]nodeStatus, processCh chan<- NamedNode,
-	down bool) {
+	nodeUpdateCh chan<- nodeStatus, down bool) {
 	for node, nodeStatus := range nodeStatusesById {
 		namedNode := nodeStatusesById[node]
 
@@ -440,7 +446,9 @@ func (g *Dag) processEligibleNodes(nodeStatusesById map[int64]nodeStatus, proces
 				"processing queue", namedNode.node.name)
 			// update the status to running so we don't keep requeuing completed nodes
 			namedNode.status = running
-			nodeStatusesById[node] = namedNode
+			// we only have a copy of the nodeStatusesById map so we need to send modifications to a channel so they
+			// can actually be persisted in the main for loop
+			nodeUpdateCh <- namedNode
 			processCh <- namedNode.node
 		} else {
 			log.Logger.Tracef("Dependencies not satisfied for %s", namedNode.node.name)
