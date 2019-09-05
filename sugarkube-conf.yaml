@@ -166,6 +166,10 @@ programs:
             command: "{{ .kapp.vars.terraform }}"
             args: destroy -auto-approve {{ .kapp.vars.tf_params }}      # command auto-approved
             merge_priority: 30         # delete terraform *after* deleting a helm chart
+          - name: tf-delete-state
+            command: aws
+            args: s3 rm s3://{{ .terraform.state.bucket }}/{{ .terraform.state.key }}
+            merge_priority: 50
         output:         # todo - we'll probably need the ability to add conditions to entire run units, e.g. gt 0 len(.kapp.output)
           - call: plan_install/tf-init       # call the tf-init step defined under `plan_install`
           - name: tf-refresh
