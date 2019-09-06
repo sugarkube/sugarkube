@@ -20,11 +20,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/mock"
+	"os"
 	"testing"
 )
 
 func init() {
-	log.ConfigureLogger("debug", false)
+	log.ConfigureLogger("debug", false, os.Stderr)
 }
 
 func TestNewClusterSot(t *testing.T) {

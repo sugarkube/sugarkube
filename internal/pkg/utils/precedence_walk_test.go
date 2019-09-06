@@ -28,7 +28,7 @@ import (
 )
 
 func init() {
-	log.ConfigureLogger("debug", false)
+	log.ConfigureLogger("debug", false, os.Stderr)
 }
 
 func TestPrecedenceWalk(t *testing.T) {

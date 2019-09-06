@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -31,7 +32,7 @@ var (
 )
 
 func init() {
-	log.ConfigureLogger("debug", false)
+	log.ConfigureLogger("debug", false, os.Stderr)
 }
 
 func getAbsPath(t *testing.T, path string) string {

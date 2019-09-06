@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -36,7 +37,7 @@ type TemplateTest struct {
 }
 
 func init() {
-	log.ConfigureLogger("debug", false)
+	log.ConfigureLogger("debug", false, os.Stderr)
 }
 
 func getFixture() []TemplateTest {

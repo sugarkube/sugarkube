@@ -19,11 +19,12 @@ package registry
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"os"
 	"testing"
 )
 
 func init() {
-	log.ConfigureLogger("trace", false)
+	log.ConfigureLogger("trace", false, os.Stderr)
 }
 
 func TestSimple(t *testing.T) {

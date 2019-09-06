@@ -22,11 +22,12 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"os"
 	"testing"
 )
 
 func init() {
-	log.ConfigureLogger("debug", false)
+	log.ConfigureLogger("debug", false, os.Stderr)
 }
 
 // Test that registry values override values when returning templated vars

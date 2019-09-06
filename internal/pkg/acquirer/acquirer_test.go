@@ -20,13 +20,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"os"
 	"testing"
 )
 
 const GoodGitUri = "git@github.com:sugarkube/kapps.git//incubator/tiller#master"
 
 func init() {
-	log.ConfigureLogger("debug", false)
+	log.ConfigureLogger("debug", false, os.Stderr)
 }
 
 func TestNewAcquirerError(t *testing.T) {

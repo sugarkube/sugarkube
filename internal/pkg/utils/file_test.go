@@ -19,6 +19,7 @@ package utils
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -26,7 +27,7 @@ import (
 const testDir = "../../testdata"
 
 func init() {
-	log.ConfigureLogger("debug", false)
+	log.ConfigureLogger("debug", false, os.Stderr)
 }
 
 // Test against testdata

@@ -18,10 +18,11 @@ package provisioner
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"os"
 )
 
 func init() {
-	log.ConfigureLogger("debug", false)
+	log.ConfigureLogger("debug", false, os.Stderr)
 }
 
 //func TestRenameKubeContext(t *testing.T) {

@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"os"
 	"path"
 	"testing"
 )
@@ -27,7 +28,7 @@ import (
 const testDir = "../../testdata"
 
 func init() {
-	log.ConfigureLogger("debug", false)
+	log.ConfigureLogger("debug", false, os.Stderr)
 }
 
 // Test that registry values override values when returning templated vars

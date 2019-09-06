@@ -18,10 +18,11 @@ package installable
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"os"
 )
 
 func init() {
-	log.ConfigureLogger("debug", false)
+	log.ConfigureLogger("debug", false, os.Stderr)
 }
 
 // todo - test adding and merging config layers

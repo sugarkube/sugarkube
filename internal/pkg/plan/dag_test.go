@@ -25,12 +25,13 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
+	"os"
 	"sync"
 	"testing"
 )
 
 func init() {
-	log.ConfigureLogger("trace", false)
+	log.ConfigureLogger("trace", false, os.Stderr)
 }
 
 func kapp(t *testing.T, dependencies []string) interfaces.IInstallable {
