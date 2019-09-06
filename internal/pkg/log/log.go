@@ -18,15 +18,14 @@ package log
 
 import (
 	"github.com/onrik/logrus/filename"
-	"io/ioutil"
-	"os"
-
 	"github.com/sirupsen/logrus"
+	"io"
+	"io/ioutil"
 )
 
 var Logger *logrus.Logger
 
-func ConfigureLogger(logLevel string, jsonLogs bool) {
+func ConfigureLogger(logLevel string, jsonLogs bool, out io.Writer) {
 	isFirstRun := false
 	if Logger == nil {
 		isFirstRun = true
@@ -35,7 +34,7 @@ func ConfigureLogger(logLevel string, jsonLogs bool) {
 			"setting json logs=%#v", logLevel, jsonLogs)
 	}
 
-	Logger = newLogger(logLevel, jsonLogs)
+	Logger = newLogger(logLevel, jsonLogs, out)
 
 	if isFirstRun {
 		Logger.Debugf("Initialised logger at log level '%s' and "+
@@ -43,7 +42,7 @@ func ConfigureLogger(logLevel string, jsonLogs bool) {
 	}
 }
 
-func newLogger(logLevel string, jsonLogs bool) *logrus.Logger {
+func newLogger(logLevel string, jsonLogs bool, out io.Writer) *logrus.Logger {
 	l := logrus.New()
 
 	// make the formatter include the current time
@@ -59,7 +58,7 @@ func newLogger(logLevel string, jsonLogs bool) *logrus.Logger {
 	}
 
 	l.Formatter = formatter
-	l.Out = os.Stderr
+	l.Out = out
 
 	setLevel(l, logLevel)
 

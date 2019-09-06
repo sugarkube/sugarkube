@@ -92,6 +92,7 @@ var rootCmd = &cobra.Command{
 }
 
 var logLevel string
+var logFilePath string
 var configFile string
 
 func NewCommand(name string) *cobra.Command {
@@ -129,7 +130,7 @@ func init() {
 		jsonLogs = false
 	}
 
-	log.ConfigureLogger(defaultLogLevel, jsonLogs)
+	log.ConfigureLogger(defaultLogLevel, jsonLogs, os.Stderr)
 
 	cobra.OnInitialize(func() {
 		if configFile != "" {
@@ -163,14 +164,22 @@ func init() {
 		}
 
 		// reconfigure the logger based on CLI args
-		log.ConfigureLogger(config.CurrentConfig.LogLevel,
-			config.CurrentConfig.JsonLogs)
+		logFile := os.Stderr
+		if logFilePath != "" {
+			logFile, err = os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+			if err != nil {
+				panic(fmt.Sprintf("Error logging to file '%s'", logFilePath))
+			}
+		}
+
+		log.ConfigureLogger(config.CurrentConfig.LogLevel, config.CurrentConfig.JsonLogs, logFile)
 	})
 
 	noColor := false
 	verbose := false
 
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|trace|debug|info|warn|error|fatal")
+	rootCmd.PersistentFlags().StringVar(&logFilePath, "log-file", "", "log to the given file")
 	rootCmd.PersistentFlags().StringVar(&configFile, "config", "",
 		fmt.Sprintf("path to a config file. If not given, default paths "+
 			"will be searched for a file called '%s.(yaml|json)'", config.ConfigFileName))
