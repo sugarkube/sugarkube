@@ -27,6 +27,7 @@ import (
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
+	"sort"
 	"strings"
 	"time"
 )
@@ -314,11 +315,14 @@ func addAncestors(inputGraph *simple.DirectedGraph, outputGraph *simple.Directed
 
 	for igParents.Next() {
 		igParentNode := igParents.Node().(NamedNode)
+		log.Logger.Tracef("Adding ancestors for node '%s'", igParentNode.name)
 
 		conditionsValid, err = utils.All(igParentNode.installableObj.GetDescriptor().Conditions)
 		if err != nil {
 			return errors.WithStack(err)
 		}
+
+		log.Logger.Tracef("Adding ancestor node '%s' to graph", igParentNode.name)
 
 		// we generally don't want to process ancestors, only use them to grab their
 		// outputs, but it depends on `includeParents` and their conditions
@@ -407,18 +411,14 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 	numNodes := g.graph.Nodes().Len()
 	log.Logger.Debugf("Graph has %d nodes", numNodes)
 
-	finishedCh := make(chan bool)
-	nodeUpdateCh := make(chan nodeStatus, len(nodeStatusesById))
+	numWorkers := config.CurrentConfig.NumWorkers
+	log.Logger.Debugf("Walking the DAG with %d workers", numWorkers)
 
-	// run the process method once here to send the initial nodes for processing to the processing channel.
-	// We pass a copy of the nodeStatusesById map to avoid a data race
-	nodeStatusesCopy := make(map[int64]nodeStatus, 0)
-	for k, v := range nodeStatusesById {
-		nodeStatusesCopy[k] = v
-	}
-	go g.processEligibleNodes(nodeStatusesCopy, processCh, nodeUpdateCh, down)
+	finishedCh := make(chan bool)
+	nodeUpdateCh := make(chan nodeStatus, numWorkers)
 
 	channelsClosed := false
+	initialiseCh := make(chan bool)
 
 	go func() {
 		// create a ticker to display progress
@@ -428,6 +428,11 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 		// loop until there are no nodes left which haven't been processed
 		for {
 			select {
+			case <-initialiseCh:
+				go func() {
+					g.processAnEligibleNode(nodeStatusesById, processCh, nodeUpdateCh, down)
+					log.Logger.Debugf("Finished the initial pass processing eligible nodes")
+				}()
 			case namedNode, ok := <-doneCh:
 				// this will be false if the channel has been closed, otherwise it pumps out nil values
 				if ok {
@@ -436,21 +441,22 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 					nodeItem.status = finished
 					nodeStatusesById[namedNode.node.ID()] = nodeItem
 
-					// reprocess nodes again since there's been a state change
-					g.processEligibleNodes(nodeStatusesById, processCh, nodeUpdateCh, down)
+					go func() {
+						// reprocess nodes again since there's been a state change
+						g.processAnEligibleNode(nodeStatusesById, processCh, nodeUpdateCh, down)
 
-					if allDone(nodeStatusesById) {
-						log.Logger.Infof("DAG fully processed")
-						// keep track of whether we've closed the channels (possibly in another goroutine)
-						if !channelsClosed {
-							close(finishedCh)
-							close(doneCh)
-							close(processCh)
-							close(nodeUpdateCh)
-							channelsClosed = true
+						if allDone(nodeStatusesById) {
+							log.Logger.Infof("DAG fully processed")
+							// keep track of whether we've closed the channels (possibly in another goroutine)
+							if !channelsClosed {
+								close(finishedCh)
+								close(doneCh)
+								close(processCh)
+								close(nodeUpdateCh)
+								channelsClosed = true
+							}
 						}
-						break
-					}
+					}()
 				}
 			case namedNode, ok := <-nodeUpdateCh:
 				if ok {
@@ -473,11 +479,16 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 		}
 	}()
 
+	log.Logger.Tracef("Starting initialisation pass over nodes")
+	for i := 0; i < numWorkers; i++ {
+		initialiseCh <- true
+	}
+
 	return finishedCh
 }
 
-// Adds any nodes whose dependencies have all been satisfied into a channel for processing by workers
-func (g *Dag) processEligibleNodes(nodeStatusesById map[int64]nodeStatus, processCh chan<- NamedNode,
+// Adds a single node whose dependencies have all been satisfied into a channel for processing by workers
+func (g *Dag) processAnEligibleNode(nodeStatusesById map[int64]nodeStatus, processCh chan<- NamedNode,
 	nodeUpdateCh chan<- nodeStatus, down bool) {
 	for node, nodeStatus := range nodeStatusesById {
 		namedNode := nodeStatusesById[node]
@@ -507,6 +518,7 @@ func (g *Dag) processEligibleNodes(nodeStatusesById map[int64]nodeStatus, proces
 			// can actually be persisted in the main for loop
 			nodeUpdateCh <- namedNode
 			processCh <- namedNode.node
+			break
 		} else {
 			log.Logger.Tracef("Dependencies not satisfied for %s", namedNode.node.name)
 		}
@@ -527,43 +539,46 @@ func (g *Dag) Print() error {
 	doneCh := make(chan NamedNode, numWorkers)
 	finishedCh := g.walkDown(processCh, doneCh)
 
-	go func() {
-		for node := range processCh {
-			log.Logger.Debugf("Visited node: %+v", node)
-			parents := g.graph.To(node.ID())
+	for i := 0; i < numWorkers; i++ {
+		go func() {
+			for node := range processCh {
+				log.Logger.Debugf("Print worker received node: %+v", node)
+				parents := g.graph.To(node.ID())
 
-			parentNames := make([]string, 0)
-			for parents.Next() {
-				parent := parents.Node().(NamedNode)
-				parentNames = append(parentNames, parent.name)
+				parentNames := make([]string, 0)
+				for parents.Next() {
+					parent := parents.Node().(NamedNode)
+					parentNames = append(parentNames, parent.name)
+				}
+
+				marked := "  "
+				if node.marked {
+					marked = fmt.Sprintf("[bold]%s ", markedNodeStr)
+				}
+
+				sort.Strings(parentNames)
+				parentNamesStr := strings.Join(parentNames, ", ")
+				if parentNamesStr == "" {
+					parentNamesStr = "<nothing>"
+				}
+
+				conditionsStr := ""
+				if !node.conditionsValid {
+					conditionsStr = " (conditions failed)"
+				}
+
+				str := fmt.Sprintf("  %s%s[reset]%s - depends on: %s\n", marked,
+					node.name, conditionsStr, parentNamesStr)
+				_, err = printer.Fprint(str)
+				if err != nil {
+					panic(err)
+				}
+
+				log.Logger.Tracef("Print worker finished with node '%s' (id=%d): %#v", node.name, node.ID(), node)
+				doneCh <- node
 			}
-
-			marked := "  "
-			if node.marked {
-				marked = fmt.Sprintf("[bold]%s ", markedNodeStr)
-			}
-
-			parentNamesStr := strings.Join(parentNames, ", ")
-			if parentNamesStr == "" {
-				parentNamesStr = "<nothing>"
-			}
-
-			conditionsStr := ""
-			if !node.conditionsValid {
-				conditionsStr = " (conditions failed)"
-			}
-
-			str := fmt.Sprintf("  %s%s[reset]%s - depends on: %s\n", marked,
-				node.name, conditionsStr, parentNamesStr)
-			_, err = printer.Fprint(str)
-			if err != nil {
-				panic(err)
-			}
-
-			log.Logger.Tracef("Print worker finished with node '%s': %#v", node.name, node)
-			doneCh <- node
-		}
-	}()
+		}()
+	}
 
 	<-finishedCh
 
