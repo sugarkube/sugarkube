@@ -19,6 +19,7 @@ package plan
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/installable"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -170,6 +171,9 @@ func TestTraverse(t *testing.T) {
 	var lastProcessedId string
 
 	numWorkers := 5
+	config.CurrentConfig = &config.Config{
+		NumWorkers: numWorkers,
+	}
 
 	for i := 0; i < numWorkers; i++ {
 		go func() {
@@ -197,10 +201,7 @@ func TestTraverse(t *testing.T) {
 	finishedCh := dag.walkDown(processCh, doneCh)
 
 	// wait for traversal to finish
-	select {
-	case <-finishedCh:
-		break
-	}
+	<-finishedCh
 
 	// make sure the last to be processed is marked as being allowed to be last
 	assert.True(t, utils.InStringArray(possibleLastNodes, lastProcessedId))
