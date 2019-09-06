@@ -17,7 +17,6 @@
 * Add a way of replacing kapp settings in stack configs (e.g. to replace dependencies)
 * Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
 
-* The Wordpress kapp should provide control over whether to install fixtures or not. Maybe by default it should only do it when the kapp is first installed, since after that it fails...
 * Update the prometheus-operator kapp to delete its CRDs when it's deleted
 
 * It should be possible to set kapp vars that are maps and lists

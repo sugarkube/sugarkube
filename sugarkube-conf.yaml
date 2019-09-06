@@ -3,6 +3,8 @@
 log_level: none
 #json_logs: false
 #no_color: true
+num_workers: 10     # number of goroutines to use to process kapps in parallel. You probably won't need it much higher
+# than this unless your DAG is enormous
 
 programs:
   helm:
