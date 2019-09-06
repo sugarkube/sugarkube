@@ -482,6 +482,9 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 	log.Logger.Tracef("Starting initialisation pass over nodes")
 	for i := 0; i < numWorkers; i++ {
 		initialiseCh <- true
+		// add a microsleep between each iteration so all workers don't end up with the same nodes queued (i.e. we need
+		// sufficient time for a node's status to be updated via the nodeUpdateCh while initialising workers)
+		time.Sleep(50 * time.Millisecond)
 	}
 
 	return finishedCh

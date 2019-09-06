@@ -746,6 +746,8 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 			return errors.WithStack(err)
 		}
 
+		log.Logger.Infof("Executing run step '%s' for '%s'", step.Name, installableObj.FullyQualifiedId())
+
 		if config.CurrentConfig.Verbose {
 			_, err := printer.Fprintf("* %s[white]%s[reset] - Executing command for run step "+
 				"'[white]%s[default]':\n%s %s\n\n",
