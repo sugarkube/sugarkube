@@ -53,6 +53,11 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 		"skipPostActions=%v, ignoreErrors=%v, dryRun=%v", action, plan, approved, skipPostActions,
 		ignoreErrors, dryRun)
 
+	_, err := printer.Fprintln("[yellow]Executing the DAG...")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	// create the worker pool
 	for w := int(0); w < numWorkers; w++ {
 		go worker(d, processCh, doneCh, errCh, action, stackObj, plan, approved, skipPreActions, skipPostActions,
@@ -86,11 +91,6 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 		finishedCh = d.walkUp(processCh, doneCh)
 	default:
 		return fmt.Errorf("Invalid action on DAG: %s", action)
-	}
-
-	_, err := printer.Fprintln("[yellow]Executing the DAG...")
-	if err != nil {
-		return errors.WithStack(err)
 	}
 
 	log.Logger.Debug("Blocking waiting for the DAG to finish processing...")
