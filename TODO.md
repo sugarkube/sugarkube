@@ -4,9 +4,7 @@
 * Code of conduct
 
 ## Top priorities
-* change 'state' to 'conditions' on kapps and make the dag respect them
 * Sometimes nothing is printed - it's not clear what's happening
-* allow logging to a file
 
 * The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp.

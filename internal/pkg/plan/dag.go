@@ -58,6 +58,7 @@ type NamedNode struct {
 	installableObj interfaces.IInstallable
 	marked         bool // indicates whether this node was specifically marked for processing (e.g.
 	// installing/deleting, etc. )
+	conditionsValid bool // will be false if any of the installable's conditions are false
 }
 
 func (n NamedNode) ID() int64 {
@@ -72,8 +73,7 @@ type nodeStatus struct {
 
 // Creates a DAG for installables in the given manifests. If a list of selected installable IDs is
 // given a subgraph will be returned containing only those installables and their ancestors.
-func Create(stackObj interfaces.IStack, selectedInstallableIds []string,
-	includeParents bool) (*Dag, error) {
+func Create(stackObj interfaces.IStack, selectedInstallableIds []string, includeParents bool) (*Dag, error) {
 
 	manifests := stackObj.GetConfig().Manifests()
 
@@ -111,6 +111,8 @@ func build(descriptors map[string]nodeDescriptor, stackObj interfaces.IStack) (*
 	graphObj := simple.NewDirectedGraph()
 	nodesByName := make(map[string]NamedNode, 0)
 
+	var shouldProcess bool
+
 	// add each descriptor to the graph
 	for descriptorId, descriptor := range descriptors {
 		installableObj := descriptor.installableObj
@@ -126,8 +128,16 @@ func build(descriptors map[string]nodeDescriptor, stackObj interfaces.IStack) (*
 			return nil, errors.WithStack(err)
 		}
 
+		// only process installables whose conditions are all true
+		shouldProcess, err = utils.All(installableObj.GetDescriptor().Conditions)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
 		descriptorNode := addNode(graphObj, nodesByName, descriptorId,
-			installableObj, true)
+			installableObj, shouldProcess)
+
+		descriptorNode.conditionsValid = shouldProcess
 
 		dependencies := installableObj.GetDescriptor().DependsOn
 
@@ -197,7 +207,9 @@ func addNode(graphObj *simple.DirectedGraph, nodes map[string]NamedNode, nodeNam
 		// we would create it as a processable node, toggle the flag
 		if !existing.marked && shouldProcess {
 			existing.marked = shouldProcess
+			existing.conditionsValid = shouldProcess
 			nodes[nodeName] = existing
+			log.Logger.Tracef("Updating node '%s' to: %#v", nodeName, existing)
 		}
 
 		log.Logger.Debugf("Node '%s' already exists... won't recreate", nodeName)
@@ -209,11 +221,15 @@ func addNode(graphObj *simple.DirectedGraph, nodes map[string]NamedNode, nodeNam
 	// note - we don't create separate nodes for post actions because whether we actually run them
 	// or not depends on if we're installing or deleting the installable
 	namedNode := NamedNode{
-		name:           nodeName,
-		node:           graphObj.NewNode(),
-		installableObj: installableObj,
-		marked:         shouldProcess,
+		name:            nodeName,
+		node:            graphObj.NewNode(),
+		installableObj:  installableObj,
+		marked:          shouldProcess,
+		conditionsValid: shouldProcess,
 	}
+
+	log.Logger.Tracef("Adding node '%s': %#v", nodeName, namedNode)
+
 	graphObj.AddNode(namedNode)
 	nodes[nodeName] = namedNode
 	return namedNode
@@ -252,6 +268,9 @@ func (g *Dag) subGraph(nodeNames []string, includeParents bool) (*Dag, error) {
 	inputGraphNodesByName := g.nodesByName()
 	ogNodesByName := make(map[string]NamedNode, 0)
 
+	var shouldProcess bool
+	var err error
+
 	// find each named node along with all its ancestors and add them to the sub-graph
 	for _, nodeName := range nodeNames {
 		inputGraphNode, ok := inputGraphNodesByName[nodeName]
@@ -259,10 +278,22 @@ func (g *Dag) subGraph(nodeNames []string, includeParents bool) (*Dag, error) {
 			return nil, fmt.Errorf("Graph doesn't contain a node called '%s'", nodeName)
 		}
 
+		// only process installables whose conditions are all true
+		shouldProcess, err = utils.All(inputGraphNode.installableObj.GetDescriptor().Conditions)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
 		// mark that we should process this node
 		ogNode := addNode(outputGraph, ogNodesByName, inputGraphNode.name,
-			inputGraphNode.installableObj, true)
-		addAncestors(g.graph, outputGraph, ogNodesByName, inputGraphNode, ogNode, includeParents)
+			inputGraphNode.installableObj, shouldProcess)
+
+		ogNode.conditionsValid = shouldProcess
+
+		err = addAncestors(g.graph, outputGraph, ogNodesByName, inputGraphNode, ogNode, includeParents)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
 	}
 
 	dag := Dag{
@@ -275,16 +306,30 @@ func (g *Dag) subGraph(nodeNames []string, includeParents bool) (*Dag, error) {
 }
 
 func addAncestors(inputGraph *simple.DirectedGraph, outputGraph *simple.DirectedGraph,
-	ogNodes map[string]NamedNode, igNode NamedNode, ogNode NamedNode, includeParents bool) {
+	ogNodes map[string]NamedNode, igNode NamedNode, ogNode NamedNode, includeParents bool) error {
 	igParents := inputGraph.To(igNode.ID())
+
+	var conditionsValid bool
+	var err error
 
 	for igParents.Next() {
 		igParentNode := igParents.Node().(NamedNode)
 
+		conditionsValid, err = utils.All(igParentNode.installableObj.GetDescriptor().Conditions)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
 		// we generally don't want to process ancestors, only use them to grab their
-		// outputs, but it depends on `includeParents`
+		// outputs, but it depends on `includeParents` and their conditions
 		ogParentNode := addNode(outputGraph, ogNodes, igParentNode.name,
-			igParentNode.installableObj, includeParents)
+			igParentNode.installableObj, includeParents && conditionsValid)
+
+		if includeParents {
+			ogParentNode.conditionsValid = includeParents && conditionsValid
+		} else {
+			ogParentNode.conditionsValid = conditionsValid
+		}
 
 		// now we have parent and child nodes in the output graph , create a directed
 		// edge between them
@@ -292,8 +337,13 @@ func addAncestors(inputGraph *simple.DirectedGraph, outputGraph *simple.Directed
 		outputGraph.SetEdge(edge)
 
 		// now recurse to the parent of the parent node
-		addAncestors(inputGraph, outputGraph, ogNodes, igParentNode, ogParentNode, includeParents)
+		err = addAncestors(inputGraph, outputGraph, ogNodes, igParentNode, ogParentNode, includeParents)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
+
+	return nil
 }
 
 // Returns a map of nodeStatuses for each node in the graph keyed by node ID
@@ -498,14 +548,19 @@ func (g *Dag) Print() error {
 				parentNamesStr = "<nothing>"
 			}
 
-			str := fmt.Sprintf("  %s%s[reset] - depends on: %s\n", marked,
-				node.name, parentNamesStr)
+			conditionsStr := ""
+			if !node.conditionsValid {
+				conditionsStr = " (conditions failed)"
+			}
+
+			str := fmt.Sprintf("  %s%s[reset]%s - depends on: %s\n", marked,
+				node.name, conditionsStr, parentNamesStr)
 			_, err = printer.Fprint(str)
 			if err != nil {
 				panic(err)
 			}
 
-			log.Logger.Tracef("Print worker finished with node %s", node.name)
+			log.Logger.Tracef("Print worker finished with node '%s': %#v", node.name, node)
 			doneCh <- node
 		}
 	}()
