@@ -4,8 +4,6 @@
 * Code of conduct
 
 ## Top priorities
-* Sometimes nothing is printed - it's not clear what's happening
-
 * The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp.
 * The kapps validate command should make sure that all run steps are uniquely named to avoid issues calling different ones

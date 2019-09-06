@@ -8,6 +8,7 @@
 * Templates can now also take a list of conditions that determines whether they should be rendered or not
 * Refactored to prevent some data races
 * EKS support
+* Breaking change: Removed the `state` attribute of kapps in favour of a list of conditions to make it easier to conditionally control whether a kapp should be processed or not
 
 ## 0.9.0
 * Rename the 'cache' subcommand to 'workspace' because it wasn't clear that users should actually work inside cache directories (i.e. they're not temporary caches).
