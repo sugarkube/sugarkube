@@ -103,8 +103,7 @@ func (c *templateConfig) run() error {
 	}
 
 	// create a DAG to template all the kapps
-	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		c.includeParents, "")
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector, c.includeParents)
 	if err != nil {
 		return errors.WithStack(err)
 	}

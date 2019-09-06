@@ -50,7 +50,6 @@ func GetTestManifestDescriptors() []structs.ManifestDescriptor {
 		Overrides: map[string]structs.KappDescriptorWithMaps{
 			"kappA": {
 				KappConfig: structs.KappConfig{
-					State: "absent",
 					Vars: map[string]interface{}{
 						"sizeVar":  "mediumOverridden",
 						"stackVar": "setInOverrides",
@@ -85,7 +84,6 @@ func GetTestManifests(t *testing.T) []interfaces.IManifest {
 		Overrides: map[string]structs.KappDescriptorWithMaps{
 			"kappA": {
 				KappConfig: structs.KappConfig{
-					State: "absent",
 					Vars: map[string]interface{}{
 						"sizeVar":  "mediumOverridden",
 						"stackVar": "setInOverrides",
@@ -106,7 +104,6 @@ func GetTestManifests(t *testing.T) []interfaces.IManifest {
 		{
 			Id: "kappA",
 			KappConfig: structs.KappConfig{
-				State: "present",
 				Vars: map[string]interface{}{
 					"sizeVar": "big",
 					"colours": []interface{}{
@@ -142,10 +139,8 @@ func GetTestManifests(t *testing.T) []interfaces.IManifest {
 
 	manifest2KappDescriptors := []structs.KappDescriptorWithLists{
 		{
-			Id: "kappC",
-			KappConfig: structs.KappConfig{
-				State: "present",
-			},
+			Id:         "kappC",
+			KappConfig: structs.KappConfig{},
 			Sources: []structs.Source{
 				{
 					Id:  "special",
@@ -157,19 +152,15 @@ func GetTestManifests(t *testing.T) []interfaces.IManifest {
 			},
 		},
 		{
-			Id: "kappB",
-			KappConfig: structs.KappConfig{
-				State: "present",
-			},
+			Id:         "kappB",
+			KappConfig: structs.KappConfig{},
 			Sources: []structs.Source{
 				{Uri: "git@github.com:sugarkube/kapps-B.git//some/pathB#kappB-0.2.0"},
 			},
 		},
 		{
-			Id: "kappD",
-			KappConfig: structs.KappConfig{
-				State: "present",
-			},
+			Id:         "kappD",
+			KappConfig: structs.KappConfig{},
 			Sources: []structs.Source{
 				{
 					Uri: "git@github.com:sugarkube/kapps-D.git//some/pathD#kappD-0.2.0",
@@ -180,10 +171,8 @@ func GetTestManifests(t *testing.T) []interfaces.IManifest {
 			},
 		},
 		{
-			Id: "kappA",
-			KappConfig: structs.KappConfig{
-				State: "present",
-			},
+			Id:         "kappA",
+			KappConfig: structs.KappConfig{},
 			Sources: []structs.Source{
 				{Uri: "git@github.com:sugarkube/kapps-A.git//some/pathA#kappA-0.2.0"},
 			},
@@ -302,7 +291,6 @@ func TestGetKappVarsFromFiles(t *testing.T) {
 	expected := `kapp:
   cacheRoot: ""
   id: kappA
-  state: absent
   templates: {}
   vars:
     colours:

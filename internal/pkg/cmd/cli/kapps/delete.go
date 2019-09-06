@@ -143,8 +143,7 @@ func (c *deleteCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		c.includeParents, "")
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector, c.includeParents)
 	if err != nil {
 		return errors.WithStack(err)
 	}

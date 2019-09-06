@@ -1,12 +1,10 @@
 kapps:
   - id: kappX
-    state: present
     sources:
     - uri: git@github.com:sugarkube/kapps-A.git//some/pathA#kappX-0.1.0
     post_actions:
       - cluster_update:
 
   - id: kappY
-    state: present
     sources:
     - uri: git@github.com:sugarkube/kapps-A.git//some/pathA#kappY-0.1.0

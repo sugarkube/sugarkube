@@ -85,8 +85,7 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		c.includeParents, "")
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector, c.includeParents)
 	if err != nil {
 		return errors.WithStack(err)
 	}

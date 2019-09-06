@@ -27,7 +27,6 @@ type IInstallable interface {
 	Id() string
 	FullyQualifiedId() string
 	ManifestId() string
-	State() string
 	PreInstallActions() []structs.Action
 	PreDeleteActions() []structs.Action
 	PostInstallActions() []structs.Action

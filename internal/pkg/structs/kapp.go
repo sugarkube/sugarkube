@@ -92,7 +92,6 @@ type Dependency struct {
 
 // A struct for an actual sugarkube.yaml file
 type KappConfig struct {
-	State                string                 `yaml:",omitempty"`
 	Requires             []string               `yaml:",omitempty"`
 	PostInstallActions   []map[string]Action    `yaml:"post_install_actions,omitempty"`
 	PostDeleteActions    []map[string]Action    `yaml:"post_delete_actions,omitempty"`

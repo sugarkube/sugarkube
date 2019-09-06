@@ -80,8 +80,7 @@ func (c *validateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		false, "")
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector, false)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -149,8 +149,7 @@ func (c *createCmd) run() error {
 		}
 
 		// create a DAG to template all the kapps
-		dagObj, err := kapps.BuildDagForSelected(stackObj, c.workspaceDir, []string{}, []string{},
-			false, "")
+		dagObj, err := kapps.BuildDagForSelected(stackObj, c.workspaceDir, []string{}, []string{}, false)
 		if err != nil {
 			return errors.WithStack(err)
 		}

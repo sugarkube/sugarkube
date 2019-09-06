@@ -1,10 +1,9 @@
 kapps:
   - id: kappW
-    state: absent
     sources:
     - uri: git@github.com:sugarkube/kapps-W.git//some/pathW#kappW-0.1.0
-
+    conditions:
+      - false
   - id: kappZ
-    state: present
     sources:
     - uri: git@github.com:sugarkube/kapps-Z.git//some/pathZ#kappZ-0.1.0

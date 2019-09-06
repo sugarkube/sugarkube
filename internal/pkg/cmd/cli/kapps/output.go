@@ -106,8 +106,7 @@ func (c *outputCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		c.includeParents, constants.PresentKey)
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector, c.includeParents)
 	if err != nil {
 		return errors.WithStack(err)
 	}

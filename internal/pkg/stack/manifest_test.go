@@ -219,7 +219,6 @@ kapps:
 				{
 					Id: "example1",
 					KappConfig: structs.KappConfig{
-						State: "present",
 						Templates: map[string]structs.Template{
 							"template1": {
 								"example/template1.tpl",
@@ -248,7 +247,6 @@ kapps:
 				{
 					Id: "example2",
 					KappConfig: structs.KappConfig{
-						State: "present",
 						Vars: map[string]interface{}{
 							"someVarA": "valueA",
 							"someList": []interface{}{
@@ -270,7 +268,6 @@ kapps:
 				{
 					Id: "example3",
 					KappConfig: structs.KappConfig{
-						State: "absent",
 						PostInstallActions: []map[string]structs.Action{
 							{constants.ActionClusterUpdate: structs.Action{}},
 						},
@@ -328,7 +325,6 @@ func TestManifestOverrides(t *testing.T) {
 	expectedDescriptor := structs.KappDescriptorWithMaps{
 		Id: "kappA",
 		KappConfig: structs.KappConfig{
-			State: "absent",
 			Vars: map[string]interface{}{
 				"stackVar": "setInOverrides",
 				"sizeVar":  "mediumOverridden",
@@ -375,8 +371,7 @@ func TestManifestOverridesNil(t *testing.T) {
 	expectedDescriptor := structs.KappDescriptorWithMaps{
 		Id: "kappC",
 		KappConfig: structs.KappConfig{
-			State: "present",
-			Vars:  map[string]interface{}{},
+			Vars: map[string]interface{}{},
 		},
 		Sources: map[string]structs.Source{
 			"special": {

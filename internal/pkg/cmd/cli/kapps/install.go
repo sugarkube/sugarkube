@@ -170,8 +170,7 @@ func (c *installCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector,
-		c.includeParents, constants.PresentKey)
+	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector, c.includeParents)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -255,8 +254,7 @@ func (c *installCmd) run() error {
 
 // Creates a DAG for installables matched by selectors. If an optional state (e.g. present, absent, etc.) is
 // provided, only installables with the same state will be included in the returned DAG
-func BuildDagForSelected(stackObj interfaces.IStack, workspaceDir string, includeSelector []string,
-	excludeSelector []string, includeParents bool, stateFilter string) (*plan.Dag, error) {
+func BuildDagForSelected(stackObj interfaces.IStack, workspaceDir string, includeSelector []string, excludeSelector []string, includeParents bool) (*plan.Dag, error) {
 	// load configs for all installables in the stack
 	err := stackObj.LoadInstallables(workspaceDir)
 	if err != nil {
@@ -271,21 +269,14 @@ func BuildDagForSelected(stackObj interfaces.IStack, workspaceDir string, includ
 		return nil, errors.WithStack(err)
 	}
 
-	filteredInstallableIds := make([]string, 0)
+	selectedInstallableIds := make([]string, 0)
 
-	// since we want to install kapps, remove any whose state isn't 'present'
 	for _, installableObj := range selectedInstallables {
-		if stateFilter != "" && installableObj.State() == stateFilter {
-			filteredInstallableIds = append(filteredInstallableIds,
-				installableObj.FullyQualifiedId())
-		} else {
-			// no filtering so add all instances
-			filteredInstallableIds = append(filteredInstallableIds,
-				installableObj.FullyQualifiedId())
-		}
+		selectedInstallableIds = append(selectedInstallableIds,
+			installableObj.FullyQualifiedId())
 	}
 
-	dagObj, err := plan.Create(stackObj, filteredInstallableIds, includeParents)
+	dagObj, err := plan.Create(stackObj, selectedInstallableIds, includeParents)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

@@ -59,10 +59,6 @@ func (k Kapp) ManifestId() string {
 	return k.manifestId
 }
 
-func (k Kapp) State() string {
-	return k.mergedDescriptor.State
-}
-
 // Returns the pre/post install/delete actions
 func (k Kapp) getActions(pre bool, install bool) []structs.Action {
 	// convert the map to a list
@@ -464,7 +460,6 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 func (k Kapp) getIntrinsicData() map[string]string {
 	return map[string]string{
 		"id":        k.Id(),
-		"state":     k.State(),
 		"cacheRoot": k.GetCacheDir(),
 	}
 }

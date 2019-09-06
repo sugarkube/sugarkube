@@ -1,12 +1,10 @@
 kapps:
   - id: kappW
-    state: present
     sources:
       # the branches are set in the stack
       - uri: git@github.com:sugarkube/kapps-W.git//some/pathW
       - uri: git@github.com:sugarkube/kapps-X.git//some/pathX
 
   - id: kappZ
-    state: present
     sources:
       - uri: git@github.com:sugarkube/kapps-Z.git//some/pathZ#kappZ-0.1.0
