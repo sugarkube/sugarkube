@@ -37,6 +37,7 @@ type Output struct {
 	Format    string
 	Sensitive bool // sensitive outputs will be deleted after adding the data to the registry to try to prevent
 	// secrets lingering on disk
+	Conditions []string `yaml:",omitempty"` // outputs will only be loaded if all these are true
 }
 
 type Source struct {

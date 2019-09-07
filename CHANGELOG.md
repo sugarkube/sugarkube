@@ -11,6 +11,7 @@
 * Breaking change: Removed the `state` attribute of kapps in favour of a list of conditions to make it easier to conditionally control whether a kapp should be processed or not
 * When merging kapp config fragments, lists will always overwrite each other -- values will not be appended any more
 * The `action` name and value of `dry-run` will no longer be passed to kapps as variables
+* Outputs can now also take 'conditions'. They'll only be loaded if all conditions are true
 
 ## 0.9.0
 * Rename the 'cache' subcommand to 'workspace' because it wasn't clear that users should actually work inside cache directories (i.e. they're not temporary caches).

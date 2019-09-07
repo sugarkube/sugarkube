@@ -21,6 +21,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -152,4 +153,14 @@ func ReplaceAllInFile(search string, replacement string, path string) error {
 	}
 
 	return nil
+}
+
+// Takes a path. If it's absolute it'll be returned unchanged. If it's relative
+// it'll have `prefix` prepended
+func MakePathAbsoluteIfNot(inPath string, prefix string) string {
+	if !strings.HasPrefix(inPath, string(os.PathSeparator)) {
+		inPath = path.Join(prefix, inPath)
+	}
+
+	return inPath
 }

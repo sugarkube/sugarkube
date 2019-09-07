@@ -744,7 +744,27 @@ func (k Kapp) GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{
 
 	var err error
 
+	var allOk bool
+
 	for _, output := range k.mergedDescriptor.Outputs {
+		allOk, err = utils.All(output.Conditions)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		if !allOk {
+			log.Logger.Infof("Not loading output '%s' for kapp '%s' which has failed conditions",
+				output.Id, k.FullyQualifiedId())
+
+			_, err := printer.Fprintf("[yellow]Not loading output '%s' for kapp "+
+				"'[bold]%s[reset] due to failed conditions[yellow]'\n", output.Id, k.FullyQualifiedId())
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+
+			continue
+		}
+
 		// if the output exists, parse it as the declared type and put it in the map
 		path := output.Path
 

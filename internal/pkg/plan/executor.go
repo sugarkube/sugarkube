@@ -710,6 +710,8 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 		return errors.WithStack(err)
 	}
 
+	var outPath string
+
 	var step structs.RunStep
 	// iterate using a counter because we may need to retemplate the run steps during iteration
 	for i := 0; i < len(runSteps); i++ {
@@ -816,11 +818,15 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 		var err2 error
 
 		if step.Stdout != "" {
-			err2 = ioutil.WriteFile(step.Stdout, stdoutBuf.Bytes(), 0644)
+			outPath = utils.MakePathAbsoluteIfNot(step.Stdout, step.WorkingDir)
+			log.Logger.Debugf("Writing stdout from step '%s' to '%s'", step.Name, outPath)
+			err2 = ioutil.WriteFile(outPath, stdoutBuf.Bytes(), 0644)
 		}
 
 		if step.Stderr != "" {
-			err2 = ioutil.WriteFile(step.Stderr, stderrBuf.Bytes(), 0644)
+			outPath = utils.MakePathAbsoluteIfNot(step.Stderr, step.WorkingDir)
+			log.Logger.Debugf("Writing stderr from step '%s' to '%s'", step.Name, outPath)
+			err2 = ioutil.WriteFile(outPath, stderrBuf.Bytes(), 0644)
 		}
 
 		// the original error is more important to return, so return that. We should write files
