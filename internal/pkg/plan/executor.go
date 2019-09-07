@@ -215,8 +215,7 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 		}
 
 		// template the kapp's descriptor, including the global registry
-		templatedVars, err := stackObj.GetTemplatedVars(installableObj,
-			installerImpl.GetVars(action, dryRun))
+		templatedVars, err := stackObj.GetTemplatedVars(installableObj, map[string]interface{}{})
 		if err != nil {
 			errCh <- errors.WithStack(err)
 			return
@@ -306,7 +305,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			if node.marked {
 				// template the kapp's descriptor, including the global registry
 				templatedVars, err := stackObj.GetTemplatedVars(installableObj,
-					installerImpl.GetVars(action, dryRun))
+					map[string]interface{}{})
 				err = installableObj.TemplateDescriptor(templatedVars)
 				if err != nil {
 					errCh <- errors.WithStack(err)
@@ -319,7 +318,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 					return
 				}
 
-				err = executeRunSteps(constants.Clean, runSteps, installableObj, stackObj, dryRun)
+				err = executeRunSteps(constants.Clean, runSteps, installableObj, stackObj, installerImpl.Clean, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 					return
@@ -329,7 +328,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 			if node.marked {
 				// template the kapp's descriptor, including the global registry
 				templatedVars, err := stackObj.GetTemplatedVars(installableObj,
-					installerImpl.GetVars(action, dryRun))
+					map[string]interface{}{})
 				err = installableObj.TemplateDescriptor(templatedVars)
 				if err != nil {
 					errCh <- errors.WithStack(err)
@@ -342,7 +341,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 					return
 				}
 
-				err = executeRunSteps(constants.Output, runSteps, installableObj, stackObj, dryRun)
+				err = executeRunSteps(constants.Output, runSteps, installableObj, stackObj, installerImpl.Output, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 					return
@@ -351,9 +350,8 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 		case constants.DagActionTemplate:
 			// Template nodes before trying to get the output in case getting the output relies on templated
 			// files, e.g. terraform backends
-			installerVars := installerImpl.GetVars(action, dryRun)
 			if node.marked {
-				err = renderKappTemplates(stackObj, installableObj, installerVars, false, dryRun)
+				err = renderKappTemplates(stackObj, installableObj, false, dryRun)
 				if err != nil {
 					if ignoreErrors {
 						log.Logger.Warnf("Ignoring error templating kapp: %#v", err)
@@ -367,7 +365,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 
 			// template the kapp's descriptor, including the global registry
 			templatedVars, err := stackObj.GetTemplatedVars(installableObj,
-				installerImpl.GetVars(action, dryRun))
+				map[string]interface{}{})
 			err = installableObj.TemplateDescriptor(templatedVars)
 			if err != nil {
 				errCh <- errors.WithStack(err)
@@ -402,7 +400,7 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 
 			// only template marked nodes
 			if node.marked {
-				err = renderKappTemplates(stackObj, installableObj, installerVars, true, dryRun)
+				err = renderKappTemplates(stackObj, installableObj, true, dryRun)
 				if err != nil {
 					if ignoreErrors {
 						log.Logger.Warnf("Ignoring error templating kapp: %#v", err)
@@ -448,19 +446,10 @@ func varsWorker(processCh <-chan NamedNode, doneCh chan<- NamedNode, errCh chan 
 			return
 		}
 
-		// kapp exists, Instantiate an installer in case we need it (for now, this will always be a RunUnit installer)
-		installerImpl, err := installer.New(installer.RunUnit, stackObj.GetProvider())
-		if err != nil {
-			errCh <- errors.Wrapf(err, "Error instantiating installer for "+
-				"kapp '%s'", installableObj.Id())
-			return
-		}
-
 		log.Logger.Debugf("Getting variables for kapp '%s'", installableObj.FullyQualifiedId())
 
 		// template the kapp's descriptor, including the global registry
-		templatedVars, err := stackObj.GetTemplatedVars(installableObj,
-			installerImpl.GetVars("<action, e.g. plan-install, apply-delete, etc>", false))
+		templatedVars, err := stackObj.GetTemplatedVars(installableObj, map[string]interface{}{})
 
 		if len(suppress) > 0 {
 			for _, exclusion := range suppress {
@@ -531,10 +520,9 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	if !install {
 		actionName = constants.DagActionDelete
 	}
-	installerVars := installerImpl.GetVars(actionName, dryRun)
 
 	// render templates in case any are used as outputs for some reason
-	err := renderKappTemplates(stackObj, installableObj, installerVars, true, dryRun)
+	err := renderKappTemplates(stackObj, installableObj, true, dryRun)
 	if err != nil {
 		errCh <- errors.WithStack(err)
 		return
@@ -563,7 +551,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				return
 			}
 
-			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, dryRun)
+			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, installerMethod, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
@@ -631,7 +619,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				return
 			}
 
-			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, dryRun)
+			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, installerMethod, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
@@ -672,7 +660,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	}
 
 	// rerender templates so they can use kapp outputs (e.g. before adding the paths to rendered templates as provider vars)
-	err = renderKappTemplates(stackObj, installableObj, installerVars, false, dryRun)
+	err = renderKappTemplates(stackObj, installableObj, false, dryRun)
 	if err != nil {
 		errCh <- errors.WithStack(err)
 		return
@@ -707,7 +695,9 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 
 // Executes a list of run steps
 func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj interfaces.IInstallable,
-	stackObj interfaces.IStack, dryRun bool) error {
+	stackObj interfaces.IStack,
+	installerMethod func(installableObj interfaces.IInstallable, stack interfaces.IStack, dryRun bool) ([]structs.RunStep, error),
+	dryRun bool) error {
 
 	dryRunPrefix := ""
 	if dryRun {
@@ -720,7 +710,11 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 		return errors.WithStack(err)
 	}
 
-	for _, step := range runSteps {
+	var step structs.RunStep
+	// iterate using a counter because we may need to retemplate the run steps during iteration
+	for i := 0; i < len(runSteps); i++ {
+		step = runSteps[i]
+
 		// evaluate any conditions
 		allOk, err := utils.All(step.Conditions)
 		if err != nil {
@@ -840,6 +834,7 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 		}
 
 		if step.LoadOutputs && installableObj.HasOutputs() {
+			log.Logger.Debugf("Loading outputs for step '%s'", step.Name)
 			// load any outputs we can, parse them and add values to the registry
 			outputs, err := installableObj.GetOutputs(true, dryRun)
 			if err != nil {
@@ -854,6 +849,19 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 
 			// and also to the stack's registry (but only with fully-qualified keys)
 			err = addOutputsToRegistry(installableObj, outputs, stackObj.GetRegistry(), false)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			// rerender templates (which will also remerge the kapp's config) in case subsequent steps access outputs
+			// we've just loaded in templates they use
+			err = renderKappTemplates(stackObj, installableObj, false, dryRun)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+
+			// rerender the run steps
+			runSteps, err = installerMethod(installableObj, stackObj, dryRun)
 			if err != nil {
 				return errors.WithStack(err)
 			}
@@ -876,7 +884,7 @@ func getOutputs(installableObj interfaces.IInstallable, stackObj interfaces.ISta
 			return nil, errors.Wrapf(err, "Error writing output for kapp '%s'", installableObj.Id())
 		}
 
-		err = executeRunSteps(constants.Output, runSteps, installableObj, stackObj, dryRun)
+		err = executeRunSteps(constants.Output, runSteps, installableObj, stackObj, installerImpl.Output, dryRun)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 		}
@@ -1046,10 +1054,10 @@ func addOutputsToRegistry(installableObj interfaces.IInstallable, outputs map[st
 
 // Renders templates for a kapp
 func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.IInstallable,
-	installerVars map[string]interface{}, printMessage bool, dryRun bool) error {
+	printMessage bool, dryRun bool) error {
 
 	// merge all the vars required to render the kapp's sugarkube.yaml file
-	templatedVars, err := stackObj.GetTemplatedVars(installableObj, installerVars)
+	templatedVars, err := stackObj.GetTemplatedVars(installableObj, map[string]interface{}{})
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -1061,7 +1069,7 @@ func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.I
 	}
 
 	// get the updated template vars
-	templatedVars, err = stackObj.GetTemplatedVars(installableObj, installerVars)
+	templatedVars, err = stackObj.GetTemplatedVars(installableObj, map[string]interface{}{})
 	if err != nil {
 		return errors.WithStack(err)
 	}

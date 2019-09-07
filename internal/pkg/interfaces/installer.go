@@ -26,5 +26,4 @@ type IInstaller interface {
 	Clean(installableObj IInstallable, stackObj IStack, dryRun bool) ([]structs.RunStep, error)
 	Output(installableObj IInstallable, stackObj IStack, dryRun bool) ([]structs.RunStep, error)
 	Name() string
-	GetVars(action string, approved bool) map[string]interface{}
 }

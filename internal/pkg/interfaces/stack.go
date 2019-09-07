@@ -55,7 +55,7 @@ type IStack interface {
 	GetProvisioner() IProvisioner
 	GetRegistry() IRegistry
 	GetTemplatedVars(installableObj IInstallable,
-		installerVars map[string]interface{}) (map[string]interface{}, error)
+		extraVars map[string]interface{}) (map[string]interface{}, error)
 	RefreshProviderVars() error
 	LoadInstallables(workspaceDir string) error
 }

@@ -372,11 +372,3 @@ func (r RunUnitInstaller) Output(installableObj interfaces.IInstallable,
 
 	return r.getRunSteps(installableObj, stackObj, constants.Output, dryRun)
 }
-
-// todo - get rid of this and just return the action name
-func (r RunUnitInstaller) GetVars(action string, dryRun bool) map[string]interface{} {
-	return map[string]interface{}{
-		"action":  action,
-		"dry-run": dryRun,
-	}
-}

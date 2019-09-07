@@ -197,7 +197,7 @@ func (k *Kapp) mergeDescriptorLayers() error {
 	for _, layer := range k.descriptorLayers {
 		log.Logger.Debugf("Merging config layer for kapp '%s' - layer %#v into existing map %#v",
 			k.FullyQualifiedId(), layer, mergedDescriptor)
-		err := vars.MergeWithStrategy(&mergedDescriptor, layer)
+		err := vars.Merge(&mergedDescriptor, layer)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -410,7 +410,7 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 	kappIntrinsicDataConverted = convert.MapStringStringToMapStringInterface(kappIntrinsicData)
 
 	// merge kapp.Vars with the vars from files so kapp.Vars take precedence. Todo - document the order of precedence
-	err = vars.MergeWithStrategy(&kappVars, k.mergedDescriptor.Vars)
+	err = vars.Merge(&kappVars, k.mergedDescriptor.Vars)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -445,7 +445,7 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 		log.Logger.Tracef("Merging local registry for kapp '%s' with kapp vars. Local registry is: %#v",
 			k.FullyQualifiedId(), k.localRegistry)
 
-		err = vars.MergeWithStrategy(&namespacedKappMap, k.localRegistry.AsMap())
+		err = vars.Merge(&namespacedKappMap, k.localRegistry.AsMap())
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

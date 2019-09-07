@@ -103,7 +103,7 @@ func (s Stack) GetRegistry() interfaces.IRegistry {
 // is given, data specific to it will be included in the returned map,
 // otherwise only stack-specific variables will be returned.
 func (s *Stack) GetTemplatedVars(installableObj interfaces.IInstallable,
-	installerVars map[string]interface{}) (map[string]interface{}, error) {
+	extraVars map[string]interface{}) (map[string]interface{}, error) {
 
 	stackConfig := s.config
 
@@ -118,7 +118,7 @@ func (s *Stack) GetTemplatedVars(installableObj interfaces.IInstallable,
 	})
 
 	// store additional runtime values under the "sugarkube" key
-	installerVars["defaultVars"] = []string{
+	extraVars["defaultVars"] = []string{
 		stackConfig.GetProvider(),
 		stackConfig.GetProvisioner(),
 		stackConfig.GetAccount(), // may be blank depending on the provider
@@ -128,7 +128,7 @@ func (s *Stack) GetTemplatedVars(installableObj interfaces.IInstallable,
 	}
 
 	configFragments = append(configFragments, map[string]interface{}{
-		"sugarkube": installerVars,
+		"sugarkube": extraVars,
 	})
 
 	providerVars := stackConfig.GetProviderVars()

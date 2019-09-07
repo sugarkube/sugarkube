@@ -4,6 +4,8 @@
 * Code of conduct
 
 ## Top priorities
+* Sugarkube uses 100% of CPU when waiting on tasks to complete :-(
+* kapps whose conditions are false won't be run even if they are explicitly selected with -i. That's annoying for `kapp vars`. Perhaps explicitly selected kapps should have their conditions overridden? 
 * The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp.
 * The kapps validate command should make sure that all run steps are uniquely named to avoid issues calling different ones
