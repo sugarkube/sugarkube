@@ -48,8 +48,7 @@ func newOutputCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "output [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Generate output for kapps"),
-		Long: `Run 'make output' on all selected kapps.
-`,
+		Long:  "Makes all selected kapps generate output.\n",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")

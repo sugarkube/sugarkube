@@ -62,6 +62,7 @@ func NewKappsCmds() *cobra.Command {
 		newOutputCmd(),
 		newVarsCmd(),
 		newValidateCmd(),
+		newGraphCmd(),
 	)
 
 	cmd.Aliases = []string{"kapp"}

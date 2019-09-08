@@ -528,7 +528,7 @@ func (g *Dag) processAnEligibleNode(nodeStatusesById map[int64]nodeStatus, proce
 	}
 }
 
-// Prints out the DAG to the writer
+// Prints the DAG
 func (g *Dag) Print() error {
 	_, err := printer.Fprintf("Created the following DAG. Only nodes marked with a %s will "+
 		"be processed: \n", markedNodeStr)
@@ -588,6 +588,74 @@ func (g *Dag) Print() error {
 	log.Logger.Debug("DAG printed")
 
 	return nil
+}
+
+// Returns a definition of the DAG compatible with GraphViz for visualising it
+func (g *Dag) Visualise(clusterName string) string {
+
+	numWorkers := config.CurrentConfig.NumWorkers
+
+	processCh := make(chan NamedNode, numWorkers)
+	doneCh := make(chan NamedNode, numWorkers)
+	finishedCh := g.walkDown(processCh, doneCh)
+
+	// build an array of relationships in the format accepted by graphviz
+	graphVizNodes := make([]string, 0)
+
+	// graphViz style to apply to unmarked nodes
+	const graphVizNodeNotMarked = ` [fontcolor="#FF0000" color="#FF0000"]`
+	hasUnmarkedNodes := false
+
+	for i := 0; i < numWorkers; i++ {
+		go func() {
+			for node := range processCh {
+				log.Logger.Debugf("Visualise worker received node: %+v", node)
+				parents := g.graph.To(node.ID())
+
+				if !node.marked {
+					graphVizNodes = append(graphVizNodes, fmt.Sprintf(`"%s" %s`, node.name, graphVizNodeNotMarked))
+					hasUnmarkedNodes = true
+				}
+
+				for parents.Next() {
+					parent := parents.Node().(NamedNode)
+					graphVizNodes = append(graphVizNodes,
+						fmt.Sprintf(`"%s" -> "%s";`, parent.name, node.name))
+				}
+
+				log.Logger.Tracef("Visualise worker finished with node '%s' (id=%d): %#v", node.name, node.ID(), node)
+				doneCh <- node
+			}
+		}()
+	}
+
+	<-finishedCh
+
+	graphVizDigraph := fmt.Sprintf(`digraph {
+label = "Cluster: %s"
+labelloc = "t";
+node [shape=box,style="rounded"]
+%%s
+%%s
+}`, clusterName)
+
+	unmarkedLabel := ""
+
+	if hasUnmarkedNodes {
+		unmarkedLabel = `{
+        notelabel [
+          shape=plain
+          label = "Nodes in red will not be processed"
+        ]
+    }`
+	}
+
+	graphVizDot := fmt.Sprintf(graphVizDigraph,
+		strings.Join(graphVizNodes, "\n"), unmarkedLabel)
+
+	log.Logger.Debugf("DAG visualisation spec produced: %s", graphVizDot)
+
+	return graphVizDot
 }
 
 // Returns a boolean indicating whether all nodes have been processed

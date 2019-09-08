@@ -17,19 +17,26 @@
 package kapps
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
+	"io/ioutil"
+	"os"
 )
 
-type cleanCmd struct {
+type graphCmd struct {
 	workspaceDir    string
-	dryRun          bool
 	includeParents  bool
+	open            bool
+	outPath         string
 	stackName       string
 	stackFile       string
 	provider        string
@@ -42,30 +49,32 @@ type cleanCmd struct {
 	excludeSelector []string
 }
 
-func newCleanCmd() *cobra.Command {
-	c := &cleanCmd{}
+func newGraphCmd() *cobra.Command {
+	c := &graphCmd{}
 
 	cmd := &cobra.Command{
-		Use:   "clean [flags] [stack-file] [stack-name] [workspace-dir]",
-		Short: fmt.Sprintf("Cleans local kapps"),
-		Long: `Deletes temporary/generated files for all selected kapps.
+		Use:   "graph [flags] [stack-file] [stack-name]",
+		Short: fmt.Sprintf("Graphs local kapps"),
+		Long: `Prints the graph showing which kapps would be processed.
+
+The graph can also optionally be rendered as an SVG image.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) < 3 {
+			if len(args) < 2 {
 				return errors.New("some required arguments are missing")
-			} else if len(args) > 3 {
+			} else if len(args) > 2 {
 				return errors.New("too many arguments supplied")
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
-			c.workspaceDir = args[2]
 
 			return c.run()
 		},
 	}
 
 	f := cmd.Flags()
-	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
+	f.BoolVar(&c.open, "open", false, "produce an SVG visualisation and open it in the default .svg application (required graphviz)")
+	f.StringVarP(&c.outPath, "out", "o", "", "write an SVG visualisation to the given file path (required graphviz)")
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
@@ -82,7 +91,7 @@ func newCleanCmd() *cobra.Command {
 	return cmd
 }
 
-func (c *cleanCmd) run() error {
+func (c *graphCmd) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &structs.StackFile{
@@ -101,11 +110,6 @@ func (c *cleanCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	dryRunPrefix := ""
-	if c.dryRun {
-		dryRunPrefix = "[Dry run] "
-	}
-
 	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector, c.includeParents)
 	if err != nil {
 		return errors.WithStack(err)
@@ -116,15 +120,64 @@ func (c *cleanCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = dagObj.Execute(constants.DagActionClean, stackObj, false, true, true,
-		true, false, c.dryRun)
-	if err != nil {
-		return errors.WithStack(err)
-	}
+	if c.open || c.outPath != "" {
+		log.Logger.Debugf("Generating graphViz definition...")
+		graphViz := dagObj.Visualise(stackObj.GetConfig().GetName())
 
-	_, err = printer.Fprintf("%s[green]Kapps successfully cleaned\n", dryRunPrefix)
-	if err != nil {
-		return errors.WithStack(err)
+		// write the graphViz config to a file
+		dotFile, err := ioutil.TempFile("", "sugarkube-svg-")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		log.Logger.Debugf("Writing graphViz file to: %s", dotFile.Name())
+
+		_, err = dotFile.Write([]byte(graphViz))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		err = dotFile.Close()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		var outFile *os.File
+
+		if c.outPath != "" {
+			outFile, err = os.Open(c.outPath)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		} else {
+			outFile, err = ioutil.TempFile("", "sugarkube-graph.*.svg")
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+
+		var stdoutBuf, stderrBuf bytes.Buffer
+		workingDir, err := os.Getwd()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		err = utils.ExecCommand("dot", []string{"-Tsvg", dotFile.Name(), "-o", outFile.Name()},
+			map[string]string{}, &stdoutBuf, &stderrBuf, workingDir, 5, 0, false)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		_, err = printer.Fprintf("[green]SVG written to %s!\n", outFile.Name())
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		if c.open {
+			err = open.Start(outFile.Name())
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
 	}
 
 	return nil
