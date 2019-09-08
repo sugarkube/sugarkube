@@ -144,7 +144,7 @@ func (c *graphCmd) run() error {
 		var outFile *os.File
 
 		if c.outPath != "" {
-			outFile, err = os.Open(c.outPath)
+			outFile, err = os.OpenFile(c.outPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
 			if err != nil {
 				return errors.WithStack(err)
 			}
