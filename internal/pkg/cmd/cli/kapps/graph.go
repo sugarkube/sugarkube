@@ -125,12 +125,12 @@ func (c *graphCmd) run() error {
 		graphViz := dagObj.Visualise(stackObj.GetConfig().GetName())
 
 		// write the graphViz config to a file
-		dotFile, err := ioutil.TempFile("", "sugarkube-svg-")
+		dotFile, err := ioutil.TempFile("", "sugarkube-graph.*.dot")
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
-		log.Logger.Debugf("Writing graphViz file to: %s", dotFile.Name())
+		log.Logger.Infof("Writing graphViz file to: %s", dotFile.Name())
 
 		_, err = dotFile.Write([]byte(graphViz))
 		if err != nil {
