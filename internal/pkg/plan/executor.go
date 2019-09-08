@@ -950,7 +950,7 @@ func addParentRegistries(dagObj *Dag, node NamedNode, errCh chan<- error) {
 	node.installableObj.SetLocalRegistry(localRegistry)
 }
 
-// Executes post actions
+// Executes pre/post kapp actions
 func executeAction(action structs.Action, installableObj interfaces.IInstallable,
 	stackObj interfaces.IStack, errCh chan error, dryRun bool) {
 	log.Logger.Infof("Executing action '%s' for installable '%s'", action, installableObj.FullyQualifiedId())

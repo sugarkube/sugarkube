@@ -48,6 +48,8 @@
   if not set it up again. Also, when sugarkube is invoked throw an error if port forwarding is already set up
 * Or do ssh using a golang library so we can make it more robust (reconnecting on dropped connections, etc)
 * Improve the UX around using caches/workspaces, especially re updating while working on a change (sugarkube shouldn't bomb out but should update whatever it can)
+* Make graph visualisations show kapp actions
+* Allow graphs to be visualised in the install, delete or both directions (both looks pretty messy so it'd be good to have the option of each direction individually)
   
 ### Everything else
 * Support declaring templates as 'sensitive' - they should be templated just-in-time then deleted (even on error/interrupts)

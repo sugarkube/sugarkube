@@ -634,7 +634,7 @@ func (g *Dag) Visualise(clusterName string) string {
 	graphVizDigraph := fmt.Sprintf(`digraph {
 label = "Cluster: %s"
 labelloc = "t";
-node [shape=box,style="rounded"]
+node [shape=box,style="rounded,bold"]
 %%s
 %%s
 }`, clusterName)
