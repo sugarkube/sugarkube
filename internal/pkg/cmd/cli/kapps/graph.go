@@ -149,7 +149,8 @@ func (c *graphCmd) run() error {
 				return errors.WithStack(err)
 			}
 		} else {
-			outFile, err = ioutil.TempFile("", "sugarkube-graph.*.svg")
+			outFile, err = ioutil.TempFile("",
+				fmt.Sprintf("sugarkube-graph-%s.*.svg", stackObj.GetConfig().GetName()))
 			if err != nil {
 				return errors.WithStack(err)
 			}
