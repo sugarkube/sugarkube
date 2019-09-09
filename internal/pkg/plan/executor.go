@@ -592,7 +592,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 							actionName, installableObj.FullyQualifiedId())
 						skipInstallerMethod = true
 					default:
-						executeAction(action, installableObj, stackObj, errCh, dryRun)
+						executeAction(action, installableObj, stackObj, errCh, ignoreErrors, dryRun)
 					}
 				}
 			}
@@ -687,7 +687,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 			log.Logger.Infof("Will run %d post %s actions", len(postActions), actionName)
 
 			for _, action := range postActions {
-				executeAction(action, installableObj, stackObj, errCh, dryRun)
+				executeAction(action, installableObj, stackObj, errCh, ignoreErrors, dryRun)
 			}
 		}
 	}
@@ -952,22 +952,40 @@ func addParentRegistries(dagObj *Dag, node NamedNode, errCh chan<- error) {
 
 // Executes pre/post kapp actions
 func executeAction(action structs.Action, installableObj interfaces.IInstallable,
-	stackObj interfaces.IStack, errCh chan error, dryRun bool) {
+	stackObj interfaces.IStack, errCh chan error, ignoreErrors bool, dryRun bool) {
 	log.Logger.Infof("Executing action '%s' for installable '%s'", action, installableObj.FullyQualifiedId())
+
+	_, err := printer.Fprintf("[white][bold]%s[reset] - Executing the '[white]%s[reset]' action...\n",
+		installableObj.FullyQualifiedId(), action.Id)
+	if err != nil {
+		errCh <- errors.WithStack(err)
+		return
+	}
+
 	switch action.Id {
 	case constants.ActionClusterUpdate:
 		err := cluster.UpdateCluster(stackObj, true, dryRun)
 		if err != nil {
-			errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'",
-				installableObj.Id())
-			return
+			if ignoreErrors {
+				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
+			} else {
+				log.Logger.Warnf("Error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
+				errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'",
+					installableObj.Id())
+				return
+			}
 		}
 	case constants.ActionClusterDelete:
 		err := stackObj.GetProvisioner().Delete(true, dryRun)
 		if err != nil {
-			errCh <- errors.Wrapf(err, "Error deleting cluster, triggered by kapp '%s'",
-				installableObj.Id())
-			return
+			if ignoreErrors {
+				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
+			} else {
+				log.Logger.Warnf("Error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
+				errCh <- errors.Wrapf(err, "Error deleting cluster, triggered by kapp '%s'",
+					installableObj.Id())
+				return
+			}
 		}
 	case constants.ActionAddProviderVarsFiles:
 		// todo - run each path through the templater
@@ -984,8 +1002,13 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 		// refresh the provider vars so the extra vars files we've just added are loaded
 		err := stackObj.RefreshProviderVars()
 		if err != nil {
-			errCh <- errors.WithStack(err)
-			return
+			if ignoreErrors {
+				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
+			} else {
+				log.Logger.Warnf("Error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
+				errCh <- errors.WithStack(err)
+				return
+			}
 		}
 	}
 }

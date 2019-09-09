@@ -5,7 +5,12 @@
 
 ## Top priorities
 * The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
+* Add a single flag '--run-actions' that is the same as setting run pre-/post actions to true
 
+* Fix issues around errors with actions:
+  * if no cluster exists to delete an error is still thrown, even with --ignore-errors
+  * it's safe to call 'create_cluster' multiple times, but calling 'delete_cluster' multiple times results in an error. Ideally we'd only throw an error on the first attempt and ignore it on subsequent ones (e.g. because we already successfully deleted the cluster this run)
+  * running cluster_update twice for kops seems to kill ssh and make sugarkube lose connectivity. It dies with an error.
 * Sugarkube uses 100% of CPU when waiting on tasks to complete. Profiling confirms there are no inefficiencies in our code. It appears to be due to https://github.com/golang/go/issues/27707
 * kapps whose conditions are false won't be run even if they are explicitly selected with -i. That's annoying for `kapp vars`. Perhaps explicitly selected kapps should have their conditions overridden? 
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp.
