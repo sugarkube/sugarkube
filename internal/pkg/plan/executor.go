@@ -546,17 +546,16 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
 
-					_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]'. "+
-						"No more run steps or actions will be executed for this kapp.\n", installableObj.FullyQualifiedId())
+					_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]'.\n",
+						installableObj.FullyQualifiedId())
 					if err != nil {
 						errCh <- errors.WithStack(err)
 						return
 					}
-
+				} else {
+					errCh <- errors.Wrapf(err, "Error planning kapp '%s'", installableObj.Id())
 					return
 				}
-				errCh <- errors.Wrapf(err, "Error planning kapp '%s'", installableObj.Id())
-				return
 			}
 
 			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, installerMethod, dryRun)
@@ -565,17 +564,16 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
 
-					_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]'. "+
-						"No more run steps or actions will be executed for this kapp.\n", installableObj.FullyQualifiedId())
+					_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]'.\n",
+						installableObj.FullyQualifiedId())
 					if err != nil {
 						errCh <- errors.WithStack(err)
 						return
 					}
-
+				} else {
+					errCh <- errors.Wrapf(err, "Error planning kapp '%s'", installableObj.Id())
 					return
 				}
-				errCh <- errors.Wrapf(err, "Error planning kapp '%s'", installableObj.Id())
-				return
 			}
 		}
 
@@ -627,39 +625,37 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 			runSteps, err = installerMethod(installableObj, stackObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
-					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
+					log.Logger.Warnf("Ignoring error applying kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
 
-					_, err = printer.Fprintf("[yellow]Ignoring error processing '[bold][white]%s[reset][yellow]'. "+
-						"No more run steps or actions will be executed for this kapp.\n", installableObj.FullyQualifiedId())
+					_, err = printer.Fprintf("[yellow]Ignoring error applying '[bold][white]%s[reset][yellow]'.\n",
+						installableObj.FullyQualifiedId())
 					if err != nil {
 						errCh <- errors.WithStack(err)
 						return
 					}
-
+				} else {
+					errCh <- errors.Wrapf(err, "Error processing kapp '%s'", installableObj.Id())
 					return
 				}
-				errCh <- errors.Wrapf(err, "Error processing kapp '%s'", installableObj.Id())
-				return
 			}
 
 			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, installerMethod, dryRun)
 			if err != nil {
 				if ignoreErrors {
-					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
+					log.Logger.Warnf("Ignoring error applying kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
 
-					_, err = printer.Fprintf("[yellow]Ignoring error processing '[bold][white]%s[reset][yellow]'. "+
-						"No more run steps or actions will be executed for this kapp.\n", installableObj.FullyQualifiedId())
+					_, err = printer.Fprintf("[yellow]Ignoring error applying '[bold][white]%s[reset][yellow]'.\n",
+						installableObj.FullyQualifiedId())
 					if err != nil {
 						errCh <- errors.WithStack(err)
 						return
 					}
-
+				} else {
+					errCh <- errors.Wrapf(err, "Error processing kapp '%s'", installableObj.Id())
 					return
 				}
-				errCh <- errors.Wrapf(err, "Error processing kapp '%s'", installableObj.Id())
-				return
 			}
 		}
 	}
@@ -1001,9 +997,8 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 			if ignoreErrors {
 				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
 
-				_, err := printer.Fprintf("[white][bold]%s[reset] - [yellow]Ignoring error executing the "+
-					"'[white]%s[reset][yellow]' action.\n",
-					installableObj.FullyQualifiedId(), action.Id)
+				_, err := printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
+					"'[white]%s[reset][yellow]' action.\n", installableObj.FullyQualifiedId(), action.Id)
 				if err != nil {
 					errCh <- err
 					return
@@ -1020,9 +1015,8 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 		if err != nil {
 			if ignoreErrors {
 				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
-				_, err := printer.Fprintf("[white][bold]%s[reset] - [yellow]Ignoring error executing the "+
-					"'[white]%s[reset][yellow]' action.\n",
-					installableObj.FullyQualifiedId(), action.Id)
+				_, err := printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
+					"'[white]%s[reset][yellow]' action.\n", installableObj.FullyQualifiedId(), action.Id)
 				if err != nil {
 					errCh <- err
 					return
@@ -1051,9 +1045,8 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 		if err != nil {
 			if ignoreErrors {
 				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
-				_, err := printer.Fprintf("[white][bold]%s[reset] - [yellow]Ignoring error executing the "+
-					"'[white]%s[reset][yellow]' action.\n",
-					installableObj.FullyQualifiedId(), action.Id)
+				_, err := printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
+					"'[white]%s[reset][yellow]' action.\n", installableObj.FullyQualifiedId(), action.Id)
 				if err != nil {
 					errCh <- err
 					return
