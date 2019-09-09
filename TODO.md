@@ -53,6 +53,7 @@
 * Improve the UX around using caches/workspaces, especially re updating while working on a change (sugarkube shouldn't bomb out but should update whatever it can)
 * Make graph visualisations show kapp actions
 * Allow graphs to be visualised in the install, delete or both directions (both looks pretty messy so it'd be good to have the option of each direction individually)
+* Allow graph visualisations to show the individual run steps for each kapp (i.e. add a 'detailed' mode)
   
 ### Everything else
 * Support declaring templates as 'sensitive' - they should be templated just-in-time then deleted (even on error/interrupts)

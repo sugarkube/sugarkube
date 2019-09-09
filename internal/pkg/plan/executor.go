@@ -545,6 +545,14 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
+
+					_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]'. "+
+						"No more run steps or actions will be executed for this kapp.\n", installableObj.FullyQualifiedId())
+					if err != nil {
+						errCh <- errors.WithStack(err)
+						return
+					}
+
 					return
 				}
 				errCh <- errors.Wrapf(err, "Error planning kapp '%s'", installableObj.Id())
@@ -556,6 +564,14 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
+
+					_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]'. "+
+						"No more run steps or actions will be executed for this kapp.\n", installableObj.FullyQualifiedId())
+					if err != nil {
+						errCh <- errors.WithStack(err)
+						return
+					}
+
 					return
 				}
 				errCh <- errors.Wrapf(err, "Error planning kapp '%s'", installableObj.Id())
@@ -613,6 +629,14 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
+
+					_, err = printer.Fprintf("[yellow]Ignoring error processing '[bold][white]%s[reset][yellow]'. "+
+						"No more run steps or actions will be executed for this kapp.\n", installableObj.FullyQualifiedId())
+					if err != nil {
+						errCh <- errors.WithStack(err)
+						return
+					}
+
 					return
 				}
 				errCh <- errors.Wrapf(err, "Error processing kapp '%s'", installableObj.Id())
@@ -624,6 +648,14 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error processing kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
+
+					_, err = printer.Fprintf("[yellow]Ignoring error processing '[bold][white]%s[reset][yellow]'. "+
+						"No more run steps or actions will be executed for this kapp.\n", installableObj.FullyQualifiedId())
+					if err != nil {
+						errCh <- errors.WithStack(err)
+						return
+					}
+
 					return
 				}
 				errCh <- errors.Wrapf(err, "Error processing kapp '%s'", installableObj.Id())
