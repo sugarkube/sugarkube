@@ -33,6 +33,7 @@ type deleteCmd struct {
 	oneShot             bool
 	ignoreErrors        bool
 	skipTemplating      bool
+	runActions          bool
 	runPreActions       bool
 	runPostActions      bool
 	establishConnection bool
@@ -101,6 +102,7 @@ process before deleting the selected kapps.
 	f.BoolVar(&c.ignoreErrors, "ignore-errors", false, "ignore errors deleting kapps")
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before deleting them")
+	f.BoolVar(&c.runActions, "run-actions", false, "run pre- and post-actions in kapps")
 	f.BoolVar(&c.runPreActions, constants.RunPreActions, false, "run pre actions in kapps")
 	f.BoolVar(&c.runPostActions, constants.RunPostActions, false, "run post actions in kapps")
 	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
@@ -174,8 +176,9 @@ func (c *deleteCmd) run() error {
 		}
 	}
 
-	err = dagObj.Execute(constants.DagActionDelete, stackObj, shouldPlan, approved, !c.runPreActions,
-		!c.runPostActions, c.ignoreErrors, c.dryRun)
+	err = dagObj.Execute(constants.DagActionDelete, stackObj, shouldPlan, approved,
+		!(c.runPreActions || c.runActions), !(c.runPostActions || c.runActions),
+		c.ignoreErrors, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

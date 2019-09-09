@@ -37,6 +37,7 @@ type installCmd struct {
 	oneShot      bool
 	//force               bool
 	skipTemplating      bool
+	runActions          bool
 	runPreActions       bool
 	runPostActions      bool
 	establishConnection bool
@@ -123,6 +124,7 @@ process before installing the selected kapps.
 	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/delete all the kapps "+
 	//	"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before installing them")
+	f.BoolVar(&c.runActions, "run-actions", false, "run pre- and post-actions in kapps")
 	f.BoolVar(&c.runPreActions, constants.RunPreActions, false, "run pre actions in kapps")
 	f.BoolVar(&c.runPostActions, constants.RunPostActions, false, "run post actions in kapps")
 	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
@@ -222,7 +224,8 @@ func (c *installCmd) run() error {
 	}
 
 	err = dagObj.Execute(constants.DagActionInstall, stackObj, shouldPlan, approved,
-		!c.runPreActions, !c.runPostActions, false, c.dryRun)
+		!(c.runPreActions || c.runActions), !(c.runPostActions || c.runActions),
+		false, c.dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}

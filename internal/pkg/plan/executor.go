@@ -50,8 +50,8 @@ func (d *Dag) Execute(action string, stackObj interfaces.IStack, plan bool, appr
 	errCh := make(chan error)
 
 	log.Logger.Infof("Executing DAG with action=%s, plan=%v, approved=%v, "+
-		"skipPostActions=%v, ignoreErrors=%v, dryRun=%v", action, plan, approved, skipPostActions,
-		ignoreErrors, dryRun)
+		"skipPreActions=%v, skipPostActions=%v, ignoreErrors=%v, dryRun=%v", action, plan, approved, skipPreActions,
+		skipPostActions, ignoreErrors, dryRun)
 
 	_, err := printer.Fprintln("[yellow]Executing the DAG...")
 	if err != nil {
