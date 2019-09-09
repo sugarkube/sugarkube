@@ -1000,6 +1000,14 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 		if err != nil {
 			if ignoreErrors {
 				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
+
+				_, err := printer.Fprintf("[white][bold]%s[reset] - [yellow]Ignoring error executing the "+
+					"'[white]%s[reset][yellow]' action.\n",
+					installableObj.FullyQualifiedId(), action.Id)
+				if err != nil {
+					errCh <- err
+					return
+				}
 			} else {
 				log.Logger.Warnf("Error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
 				errCh <- errors.Wrapf(err, "Error updating cluster, triggered by kapp '%s'",
@@ -1012,6 +1020,13 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 		if err != nil {
 			if ignoreErrors {
 				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
+				_, err := printer.Fprintf("[white][bold]%s[reset] - [yellow]Ignoring error executing the "+
+					"'[white]%s[reset][yellow]' action.\n",
+					installableObj.FullyQualifiedId(), action.Id)
+				if err != nil {
+					errCh <- err
+					return
+				}
 			} else {
 				log.Logger.Warnf("Error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
 				errCh <- errors.Wrapf(err, "Error deleting cluster, triggered by kapp '%s'",
@@ -1036,6 +1051,13 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 		if err != nil {
 			if ignoreErrors {
 				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
+				_, err := printer.Fprintf("[white][bold]%s[reset] - [yellow]Ignoring error executing the "+
+					"'[white]%s[reset][yellow]' action.\n",
+					installableObj.FullyQualifiedId(), action.Id)
+				if err != nil {
+					errCh <- err
+					return
+				}
 			} else {
 				log.Logger.Warnf("Error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
 				errCh <- errors.WithStack(err)
