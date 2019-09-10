@@ -622,6 +622,10 @@ func (g *Dag) Visualise(clusterName string) string {
 	hasUnmarkedNodes := false
 	var hasParents bool
 
+	// this mutex stops race conditions where different goroutines simultaneously write to the list which causes
+	// data loss
+	mutex := &sync.Mutex{}
+
 	for i := 0; i < numWorkers; i++ {
 		go func() {
 			for node := range processCh {
@@ -637,13 +641,16 @@ func (g *Dag) Visualise(clusterName string) string {
 				for parents.Next() {
 					hasParents = true
 					parent := parents.Node().(NamedNode)
+					mutex.Lock()
 					graphVizNodes = append(graphVizNodes,
 						fmt.Sprintf(`"%s" -> "%s";`, parent.name, node.name))
+					mutex.Unlock()
 				}
 
 				if !hasParents {
-					graphVizNodes = append(graphVizNodes,
-						fmt.Sprintf(`"%s";`, node.name))
+					mutex.Lock()
+					graphVizNodes = append(graphVizNodes, fmt.Sprintf(`"%s";`, node.name))
+					mutex.Unlock()
 				}
 
 				log.Logger.Tracef("Visualise worker finished with node '%s' (id=%d): %#v", node.name, node.ID(), node)
