@@ -546,8 +546,13 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
 
-					_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]'.\n",
-						installableObj.FullyQualifiedId())
+					if config.CurrentConfig.Verbose {
+						_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]':\n%v\n",
+							installableObj.FullyQualifiedId(), err)
+					} else {
+						_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]'.\n",
+							installableObj.FullyQualifiedId())
+					}
 					if err != nil {
 						errCh <- errors.WithStack(err)
 						return
@@ -564,8 +569,13 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
 
-					_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]'.\n",
-						installableObj.FullyQualifiedId())
+					if config.CurrentConfig.Verbose {
+						_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]':\n%v\n",
+							installableObj.FullyQualifiedId(), err)
+					} else {
+						_, err = printer.Fprintf("[yellow]Ignoring error planning '[bold][white]%s[reset][yellow]'.\n",
+							installableObj.FullyQualifiedId())
+					}
 					if err != nil {
 						errCh <- errors.WithStack(err)
 						return
@@ -628,8 +638,13 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 					log.Logger.Warnf("Ignoring error applying kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
 
-					_, err = printer.Fprintf("[yellow]Ignoring error applying '[bold][white]%s[reset][yellow]'.\n",
-						installableObj.FullyQualifiedId())
+					if config.CurrentConfig.Verbose {
+						_, err = printer.Fprintf("[yellow]Ignoring error applying '[bold][white]%s[reset][yellow]':\n%v\n",
+							installableObj.FullyQualifiedId(), err)
+					} else {
+						_, err = printer.Fprintf("[yellow]Ignoring error applying '[bold][white]%s[reset][yellow]'.\n",
+							installableObj.FullyQualifiedId())
+					}
 					if err != nil {
 						errCh <- errors.WithStack(err)
 						return
@@ -646,8 +661,14 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 					log.Logger.Warnf("Ignoring error applying kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
 
-					_, err = printer.Fprintf("[yellow]Ignoring error applying '[bold][white]%s[reset][yellow]'.\n",
-						installableObj.FullyQualifiedId())
+					if config.CurrentConfig.Verbose {
+						_, err = printer.Fprintf("[yellow]Ignoring error applying '[bold][white]%s[reset][yellow]':\n%v\n",
+							installableObj.FullyQualifiedId(), err)
+					} else {
+						_, err = printer.Fprintf("[yellow]Ignoring error applying '[bold][white]%s[reset][yellow]'.\n",
+							installableObj.FullyQualifiedId())
+					}
+
 					if err != nil {
 						errCh <- errors.WithStack(err)
 						return
@@ -1006,10 +1027,16 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 		err := cluster.UpdateCluster(stackObj, true, dryRun)
 		if err != nil {
 			if ignoreErrors {
-				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
+				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s': %v", action.Id,
+					installableObj.FullyQualifiedId(), err)
 
-				_, err := printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
-					"'[white]%s[reset][yellow]' action.\n", installableObj.FullyQualifiedId(), action.Id)
+				if config.CurrentConfig.Verbose {
+					_, err = printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
+						"'[white]%s[reset][yellow]' action:\n%v\n", installableObj.FullyQualifiedId(), action.Id, err)
+				} else {
+					_, err = printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
+						"'[white]%s[reset][yellow]' action.\n", installableObj.FullyQualifiedId(), action.Id)
+				}
 				if err != nil {
 					errCh <- err
 					return
@@ -1025,9 +1052,16 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 		err := stackObj.GetProvisioner().Delete(true, dryRun)
 		if err != nil {
 			if ignoreErrors {
-				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
-				_, err := printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
-					"'[white]%s[reset][yellow]' action.\n", installableObj.FullyQualifiedId(), action.Id)
+				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s': %v", action.Id,
+					installableObj.FullyQualifiedId(), err)
+
+				if config.CurrentConfig.Verbose {
+					_, err = printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
+						"'[white]%s[reset][yellow]' action:\n%v\n", installableObj.FullyQualifiedId(), action.Id, err)
+				} else {
+					_, err = printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
+						"'[white]%s[reset][yellow]' action.\n", installableObj.FullyQualifiedId(), action.Id)
+				}
 				if err != nil {
 					errCh <- err
 					return
@@ -1055,9 +1089,17 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 		err := stackObj.RefreshProviderVars()
 		if err != nil {
 			if ignoreErrors {
-				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s'", action.Id, installableObj.FullyQualifiedId())
-				_, err := printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
-					"'[white]%s[reset][yellow]' action.\n", installableObj.FullyQualifiedId(), action.Id)
+				log.Logger.Warnf("Ignoring error executing '%s' action for kapp '%s': %v", action.Id,
+					installableObj.FullyQualifiedId(), err)
+
+				if config.CurrentConfig.Verbose {
+					_, err = printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
+						"'[white]%s[reset][yellow]' action:\n%v\n", installableObj.FullyQualifiedId(), action.Id, err)
+				} else {
+					_, err = printer.Fprintf("* [white]%s[reset] - [yellow]Ignoring error executing the "+
+						"'[white]%s[reset][yellow]' action.\n", installableObj.FullyQualifiedId(), action.Id)
+				}
+
 				if err != nil {
 					errCh <- err
 					return

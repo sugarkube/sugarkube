@@ -7,6 +7,9 @@
 * The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
 * While walking the DAG check whether there are any actions that need executing, then either prompt the user or get them to pass either --skip-actions or --run-actions. It's annoying to forget to pass flags and have things fail
 
+* Ignoring errors when deleting doesn't quite work as it should:
+  * Spin up the dev-web stack. Then delete e.g. wordpress:site1. When tearing down the stack, the wordpress kapp will stop executing after failing to run `helm delete`. Instead it should continue to run `tf-destroy` but it doesn't.
+
 * Fix issues around errors with actions:
   * it's safe to call 'create_cluster' multiple times, but calling 'delete_cluster' multiple times results in an error. Ideally we'd only throw an error on the first attempt and ignore it on subsequent ones (e.g. because we already successfully deleted the cluster this run)
   * running cluster_update twice for kops seems to kill ssh and make sugarkube lose connectivity. It dies with an error.
