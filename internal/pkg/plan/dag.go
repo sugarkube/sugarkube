@@ -29,6 +29,7 @@ import (
 	"gonum.org/v1/gonum/graph/topo"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -415,10 +416,11 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 	log.Logger.Debugf("Walking the DAG with %d workers", numWorkers)
 
 	finishedCh := make(chan bool)
-	nodeUpdateCh := make(chan nodeStatus, numWorkers)
 
 	channelsClosed := false
 	initialiseCh := make(chan bool)
+
+	mutex := &sync.Mutex{}
 
 	go func() {
 		// create a ticker to display progress
@@ -430,7 +432,7 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 			select {
 			case <-initialiseCh:
 				go func() {
-					g.processAnEligibleNode(nodeStatusesById, processCh, nodeUpdateCh, down)
+					g.processAnEligibleNode(nodeStatusesById, processCh, mutex, down)
 					log.Logger.Debugf("Finished the initial pass processing eligible nodes")
 				}()
 			case namedNode, ok := <-doneCh:
@@ -443,7 +445,7 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 
 					go func() {
 						// reprocess nodes again since there's been a state change
-						g.processAnEligibleNode(nodeStatusesById, processCh, nodeUpdateCh, down)
+						g.processAnEligibleNode(nodeStatusesById, processCh, mutex, down)
 
 						if allDone(nodeStatusesById) {
 							log.Logger.Infof("DAG fully processed")
@@ -452,16 +454,10 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 								close(finishedCh)
 								close(doneCh)
 								close(processCh)
-								close(nodeUpdateCh)
 								channelsClosed = true
 							}
 						}
 					}()
-				}
-			case namedNode, ok := <-nodeUpdateCh:
-				if ok {
-					log.Logger.Tracef("Updating status of node: %v", namedNode)
-					nodeStatusesById[namedNode.node.ID()] = namedNode
 				}
 			case <-progressTicker.C:
 				inProgressNodes := make([]string, 0)
@@ -482,9 +478,6 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 	log.Logger.Tracef("Starting initialisation pass over nodes")
 	for i := 0; i < numWorkers; i++ {
 		initialiseCh <- true
-		// add a microsleep between each iteration so all workers don't end up with the same nodes queued (i.e. we need
-		// sufficient time for a node's status to be updated via the nodeUpdateCh while initialising workers)
-		time.Sleep(50 * time.Millisecond)
 	}
 
 	return finishedCh
@@ -492,10 +485,19 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 
 // Adds a single node whose dependencies have all been satisfied into a channel for processing by workers
 func (g *Dag) processAnEligibleNode(nodeStatusesById map[int64]nodeStatus, processCh chan<- NamedNode,
-	nodeUpdateCh chan<- nodeStatus, down bool) {
-	for node, nodeStatus := range nodeStatusesById {
-		namedNode := nodeStatusesById[node]
+	mutex *sync.Mutex, down bool) {
 
+	// copy the node status map with a mutex so we don't hit concurrent map misuse issues
+	nodeStatusesByIdCopy := make(map[int64]nodeStatus)
+
+	mutex.Lock()
+	for k, v := range nodeStatusesById {
+		nodeStatusesByIdCopy[k] = v
+	}
+	mutex.Unlock()
+
+	var currentStatus nodeStatus
+	for _, nodeStatus := range nodeStatusesByIdCopy {
 		// only consider unprocessed nodes
 		if nodeStatus.status != unprocessed {
 			//log.Logger.Tracef("Skipping node '%s' with status '%v' on this pass...",
@@ -512,18 +514,31 @@ func (g *Dag) processAnEligibleNode(nodeStatusesById map[int64]nodeStatus, proce
 
 		// we have a node that needs to be processed. Check to see if its dependencies have
 		// been satisfied
-		if dependenciesSatisfied(dependencies, nodeStatusesById) {
-			log.Logger.Debugf("All dependencies satisfied for '%s', adding it to the "+
-				"processing queue", namedNode.node.name)
-			// update the status to running so we don't keep requeuing completed nodes
-			namedNode.status = running
-			// we only have a copy of the nodeStatusesById map so we need to send modifications to a channel so they
-			// can actually be persisted in the main for loop
-			nodeUpdateCh <- namedNode
-			processCh <- namedNode.node
-			break
+		if dependenciesSatisfied(dependencies, nodeStatusesByIdCopy) {
+			log.Logger.Debugf("All dependencies satisfied for node: %+v - Adding it to the "+
+				"processing queue", nodeStatus.node)
+			// Acquire a mutex and check whether the target node is definitely still unprocessed. If it is update the
+			// status to running and process it. Otherwise keep searching.
+			mutex.Lock()
+			// read from the actual map since we have a mutex
+			currentStatus = nodeStatusesById[nodeStatus.node.ID()]
+
+			if currentStatus.status == unprocessed {
+				// update the status to running so we don't keep requeuing completed nodes
+				nodeStatus.status = running
+
+				log.Logger.Tracef("Updating status of node (with mutex): %v", nodeStatus)
+				// update the actual map (not the copy) since we have a mutex
+				nodeStatusesById[nodeStatus.node.ID()] = nodeStatus
+				processCh <- nodeStatus.node
+				mutex.Unlock()
+				break
+			}
+
+			log.Logger.Tracef("Status of node %v is not 'unprocessed'. Will keep searching", nodeStatus)
+			mutex.Unlock()
 		} else {
-			log.Logger.Tracef("Dependencies not satisfied for %s", namedNode.node.name)
+			log.Logger.Tracef("Dependencies not satisfied for node: %+v", nodeStatus.node)
 		}
 	}
 }
@@ -545,7 +560,7 @@ func (g *Dag) Print() error {
 	for i := 0; i < numWorkers; i++ {
 		go func() {
 			for node := range processCh {
-				log.Logger.Debugf("Print worker received node: %+v", node)
+				log.Logger.Debugf("Print worker received node %+v", node)
 				parents := g.graph.To(node.ID())
 
 				parentNames := make([]string, 0)
@@ -577,7 +592,7 @@ func (g *Dag) Print() error {
 					panic(err)
 				}
 
-				log.Logger.Tracef("Print worker finished with node '%s' (id=%d): %#v", node.name, node.ID(), node)
+				log.Logger.Tracef("Print worker finished with node: %+v", node)
 				doneCh <- node
 			}
 		}()
@@ -605,6 +620,7 @@ func (g *Dag) Visualise(clusterName string) string {
 	// graphViz style to apply to unmarked nodes
 	const graphVizNodeNotMarked = ` [fontcolor="#FF0000" color="#FF0000"]`
 	hasUnmarkedNodes := false
+	var hasParents bool
 
 	for i := 0; i < numWorkers; i++ {
 		go func() {
@@ -617,10 +633,17 @@ func (g *Dag) Visualise(clusterName string) string {
 					hasUnmarkedNodes = true
 				}
 
+				hasParents = false
 				for parents.Next() {
+					hasParents = true
 					parent := parents.Node().(NamedNode)
 					graphVizNodes = append(graphVizNodes,
 						fmt.Sprintf(`"%s" -> "%s";`, parent.name, node.name))
+				}
+
+				if !hasParents {
+					graphVizNodes = append(graphVizNodes,
+						fmt.Sprintf(`"%s";`, node.name))
 				}
 
 				log.Logger.Tracef("Visualise worker finished with node '%s' (id=%d): %#v", node.name, node.ID(), node)
