@@ -62,6 +62,7 @@ type RunStep struct {
 	Print   string            `yaml:"print,omitempty" mapstructure:"print"` // if 'verbose', stdout/stderr will be printed to the
 	// console when sugarkube is run with the verbose flag. Any other non-empty value will always cause output to be printed regardless
 	ExpectedExitCode int      `yaml:"expected_exit_code,omitempty" mapstructure:"expected_exit_code"` // sugarkube will only throw an error if a different exit code is returned
+	IgnoreErrors     bool     `yaml:"ignore_errors" mapstructure:"ignore_errors"`                     // don't exit if any errors occurred
 	Conditions       []string `yaml:",omitempty"`
 	WorkingDir       string   `yaml:"working_dir,omitempty" mapstructure:"working_dir"`
 	MergePriority    *uint8   `yaml:"merge_priority,omitempty" mapstructure:"merge_priority"`

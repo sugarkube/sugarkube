@@ -5,6 +5,7 @@
 
 ## Top priorities
 * The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
+* While walking the DAG check whether there are any actions that need executing, then either prompt the user or get them to pass either --skip-actions or --run-actions. It's annoying to forget to pass flags and have things fail
 
 * Fix issues around errors with actions:
   * it's safe to call 'create_cluster' multiple times, but calling 'delete_cluster' multiple times results in an error. Ideally we'd only throw an error on the first attempt and ignore it on subsequent ones (e.g. because we already successfully deleted the cluster this run)
@@ -20,7 +21,6 @@
 * Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
 * `ws create` should support `-i/-x` selectors to support selectively updating kapps
 
-* Add a way of replacing kapp settings in stack configs (e.g. to replace dependencies)
 * Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
 
 * Update the prometheus-operator kapp to delete its CRDs when it's deleted

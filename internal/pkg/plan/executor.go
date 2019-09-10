@@ -860,7 +860,18 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 		// the original error is more important to return, so return that. We should write files
 		// before returning it though
 		if cmdErr != nil {
-			return errors.WithStack(cmdErr)
+			if step.IgnoreErrors {
+				log.Logger.Infof("Ignoring error running step '%s' because ignore_errors is true: %v",
+					step.Name, cmdErr)
+
+				_, err := printer.Fprintf("* %s[white]%s[reset] - Ignoring errors running step '[white]%s[default]'...\n",
+					dryRunPrefix, installableObj.FullyQualifiedId(), step.Name)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+			} else {
+				return errors.WithStack(cmdErr)
+			}
 		}
 
 		if err2 != nil {

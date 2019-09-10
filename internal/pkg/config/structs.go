@@ -25,4 +25,5 @@ type Config struct {
 	NumWorkers int    `mapstructure:"num_workers"` // an uncontroversial name that avoids British/American spelling differences (vs 'parallelisation', etc)
 	Verbose    bool
 	Programs   map[string]structs.KappConfig `mapstructure:"programs"`
+	RunUnits   structs.RunUnit               `yaml:"run_units" mapstructure:"run_units"` // global run units
 }
