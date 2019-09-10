@@ -530,8 +530,8 @@ func (g *Dag) processAnEligibleNode(nodeStatusesById map[int64]nodeStatus, proce
 				log.Logger.Tracef("Updating status of node (with mutex): %v", nodeStatus)
 				// update the actual map (not the copy) since we have a mutex
 				nodeStatusesById[nodeStatus.node.ID()] = nodeStatus
-				processCh <- nodeStatus.node
 				mutex.Unlock()
+				processCh <- nodeStatus.node
 				break
 			}
 
