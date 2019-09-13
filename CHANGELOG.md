@@ -14,6 +14,7 @@
 * Outputs can now also take 'conditions'. They'll only be loaded if all conditions are true
 * Added a `kapps graph` command that only prints the graph of kapps that would be processed. It can also produce SVG visualisations of the graph.
 * `--ignore-errors` now continues to try to execute all run steps for a kapp instead of aborting the kapp (which helps if e.g. the helm chart has been deleted but Terraform resources weren't cleaned up)
+* YAML loading is now strict - if any keys exist that aren't in our structs an error will be thrown
 
 ## 0.9.0
 * Rename the 'cache' subcommand to 'workspace' because it wasn't clear that users should actually work inside cache directories (i.e. they're not temporary caches).

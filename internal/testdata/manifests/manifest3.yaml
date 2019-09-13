@@ -2,7 +2,7 @@ kapps:
   - id: kappX
     sources:
     - uri: git@github.com:sugarkube/kapps-A.git//some/pathA#kappX-0.1.0
-    post_actions:
+    post_install_actions:
       - cluster_update:
 
   - id: kappY

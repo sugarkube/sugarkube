@@ -16,7 +16,6 @@
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp. Add an extra field for the command path.
 * The kapps validate command should make sure that all run steps are uniquely named to avoid issues calling different ones
 * Maybe the validate command should be implicitly run before `kapps install/delete`. The problem is with executing actions - if we default to running them it's dangerous, and if we default to not running them then perhaps config changes might also accidentally be applied perhaps or the commands run as expected. I think we should make `validate` search for run actions. If any are found we should require users to explictly either pass `--run-actions/--run-*-actions` or `--skip-*-actions` so they're actively choosing what to do.
-* The `kapps validate` command should be strict and throw an error if any unexpected yaml keys are present 
 * Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
 * Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
 * `ws create` should support `-i/-x` selectors to support selectively updating kapps
