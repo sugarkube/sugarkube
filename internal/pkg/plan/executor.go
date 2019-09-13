@@ -318,7 +318,8 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 					return
 				}
 
-				err = executeRunSteps(constants.Clean, runSteps, installableObj, stackObj, installerImpl.Clean, dryRun)
+				err = executeRunSteps(constants.Clean, runSteps, installableObj, stackObj, installerImpl.Clean,
+					ignoreErrors, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 					return
@@ -341,7 +342,8 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 					return
 				}
 
-				err = executeRunSteps(constants.Output, runSteps, installableObj, stackObj, installerImpl.Output, dryRun)
+				err = executeRunSteps(constants.Output, runSteps, installableObj, stackObj, installerImpl.Output,
+					ignoreErrors, dryRun)
 				if err != nil {
 					errCh <- errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 					return
@@ -563,7 +565,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				}
 			}
 
-			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, installerMethod, dryRun)
+			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, installerMethod, ignoreErrors, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error planning kapp '%s': %#v",
@@ -635,14 +637,14 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 			runSteps, err = installerMethod(installableObj, stackObj, dryRun)
 			if err != nil {
 				if ignoreErrors {
-					log.Logger.Warnf("Ignoring error applying kapp '%s': %#v",
+					log.Logger.Warnf("Ignoring error getting run steps for kapp '%s': %#v",
 						installableObj.FullyQualifiedId(), err)
 
 					if config.CurrentConfig.Verbose {
-						_, err = printer.Fprintf("[yellow]Ignoring error applying '[bold][white]%s[reset][yellow]':\n%v\n",
+						_, err = printer.Fprintf("[yellow]Ignoring error getting run steps for '[bold][white]%s[reset][yellow]':\n%v\n",
 							installableObj.FullyQualifiedId(), err)
 					} else {
-						_, err = printer.Fprintf("[yellow]Ignoring error applying '[bold][white]%s[reset][yellow]'.\n",
+						_, err = printer.Fprintf("[yellow]Ignoring error getting run steps for '[bold][white]%s[reset][yellow]'.\n",
 							installableObj.FullyQualifiedId())
 					}
 					if err != nil {
@@ -655,7 +657,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				}
 			}
 
-			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, installerMethod, dryRun)
+			err = executeRunSteps(unitName, runSteps, installableObj, stackObj, installerMethod, ignoreErrors, dryRun)
 			if err != nil {
 				if ignoreErrors {
 					log.Logger.Warnf("Ignoring error applying kapp '%s': %#v",
@@ -746,7 +748,7 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj interfaces.IInstallable,
 	stackObj interfaces.IStack,
 	installerMethod func(installableObj interfaces.IInstallable, stack interfaces.IStack, dryRun bool) ([]structs.RunStep, error),
-	dryRun bool) error {
+	ignoreErrors bool, dryRun bool) error {
 
 	dryRunPrefix := ""
 	if dryRun {
@@ -881,7 +883,18 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 		// the original error is more important to return, so return that. We should write files
 		// before returning it though
 		if cmdErr != nil {
-			if step.IgnoreErrors {
+			if ignoreErrors {
+				log.Logger.Infof("Ignoring error running step '%s' because --ignore-errors was passed: %v",
+					step.Name, cmdErr)
+
+				_, err := printer.Fprintf("* %s[white]%s[reset] - [yellow]Ignoring errors running step "+
+					"'[white]%s[default][yellow]' due to --ignore-errors flag...\n", dryRunPrefix, installableObj.FullyQualifiedId(), step.Name)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+
+				continue
+			} else if step.IgnoreErrors {
 				log.Logger.Infof("Ignoring error running step '%s' because ignore_errors is true: %v",
 					step.Name, cmdErr)
 
@@ -890,6 +903,8 @@ func executeRunSteps(unitName string, runSteps []structs.RunStep, installableObj
 				if err != nil {
 					return errors.WithStack(err)
 				}
+
+				continue
 			} else {
 				return errors.WithStack(cmdErr)
 			}
@@ -950,7 +965,7 @@ func getOutputs(installableObj interfaces.IInstallable, stackObj interfaces.ISta
 			return nil, errors.Wrapf(err, "Error writing output for kapp '%s'", installableObj.Id())
 		}
 
-		err = executeRunSteps(constants.Output, runSteps, installableObj, stackObj, installerImpl.Output, dryRun)
+		err = executeRunSteps(constants.Output, runSteps, installableObj, stackObj, installerImpl.Output, false, dryRun)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error executing run steps for kapp '%s'", installableObj.Id())
 		}
