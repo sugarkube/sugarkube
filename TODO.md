@@ -12,16 +12,15 @@
   * it's safe to call 'create_cluster' multiple times, but calling 'delete_cluster' multiple times results in an error. Ideally we'd only throw an error on the first attempt and ignore it on subsequent ones (e.g. because we already successfully deleted the cluster this run)
   * running cluster_update twice for kops seems to kill ssh and make sugarkube lose connectivity. It dies with an error.
 * Sugarkube uses 100% of CPU when waiting on tasks to complete. Profiling confirms there are no inefficiencies in our code. It appears to be due to https://github.com/golang/go/issues/27707
-* kapps whose conditions are false won't be run even if they are explicitly selected with -i. That's annoying for `kapp vars`. Perhaps explicitly selected kapps should have their conditions overridden? 
-* The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp.
+* kapps whose conditions are false won't be run even if they are explicitly selected with -i. That's annoying for `kapp vars`. Perhaps explicitly selected kapps should have their conditions overridden? Or add a flag for that?
+* The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp. Add an extra field for the command path.
 * The kapps validate command should make sure that all run steps are uniquely named to avoid issues calling different ones
 * Maybe the validate command should be implicitly run before `kapps install/delete`. The problem is with executing actions - if we default to running them it's dangerous, and if we default to not running them then perhaps config changes might also accidentally be applied perhaps or the commands run as expected. I think we should make `validate` search for run actions. If any are found we should require users to explictly either pass `--run-actions/--run-*-actions` or `--skip-*-actions` so they're actively choosing what to do.
 * The `kapps validate` command should be strict and throw an error if any unexpected yaml keys are present 
-* Add a setting to throw an error/make kapps validate print an error if kapp IDs aren't globally unique. We don't care, but terraform does with our sample naming convention. The options are either to add the manifest ID to the TF state path which stops people reorganising, or making kapp IDs globally unique, otherwise e.g. 2 wordpress instances in different manifests could clobber each other  
 * Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
 * Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
 * `ws create` should support `-i/-x` selectors to support selectively updating kapps
-* Find a way of stopping `kapp vars` or `kapps install --dry-run` failing if they refer to outputs from another kapp that don't exist
+* Find a way of stopping `kapp vars` or `kapps install --dry-run` failing if they refer to outputs from another kapp that don't exist (or if output can't be generated, eg jenkins when the cluster is offline)
 
 * Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
 
@@ -34,7 +33,6 @@
   * Document the dangers of adding provider vars dirs (i.e. that the next time sugarkube is run it'll replace the config). It should only be used in certain situations (and probably never in prod)
 * Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
 * Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them)
-* Think of a good way of declaring per-project names that can be used for namespacing (i.e. to allow multiple clusters to be brought up for different reasons)
 * Retry setting up SSH port forwarding in case the bastion hostname doesn't resolve
 
 ### Cluster updates
@@ -44,7 +42,7 @@
 * We also need to allow access to vars from other kapps. E.g. if one kapp sets a particular variable, 
   'vars' blocks for other kapps should be able to refer to them (e.g. myvar: "{{ .kapps.somekapp.var.thevar }}")
 * Provide a 'varsTemplate' field to allow for templating before parsing vars. That'll help with things like reassigning
-  a map. Template this block then parse it as yaml and merge it with the other vars.
+  a map. Template this block then parse it as yaml and merge it with the other vars (pretty sure templating & outputs make this obsolete).
 
 ### Developer experience
 * Stream console output in real-time - see stern for an example of streaming logs from multiple processes in parallel. Add a flag to enable this.

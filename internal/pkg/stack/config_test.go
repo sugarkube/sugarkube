@@ -291,6 +291,7 @@ func TestGetKappVarsFromFiles(t *testing.T) {
 	expected := `kapp:
   cacheRoot: ""
   id: kappA
+  manifestId: manifest1
   templates: {}
   vars:
     colours:

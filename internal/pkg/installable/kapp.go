@@ -459,8 +459,9 @@ func (k Kapp) Vars(stack interfaces.IStack) (map[string]interface{}, error) {
 // Returns certain kapp data that should be exposed as variables when running kapps
 func (k Kapp) getIntrinsicData() map[string]string {
 	return map[string]string{
-		"id":        k.Id(),
-		"cacheRoot": k.GetCacheDir(),
+		"id":         k.Id(),
+		"manifestId": k.ManifestId(),
+		"cacheRoot":  k.GetCacheDir(),
 	}
 }
 
