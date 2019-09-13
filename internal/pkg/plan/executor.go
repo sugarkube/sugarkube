@@ -685,10 +685,10 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 	// the assumption is that those kapps will have been previously installed and already exist - otherwise they'd
 	// be marked as absent not to be installed at all)
 	var outputs map[string]interface{}
-	if install && approved {
-		// fail if outputs don't exist
-		outputs, err = getOutputs(installableObj, stackObj, installerImpl, false, dryRun)
-		if err != nil {
+	if install {
+		// only fail if outputs don't exist if we're approved. Otherwise it's a best-effort.
+		outputs, err = getOutputs(installableObj, stackObj, installerImpl, !approved, dryRun)
+		if approved && err != nil {
 			errCh <- errors.WithStack(err)
 			return
 		}
@@ -942,7 +942,7 @@ func getOutputs(installableObj interfaces.IInstallable, stackObj interfaces.ISta
 	installerImpl interfaces.IInstaller, ignoreMissing bool, dryRun bool) (map[string]interface{}, error) {
 	var outputs map[string]interface{}
 
-	// try to load kapp outputs and fail if we can't (assume we only need to do this when installing)
+	// try to load kapp outputs and fail if we can't
 	if installableObj.HasOutputs() {
 		// run the output target to write outputs to files
 		runSteps, err := installerImpl.Output(installableObj, stackObj, dryRun)

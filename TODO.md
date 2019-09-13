@@ -59,6 +59,7 @@
 * Make graph visualisations show kapp actions
 * Allow graphs to be visualised in the install, delete or both directions (both looks pretty messy so it'd be good to have the option of each direction individually)
 * Allow graph visualisations to show the individual run steps for each kapp (i.e. add a 'detailed' mode)
+* There should be a flag to make sugarkube try to load generated outputs already on disk, but not actually execute the output steps (in case they take a long time)
   
 ### Everything else
 * Support declaring templates as 'sensitive' - they should be templated just-in-time then deleted (even on error/interrupts)

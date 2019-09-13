@@ -264,6 +264,9 @@ func mergeRunUnits(runUnits map[string]structs.RunUnit, action string,
 		case constants.ApplyDelete:
 			runSteps := setRunUnitDefaults(v, v.ApplyDelete)
 			steps = append(steps, runSteps...)
+		case constants.Output:
+			runSteps := setRunUnitDefaults(v, v.Output)
+			steps = append(steps, runSteps...)
 		case constants.Clean:
 			// todo - merge in globally configured defaults
 			runSteps := setRunUnitDefaults(v, v.Clean)
