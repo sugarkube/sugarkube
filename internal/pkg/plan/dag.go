@@ -432,7 +432,7 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 			select {
 			case <-initialiseCh:
 				go func() {
-					g.processAnEligibleNode(nodeStatusesById, processCh, mutex, down)
+					g.processEligibleNodes(nodeStatusesById, processCh, mutex, down)
 					log.Logger.Debugf("Finished the initial pass processing eligible nodes")
 				}()
 			case namedNode, ok := <-doneCh:
@@ -445,7 +445,7 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 
 					go func() {
 						// reprocess nodes again since there's been a state change
-						g.processAnEligibleNode(nodeStatusesById, processCh, mutex, down)
+						g.processEligibleNodes(nodeStatusesById, processCh, mutex, down)
 
 						if allDone(nodeStatusesById) {
 							log.Logger.Infof("DAG fully processed")
@@ -476,15 +476,13 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 	}()
 
 	log.Logger.Tracef("Starting initialisation pass over nodes")
-	for i := 0; i < numWorkers; i++ {
-		initialiseCh <- true
-	}
+	initialiseCh <- true
 
 	return finishedCh
 }
 
-// Adds a single node whose dependencies have all been satisfied into a channel for processing by workers
-func (g *Dag) processAnEligibleNode(nodeStatusesById map[int64]nodeStatus, processCh chan<- NamedNode,
+// Adds nodes whose dependencies have all been satisfied into a channel for processing by workers
+func (g *Dag) processEligibleNodes(nodeStatusesById map[int64]nodeStatus, processCh chan<- NamedNode,
 	mutex *sync.Mutex, down bool) {
 
 	// copy the node status map with a mutex so we don't hit concurrent map misuse issues
@@ -532,11 +530,10 @@ func (g *Dag) processAnEligibleNode(nodeStatusesById map[int64]nodeStatus, proce
 				nodeStatusesById[nodeStatus.node.ID()] = nodeStatus
 				mutex.Unlock()
 				processCh <- nodeStatus.node
-				break
+			} else {
+				log.Logger.Tracef("Status of node %v is not 'unprocessed'. Will keep searching", nodeStatus)
+				mutex.Unlock()
 			}
-
-			log.Logger.Tracef("Status of node %v is not 'unprocessed'. Will keep searching", nodeStatus)
-			mutex.Unlock()
 		} else {
 			log.Logger.Tracef("Dependencies not satisfied for node: %+v", nodeStatus.node)
 		}
