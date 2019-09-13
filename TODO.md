@@ -4,6 +4,7 @@
 * Code of conduct
 
 ## Top priorities
+* Add retries around setting up SSH port forwarding (it should make sugarkube abort if no port forwarding can be created - at the moment it always reports success). 
 * The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
 * While walking the DAG check whether there are any actions that need executing, then either prompt the user or get them to pass either --skip-actions or --run-actions. It's annoying to forget to pass flags and have things fail
 
@@ -23,6 +24,7 @@
 * Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
 * Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
 * `ws create` should support `-i/-x` selectors to support selectively updating kapps
+* Find a way of stopping `kapp vars` or `kapps install --dry-run` failing if they refer to outputs from another kapp that don't exist
 
 * Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
 

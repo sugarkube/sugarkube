@@ -170,6 +170,11 @@ func init() {
 			if err != nil {
 				panic(fmt.Sprintf("Error logging to file '%s'", logFilePath))
 			}
+
+			// set a log level if it's none
+			if config.CurrentConfig.LogLevel == "none" {
+				config.CurrentConfig.LogLevel = "info"
+			}
 		}
 
 		log.ConfigureLogger(config.CurrentConfig.LogLevel, config.CurrentConfig.JsonLogs, logFile)

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/sugarkube/sugarkube/internal/pkg/clustersot"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/convert"
@@ -168,11 +169,12 @@ func (p KopsProvisioner) Create(dryRun bool) error {
 		return nil
 	}
 
-	templatedVars, err := p.stack.GetTemplatedVars(nil, map[string]interface{}{})
+	// reparse the config in case kapps have added extra provider vars paths
+	kopsConfig, err := parseKopsConfig(p.stack)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	log.Logger.Debugf("Templated stack config vars: %#v", templatedVars)
+	p.kopsConfig = *kopsConfig
 
 	args := []string{"create", "cluster"}
 	args = parameteriseValues(args, p.kopsConfig.Params.Global)
@@ -294,7 +296,14 @@ func (p KopsProvisioner) IsAlreadyOnline(dryRun bool) (bool, error) {
 // No-op function, required to fully implement the Provisioner interface
 func (p KopsProvisioner) Update(dryRun bool) error {
 
-	err := p.patch(dryRun)
+	// reparse the config in case kapps have added extra provider vars paths
+	kopsConfig, err := parseKopsConfig(p.stack)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	p.kopsConfig = *kopsConfig
+
+	err = p.patch(dryRun)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -457,10 +466,13 @@ func (p KopsProvisioner) patch(dryRun bool) error {
 		return errors.WithStack(err)
 	}
 
-	// we don't just defer this because it's useful to inspect it if the above command fails
-	err = os.Remove(tmpfile.Name()) // clean up
-	if err != nil {
-		return errors.WithStack(err)
+	// we don't just defer this because it's useful to inspect it if the above command fails.
+	// Also if debugging is enabled don't delete it
+	if log.Logger.Level != logrus.TraceLevel && log.Logger.Level != logrus.DebugLevel {
+		err = os.Remove(tmpfile.Name()) // clean up
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	if !dryRun {
@@ -586,9 +598,12 @@ func (p KopsProvisioner) patchInstanceGroup(kopsConfig KopsConfig, instanceGroup
 	}
 
 	// we don't just defer this because it's useful to inspect it if the above command fails
-	err = os.Remove(tmpfile.Name()) // clean up
-	if err != nil {
-		return errors.WithStack(err)
+	// Also don't delete the file if logging is enabled
+	if log.Logger.Level != logrus.TraceLevel && log.Logger.Level != logrus.DebugLevel {
+		err = os.Remove(tmpfile.Name()) // clean up
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	log.Logger.Infof("Successfully replaced config of instance group '%s'", instanceGroupName)
@@ -602,6 +617,9 @@ func parseKopsConfig(stack interfaces.IStack) (*KopsConfig, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	log.Logger.Debugf("Will parse Kops config from templated stack config vars: %#v", templatedVars)
+
 	provisionerValues, ok := templatedVars[ProvisionerKey].(map[interface{}]interface{})
 	if !ok {
 		return nil, errors.New("No provisioner found in stack config. You must at least set the binary path.")
