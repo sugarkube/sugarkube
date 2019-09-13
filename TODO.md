@@ -8,9 +8,6 @@
 * The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
 * While walking the DAG check whether there are any actions that need executing, then either prompt the user or get them to pass either --skip-actions or --run-actions. It's annoying to forget to pass flags and have things fail
 
-* Ignoring errors when deleting doesn't quite work as it should:
-  * Spin up the dev-web stack. Then delete e.g. wordpress:site1. When tearing down the stack, the wordpress kapp will stop executing after failing to run `helm delete`. Instead it should continue to run `tf-destroy` but it doesn't.
-
 * Fix issues around errors with actions:
   * it's safe to call 'create_cluster' multiple times, but calling 'delete_cluster' multiple times results in an error. Ideally we'd only throw an error on the first attempt and ignore it on subsequent ones (e.g. because we already successfully deleted the cluster this run)
   * running cluster_update twice for kops seems to kill ssh and make sugarkube lose connectivity. It dies with an error.
@@ -32,7 +29,6 @@
 
 * It should be possible to set kapp vars that are maps and lists
 * Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
-* Only run a kops update if the spec has changed (diff the new spec with the existing one)
 * Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity) (created https://github.com/kubernetes/kops/issues/7393)
 * Documentation
   * Document the dangers of adding provider vars dirs (i.e. that the next time sugarkube is run it'll replace the config). It should only be used in certain situations (and probably never in prod)

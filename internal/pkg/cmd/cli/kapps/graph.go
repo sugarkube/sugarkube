@@ -35,7 +35,7 @@ import (
 type graphCmd struct {
 	workspaceDir    string
 	includeParents  bool
-	open            bool
+	noOpen          bool
 	outPath         string
 	stackName       string
 	stackFile       string
@@ -55,9 +55,8 @@ func newGraphCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "graph [flags] [stack-file] [stack-name]",
 		Short: fmt.Sprintf("Graphs local kapps"),
-		Long: `Prints the graph showing which kapps would be processed.
-
-The graph can also optionally be rendered as an SVG image.
+		Long: `Prints the graph showing which kapps would be processed, renders it as an SVG 
+and opens it using the default SVG application. To disable rendering an SVG pass '--no-open'.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
@@ -73,8 +72,8 @@ The graph can also optionally be rendered as an SVG image.
 	}
 
 	f := cmd.Flags()
-	f.BoolVar(&c.open, "open", false, "produce an SVG visualisation and open it in the default .svg application (required graphviz)")
-	f.StringVarP(&c.outPath, "out", "o", "", "write an SVG visualisation to the given file path (required graphviz)")
+	f.BoolVar(&c.noOpen, "no-open", false, "don't open an SVG visualisation in the default .svg application (requires graphviz)")
+	f.StringVarP(&c.outPath, "out", "o", "", "write an SVG visualisation to the given file path (requires graphviz)")
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
@@ -120,7 +119,7 @@ func (c *graphCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	if c.open || c.outPath != "" {
+	if !c.noOpen || c.outPath != "" {
 		log.Logger.Debugf("Generating graphViz definition...")
 		graphViz := dagObj.Visualise(stackObj.GetConfig().GetName())
 
@@ -173,7 +172,7 @@ func (c *graphCmd) run() error {
 			return errors.WithStack(err)
 		}
 
-		if c.open {
+		if !c.noOpen {
 			err = open.Start(outFile.Name())
 			if err != nil {
 				return errors.WithStack(err)
