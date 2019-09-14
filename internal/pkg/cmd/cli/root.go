@@ -99,6 +99,7 @@ func NewCommand(name string) *cobra.Command {
 
 	rootCmd.Use = name
 	rootCmd.SilenceUsage = true
+	rootCmd.SilenceErrors = true // we'll print errors, Cobra doesn't have to
 
 	printer.SetOutput(rootCmd.OutOrStdout())
 

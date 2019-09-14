@@ -49,7 +49,7 @@ func CheckError(err error) {
 			if log.Logger.Level == logrus.DebugLevel || log.Logger.Level == logrus.TraceLevel {
 				_, err2 = printer.Fprintf("[red]An error occurred: %+v\n", err)
 			} else {
-				_, err2 = printer.Fprintf("[red]An error occurred: %v\n\n"+
+				_, err2 = printer.Fprintf("\n[red][bold]Error[reset][red]: %v\n\n"+
 					"[reset]Run with `-l debug` or `-l trace` for a full stacktrace.\n", err)
 			}
 			if err2 != nil {
