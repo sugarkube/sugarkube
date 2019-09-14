@@ -252,7 +252,9 @@ func (g *Dag) GetInstallables() []interfaces.IInstallable {
 	installables := make([]interfaces.IInstallable, 0)
 
 	for _, node := range g.nodesByName() {
-		installables = append(installables, node.installableObj)
+		if node.marked {
+			installables = append(installables, node.installableObj)
+		}
 	}
 
 	return installables

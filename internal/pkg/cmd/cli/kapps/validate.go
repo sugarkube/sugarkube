@@ -107,6 +107,7 @@ func (c *validateConfig) run() error {
 			return errors.WithStack(err)
 		}
 
+		// make sure required binaries exist
 		for _, requirement := range descriptor.Requires {
 			// todo - this should lookup the requirement's Command
 
@@ -127,6 +128,11 @@ func (c *validateConfig) run() error {
 				log.Logger.Infof("Found requirement '%s' at '%s'", requirement, path)
 			}
 		}
+
+		err = assertUniqueRunStepNames(descriptor.RunUnits)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	if numMissing > 0 {
@@ -139,6 +145,47 @@ func (c *validateConfig) run() error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
+	}
+
+	return nil
+}
+
+// Returns an error if multiple run steps in the same run unit have the same name
+func assertUniqueRunStepNames(runUnits map[string]structs.RunUnit) error {
+	for _, runUnit := range runUnits {
+		for _, runSteps := range [][]structs.RunStep{runUnit.PlanInstall, runUnit.ApplyInstall, runUnit.PlanDelete,
+			runUnit.ApplyDelete, runUnit.Output, runUnit.Clean} {
+
+			// strip out call run steps
+			candidateRunSteps := make([]structs.RunStep, 0)
+			for _, step := range runSteps {
+				if step.Call == "" {
+					candidateRunSteps = append(candidateRunSteps, step)
+				}
+			}
+
+			err := errorOnDuplicates(candidateRunSteps)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// Returns an error if multiple run steps have the same name
+func errorOnDuplicates(runSteps []structs.RunStep) error {
+	seen := make(map[string]bool, 0)
+	for _, step := range runSteps {
+		if _, ok := seen[step.Name]; ok {
+			return fmt.Errorf("Multiple run steps exist called '%s'. Run steps in each run unit must be "+
+				"uniquely named.", step.Name)
+		}
+
+		log.Logger.Tracef("No previous run step called '%s' exists", step.Name)
+
+		seen[step.Name] = true
 	}
 
 	return nil
