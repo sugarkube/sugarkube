@@ -42,6 +42,8 @@ type createCmd struct {
 	region          string
 	workspaceDir    string
 	renderTemplates bool
+	includeSelector []string
+	excludeSelector []string
 }
 
 func newCreateCmd() *cobra.Command {
@@ -74,6 +76,12 @@ templates defined by kapps.`,
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
+	f.StringArrayVarP(&c.includeSelector, "include", "i", []string{},
+		fmt.Sprintf("only process specified kapps (can specify multiple, formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all)",
+			constants.WildcardCharacter))
+	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
+		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all)",
+			constants.WildcardCharacter))
 
 	return cmd
 }
@@ -122,8 +130,23 @@ func (c *createCmd) run() error {
 		return errors.WithStack(err)
 	}
 
+	// selected kapps will be returned in the order in which they appear in manifests, not the order
+	// they're specified in selectors
+	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
+		c.includeSelector, c.excludeSelector)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	selectedInstallableIds := make([]string, 0)
+
+	for _, installableObj := range selectedInstallables {
+		selectedInstallableIds = append(selectedInstallableIds,
+			installableObj.FullyQualifiedId())
+	}
+
 	for _, manifest := range stackObj.GetConfig().Manifests() {
-		err := cacher.CacheManifest(manifest, absRootWorkspaceDir, c.dryRun)
+		err := cacher.CacheManifest(manifest, absRootWorkspaceDir, selectedInstallableIds, c.dryRun)
 		if err != nil {
 			return errors.WithStack(err)
 		}

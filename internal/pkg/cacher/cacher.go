@@ -22,6 +22,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,7 +40,8 @@ type CacheGrouper interface {
 }
 
 // Cache a group of cacheable objects under a root directory
-func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) error {
+func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, selectedInstallableIds []string,
+	dryRun bool) error {
 
 	// create a directory to cache all kapps in this cacheGroup in
 	groupCacheDir := filepath.Join(rootCacheDir, cacheGroup.Id())
@@ -51,6 +53,11 @@ func CacheManifest(cacheGroup CacheGrouper, rootCacheDir string, dryRun bool) er
 
 	// acquire each kapp and cache it
 	for _, installableObj := range cacheGroup.Installables() {
+		if !utils.InStringArray(selectedInstallableIds, installableObj.FullyQualifiedId()) {
+			log.Logger.Debugf("Won't cache unselected installable '%s'", installableObj.FullyQualifiedId())
+			continue
+		}
+
 		log.Logger.Infof("Caching kapp '%s'", installableObj.FullyQualifiedId())
 		log.Logger.Debugf("Kapp to cache: %#v", installableObj)
 
