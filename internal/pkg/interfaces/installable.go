@@ -43,6 +43,7 @@ type IInstallable interface {
 	RenderTemplates(templateVars map[string]interface{}, stackConfig IStackConfig,
 		dryRun bool) error
 	GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{}, error)
+	HasActions() bool
 	HasOutputs() bool
 	GetLocalRegistry() IRegistry
 	SetLocalRegistry(registry IRegistry)

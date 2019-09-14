@@ -8,6 +8,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
+	"github.com/sugarkube/sugarkube/internal/pkg/program"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"os/exec"
@@ -126,6 +127,8 @@ func (c *validateConfig) run() error {
 		if err != nil {
 			return errors.WithStack(err)
 		}
+
+		return program.SilentError{}
 	} else {
 		_, err = printer.Fprint("\n[green]All requirements satisfied\n")
 		if err != nil {

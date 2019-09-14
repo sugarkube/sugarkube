@@ -11,7 +11,6 @@
 
 
 * Default to running the `kapps validate` command implicitly before running `kapps install/delete`. 
-* While walking the DAG check whether there are any actions that need executing, then either prompt the user or get them to pass either --skip-actions or --run-actions. It's annoying to forget to pass flags and have things fail. Add this to `kapps validate`
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp. Add an extra field for the command path.
 
 

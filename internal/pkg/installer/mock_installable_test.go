@@ -22,6 +22,9 @@ func (m MockInstallable) ManifestId() string {
 func (m MockInstallable) State() string {
 	return ""
 }
+func (m MockInstallable) HasActions() bool {
+	return false
+}
 func (m MockInstallable) PreInstallActions() []structs.Action {
 	return nil
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
+	"github.com/sugarkube/sugarkube/internal/pkg/program"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
@@ -37,6 +38,7 @@ type installCmd struct {
 	//force               bool
 	skipTemplating      bool
 	runActions          bool
+	skipActions         bool
 	runPreActions       bool
 	runPostActions      bool
 	establishConnection bool
@@ -105,7 +107,9 @@ process before installing the selected kapps.
 			}
 
 			if err1 != nil {
-				_, _ = printer.Fprint("\n[red][bold]Error installing kapp. Aborting.\n")
+				if _, silent := err1.(program.SilentError); !silent {
+					_, _ = printer.Fprint("\n[red][bold]Error installing kapp. Aborting.\n")
+				}
 				return errors.WithStack(err1)
 			}
 
@@ -124,6 +128,7 @@ process before installing the selected kapps.
 	//	"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before installing them")
 	f.BoolVar(&c.runActions, "run-actions", false, "run pre- and post-actions in kapps")
+	f.BoolVar(&c.skipActions, "skip-actions", false, "skip pre- and post-actions in kapps")
 	f.BoolVar(&c.runPreActions, constants.RunPreActions, false, "run pre actions in kapps")
 	f.BoolVar(&c.runPostActions, constants.RunPostActions, false, "run post actions in kapps")
 	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
@@ -179,6 +184,28 @@ func (c *installCmd) run() error {
 	_, err = printer.Fprintln("")
 	if err != nil {
 		return errors.WithStack(err)
+	}
+
+	// if a user selected to run either pre- or post- actions, set the runActions flag if they didn't set it explicitly
+	if !c.runActions {
+		if c.runPostActions || c.runPreActions {
+			c.runActions = true
+		}
+	}
+
+	// if no action flags were given, check whether any installables have actions. If they do
+	// return an error - the user must explicitly choose whether to run or skip them.
+	if !c.runActions && !c.skipActions {
+		installables := dagObj.GetInstallables()
+		for _, installableObj := range installables {
+			if installableObj.HasActions() {
+				_, err = printer.Fprintf("[red]Kapp '[white]%s[reset][red]' has pre-/post- actions. You must "+
+					"explicitly choose whether to run them (with `[bold]--run-actions[reset][red]`, "+
+					"`[bold]--run-pre-actions[reset][red]` or `[bold]--run-post-actions[reset][red]`) or skip them "+
+					"(with `[bold]--skip-actions[reset][red]`).\n", installableObj.FullyQualifiedId())
+				return program.SilentError{}
+			}
+		}
 	}
 
 	if c.establishConnection {

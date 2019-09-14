@@ -59,6 +59,14 @@ func (k Kapp) ManifestId() string {
 	return k.manifestId
 }
 
+// Returns true if the installable has any pre-/post- actions
+func (k Kapp) HasActions() bool {
+	return len(k.PreInstallActions()) > 0 ||
+		len(k.PostInstallActions()) > 0 ||
+		len(k.PreDeleteActions()) > 0 ||
+		len(k.PostDeleteActions()) > 0
+}
+
 // Returns the pre/post install/delete actions
 func (k Kapp) getActions(pre bool, install bool) []structs.Action {
 	// convert the map to a list
