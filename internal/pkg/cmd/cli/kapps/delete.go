@@ -35,10 +35,12 @@ type deleteCmd struct {
 	ignoreErrors        bool
 	skipTemplating      bool
 	runActions          bool
+	skipActions         bool
 	runPreActions       bool
 	runPostActions      bool
 	establishConnection bool
 	includeParents      bool
+	noValidate          bool
 	stackName           string
 	stackFile           string
 	provider            string
@@ -103,6 +105,8 @@ process before deleting the selected kapps.
 	f.BoolVar(&c.ignoreErrors, "ignore-errors", false, "ignore errors deleting kapps")
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before deleting them")
+	f.BoolVar(&c.noValidate, "no-validate", false, "don't validate kapps")
+	f.BoolVar(&c.skipActions, "skip-actions", false, "skip pre- and post-actions in kapps")
 	f.BoolVar(&c.runActions, "run-actions", false, "run pre- and post-actions in kapps")
 	f.BoolVar(&c.runPreActions, constants.RunPreActions, false, "run pre actions in kapps")
 	f.BoolVar(&c.runPostActions, constants.RunPostActions, false, "run post actions in kapps")
@@ -152,6 +156,11 @@ func (c *deleteCmd) run() error {
 	}
 
 	_, err = printer.Fprintln("")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	err = CatchMistakes(dagObj, c.runActions, c.skipActions, c.noValidate)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -97,7 +97,22 @@ func (c *validateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
+	err = Validate(dagObj)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+// Validates kapps
+func Validate(dagObj *plan.Dag) error {
 	numMissing := 0
+
+	_, err := printer.Fprintf("Validating kapps...\n")
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	installables := dagObj.GetInstallables()
 	for _, installable := range installables {
@@ -123,14 +138,14 @@ func (c *validateConfig) run() error {
 	}
 
 	if numMissing > 0 {
-		_, err = printer.Fprintf("\n[red]%d requirement(s) missing\n", numMissing)
+		_, err := printer.Fprintf("\n[red]%d requirement(s) missing\n", numMissing)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
 		return program.SilentError{}
 	} else {
-		_, err = printer.Fprint("\n[green]All requirements satisfied\n")
+		_, err := printer.Fprint("\n[green]Kapps successfully validated\n")
 		if err != nil {
 			return errors.WithStack(err)
 		}

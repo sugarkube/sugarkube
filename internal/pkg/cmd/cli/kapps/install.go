@@ -43,6 +43,7 @@ type installCmd struct {
 	runPostActions      bool
 	establishConnection bool
 	includeParents      bool
+	noValidate          bool
 	stackName           string
 	stackFile           string
 	provider            string
@@ -107,7 +108,7 @@ process before installing the selected kapps.
 			}
 
 			if err1 != nil {
-				if _, silent := err1.(program.SilentError); !silent {
+				if _, silent := errors.Cause(err1).(program.SilentError); !silent {
 					_, _ = printer.Fprint("\n[red][bold]Error installing kapp. Aborting.\n")
 				}
 				return errors.WithStack(err1)
@@ -127,6 +128,7 @@ process before installing the selected kapps.
 	//f.BoolVar(&c.force, "force", false, "don't require a cluster diff, just blindly install/delete all the kapps "+
 	//	"defined in a manifest(s)/stack config, even if they're already present/absent in the target cluster")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before installing them")
+	f.BoolVar(&c.noValidate, "no-validate", false, "don't validate kapps")
 	f.BoolVar(&c.runActions, "run-actions", false, "run pre- and post-actions in kapps")
 	f.BoolVar(&c.skipActions, "skip-actions", false, "skip pre- and post-actions in kapps")
 	f.BoolVar(&c.runPreActions, constants.RunPreActions, false, "run pre actions in kapps")
@@ -193,19 +195,9 @@ func (c *installCmd) run() error {
 		}
 	}
 
-	// if no action flags were given, check whether any installables have actions. If they do
-	// return an error - the user must explicitly choose whether to run or skip them.
-	if !c.runActions && !c.skipActions {
-		installables := dagObj.GetInstallables()
-		for _, installableObj := range installables {
-			if installableObj.HasActions() {
-				_, err = printer.Fprintf("[red]Kapp '[white]%s[reset][red]' has pre-/post- actions. You must "+
-					"explicitly choose whether to run them (with `[bold]--run-actions[reset][red]`, "+
-					"`[bold]--run-pre-actions[reset][red]` or `[bold]--run-post-actions[reset][red]`) or skip them "+
-					"(with `[bold]--skip-actions[reset][red]`).\n", installableObj.FullyQualifiedId())
-				return program.SilentError{}
-			}
-		}
+	err = CatchMistakes(dagObj, c.runActions, c.skipActions, c.noValidate)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	if c.establishConnection {
@@ -294,6 +286,42 @@ func establishConnection(dryRun bool, dryRunPrefix string) error {
 		if !isOnline {
 			log.Logger.Warnf("Cluster '%s' isn't online. Won't try to establish connectivity its "+
 				"API server", stackObj.GetConfig().GetCluster())
+		}
+	}
+
+	return nil
+}
+
+// Test whether any kapps have actions and if so explicitly require users to either opt to run or skip them. Also validate
+// kapps if users want to
+func CatchMistakes(dagObj *plan.Dag, runActions bool, skipActions bool, noValidate bool) error {
+	// if no action flags were given, check whether any installables have actions. If they do
+	// return an error - the user must explicitly choose whether to run or skip them.
+	if !runActions && !skipActions {
+		installables := dagObj.GetInstallables()
+		for _, installableObj := range installables {
+			if installableObj.HasActions() {
+				_, err := printer.Fprintf("[red]Kapp '[white]%s[reset][red]' has pre-/post- actions. You must "+
+					"explicitly choose whether to run them (with `[bold]--run-actions[reset][red]`, "+
+					"`[bold]--run-pre-actions[reset][red]` or `[bold]--run-post-actions[reset][red]`) or skip them "+
+					"(with `[bold]--skip-actions[reset][red]`).\n", installableObj.FullyQualifiedId())
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				return program.SilentError{}
+			}
+		}
+	}
+
+	if !noValidate {
+		err := Validate(dagObj)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		_, err = printer.Fprintln("")
+		if err != nil {
+			return errors.WithStack(err)
 		}
 	}
 

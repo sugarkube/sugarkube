@@ -10,7 +10,6 @@
 * Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
 
 
-* Default to running the `kapps validate` command implicitly before running `kapps install/delete`. 
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp. Add an extra field for the command path.
 
 
