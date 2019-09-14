@@ -108,27 +108,12 @@ func (c *validateConfig) run() error {
 		}
 
 		// make sure required binaries exist
-		for _, requirement := range descriptor.Requires {
-			// todo - this should lookup the requirement's Command
-
-			path, err := exec.LookPath(requirement)
-			if err != nil {
-				_, err = printer.Fprintf("  [red]Requirement missing! Can't find '[bold]%s[reset][red]' for [bold]%s\n", requirement,
-					installable.FullyQualifiedId())
-				numMissing++
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				log.Logger.Errorf("Requirement missing. Can't find: %s", requirement)
-			} else {
-				_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]' at '%s'\n", requirement, path)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				log.Logger.Infof("Found requirement '%s' at '%s'", requirement, path)
-			}
+		err = assertBinariesExist(descriptor.Requires, installable.FullyQualifiedId(), &numMissing)
+		if err != nil {
+			return errors.WithStack(err)
 		}
 
+		// make sure run steps are unquely named
 		err = assertUniqueRunStepNames(descriptor.RunUnits)
 		if err != nil {
 			return errors.WithStack(err)
@@ -144,6 +129,32 @@ func (c *validateConfig) run() error {
 		_, err = printer.Fprint("\n[green]All requirements satisfied\n")
 		if err != nil {
 			return errors.WithStack(err)
+		}
+	}
+
+	return nil
+}
+
+// Returns an error if binaries for requirements don't exist
+func assertBinariesExist(requirements []string, installableId string, numMissing *int) error {
+	for _, requirement := range requirements {
+		// todo - this should lookup the requirement's Command
+
+		path, err := exec.LookPath(requirement)
+		if err != nil {
+			_, err = printer.Fprintf("  [red]Requirement missing! Can't find '[bold]%s[reset][red]' "+
+				"for [bold]%s\n", requirement, installableId)
+			*numMissing++
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			log.Logger.Errorf("Requirement missing. Can't find: %s", requirement)
+		} else {
+			_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]' at '%s'\n", requirement, path)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			log.Logger.Infof("Found requirement '%s' at '%s'", requirement, path)
 		}
 	}
 
