@@ -46,4 +46,5 @@ type StackFile struct {
 	KappVarsDirs        []string             `yaml:"kapp_vars_dirs"`
 	ManifestDescriptors []ManifestDescriptor `yaml:"manifests"` // this struct should be immutable, so don't store pointers
 	TemplateDirs        []string             `yaml:"template_dirs"`
+	Defaults            KappConfig           // Defaults that apply to all manifests in the stack
 }

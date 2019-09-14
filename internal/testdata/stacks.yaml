@@ -19,6 +19,10 @@ large:
   cluster: large
   provider_vars_dirs:               # paths to yaml files to load data from. Keys will be merged.
     - ./stacks/
+  defaults:
+    vars:
+      stackDefault: xyz
+      overriddenDefault: zzz
   manifests:
     - uri: manifests/manifest1.yaml
       overrides:
@@ -31,6 +35,7 @@ large:
           vars:
             sizeVar: mediumOverridden
             stackVar: setInOverrides
+            overriddenDefault: aaa
     - uri: manifests/manifest2.yaml
       id: exampleManifest2
   template_dirs:

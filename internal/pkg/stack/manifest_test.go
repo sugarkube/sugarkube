@@ -298,7 +298,7 @@ kapps:
 			manifestFile: manifestFile,
 		}
 
-		installables, err := instantiateInstallables(manifest.Id(), manifest)
+		installables, err := instantiateInstallables(manifest)
 		manifest.installables = installables
 
 		if test.expectedError {
@@ -327,8 +327,10 @@ func TestManifestOverrides(t *testing.T) {
 		Id: "kappA",
 		KappConfig: structs.KappConfig{
 			Vars: map[string]interface{}{
-				"stackVar": "setInOverrides",
-				"sizeVar":  "mediumOverridden",
+				"stackVar":          "setInOverrides",
+				"sizeVar":           "mediumOverridden",
+				"stackDefault":      "xyz",
+				"overriddenDefault": "aaa",
 				"colours": []interface{}{
 					"red",
 					"black",
@@ -372,7 +374,10 @@ func TestManifestOverridesNil(t *testing.T) {
 	expectedDescriptor := structs.KappDescriptorWithMaps{
 		Id: "kappC",
 		KappConfig: structs.KappConfig{
-			Vars: map[string]interface{}{},
+			Vars: map[string]interface{}{
+				"stackDefault":      "xyz",
+				"overriddenDefault": "zzz",
+			},
 		},
 		Sources: map[string]structs.Source{
 			"special": {

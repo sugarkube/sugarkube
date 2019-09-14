@@ -6,33 +6,32 @@
 ## Top priorities
 * Add retries around setting up SSH port forwarding (it should make sugarkube abort if no port forwarding can be created - at the moment it always reports success). 
 * Retry setting up SSH port forwarding in case the bastion hostname doesn't resolve
+
 * The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
-* Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
-
-
 * The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp. Add an extra field for the command path.
 
+* Update the prometheus-operator kapp to delete its CRDs when it's deleted
 
-* kapps whose conditions are false won't be run even if they are explicitly selected with -i. That's annoying for `kapp vars`. Perhaps explicitly selected kapps should have their conditions overridden? Or add a flag for that?
-* Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
+* Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
+* Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them)
+
+
+
+
 
 * Find a way of stopping `kapp vars` or `kapps install --dry-run` failing if they refer to outputs from another kapp that don't exist (or if output can't be generated, eg jenkins when the cluster is offline). There is a `--skip-outputs` flag but it's easy to miss - perhaps add it to an error message?)
+
+* Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
+* Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
+* kapps whose conditions are false won't be run even if they are explicitly selected with -i. That's annoying for `kapp vars`. Perhaps explicitly selected kapps should have their conditions overridden? Or add a flag for that?
+* Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
+* There should be a flag to make sugarkube try to load generated outputs already on disk, but not actually execute the output steps (in case they take a long time)
 
 * Fix issues around errors with actions:
   * it's safe to call 'create_cluster' multiple times, but calling 'delete_cluster' multiple times results in an error. Ideally we'd only throw an error on the first attempt and ignore it on subsequent ones (e.g. because we already successfully deleted the cluster this run)
   * running cluster_update twice for kops seems to kill ssh and make sugarkube lose connectivity. It dies with an error.
 
-* Support defaults at the stack level (e.g. to pin helm/kubectl binaries per stack)
-
-* Update the prometheus-operator kapp to delete its CRDs when it's deleted
-
 * It should be possible to set kapp vars that are maps and lists
-* Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
-* Throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity) (created https://github.com/kubernetes/kops/issues/7393)
-* Documentation
-  * Document the dangers of adding provider vars dirs (i.e. that the next time sugarkube is run it'll replace the config). It should only be used in certain situations (and probably never in prod)
-* Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
-* Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them)
 
 ### Cluster updates
 * It should be easy to see what changes will be applied by kops - perhaps go to a two-stage approach with a '--yes' flag, to make a distinction between --dry-run and staging changes.
@@ -52,7 +51,6 @@
 * Make graph visualisations show kapp actions
 * Allow graphs to be visualised in the install, delete or both directions (both looks pretty messy so it'd be good to have the option of each direction individually)
 * Allow graph visualisations to show the individual run steps for each kapp (i.e. add a 'detailed' mode)
-* There should be a flag to make sugarkube try to load generated outputs already on disk, but not actually execute the output steps (in case they take a long time)
   
 ### Everything else
 * Support declaring templates as 'sensitive' - they should be templated just-in-time then deleted (even on error/interrupts)
@@ -79,3 +77,4 @@
   
 # Known issues
 * Sugarkube uses 100% of CPU when waiting on tasks to complete. Profiling confirms there are no inefficiencies in our code. It appears to be due to https://github.com/golang/go/issues/27707
+* It'd be nice to throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity) but it's currently out of our hands: really https://github.com/kubernetes/kops/issues/7393

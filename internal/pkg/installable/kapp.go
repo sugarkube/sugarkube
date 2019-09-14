@@ -158,7 +158,12 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 			for key, previousSource := range previousLayer.Sources {
 				currentSource, ok := configCopy.Sources[key]
 				if !ok {
-					continue
+					// if no source exists, initialise one so we can propagate values
+					currentSource = structs.Source{
+						Options: map[string]interface{}{},
+					}
+
+					configCopy.Sources = make(map[string]structs.Source)
 				}
 
 				if currentSource.Uri == "" && previousSource.Uri != "" {
@@ -175,7 +180,7 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 			for key, previousOutput := range previousLayer.Outputs {
 				currentOutput, ok := configCopy.Outputs[key]
 				if !ok {
-					continue
+					currentOutput = structs.Output{}
 				}
 
 				if currentOutput.Id == "" && previousOutput.Id != "" {

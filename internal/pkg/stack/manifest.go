@@ -58,7 +58,7 @@ func (m Manifest) IsSequential() bool {
 }
 
 // Instantiate installables for kapps defined in manifest files. Note: No overrides are applied at this stage.
-func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces.IInstallable, error) {
+func instantiateInstallables(manifest Manifest) ([]interfaces.IInstallable, error) {
 
 	manifestFile := manifest.manifestFile
 
@@ -83,6 +83,7 @@ func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces
 		//     of descriptors when it's loaded)
 		//   * defaults in manifest files
 		//   * the kapp descriptor in manifest files
+		//   * defaults in stack files
 		//   * overrides in stack files for the kapp
 		//   * command line values (todo)
 
@@ -91,7 +92,7 @@ func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces
 			kappDescriptorWithMap,
 		}
 
-		installableObj, err := installable.New(manifestId, descriptors)
+		installableObj, err := installable.New(manifest.Id(), descriptors)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -121,20 +122,10 @@ func instantiateInstallables(manifestId string, manifest Manifest) ([]interfaces
 			}
 		}
 
-		// if there were any overrides defined in the stack for this installable, append
-		// the descriptor to the list
-		stackOverrides, ok := manifest.descriptor.Overrides[installableObj.Id()]
-		if ok {
-			err = installableObj.AddDescriptor(stackOverrides, false)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
-		}
-
 		installables[i] = installableObj
 	}
 
-	log.Logger.Tracef("Parsed installables from manifest '%s' as: %#v", manifestId, installables)
+	log.Logger.Tracef("Parsed installables from manifest '%s' as: %#v", manifest.Id(), installables)
 
 	return installables, nil
 }
@@ -158,7 +149,7 @@ func ParseManifestFile(manifestFilePath string, manifestDescriptor structs.Manif
 		manifestFile: manifestFile,
 	}
 
-	installables, err := instantiateInstallables(manifest.Id(), manifest)
+	installables, err := instantiateInstallables(manifest)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -318,15 +309,37 @@ func MatchesSelector(installable interfaces.IInstallable, selector string) (bool
 	return false, nil
 }
 
-func acquireManifests(stackObj structs.StackFile) ([]interfaces.IManifest, error) {
+func acquireManifests(stackFile structs.StackFile) ([]interfaces.IManifest, error) {
 	log.Logger.Info("Acquiring manifests...")
 
-	manifests := make([]interfaces.IManifest, len(stackObj.ManifestDescriptors))
+	stackDefaults := structs.KappDescriptorWithMaps{
+		KappConfig: stackFile.Defaults,
+	}
 
-	for i, manifestDescriptor := range stackObj.ManifestDescriptors {
-		manifest, err := acquireManifest(filepath.Dir(stackObj.FilePath), manifestDescriptor)
+	manifests := make([]interfaces.IManifest, len(stackFile.ManifestDescriptors))
+
+	for i, manifestDescriptor := range stackFile.ManifestDescriptors {
+		manifest, err := acquireManifest(filepath.Dir(stackFile.FilePath), manifestDescriptor)
 		if err != nil {
 			return nil, errors.WithStack(err)
+		}
+
+		for _, installableObj := range manifest.Installables() {
+			// add stack defaults to the installable
+			err = installableObj.AddDescriptor(stackDefaults, false)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+
+			// if there were any overrides defined in the stack for this installable, append
+			// the descriptor to the list
+			stackOverrides, ok := manifestDescriptor.Overrides[installableObj.Id()]
+			if ok {
+				err = installableObj.AddDescriptor(stackOverrides, false)
+				if err != nil {
+					return nil, errors.WithStack(err)
+				}
+			}
 		}
 
 		manifests[i] = manifest

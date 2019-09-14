@@ -51,8 +51,9 @@ func GetTestManifestDescriptors() []structs.ManifestDescriptor {
 			"kappA": {
 				KappConfig: structs.KappConfig{
 					Vars: map[string]interface{}{
-						"sizeVar":  "mediumOverridden",
-						"stackVar": "setInOverrides",
+						"sizeVar":           "mediumOverridden",
+						"stackVar":          "setInOverrides",
+						"overriddenDefault": "aaa",
 					},
 				},
 				Sources: map[string]structs.Source{
@@ -85,8 +86,9 @@ func GetTestManifests(t *testing.T) []interfaces.IManifest {
 			"kappA": {
 				KappConfig: structs.KappConfig{
 					Vars: map[string]interface{}{
-						"sizeVar":  "mediumOverridden",
-						"stackVar": "setInOverrides",
+						"sizeVar":           "mediumOverridden",
+						"stackVar":          "setInOverrides",
+						"overriddenDefault": "aaa",
 					},
 				},
 				Sources: map[string]structs.Source{
@@ -215,6 +217,12 @@ func TestLoadStackConfig(t *testing.T) {
 		KappVarsDirs: []string{
 			"sample-kapp-vars/",
 		},
+		Defaults: structs.KappConfig{
+			Vars: map[string]interface{}{
+				"stackDefault":      "xyz",
+				"overriddenDefault": "zzz",
+			},
+		},
 	}
 
 	stackFile, err := loadStackFile("large", "../../testdata/stacks.yaml")
@@ -286,6 +294,12 @@ func TestGetKappVarsFromFiles(t *testing.T) {
 			"./sample-kapp-vars/kapp-vars2/",
 		},
 		ManifestDescriptors: GetTestManifestDescriptors(),
+		Defaults: structs.KappConfig{
+			Vars: map[string]interface{}{
+				"stackDefault":      "xyz",
+				"overriddenDefault": "zzz",
+			},
+		},
 	}
 
 	expected := `kapp:
@@ -303,10 +317,12 @@ func TestGetKappVarsFromFiles(t *testing.T) {
     kappASisterDir: extra-val
     kappOverride: kappA-val-override
     namespace: test-namespace
+    overriddenDefault: aaa
     profile: test-profile-val
     region: test-region1-val
     regionOverride: region-val-override
     sizeVar: mediumOverridden
+    stackDefault: xyz
     stackVar: setInOverrides
 `
 
