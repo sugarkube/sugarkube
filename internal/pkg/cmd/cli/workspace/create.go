@@ -21,9 +21,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/cacher"
-	"github.com/sugarkube/sugarkube/internal/pkg/cmd/cli/kapps"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
@@ -172,7 +172,7 @@ func (c *createCmd) run() error {
 		}
 
 		// create a DAG to template all the kapps
-		dagObj, err := kapps.BuildDagForSelected(stackObj, c.workspaceDir, []string{}, []string{}, false)
+		dagObj, err := plan.BuildDagForSelected(stackObj, c.workspaceDir, []string{}, []string{}, false)
 		if err != nil {
 			return errors.WithStack(err)
 		}

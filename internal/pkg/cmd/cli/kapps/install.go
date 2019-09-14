@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
@@ -172,7 +171,7 @@ func (c *installCmd) run() error {
 		dryRunPrefix = "[Dry run] "
 	}
 
-	dagObj, err := BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector, c.includeParents)
+	dagObj, err := plan.BuildDagForSelected(stackObj, c.workspaceDir, c.includeSelector, c.excludeSelector, c.includeParents)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -253,43 +252,6 @@ func (c *installCmd) run() error {
 	}
 
 	return nil
-}
-
-// Creates a DAG for installables matched by selectors. If an optional state (e.g. present, absent, etc.) is
-// provided, only installables with the same state will be included in the returned DAG
-func BuildDagForSelected(stackObj interfaces.IStack, workspaceDir string, includeSelector []string, excludeSelector []string, includeParents bool) (*plan.Dag, error) {
-	// load configs for all installables in the stack
-	err := stackObj.LoadInstallables(workspaceDir)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	// selected kapps will be returned in the order in which they appear in manifests, not the order
-	// they're specified in selectors
-	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
-		includeSelector, excludeSelector)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	selectedInstallableIds := make([]string, 0)
-
-	for _, installableObj := range selectedInstallables {
-		selectedInstallableIds = append(selectedInstallableIds,
-			installableObj.FullyQualifiedId())
-	}
-
-	dagObj, err := plan.Create(stackObj, selectedInstallableIds, includeParents)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	err = dagObj.Print()
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return dagObj, nil
 }
 
 // Establish a connection to the cluster if necessary

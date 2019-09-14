@@ -23,6 +23,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
+	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
@@ -245,7 +246,7 @@ func isAcyclic(graphObj *simple.DirectedGraph) bool {
 	return err == nil
 }
 
-// Returns a list of all installables in the DAG (in any order).
+// Returns a list of all marked installables in the DAG (in any order).
 func (g *Dag) GetInstallables() []interfaces.IInstallable {
 	log.Logger.Debug("Putting all installables in the DAG into a list")
 
@@ -712,4 +713,42 @@ func dependenciesSatisfied(dependencies graph.Nodes, nodeStatuses map[int64]node
 	}
 
 	return true
+}
+
+// Creates a DAG for installables matched by selectors. If an optional state (e.g. present, absent, etc.) is
+// provided, only installables with the same state will be included in the returned DAG
+func BuildDagForSelected(stackObj interfaces.IStack, workspaceDir string, includeSelector []string,
+	excludeSelector []string, includeParents bool) (*Dag, error) {
+	// load configs for all installables in the stack
+	err := stackObj.LoadInstallables(workspaceDir)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	// selected kapps will be returned in the order in which they appear in manifests, not the order
+	// they're specified in selectors
+	selectedInstallables, err := stack.SelectInstallables(stackObj.GetConfig().Manifests(),
+		includeSelector, excludeSelector)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	selectedInstallableIds := make([]string, 0)
+
+	for _, installableObj := range selectedInstallables {
+		selectedInstallableIds = append(selectedInstallableIds,
+			installableObj.FullyQualifiedId())
+	}
+
+	dagObj, err := Create(stackObj, selectedInstallableIds, includeParents)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	err = dagObj.Print()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return dagObj, nil
 }
