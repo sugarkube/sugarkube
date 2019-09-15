@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
@@ -195,7 +196,7 @@ func (c *installCmd) run() error {
 		}
 	}
 
-	err = CatchMistakes(dagObj, c.runActions, c.skipActions, c.noValidate)
+	err = CatchMistakes(stackObj, dagObj, c.runActions, c.skipActions, c.noValidate)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -294,7 +295,7 @@ func establishConnection(dryRun bool, dryRunPrefix string) error {
 
 // Test whether any kapps have actions and if so explicitly require users to either opt to run or skip them. Also validate
 // kapps if users want to
-func CatchMistakes(dagObj *plan.Dag, runActions bool, skipActions bool, noValidate bool) error {
+func CatchMistakes(stackObj interfaces.IStack, dagObj *plan.Dag, runActions bool, skipActions bool, noValidate bool) error {
 	// if no action flags were given, check whether any installables have actions. If they do
 	// return an error - the user must explicitly choose whether to run or skip them.
 	if !runActions && !skipActions {
@@ -314,7 +315,7 @@ func CatchMistakes(dagObj *plan.Dag, runActions bool, skipActions bool, noValida
 	}
 
 	if !noValidate {
-		err := Validate(dagObj)
+		err := Validate(stackObj, dagObj)
 		if err != nil {
 			return errors.WithStack(err)
 		}

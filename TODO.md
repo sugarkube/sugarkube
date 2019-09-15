@@ -8,7 +8,6 @@
 * Retry setting up SSH port forwarding in case the bastion hostname doesn't resolve
 
 * The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
-* The kapps validate command should search for the actual configured command, not assume it's the same name as the requirement itself. Test it with the wordpress kapp. Add an extra field for the command path.
 
 * Update the prometheus-operator kapp to delete its CRDs when it's deleted
 

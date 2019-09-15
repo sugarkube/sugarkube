@@ -160,7 +160,7 @@ func (c *deleteCmd) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = CatchMistakes(dagObj, c.runActions, c.skipActions, c.noValidate)
+	err = CatchMistakes(stackObj, dagObj, c.runActions, c.skipActions, c.noValidate)
 	if err != nil {
 		return errors.WithStack(err)
 	}

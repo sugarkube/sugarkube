@@ -330,9 +330,6 @@ func (r RunUnitInstaller) getRunSteps(installableObj interfaces.IInstallable,
 	// just be a list of string boolean values, etc.
 	runUnits := installableObj.GetDescriptor().RunUnits
 
-	// todo - validate that there aren't multiple run steps with the same name for a given run unit (which would mess up calling
-	//  run steps)
-
 	runSteps, err := mergeRunUnits(runUnits, action, installableObj)
 	if err != nil {
 		return nil, errors.WithStack(err)

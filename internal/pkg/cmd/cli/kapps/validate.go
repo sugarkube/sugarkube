@@ -5,12 +5,15 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/installer"
+	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/program"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
+	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os/exec"
 	"strings"
 )
@@ -97,7 +100,7 @@ func (c *validateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = Validate(dagObj)
+	err = Validate(stackObj, dagObj)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -106,8 +109,9 @@ func (c *validateConfig) run() error {
 }
 
 // Validates kapps
-func Validate(dagObj *plan.Dag) error {
+func Validate(stackObj interfaces.IStack, dagObj *plan.Dag) error {
 	numMissing := 0
+	commandsSeen := make([]string, 0)
 
 	_, err := printer.Fprintf("Validating kapps...\n")
 	if err != nil {
@@ -125,7 +129,7 @@ func Validate(dagObj *plan.Dag) error {
 		}
 
 		// make sure required binaries exist
-		err = assertBinariesExist(descriptor.Requires, installable.FullyQualifiedId(), &numMissing)
+		err = assertBinariesExist(stackObj, installable, commandsSeen, &numMissing)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -154,26 +158,57 @@ func Validate(dagObj *plan.Dag) error {
 	return nil
 }
 
-// Returns an error if binaries for requirements don't exist
-func assertBinariesExist(requirements []string, installableId string, numMissing *int) error {
-	for _, requirement := range requirements {
-		// todo - this should lookup the requirement's Command
+// Returns an error if binaries for runstep commands don't exist
+func assertBinariesExist(stackObj interfaces.IStack, installableObj interfaces.IInstallable, commandSeen []string,
+	numMissing *int) error {
+	log.Logger.Debugf("Making sure binaries exist for '%s'", installableObj.FullyQualifiedId())
+	installerName := installer.RunUnit
+	installerImpl, err := installer.New(installerName, stackObj.GetProvider())
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
-		path, err := exec.LookPath(requirement)
+	runUnitFunctions := []func(installableObj interfaces.IInstallable, stackObj interfaces.IStack, dryRun bool) ([]structs.RunStep, error){
+		installerImpl.PlanInstall,
+		installerImpl.ApplyInstall,
+		installerImpl.PlanDelete,
+		installerImpl.ApplyDelete,
+		installerImpl.Clean,
+		installerImpl.Output,
+	}
+
+	for _, function := range runUnitFunctions {
+		runSteps, err := function(installableObj, stackObj, true)
 		if err != nil {
-			_, err = printer.Fprintf("  [red]Requirement missing! Can't find '[bold]%s[reset][red]' "+
-				"for [bold]%s\n", requirement, installableId)
-			*numMissing++
-			if err != nil {
-				return errors.WithStack(err)
+			return errors.WithStack(err)
+		}
+
+		for _, runStep := range runSteps {
+			command := runStep.Command
+
+			if utils.InStringArray(commandSeen, command) {
+				log.Logger.Tracef("Already searched for command '%s', won't look again", command)
+				continue
 			}
-			log.Logger.Errorf("Requirement missing. Can't find: %s", requirement)
-		} else {
-			_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]' at '%s'\n", requirement, path)
+
+			path, err := exec.LookPath(command)
 			if err != nil {
-				return errors.WithStack(err)
+				_, err = printer.Fprintf("  [red]Requirement missing! Can't find '[bold]%s[reset][red]' "+
+					"for [bold]%s\n", command, installableObj.FullyQualifiedId())
+				*numMissing++
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				log.Logger.Errorf("Requirement missing. Can't find '%s' for '%s'", command, installableObj.FullyQualifiedId())
+			} else {
+				_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]' at '%s'\n", command, path)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+				log.Logger.Infof("Found requirement '%s' at '%s'", command, path)
 			}
-			log.Logger.Infof("Found requirement '%s' at '%s'", requirement, path)
+
+			commandSeen = append(commandSeen, command)
 		}
 	}
 
