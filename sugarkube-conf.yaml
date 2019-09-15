@@ -92,6 +92,10 @@ programs:
   aws:
     vars:
       region: "{{ .stack.region }}"
+    run_units:
+      aws:
+        binaries:
+          - aws
 
   terraform:
     vars:
