@@ -158,8 +158,8 @@ func Validate(stackObj interfaces.IStack, dagObj *plan.Dag) error {
 	return nil
 }
 
-// Returns an error if binaries for runstep commands don't exist
-func assertBinariesExist(stackObj interfaces.IStack, installableObj interfaces.IInstallable, commandSeen []string,
+// Returns an error if binaries for run step commands don't exist
+func assertBinariesExist(stackObj interfaces.IStack, installableObj interfaces.IInstallable, commandsSeen []string,
 	numMissing *int) error {
 	log.Logger.Debugf("Making sure binaries exist for '%s'", installableObj.FullyQualifiedId())
 	installerName := installer.RunUnit
@@ -178,6 +178,17 @@ func assertBinariesExist(stackObj interfaces.IStack, installableObj interfaces.I
 	}
 
 	for _, function := range runUnitFunctions {
+
+		// make sure all binaries declared for all run units exist
+		for _, runUnit := range installableObj.GetDescriptor().RunUnits {
+			for _, binary := range runUnit.Binaries {
+				commandsSeen, err = assertBinaryExists(binary, commandsSeen, installableObj, numMissing)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+			}
+		}
+
 		runSteps, err := function(installableObj, stackObj, true)
 		if err != nil {
 			return errors.WithStack(err)
@@ -186,33 +197,54 @@ func assertBinariesExist(stackObj interfaces.IStack, installableObj interfaces.I
 		for _, runStep := range runSteps {
 			command := runStep.Command
 
-			if utils.InStringArray(commandSeen, command) {
-				log.Logger.Tracef("Already searched for command '%s', won't look again", command)
-				continue
-			}
-
-			path, err := exec.LookPath(command)
+			// make sure the main command for the run step exists
+			commandsSeen, err = assertBinaryExists(command, commandsSeen, installableObj, numMissing)
 			if err != nil {
-				_, err = printer.Fprintf("  [red]Requirement missing! Can't find '[bold]%s[reset][red]' "+
-					"for [bold]%s\n", command, installableObj.FullyQualifiedId())
-				*numMissing++
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				log.Logger.Errorf("Requirement missing. Can't find '%s' for '%s'", command, installableObj.FullyQualifiedId())
-			} else {
-				_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]' at '%s'\n", command, path)
-				if err != nil {
-					return errors.WithStack(err)
-				}
-				log.Logger.Infof("Found requirement '%s' at '%s'", command, path)
+				return errors.WithStack(err)
 			}
 
-			commandSeen = append(commandSeen, command)
+			// make sure all binaries declared for all run steps exist
+			for _, binary := range runStep.Binaries {
+				commandsSeen, err = assertBinaryExists(binary, commandsSeen, installableObj, numMissing)
+				if err != nil {
+					return errors.WithStack(err)
+				}
+			}
 		}
 	}
 
 	return nil
+}
+
+// Asserts that a binary exists. Returns an updated list of commands already searched for or an error
+func assertBinaryExists(command string, commandsSeen []string, installableObj interfaces.IInstallable,
+	numMissing *int) ([]string, error) {
+
+	if utils.InStringArray(commandsSeen, command) {
+		log.Logger.Debugf("Already searched for command '%s', won't look again", command)
+		return commandsSeen, nil
+	}
+
+	commandsSeen = append(commandsSeen, command)
+
+	path, err := exec.LookPath(command)
+	if err != nil {
+		_, err = printer.Fprintf("  [red]Requirement missing! Can't find '[bold]%s[reset][red]' "+
+			"for [bold]%s\n", command, installableObj.FullyQualifiedId())
+		*numMissing++
+		if err != nil {
+			return commandsSeen, errors.WithStack(err)
+		}
+		log.Logger.Errorf("Requirement missing. Can't find '%s' for '%s'", command, installableObj.FullyQualifiedId())
+	} else {
+		_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]' at '%s'\n", command, path)
+		if err != nil {
+			return commandsSeen, errors.WithStack(err)
+		}
+		log.Logger.Infof("Found requirement '%s' at '%s'", command, path)
+	}
+
+	return commandsSeen, nil
 }
 
 // Returns an error if multiple run steps in the same run unit have the same name

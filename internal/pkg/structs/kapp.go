@@ -53,13 +53,14 @@ type Action struct {
 }
 
 type RunStep struct {
-	Name    string            `yaml:",omitempty"`
-	Command string            `yaml:",omitempty"`
-	Args    string            `yaml:",omitempty"`
-	EnvVars map[string]string `yaml:"env_vars" mapstructure:"env_vars"`
-	Stdout  string            `yaml:",omitempty"`                           // path to write stdout to
-	Stderr  string            `yaml:",omitempty"`                           // path to write stderr to
-	Print   string            `yaml:"print,omitempty" mapstructure:"print"` // if 'verbose', stdout/stderr will be printed to the
+	Name     string            `yaml:",omitempty"`
+	Binaries []string          `yaml:",omitempty"` // additional binaries required by the command/script (used to validate kapps)
+	Command  string            `yaml:",omitempty"`
+	Args     string            `yaml:",omitempty"`
+	EnvVars  map[string]string `yaml:"env_vars" mapstructure:"env_vars"`
+	Stdout   string            `yaml:",omitempty"`                           // path to write stdout to
+	Stderr   string            `yaml:",omitempty"`                           // path to write stderr to
+	Print    string            `yaml:"print,omitempty" mapstructure:"print"` // if 'verbose', stdout/stderr will be printed to the
 	// console when sugarkube is run with the verbose flag. Any other non-empty value will always cause output to be printed regardless
 	ExpectedExitCode int      `yaml:"expected_exit_code,omitempty" mapstructure:"expected_exit_code"` // sugarkube will only throw an error if a different exit code is returned
 	IgnoreErrors     bool     `yaml:"ignore_errors" mapstructure:"ignore_errors"`                     // don't exit if any errors occurred
@@ -78,6 +79,7 @@ type RunStep struct {
 type RunUnit struct {
 	WorkingDir   string            `yaml:"working_dir" mapstructure:"working_dir"`
 	Conditions   []string          `yaml:",omitempty"`
+	Binaries     []string          `yaml:",omitempty"` // additional binaries required by the command/script (used to validate kapps)
 	EnvVars      map[string]string `yaml:"env_vars" mapstructure:"env_vars"`
 	PlanInstall  []RunStep         `yaml:"plan_install,omitempty" mapstructure:"plan_install"`
 	ApplyInstall []RunStep         `yaml:"apply_install,omitempty" mapstructure:"apply_install"`

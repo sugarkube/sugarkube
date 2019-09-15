@@ -208,7 +208,7 @@ func (k *Kapp) mergeDescriptorLayers() error {
 	mergedDescriptor := structs.KappDescriptorWithMaps{}
 
 	for _, layer := range k.descriptorLayers {
-		log.Logger.Debugf("Merging config layer for kapp '%s' - layer %#v into existing map %#v",
+		log.Logger.Tracef("Merging config layer for kapp '%s' - layer %#v into existing map %#v",
 			k.FullyQualifiedId(), layer, mergedDescriptor)
 		err := vars.Merge(&mergedDescriptor, layer)
 		if err != nil {
