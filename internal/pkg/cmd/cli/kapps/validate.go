@@ -237,7 +237,11 @@ func assertBinaryExists(command string, commandsSeen []string, installableObj in
 		}
 		log.Logger.Errorf("Requirement missing. Can't find '%s' for '%s'", command, installableObj.FullyQualifiedId())
 	} else {
-		_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]' at '%s'\n", command, path)
+		if strings.HasPrefix(command, "/") {
+			_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]'\n", command)
+		} else {
+			_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]' at '%s'\n", command, path)
+		}
 		if err != nil {
 			return commandsSeen, errors.WithStack(err)
 		}
