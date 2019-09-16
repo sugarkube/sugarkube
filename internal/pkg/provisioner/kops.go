@@ -50,7 +50,9 @@ const kopsCommandTimeoutSecondsLong = 300
 // number of seconds to sleep after the cluster has come online before checking whether
 // it's ready
 const kopsSleepSecondsBeforeReadyCheck = 60
-const sshPortForwardingDelaySeconds = 5
+const sshSetupTimeout = 30
+const sshMaxTries = 5
+const sshRetrySleep = 5
 
 // todo - catch errors accessing each of these
 const configKeyKopsSpecs = "specs"
@@ -766,20 +768,45 @@ func (p *KopsProvisioner) EnsureClusterConnectivity() (bool, error) {
 		}
 	}
 
-	// todo - improve error handling
-	go func() {
-		err = p.setupPortForwarding(p.kopsConfig.SshPrivateKey, p.kopsConfig.BastionUser,
-			bastionHostname, localPort, apiDomain, 443)
-		if err != nil {
-			log.Logger.Fatalf("An error occurred with SSH port forwarding: %v", err)
-		}
+	successCh := make(chan bool)
+	errCh := make(chan error)
 
-		p.portForwardingActive = true
+	// try to set up SSH port forwarding
+	go func() {
+		for i := 1; i <= sshMaxTries; i++ {
+			err = p.setupPortForwarding(p.kopsConfig.SshPrivateKey, p.kopsConfig.BastionUser,
+				bastionHostname, localPort, apiDomain, 443)
+			if err != nil {
+				if i < sshMaxTries {
+					log.Logger.Errorf("An error occurred setting up SSH port forwarding: %v. Will retry %d more "+
+						"times", err, sshMaxTries-i)
+					time.Sleep(sshRetrySleep * time.Second)
+					continue
+				} else {
+					log.Logger.Errorf("An error occurred setting up SSH port forwarding: %v. Retry limit reached.", err)
+					errCh <- fmt.Errorf("Failed to set up SSH port forwarding (tried %d times). Error was: %v", sshMaxTries, err)
+					return
+				}
+			} else {
+				p.portForwardingActive = true
+				successCh <- true
+			}
+		}
 	}()
 
-	log.Logger.Infof("Sleeping for %ds while setting up SSH port forwarding",
-		sshPortForwardingDelaySeconds)
-	time.Sleep(sshPortForwardingDelaySeconds * time.Second)
+	timeoutTicker := time.NewTicker(sshSetupTimeout * time.Second)
+	defer timeoutTicker.Stop()
+
+	log.Logger.Infof("Waiting up to %ds for SSH port forwarding to be set up", sshSetupTimeout)
+
+	select {
+	case <-successCh:
+	case err := <-errCh:
+		log.Logger.Errorf("Propagating an error that occurred setting up SSH port forwarding: %v", err)
+		return false, errors.WithStack(err)
+	case <-timeoutTicker.C:
+		return false, fmt.Errorf("Timed out setting up SSH port forwarding aftet %d seconds", sshSetupTimeout)
+	}
 
 	_, err = printer.Fprintf("[green]SSH port forwarding established. Use [bold]KUBECONFIG=%s[reset]\n\n",
 		kubeConfigPathStr)
@@ -847,7 +874,6 @@ func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string,
 
 	log.Logger.Debugf("Setting up SSH port forwarding with: %s %s", sshPath, strings.Join(args, " "))
 
-	// todo - add retries with sleeps in case the bastion hostname doesn't resolve
 	sshCommand := exec.Command(sshPath, args...)
 	sshCommand.Stdout = &stdoutBuf
 	sshCommand.Stderr = &stderrBuf
@@ -857,6 +883,23 @@ func (p *KopsProvisioner) setupPortForwarding(privateKey string, sshUser string,
 	err := sshCommand.Start()
 	if err != nil {
 		return errors.WithStack(err)
+	}
+
+	// wait a short amount of time to see whether SSH terminates quickly indicating an error
+	progressTicker := time.NewTicker(1 * time.Second)
+	defer progressTicker.Stop()
+	errCh := make(chan error)
+
+	go func() {
+		err := sshCommand.Wait()
+		errCh <- err
+	}()
+
+	select {
+	case err := <-errCh:
+		return errors.WithStack(err)
+	case <-progressTicker.C:
+		log.Logger.Info("No errors occurred after starting SSH. Assume we're conneted...")
 	}
 
 	return nil
@@ -923,24 +966,29 @@ func assertInHostsFile(ip string, domain string) error {
 // Shutdown SSH port forwarding if it's been set up
 func (p KopsProvisioner) Close() error {
 	if p.sshCommand != nil {
-		log.Logger.Info("Terminating SSH port forwarding...")
+		if p.sshCommand.ProcessState.Exited() {
+			log.Logger.Info("SSH has already exited, so no need to shut it down.")
+			return nil
+		} else {
+			log.Logger.Info("Terminating SSH port forwarding...")
 
-		err := p.sshCommand.Process.Kill()
-		if err != nil {
-			return errors.WithStack(err)
-		}
-
-		log.Logger.Debug("SSH port forwarding terminated")
-
-		// delete the downloaded kubeconfig file
-		kubeConfigPathInterface, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
-		kubeConfigPath := kubeConfigPathInterface.(string)
-		if _, err := os.Stat(kubeConfigPath); err == nil {
-			// todo - make this configurable based on a CLI flag
-			log.Logger.Infof("Deleting downloaded kubeconfig file from %s", kubeConfigPath)
-			err = os.Remove(kubeConfigPath)
+			err := p.sshCommand.Process.Kill()
 			if err != nil {
 				return errors.WithStack(err)
+			}
+
+			log.Logger.Debug("SSH port forwarding terminated")
+
+			// delete the downloaded kubeconfig file
+			kubeConfigPathInterface, _ := p.stack.GetRegistry().Get(constants.RegistryKeyKubeConfig)
+			kubeConfigPath := kubeConfigPathInterface.(string)
+			if _, err := os.Stat(kubeConfigPath); err == nil {
+				// todo - make this configurable based on a CLI flag
+				log.Logger.Infof("Deleting downloaded kubeconfig file from %s", kubeConfigPath)
+				err = os.Remove(kubeConfigPath)
+				if err != nil {
+					return errors.WithStack(err)
+				}
 			}
 		}
 	} else {
