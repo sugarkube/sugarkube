@@ -123,7 +123,7 @@ func Validate(stackObj interfaces.IStack, dagObj *plan.Dag) error {
 	for _, installable := range installables {
 		descriptor := installable.GetDescriptor()
 
-		_, err := printer.Fprintf("* [white]%s [default]requires: [white]%s\n", installable.FullyQualifiedId(),
+		_, err := printer.Fprintf("* [white][bold]%s[reset][default] requires: [white]%s\n", installable.FullyQualifiedId(),
 			strings.Join(descriptor.Requires, ", "))
 		if err != nil {
 			return errors.WithStack(err)
