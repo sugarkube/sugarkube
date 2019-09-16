@@ -178,9 +178,13 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 				if currentSource.Uri == "" && previousSource.Uri != "" {
 					currentSource.Uri = previousSource.Uri
 				}
-
 				if currentSource.Id == "" && previousSource.Id != "" {
 					currentSource.Id = previousSource.Id
+				}
+				for k, v := range previousSource.Options {
+					if _, ok := currentSource.Options[k]; !ok {
+						currentSource.Options[k] = v
+					}
 				}
 
 				currentLayer.Sources[key] = currentSource
@@ -193,7 +197,9 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 			for key, previousOutput := range previousLayer.Outputs {
 				currentOutput, ok := currentLayer.Outputs[key]
 				if !ok {
-					currentOutput = structs.Output{}
+					currentOutput = structs.Output{
+						Conditions: make([]string, 0),
+					}
 				}
 
 				if currentOutput.Id == "" && previousOutput.Id != "" {
@@ -204,6 +210,9 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 				}
 				if currentOutput.Format == "" && previousOutput.Format != "" {
 					currentOutput.Format = previousOutput.Format
+				}
+				if len(currentOutput.Conditions) == 0 && len(previousOutput.Conditions) > 0 {
+					currentOutput.Conditions = previousOutput.Conditions
 				}
 
 				currentLayer.Outputs[key] = currentOutput
