@@ -114,7 +114,7 @@ func Validate(stackObj interfaces.IStack, dagObj *plan.Dag) error {
 	numMissing := 0
 	commandsSeen := make([]string, 0)
 
-	_, err := printer.Fprintf("Validating kapps...\n")
+	_, err := printer.Fprintf("[yellow]Validating kapps...[default]\n")
 	if err != nil {
 		return errors.WithStack(err)
 	}
