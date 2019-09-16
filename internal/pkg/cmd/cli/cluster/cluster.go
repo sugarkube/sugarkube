@@ -58,7 +58,7 @@ func NewClusterCommands() *cobra.Command {
 	command.AddCommand(
 		newCreateCommand(),
 		newUpdateCommand(),
-		newDiffCommand(),
+		//newDiffCommand(),		// not implemented
 		newDeleteCommand(),
 		newVarsCommand(),
 		newConnectCommand(),

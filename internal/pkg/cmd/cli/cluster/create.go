@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
@@ -48,8 +49,10 @@ func newCreateCommand() *cobra.Command {
 
 	c := &createCommand{}
 
+	usage := "create [flags] [stack-file] [stack-name]"
+
 	command := &cobra.Command{
-		Use:   "create [flags] [stack-file] [stack-name]",
+		Use:   usage,
 		Short: fmt.Sprintf("Create a cluster"),
 		Long: `Create a new cluster, either local or remote without running any kapps.
 
@@ -69,10 +72,9 @@ workspace with 'sugarkube workspace create').
 Note: Not all providers require all arguments. See documentation for help.
 `,
 		RunE: func(command *cobra.Command, args []string) error {
-			if len(args) < 2 {
-				return errors.New("some required arguments are missing")
-			} else if len(args) > 2 {
-				return errors.New("too many arguments supplied")
+			err := cmd.ValidateNumArgs(args, 2, usage)
+			if err != nil {
+				return errors.WithStack(err)
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]

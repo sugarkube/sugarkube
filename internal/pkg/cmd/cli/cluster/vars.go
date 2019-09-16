@@ -21,6 +21,7 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
@@ -46,15 +47,15 @@ type varsConfig struct {
 func newVarsCommand() *cobra.Command {
 	c := &varsConfig{}
 
+	usage := "vars [flags] [stack-file] [stack-name]"
 	command := &cobra.Command{
-		Use:   "vars [flags] [stack-file] [stack-name]",
+		Use:   usage,
 		Short: fmt.Sprintf("Display all variables available for a stack"),
 		Long:  `Merges variables from all sources and displays them.`,
 		RunE: func(command *cobra.Command, args []string) error {
-			if len(args) < 2 {
-				return errors.New("the name of the stack to run, and the path to the stack file are required")
-			} else if len(args) > 2 {
-				return errors.New("too many arguments supplied")
+			err := cmd.ValidateNumArgs(args, 2, usage)
+			if err != nil {
+				return errors.WithStack(err)
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]

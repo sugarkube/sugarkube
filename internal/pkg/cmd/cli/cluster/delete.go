@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
@@ -42,15 +43,15 @@ type deleteCommand struct {
 func newDeleteCommand() *cobra.Command {
 	c := &deleteCommand{}
 
+	usage := "delete [flags] [stack-file] [stack-name]"
 	command := &cobra.Command{
-		Use:   "delete [flags] [stack-file] [stack-name]",
+		Use:   usage,
 		Short: fmt.Sprintf("Delete a cluster"),
 		Long:  `Tear down a target cluster.`,
 		RunE: func(command *cobra.Command, args []string) error {
-			if len(args) < 2 {
-				return errors.New("some required arguments are missing")
-			} else if len(args) > 2 {
-				return errors.New("too many arguments supplied")
+			err := cmd.ValidateNumArgs(args, 2, usage)
+			if err != nil {
+				return errors.WithStack(err)
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
