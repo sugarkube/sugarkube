@@ -42,6 +42,18 @@ func TestLoadConfig(t *testing.T) {
 		JsonLogs:   false,
 		LogLevel:   "warn",
 		NumWorkers: 5,
+		RunUnits: structs.RunUnit{
+			Clean: []structs.RunStep{
+				{
+					Name:    "find1",
+					Command: "find-stuff1",
+				},
+				{
+					Name:    "find2",
+					Command: "find-stuff2",
+				},
+			},
+		},
 		Programs: map[string]structs.KappConfig{
 			"proga": {
 				Vars: map[string]interface{}{

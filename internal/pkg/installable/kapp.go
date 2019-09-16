@@ -423,6 +423,21 @@ func (k *Kapp) LoadConfigFile(workspaceDir string) error {
 	// requirement declared by it that has an entry in the global config file, provided the
 	// kapp hasn't opted out of them.
 	if !k.GetDescriptor().IgnoreGlobalDefaults {
+		// add descriptors for globally defined defaults
+		descriptor := structs.KappDescriptorWithMaps{
+			KappConfig: structs.KappConfig{
+				RunUnits: map[string]structs.RunUnit{
+					constants.ConfigFileRunUnits: config.CurrentConfig.RunUnits,
+				},
+			},
+		}
+
+		log.Logger.Tracef("Adding default run units to kapp '%s': %#v", k.FullyQualifiedId(), descriptor)
+		err = k.AddDescriptor(descriptor, true)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
 		for i := len(k.GetDescriptor().Requires) - 1; i >= 0; i-- {
 			requirement := k.GetDescriptor().Requires[i]
 			programDescriptor, ok := config.CurrentConfig.Programs[requirement]
@@ -868,7 +883,7 @@ func (k Kapp) GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{
 				output.Id, k.FullyQualifiedId())
 
 			_, err := printer.Fprintf("[yellow]Not loading output '%s' for kapp "+
-				"'[bold]%s[reset] due to failed conditions[yellow]'\n", output.Id, k.FullyQualifiedId())
+				"'[bold]%s[reset]' due to failed conditions[yellow]'\n", output.Id, k.FullyQualifiedId())
 			if err != nil {
 				return nil, errors.WithStack(err)
 			}

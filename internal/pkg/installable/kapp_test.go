@@ -19,6 +19,7 @@ package installable
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
+	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"os"
@@ -54,6 +55,19 @@ func TestAddDescriptor(t *testing.T) {
 				"region":     "{{ .stack.region }}",
 			},
 			RunUnits: map[string]structs.RunUnit{
+				constants.ConfigFileRunUnits: {
+					EnvVars: map[string]string{},
+					Clean: []structs.RunStep{
+						{
+							Name:    "find1",
+							Command: "find-stuff1",
+						},
+						{
+							Name:    "find2",
+							Command: "find-stuff2",
+						},
+					},
+				},
 				"proga": {
 					WorkingDir: "/tmp",
 					EnvVars: map[string]string{

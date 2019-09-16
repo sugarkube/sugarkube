@@ -462,6 +462,7 @@ func TestInterpolateCallsUnitRecursive(t *testing.T) {
 func TestMergedRunStepsForKapp(t *testing.T) {
 	expectedPlanInstallRunStepNames := []string{"print-yo", "print-yes", "last-one"}
 	expectedApplyInstallRunStepNames := []string{"x", "do-stuff-first", "do-stuff-second"}
+	expectedCleanRunStepNames := []string{"find1", "find2"}
 
 	configFile := path.Join(testDir, "test-sugarkube-conf.yaml")
 	config.ViperConfig.SetConfigFile(configFile)
@@ -499,4 +500,12 @@ func TestMergedRunStepsForKapp(t *testing.T) {
 		applyInstallRunStepNames = append(applyInstallRunStepNames, step.Name)
 	}
 	assert.Equal(t, expectedApplyInstallRunStepNames, applyInstallRunStepNames, "Unexpected apply install steps")
+
+	cleanRunSteps, err := installerImpl.Clean(kapp, stackObj, true)
+	assert.Nil(t, err)
+	cleanRunStepNames := make([]string, 0)
+	for _, step := range cleanRunSteps {
+		cleanRunStepNames = append(cleanRunStepNames, step.Name)
+	}
+	assert.Equal(t, expectedCleanRunStepNames, cleanRunStepNames, "Unexpected clean steps")
 }

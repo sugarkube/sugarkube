@@ -46,3 +46,11 @@ programs:
           - name: x
             command: "/path/to/x"
             merge_priority: 10
+
+# globally defined run units will be used as defaults for each program
+run_units:
+  clean:
+    - name: find1
+      command: find-stuff1
+    - name: find2
+      command: find-stuff2
