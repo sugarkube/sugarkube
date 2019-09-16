@@ -18,6 +18,8 @@ package mock
 
 import (
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
+	"github.com/sugarkube/sugarkube/internal/pkg/registry"
+	"testing"
 )
 
 type Config struct {
@@ -137,4 +139,32 @@ func (m *MockStack) RefreshProviderVars() error {
 
 func (m *MockStack) LoadInstallables(workspaceDir string) error {
 	return nil
+}
+
+func GetMockStackConfig(t *testing.T, dir string, name string, account string, provider string,
+	provisioner string, profile string, cluster string, region string, providerVarsDirs []string) interfaces.IStackConfig {
+
+	return Config{
+		Name:             name,
+		Account:          account,
+		Provider:         provider,
+		Provisioner:      provisioner,
+		Profile:          profile,
+		Cluster:          cluster,
+		Region:           region,
+		ProviderVarsDirs: providerVarsDirs,
+		Dir:              dir,
+	}
+}
+
+func GetMockStack(t *testing.T, dir string, name string, account string, provider string,
+	provisioner string, profile string, cluster string, region string, providerVarsDirs []string) interfaces.IStack {
+
+	registryObj := registry.New()
+
+	config := GetMockStackConfig(t, dir, name, account, provider, provisioner, profile, cluster, region, providerVarsDirs)
+	return &MockStack{
+		Config:   config,
+		Registry: registryObj,
+	}
 }

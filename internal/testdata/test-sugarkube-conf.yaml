@@ -32,6 +32,9 @@ programs:
       prog2:
         binaries:
           - cat
+        plan_install:
+          - name: last-one
+            merge_priority: 99
         apply_install:
           - name: do-stuff-first
             command: "/path/to/prog2"

@@ -18,13 +18,19 @@ package installer
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
+	"github.com/sugarkube/sugarkube/internal/pkg/installable"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/mock"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os"
+	"path"
 	"testing"
 )
+
+const testDir = "../../testdata"
 
 func init() {
 	log.ConfigureLogger("debug", false, os.Stderr)
@@ -450,4 +456,47 @@ func TestInterpolateCallsUnitRecursive(t *testing.T) {
 	}
 
 	assert.True(t, found)
+}
+
+// Test that when a kapp defines some new run units, the final set of run steps is correct
+func TestMergedRunStepsForKapp(t *testing.T) {
+	expectedPlanInstallRunStepNames := []string{"print-yo", "print-yes", "last-one"}
+	expectedApplyInstallRunStepNames := []string{"x", "do-stuff-first", "do-stuff-second"}
+
+	configFile := path.Join(testDir, "test-sugarkube-conf.yaml")
+	config.ViperConfig.SetConfigFile(configFile)
+
+	err := config.Load(config.ViperConfig)
+	assert.Nil(t, err)
+
+	kapp, err := installable.New("sample-manifest", []structs.KappDescriptorWithMaps{{Id: "sample-kapp"}})
+	assert.Nil(t, err)
+
+	err = kapp.LoadConfigFile(path.Join(testDir, "sample-workspace"))
+	assert.Nil(t, err)
+
+	// we already test the correctness of the above in the kapp tests
+	installerImpl, err := New(RunUnit)
+	assert.Nil(t, err)
+
+	assert.NotNil(t, installerImpl)
+
+	stackObj := mock.GetMockStack(t, testDir, "large", "", "local",
+		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
+
+	planInstallRunSteps, err := installerImpl.PlanInstall(kapp, stackObj, true)
+	assert.Nil(t, err)
+	planInstallRunStepNames := make([]string, 0)
+	for _, step := range planInstallRunSteps {
+		planInstallRunStepNames = append(planInstallRunStepNames, step.Name)
+	}
+	assert.Equal(t, expectedPlanInstallRunStepNames, planInstallRunStepNames, "Unexpected plan install steps")
+
+	applyInstallRunSteps, err := installerImpl.ApplyInstall(kapp, stackObj, true)
+	assert.Nil(t, err)
+	applyInstallRunStepNames := make([]string, 0)
+	for _, step := range applyInstallRunSteps {
+		applyInstallRunStepNames = append(applyInstallRunStepNames, step.Name)
+	}
+	assert.Equal(t, expectedApplyInstallRunStepNames, applyInstallRunStepNames, "Unexpected apply install steps")
 }

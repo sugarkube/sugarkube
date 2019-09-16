@@ -18,7 +18,6 @@ package provider
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
 	"github.com/sugarkube/sugarkube/internal/pkg/mock"
 	"os"
@@ -32,28 +31,12 @@ func init() {
 
 const testDir = "../../testdata"
 
-func getMockStackConfig(t *testing.T, dir string, name string, account string, provider string,
-	provisioner string, profile string, cluster string, region string, providerVarsDirs []string) interfaces.IStackConfig {
-
-	return mock.Config{
-		Name:             name,
-		Account:          account,
-		Provider:         provider,
-		Provisioner:      provisioner,
-		Profile:          profile,
-		Cluster:          cluster,
-		Region:           region,
-		ProviderVarsDirs: providerVarsDirs,
-		Dir:              dir,
-	}
-}
-
 func TestLocalVarsDirs(t *testing.T) {
-	stackObj := getMockStackConfig(t, testDir, "large", "", "local",
+	stackConfig := mock.GetMockStackConfig(t, testDir, "large", "", "local",
 		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 
-	assert.Equal(t, "local", stackObj.GetProvider())
-	assert.Equal(t, []string{"./stacks/"}, stackObj.GetProviderVarsDirs())
+	assert.Equal(t, "local", stackConfig.GetProvider())
+	assert.Equal(t, []string{"./stacks/"}, stackConfig.GetProviderVarsDirs())
 
 	absTestDir, err := filepath.Abs(testDir)
 	assert.Nil(t, err)
@@ -63,7 +46,7 @@ func TestLocalVarsDirs(t *testing.T) {
 	}
 
 	providerObj := &LocalProvider{}
-	actual, err := findVarsFiles(providerObj, stackObj)
+	actual, err := findVarsFiles(providerObj, stackConfig)
 	assert.Nil(t, err)
 
 	assert.Equal(t, expected, actual, "Incorrect vars dirs returned")

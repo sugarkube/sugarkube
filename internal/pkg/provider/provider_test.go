@@ -18,27 +18,13 @@ package provider
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/mock"
-	"github.com/sugarkube/sugarkube/internal/pkg/registry"
 	"path/filepath"
 	"testing"
 )
 
-func getMockStack(t *testing.T, dir string, name string, account string, provider string,
-	provisioner string, profile string, cluster string, region string, providerVarsDirs []string) interfaces.IStack {
-
-	registryObj := registry.New()
-
-	config := getMockStackConfig(t, dir, name, account, provider, provisioner, profile, cluster, region, providerVarsDirs)
-	return &mock.MockStack{
-		Config:   config,
-		Registry: registryObj,
-	}
-}
-
 func TestStackConfigVars(t *testing.T) {
-	stackObj := getMockStack(t, testDir, "large", "", "local",
+	stackObj := mock.GetMockStack(t, testDir, "large", "", "local",
 		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 
 	expected := map[string]interface{}{
@@ -63,7 +49,7 @@ func TestStackConfigVars(t *testing.T) {
 }
 
 func TestNewNonExistentProvider(t *testing.T) {
-	stackObj := getMockStackConfig(t, testDir, "large", "", "bananas",
+	stackObj := mock.GetMockStackConfig(t, testDir, "large", "", "bananas",
 		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 
 	actual, err := New(stackObj)
@@ -72,7 +58,7 @@ func TestNewNonExistentProvider(t *testing.T) {
 }
 
 func TestNewLocalProvider(t *testing.T) {
-	stackObj := getMockStackConfig(t, testDir, "large", "", "local",
+	stackObj := mock.GetMockStackConfig(t, testDir, "large", "", "local",
 		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 
 	actual, err := New(stackObj)
@@ -81,7 +67,7 @@ func TestNewLocalProvider(t *testing.T) {
 }
 
 func TestNewAWSProvider(t *testing.T) {
-	stackObj := getMockStackConfig(t, testDir, "large", "", "aws",
+	stackObj := mock.GetMockStackConfig(t, testDir, "large", "", "aws",
 		"minikube", "local", "large", "fake-region", []string{"./stacks/"})
 	actual, err := New(stackObj)
 	assert.Nil(t, err)
@@ -96,7 +82,7 @@ func TestFindProviderVarsFiles(t *testing.T) {
 	absTestDir, err := filepath.Abs(testDir)
 	assert.Nil(t, err)
 
-	stackObj := getMockStackConfig(t, testDir, "large", "test-account", "aws",
+	stackObj := mock.GetMockStackConfig(t, testDir, "large", "test-account", "aws",
 		"test-provisioner", "test-profile", "test-cluster", "region1",
 		[]string{"./providers/"})
 

@@ -36,6 +36,7 @@ func TestLoadConfig(t *testing.T) {
 	ten := uint8(10)
 	twenty := uint8(20)
 	thirty := uint8(30)
+	last := uint8(99)
 
 	expectedConfig := &Config{
 		JsonLogs:   false,
@@ -83,6 +84,12 @@ func TestLoadConfig(t *testing.T) {
 				RunUnits: map[string]structs.RunUnit{
 					"prog2": {
 						Binaries: []string{"cat"},
+						PlanInstall: []structs.RunStep{
+							{
+								Name:          "last-one",
+								MergePriority: &last,
+							},
+						},
 						ApplyInstall: []structs.RunStep{
 							{
 								Name:    "do-stuff-first",
