@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
@@ -237,13 +238,15 @@ func assertBinaryExists(command string, commandsSeen []string, installableObj in
 		}
 		log.Logger.Errorf("Requirement missing. Can't find '%s' for '%s'", command, installableObj.FullyQualifiedId())
 	} else {
-		if strings.HasPrefix(command, "/") {
-			_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]'\n", command)
-		} else {
-			_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]' at '%s'\n", command, path)
-		}
-		if err != nil {
-			return commandsSeen, errors.WithStack(err)
+		if config.CurrentConfig.Verbose {
+			if strings.HasPrefix(command, "/") {
+				_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]'\n", command)
+			} else {
+				_, err = printer.Fprintf("  [green]Found '[bold]%s[reset][green]' at '%s'\n", command, path)
+			}
+			if err != nil {
+				return commandsSeen, errors.WithStack(err)
+			}
 		}
 		log.Logger.Infof("Found requirement '%s' at '%s'", command, path)
 	}
