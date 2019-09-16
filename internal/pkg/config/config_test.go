@@ -33,24 +33,68 @@ func init() {
 
 // Test that registry values override values when returning templated vars
 func TestLoadConfig(t *testing.T) {
+	twenty := uint8(20)
+	thirty := uint8(30)
+
 	expectedConfig := &Config{
 		JsonLogs:   false,
 		LogLevel:   "warn",
 		NumWorkers: 5,
 		Programs: map[string]structs.KappConfig{
-			"helm": {
+			"proga": {
 				Vars: map[string]interface{}{
-					"kubeconfig":   "{{ .kubeconfig }}",
-					"namespace":    "{{ .kapp.vars.namespace | default .kapp.id }}",
-					"release":      "{{ .kapp.vars.release | default .kapp.id }}",
-					"kube_context": "{{ .kube_context }}",
+					"kubeconfig": "{{ .kubeconfig }}",
+					"release":    "{{ .kapp.vars.release | default .kapp.id }}",
+					"helm":       "/path/to/helm",
+				},
+				RunUnits: map[string]structs.RunUnit{
+					"proga": {
+						WorkingDir: "/tmp",
+						EnvVars: map[string]string{
+							"user": "sk",
+						},
+						PlanInstall: []structs.RunStep{
+							{
+								Name:    "print-hi",
+								Command: "echo",
+								Args:    "hi",
+							},
+						},
+						ApplyInstall: []structs.RunStep{
+							{
+								Name:    "do-stuff-second",
+								Command: "{{ .kapp.vars.helm }}",
+								Args:    "do-stuff {{ .kapp.vars.release }}",
+								EnvVars: map[string]string{
+									"KUBECONFIG": "{{ .kapp.vars.kubeconfig }}",
+								},
+								MergePriority: &thirty,
+							},
+						},
+					},
 				},
 			},
 			"prog2": {
 				Vars: map[string]interface{}{
-					"kubeconfig":   "{{ .kubeconfig }}",
-					"kube_context": "{{ .kube_context }}",
-					"region":       "{{ .stack.region }}",
+					"kubeconfig": "{{ .kubeconfig }}",
+					"region":     "{{ .stack.region }}",
+				},
+				RunUnits: map[string]structs.RunUnit{
+					"prog2": {
+						Binaries: []string{"cat"},
+						ApplyInstall: []structs.RunStep{
+							{
+								Name:    "do-stuff-first",
+								Command: "/path/to/prog2",
+								Args:    "do-stuff-zzz {{ .kapp.vars.region }}",
+								EnvVars: map[string]string{
+									"REGION": "{{ .kapp.vars.region }}",
+									"COLOUR": "blue",
+								},
+								MergePriority: &twenty,
+							},
+						},
+					},
 				},
 			},
 		},

@@ -2,15 +2,41 @@ log_level: warn
 json_logs: false
 
 programs:
-  helm:
+  progA:
     vars:
-      KUBECONFIG: "{{ .kubeconfig }}"
-      NAMESPACE: "{{ .kapp.vars.namespace | default .kapp.id }}"
-      RELEASE: "{{ .kapp.vars.release | default .kapp.id }}"
-      KUBE_CONTEXT: "{{ .kube_context }}"
+      kubeconfig: "{{ .kubeconfig }}"
+      release: "{{ .kapp.vars.release | default .kapp.id }}"
+      helm: /path/to/helm
+    run_units:
+      progA:
+        env_vars:
+          USER: sk
+        working_dir: /tmp
+        plan_install:
+          - name: print-hi
+            command: echo
+            args: hi
+        apply_install:
+          - name: do-stuff-second
+            command: "{{ .kapp.vars.helm }}"
+            args: do-stuff {{ .kapp.vars.release }}
+            env_vars:
+              KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
+            merge_priority: 30
 
   prog2:
     vars:
-      KUBECONFIG: "{{ .kubeconfig }}"
-      KUBE_CONTEXT: "{{ .kube_context }}"
-      REGION: "{{ .stack.region }}"
+      kubeconfig: "{{ .kubeconfig }}"
+      region: "{{ .stack.region }}"
+    run_units:
+      prog2:
+        binaries:
+          - cat
+        apply_install:
+          - name: do-stuff-first
+            command: "/path/to/prog2"
+            args: do-stuff-zzz {{ .kapp.vars.region }}
+            env_vars:
+              REGION: "{{ .kapp.vars.region }}"
+              COLOUR: "blue"
+            merge_priority: 20
