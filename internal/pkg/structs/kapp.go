@@ -104,6 +104,7 @@ type KappConfig struct {
 	PreDeleteActions     []map[string]Action    `yaml:"pre_delete_actions,omitempty"`
 	Templates            map[string]Template    `yaml:",omitempty"`
 	Vars                 map[string]interface{} `yaml:",omitempty"`
+	Metadata             map[string]interface{} `yaml:",omitempty"` // a placeholder for additional data used by user scripts (e.g. tracking versions/secrets for CI/CD systems). Not used by Sugarkube at all.
 	RunUnits             map[string]RunUnit     `yaml:"run_units" mapstructure:"run_units"`
 	DependsOn            []Dependency           `yaml:"depends_on,omitempty"`   // fully qualified IDs of other kapps this depends on
 	IgnoreGlobalDefaults bool                   `yaml:"ignore_global_defaults"` // don't add globally configured defaults for each requirement
