@@ -96,11 +96,6 @@ func (c *validateConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	_, err = printer.Fprintf("[yellow]Validating requirements for kapps...\n")
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	err = Validate(stackObj, dagObj)
 	if err != nil {
 		return errors.WithStack(err)
@@ -232,8 +227,8 @@ func assertBinaryExists(entryName string, command string, commandsSeen []string,
 
 	path, err := exec.LookPath(command)
 	if err != nil {
-		_, err = printer.Fprintf("  [red]Requirement missing! Can't find command '[bold]%s[reset][red]' "+
-			"for the '[bold]%s[reset][red]' run step '[bold]%s[reset][red]'\n", command,
+		_, err = printer.Fprintf("  [red][bold]Requirement missing![reset][red] Can't find command '[bold]%s[reset][red]' "+
+			"(or it's not executable) for the '[bold]%s[reset][red]' run step '[bold]%s[reset][red]'\n", command,
 			installableObj.FullyQualifiedId(), entryName)
 		*numMissing++
 		if err != nil {
