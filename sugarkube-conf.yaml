@@ -16,6 +16,7 @@ programs:
       kube_context: "{{ .kube_context }}"
       kubectl: kubectl
       tiller_namespace: kube-system
+      helm_timeout: 600
       helm: helm        # path to the helm binary to run. This allows version pinning if you have multiple versions of helm on your machine.
       run_helm: true    # none of these units will be run for a kapp if this is false because of the associated condition
       # Search for parameters dynamically. The `findFiles` function takes a list of
@@ -61,7 +62,7 @@ programs:
                 --wait
                 --install
                 --recreate-pods
-                --timeout=600
+                --timeout={{ .kapp.vars.helm_timeout }}
                 --namespace={{ .kapp.vars.namespace }}
                 {{ .kapp.vars.release }}
                 .
@@ -92,7 +93,7 @@ programs:
               {{ .kapp.vars.namespace }}
             env_vars:
               KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
-            merge_priority: 15         # delete
+            merge_priority: 15
 
   kubectl:
     vars:
@@ -188,7 +189,7 @@ programs:
             command: aws
             args: s3 rm s3://{{ .terraform.state.bucket }}/{{ .terraform.state.key }}
             merge_priority: 50
-        output:         # todo - we'll probably need the ability to add conditions to entire run units, e.g. gt 0 len(.kapp.output)
+        output:
           - call: plan_install/tf-init       # call the tf-init step defined under `plan_install`
           - name: tf-refresh
             command: "{{ .kapp.vars.terraform }}"

@@ -481,6 +481,7 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 				}
 
 				if len(inProgressNodes) > 0 {
+					sort.Strings(inProgressNodes)
 					_, _ = printer.Fprintf("[yellow]Waiting on: [bold]%s[reset][yellow]...\n", strings.Join(inProgressNodes, ", "))
 				}
 			}

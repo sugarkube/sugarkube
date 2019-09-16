@@ -7,7 +7,7 @@
 * Remove extraneous run units from the terraform-bucket kapp
 
 * Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
-* Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them)
+* Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them) - probably not
 
 
 * Find a way of stopping `kapp vars` or `kapps install --dry-run` failing if they refer to outputs from another kapp that don't exist (or if output can't be generated, eg jenkins when the cluster is offline). There is a `--skip-outputs` flag but it's easy to miss - perhaps add it to an error message?) (e.g. `sugarkube kapps install stacks/ops.yaml local-ops -i 'monitoring:*' --parents workspaces/local-ops/ -n --log-file=log.txt -l debug`). Perhaps we should grep for `{{ .outputs` and create default maps containing placeholder values?. Note: The problem seems to be dry-run more than anything else. E.g. this fails (even with a cluster online):

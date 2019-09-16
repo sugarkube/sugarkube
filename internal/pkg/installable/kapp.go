@@ -883,7 +883,7 @@ func (k Kapp) GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{
 				output.Id, k.FullyQualifiedId())
 
 			_, err := printer.Fprintf("[yellow]Not loading output '%s' for kapp "+
-				"'[bold]%s[reset]' due to failed conditions[yellow]'\n", output.Id, k.FullyQualifiedId())
+				"'[bold]%s[reset][yellow]' due to failed conditions\n", output.Id, k.FullyQualifiedId())
 			if err != nil {
 				return nil, errors.WithStack(err)
 			}
