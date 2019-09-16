@@ -33,6 +33,7 @@ func init() {
 
 // Test that registry values override values when returning templated vars
 func TestLoadConfig(t *testing.T) {
+	ten := uint8(10)
 	twenty := uint8(20)
 	thirty := uint8(30)
 
@@ -92,6 +93,11 @@ func TestLoadConfig(t *testing.T) {
 									"COLOUR": "blue",
 								},
 								MergePriority: &twenty,
+							},
+							{
+								Name:          "x",
+								Command:       "/path/to/x",
+								MergePriority: &ten,
 							},
 						},
 					},

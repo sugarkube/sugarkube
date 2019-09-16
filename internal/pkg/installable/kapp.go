@@ -149,21 +149,26 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 	if prepend {
 		k.descriptorLayers = append([]structs.KappDescriptorWithMaps{configCopy}, configLayers...)
 	} else {
-		// until https://github.com/imdario/mergo/issues/90 is resolved we need to manually propagate
-		// non-empty fields for maps to later layers
-		// todo -  remove this once https://github.com/imdario/mergo/issues/90 is merged
-		if len(k.descriptorLayers) > 0 {
-			previousLayer := k.descriptorLayers[len(k.descriptorLayers)-1]
+		k.descriptorLayers = append(configLayers, configCopy)
+	}
+
+	// until https://github.com/imdario/mergo/issues/90 is resolved we need to manually propagate
+	// non-empty fields for maps to later layers
+	// todo -  remove this once https://github.com/imdario/mergo/issues/90 is merged
+	if len(k.descriptorLayers) > 1 {
+		for i := 0; i < len(k.descriptorLayers)-1; i++ {
+			previousLayer := k.descriptorLayers[i]
+			currentLayer := k.descriptorLayers[i+1]
 
 			for key, previousSource := range previousLayer.Sources {
-				currentSource, ok := configCopy.Sources[key]
+				currentSource, ok := currentLayer.Sources[key]
 				if !ok {
 					// if no source exists, initialise one so we can propagate values
 					currentSource = structs.Source{
 						Options: map[string]interface{}{},
 					}
 
-					configCopy.Sources = make(map[string]structs.Source)
+					currentLayer.Sources = make(map[string]structs.Source)
 				}
 
 				if currentSource.Uri == "" && previousSource.Uri != "" {
@@ -174,11 +179,11 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 					currentSource.Id = previousSource.Id
 				}
 
-				configCopy.Sources[key] = currentSource
+				currentLayer.Sources[key] = currentSource
 			}
 
 			for key, previousOutput := range previousLayer.Outputs {
-				currentOutput, ok := configCopy.Outputs[key]
+				currentOutput, ok := currentLayer.Outputs[key]
 				if !ok {
 					currentOutput = structs.Output{}
 				}
@@ -193,14 +198,76 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 					currentOutput.Format = previousOutput.Format
 				}
 
-				configCopy.Outputs[key] = currentOutput
+				currentLayer.Outputs[key] = currentOutput
 			}
-		}
 
-		k.descriptorLayers = append(configLayers, configCopy)
+			if currentLayer.RunUnits == nil {
+				currentLayer.RunUnits = map[string]structs.RunUnit{}
+			}
+
+			log.Logger.Debug("Manually merging run units")
+			for key, previousRunUnit := range previousLayer.RunUnits {
+				currentRunUnit, ok := currentLayer.RunUnits[key]
+				if !ok {
+					currentRunUnit = structs.RunUnit{
+						EnvVars: map[string]string{},
+					}
+				}
+
+				log.Logger.Tracef("Manually merging previous run unit: %#v with current run unit %#v",
+					previousRunUnit, currentRunUnit)
+
+				// hacks upon hacks. We need to initialise a map in the previous
+				// layer to stop mergo causing a panic (https://github.com/imdario/mergo/issues/90)
+				if previousLayer.RunUnits[key].EnvVars == nil {
+					previousRunUnit.EnvVars = map[string]string{}
+					previousLayer.RunUnits[key] = previousRunUnit
+				}
+
+				if currentRunUnit.WorkingDir == "" && previousRunUnit.WorkingDir != "" {
+					currentRunUnit.WorkingDir = previousRunUnit.WorkingDir
+				}
+
+				if len(currentRunUnit.Conditions) == 0 && len(previousRunUnit.Conditions) > 0 {
+					currentRunUnit.Conditions = previousRunUnit.Conditions
+				}
+				if len(currentRunUnit.Binaries) == 0 && len(previousRunUnit.Binaries) > 0 {
+					currentRunUnit.Binaries = previousRunUnit.Binaries
+				}
+				if len(currentRunUnit.EnvVars) != len(previousRunUnit.EnvVars) {
+					for k, v := range previousRunUnit.EnvVars {
+						if _, ok := currentRunUnit.EnvVars[k]; !ok {
+							currentRunUnit.EnvVars[k] = v
+						}
+					}
+				}
+
+				// use the current run steps if any are defined, otherwise use the previous ones
+				currentRunUnit.PlanInstall = mergeRunSteps(previousRunUnit.PlanInstall, currentRunUnit.PlanInstall)
+				currentRunUnit.ApplyInstall = mergeRunSteps(previousRunUnit.ApplyInstall, currentRunUnit.ApplyInstall)
+				currentRunUnit.PlanDelete = mergeRunSteps(previousRunUnit.PlanDelete, currentRunUnit.PlanDelete)
+				currentRunUnit.ApplyDelete = mergeRunSteps(previousRunUnit.ApplyDelete, currentRunUnit.ApplyDelete)
+				currentRunUnit.Output = mergeRunSteps(previousRunUnit.Output, currentRunUnit.Output)
+				currentRunUnit.Clean = mergeRunSteps(previousRunUnit.Clean, currentRunUnit.Clean)
+
+				log.Logger.Tracef("Want to set run unit for '%s' to %#v", key, currentRunUnit)
+				currentLayer.RunUnits[key] = currentRunUnit
+			}
+
+			k.descriptorLayers[i+1] = currentLayer
+		}
 	}
 
 	return k.mergeDescriptorLayers()
+}
+
+// manually merges run steps (this is required due to bugs in mergo)
+func mergeRunSteps(previous []structs.RunStep, current []structs.RunStep) []structs.RunStep {
+	if len(current) > 0 {
+		return current
+	} else {
+		return previous
+	}
 }
 
 // Merges the descriptor layers to create a new templatable merged descriptor

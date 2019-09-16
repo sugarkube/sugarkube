@@ -40,3 +40,6 @@ programs:
               REGION: "{{ .kapp.vars.region }}"
               COLOUR: "blue"
             merge_priority: 20
+          - name: x
+            command: "/path/to/x"
+            merge_priority: 10

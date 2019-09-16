@@ -17,15 +17,125 @@
 package installable
 
 import (
+	"github.com/stretchr/testify/assert"
+	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"os"
+	"path"
+	"testing"
 )
 
+const testDir = "../../testdata"
+
 func init() {
-	log.ConfigureLogger("debug", false, os.Stderr)
+	log.ConfigureLogger("trace", false, os.Stderr)
 }
 
-// todo - test adding and merging config layers
+// tests adding and merging config layers
+func TestAddDescriptor(t *testing.T) {
+	ten := uint8(10)
+	twenty := uint8(20)
+	thirty := uint8(30)
+
+	expectedKappDescriptor := structs.KappDescriptorWithMaps{
+		Id: "sample-kapp",
+		KappConfig: structs.KappConfig{
+			Requires: []string{
+				"prog2",
+				"proga",
+				"script",
+			},
+			Vars: map[string]interface{}{
+				"kubeconfig": "{{ .kubeconfig }}",
+				"release":    "{{ .kapp.vars.release | default .kapp.id }}",
+				"helm":       "/path/to/helm",
+				"region":     "{{ .stack.region }}",
+			},
+			RunUnits: map[string]structs.RunUnit{
+				"proga": {
+					WorkingDir: "/tmp",
+					EnvVars: map[string]string{
+						"user": "sk",
+						"FOOD": "carrots",
+					},
+					PlanInstall: []structs.RunStep{
+						{
+							Name:    "print-yo",
+							Command: "echo",
+							Args:    "yo",
+							EnvVars: map[string]string{
+								"KUBECONFIG": "{{ .kapp.vars.kubeconfig }}",
+							},
+							MergePriority: &ten,
+						},
+					},
+					ApplyInstall: []structs.RunStep{
+						{
+							Name:    "do-stuff-second",
+							Command: "{{ .kapp.vars.helm }}",
+							Args:    "do-stuff {{ .kapp.vars.release }}",
+							EnvVars: map[string]string{
+								"KUBECONFIG": "{{ .kapp.vars.kubeconfig }}",
+							},
+							MergePriority: &thirty,
+						},
+					},
+				},
+				"prog2": {
+					Binaries: []string{"cat"},
+					EnvVars:  map[string]string{},
+					ApplyInstall: []structs.RunStep{
+						{
+							Name:    "do-stuff-first",
+							Command: "/path/to/prog2",
+							Args:    "do-stuff-zzz {{ .kapp.vars.region }}",
+							EnvVars: map[string]string{
+								"REGION": "{{ .kapp.vars.region }}",
+								"COLOUR": "blue",
+							},
+							MergePriority: &twenty,
+						},
+						{
+							Name:          "x",
+							Command:       "/path/to/x",
+							MergePriority: &ten,
+						},
+					},
+				},
+				"script": {
+					EnvVars: map[string]string{},
+					PlanInstall: []structs.RunStep{
+						{
+							Name:          "print-yes",
+							Command:       "echo",
+							Args:          "yes",
+							MergePriority: &twenty,
+						},
+					},
+				},
+			},
+		},
+		Sources: map[string]structs.Source{},
+		Outputs: map[string]structs.Output{},
+	}
+
+	configFile := path.Join(testDir, "test-sugarkube-conf.yaml")
+	config.ViperConfig.SetConfigFile(configFile)
+
+	err := config.Load(config.ViperConfig)
+	assert.Nil(t, err)
+
+	kapp, err := New("sample-manifest", []structs.KappDescriptorWithMaps{{Id: "sample-kapp"}})
+	assert.Nil(t, err)
+
+	err = kapp.LoadConfigFile(path.Join(testDir, "sample-workspace"))
+	assert.Nil(t, err)
+
+	descriptor := kapp.GetDescriptor()
+
+	assert.Equal(t, expectedKappDescriptor, descriptor)
+}
 
 //func TestFindKappVarsFiles(t *testing.T) {
 //

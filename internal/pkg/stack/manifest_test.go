@@ -229,7 +229,8 @@ kapps:
 								nil,
 							},
 						},
-						Vars: map[string]interface{}{},
+						Vars:     map[string]interface{}{},
+						RunUnits: map[string]structs.RunUnit{},
 					},
 					Outputs: map[string]structs.Output{},
 					Sources: map[string]structs.Source{
@@ -255,6 +256,7 @@ kapps:
 								"val2",
 							},
 						},
+						RunUnits: map[string]structs.RunUnit{},
 					},
 					Outputs: map[string]structs.Output{},
 					Sources: map[string]structs.Source{
@@ -272,7 +274,8 @@ kapps:
 						PostInstallActions: []map[string]structs.Action{
 							{constants.ActionClusterUpdate: structs.Action{}},
 						},
-						Vars: map[string]interface{}{},
+						Vars:     map[string]interface{}{},
+						RunUnits: map[string]structs.RunUnit{},
 					},
 					Outputs: map[string]structs.Output{},
 					Sources: map[string]structs.Source{
@@ -337,6 +340,7 @@ func TestManifestOverrides(t *testing.T) {
 				},
 				"namespace": "test-namespace", // a manifest default variable
 			},
+			RunUnits: map[string]structs.RunUnit{},
 		},
 		Sources: map[string]structs.Source{
 			"pathA": {
@@ -378,6 +382,7 @@ func TestManifestOverridesNil(t *testing.T) {
 				"stackDefault":      "xyz",
 				"overriddenDefault": "zzz",
 			},
+			RunUnits: map[string]structs.RunUnit{},
 		},
 		Sources: map[string]structs.Source{
 			"special": {

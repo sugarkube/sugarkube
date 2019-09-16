@@ -1,13 +1,22 @@
-envVars:
-  STATIC: someValue
-  KUBE_CONTEXT: "{{.kube_context}}"
-  NAMESPACE: "{{.kapp.id}}"
-  REGION: "{{.stack.region}}"
-
-args:
-  make:
-    install:
-      helm-opts: {{ .blank | default "yes" }}
-
 requires:
-  - helm
+  - prog2
+  - proga
+  - script
+
+run_units:
+  proga:
+    env_vars:
+      FOOD: carrots
+    plan_install:           # this will replace all plan_install steps defined in the config file
+      - name: print-yo
+        command: "echo"
+        args: yo
+        env_vars:
+          KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
+        merge_priority: 10
+  script:
+    plan_install:           # this will replace all plan_install steps defined in the config file
+      - name: print-yes
+        command: "echo"
+        args: yes
+        merge_priority: 20

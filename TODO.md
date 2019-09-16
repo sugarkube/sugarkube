@@ -20,7 +20,6 @@
 
 * Find a way of stopping `kapp vars` or `kapps install --dry-run` failing if they refer to outputs from another kapp that don't exist (or if output can't be generated, eg jenkins when the cluster is offline). There is a `--skip-outputs` flag but it's easy to miss - perhaps add it to an error message?)
 
-* Run units defined in kapps should be merged with those in the main config file, so only specific units can be overridden and the configured defaults used for other units. At the moment all units must be redefined even if on a single unit is needed (see cert manager)
 * Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
 * kapps whose conditions are false won't be run even if they are explicitly selected with -i. That's annoying for `kapp vars`. Perhaps explicitly selected kapps should have their conditions overridden? Or add a flag for that?
 * Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
@@ -75,5 +74,4 @@
       different stacks)
   
 # Known issues
-* Sugarkube uses 100% of CPU when waiting on tasks to complete. Profiling confirms there are no inefficiencies in our code. It appears to be due to https://github.com/golang/go/issues/27707
 * It'd be nice to throw a more useful error if AWS creds have expired (e.g. for kops or trying to set up cluster connectivity) but it's currently out of our hands: really https://github.com/kubernetes/kops/issues/7393
