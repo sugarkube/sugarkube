@@ -160,6 +160,10 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 			previousLayer := k.descriptorLayers[i]
 			currentLayer := k.descriptorLayers[i+1]
 
+			if currentLayer.Sources == nil {
+				currentLayer.Sources = map[string]structs.Source{}
+			}
+
 			for key, previousSource := range previousLayer.Sources {
 				currentSource, ok := currentLayer.Sources[key]
 				if !ok {
@@ -182,6 +186,10 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 				currentLayer.Sources[key] = currentSource
 			}
 
+			if currentLayer.Outputs == nil {
+				currentLayer.Outputs = map[string]structs.Output{}
+			}
+
 			for key, previousOutput := range previousLayer.Outputs {
 				currentOutput, ok := currentLayer.Outputs[key]
 				if !ok {
@@ -199,6 +207,16 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 				}
 
 				currentLayer.Outputs[key] = currentOutput
+			}
+
+			if currentLayer.Vars == nil {
+				currentLayer.Vars = map[string]interface{}{}
+			}
+
+			for k, v := range previousLayer.Vars {
+				if _, ok := currentLayer.Vars[k]; !ok {
+					currentLayer.Vars[k] = v
+				}
 			}
 
 			if currentLayer.RunUnits == nil {
@@ -234,11 +252,14 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 				if len(currentRunUnit.Binaries) == 0 && len(previousRunUnit.Binaries) > 0 {
 					currentRunUnit.Binaries = previousRunUnit.Binaries
 				}
-				if len(currentRunUnit.EnvVars) != len(previousRunUnit.EnvVars) {
-					for k, v := range previousRunUnit.EnvVars {
-						if _, ok := currentRunUnit.EnvVars[k]; !ok {
-							currentRunUnit.EnvVars[k] = v
-						}
+
+				if currentRunUnit.EnvVars == nil {
+					currentRunUnit.EnvVars = map[string]string{}
+				}
+
+				for k, v := range previousRunUnit.EnvVars {
+					if _, ok := currentRunUnit.EnvVars[k]; !ok {
+						currentRunUnit.EnvVars[k] = v
 					}
 				}
 
