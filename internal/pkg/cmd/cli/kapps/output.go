@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
@@ -46,15 +47,15 @@ type outputCommand struct {
 func newOutputCommand() *cobra.Command {
 	c := &outputCommand{}
 
+	usage := "output [flags] [stack-file] [stack-name] [workspace-dir]"
 	command := &cobra.Command{
-		Use:   "output [flags] [stack-file] [stack-name] [workspace-dir]",
+		Use:   usage,
 		Short: fmt.Sprintf("Generate output for kapps"),
 		Long:  "Makes all selected kapps generate output.\n",
 		RunE: func(command *cobra.Command, args []string) error {
-			if len(args) < 3 {
-				return errors.New("some required arguments are missing")
-			} else if len(args) > 3 {
-				return errors.New("too many arguments supplied")
+			err := cmd.ValidateNumArgs(args, 3, usage)
+			if err != nil {
+				return errors.WithStack(err)
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]

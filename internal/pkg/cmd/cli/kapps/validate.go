@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/config"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/installer"
@@ -36,15 +37,15 @@ type validateConfig struct {
 func newValidateCommand() *cobra.Command {
 	c := &validateConfig{}
 
+	usage := "validate [flags] [stack-file] [stack-name] [workspace-dir]"
 	command := &cobra.Command{
-		Use:   "validate [flags] [stack-file] [stack-name] [workspace-dir]",
+		Use:   usage,
 		Short: fmt.Sprintf("Validate you have all the required binaries required by each kapp"),
 		Long:  `Loads all kapps and makes sure the binaries they declare in their 'requires' blocks are in your path`,
 		RunE: func(command *cobra.Command, args []string) error {
-			if len(args) < 3 {
-				return errors.New("some required arguments are missing")
-			} else if len(args) > 3 {
-				return errors.New("too many arguments supplied")
+			err := cmd.ValidateNumArgs(args, 3, usage)
+			if err != nil {
+				return errors.WithStack(err)
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]

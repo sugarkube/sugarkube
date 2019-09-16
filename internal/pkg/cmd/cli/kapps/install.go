@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/interfaces"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -62,8 +63,9 @@ type installCommand struct {
 func newInstallCommand() *cobra.Command {
 	c := &installCommand{}
 
+	usage := "install [flags] [stack-file] [stack-name] [workspace-dir]"
 	command := &cobra.Command{
-		Use:   "install [flags] [stack-file] [stack-name] [workspace-dir]",
+		Use:   usage,
 		Short: fmt.Sprintf("Install kapps into a cluster"),
 		Long: `Install kapps in a target cluster according to manifests.
 
@@ -90,10 +92,9 @@ you may need to pass the '--connect' flag to make Sugarkube go through that
 process before installing the selected kapps.
 `,
 		RunE: func(command *cobra.Command, args []string) error {
-			if len(args) < 3 {
-				return errors.New("some required arguments are missing")
-			} else if len(args) > 3 {
-				return errors.New("too many arguments supplied")
+			err := cmd.ValidateNumArgs(args, 3, usage)
+			if err != nil {
+				return errors.WithStack(err)
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]

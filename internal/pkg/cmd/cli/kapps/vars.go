@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
@@ -31,16 +32,16 @@ type varsConfig struct {
 func newVarsCommand() *cobra.Command {
 	c := &varsConfig{}
 
+	usage := "vars [flags] [stack-file] [stack-name] [workspace-dir]"
 	command := &cobra.Command{
-		Use:   "vars [flags] [stack-file] [stack-name] [workspace-dir]",
+		Use:   usage,
 		Short: fmt.Sprintf("Display all variables available for a kapp"),
 		Long: `Merges variables from all sources and displays them along with each kapp's 
 templated sugarkube.yaml file.`,
 		RunE: func(command *cobra.Command, args []string) error {
-			if len(args) < 3 {
-				return errors.New("some required arguments are missing")
-			} else if len(args) > 3 {
-				return errors.New("too many arguments supplied")
+			err := cmd.ValidateNumArgs(args, 3, usage)
+			if err != nil {
+				return errors.WithStack(err)
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
