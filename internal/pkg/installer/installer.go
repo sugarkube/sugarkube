@@ -26,12 +26,10 @@ import (
 const RunUnit = "run-unit"
 
 // Factory that creates installers
-func New(name string, providerImpl interfaces.IProvider) (interfaces.IInstaller, error) {
+func New(name string) (interfaces.IInstaller, error) {
 	switch name {
 	case RunUnit:
-		return RunUnitInstaller{
-			provider: providerImpl,
-		}, nil
+		return RunUnitInstaller{}, nil
 	}
 
 	return nil, errors.New(fmt.Sprintf("Installer '%s' doesn't exist", name))

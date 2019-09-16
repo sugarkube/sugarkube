@@ -164,7 +164,7 @@ func assertBinariesExist(stackObj interfaces.IStack, installableObj interfaces.I
 	numMissing *int) error {
 	log.Logger.Debugf("Making sure binaries exist for '%s'", installableObj.FullyQualifiedId())
 	installerName := installer.RunUnit
-	installerImpl, err := installer.New(installerName, stackObj.GetProvider())
+	installerImpl, err := installer.New(installerName)
 	if err != nil {
 		return errors.WithStack(err)
 	}

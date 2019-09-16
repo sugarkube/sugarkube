@@ -30,9 +30,7 @@ import (
 )
 
 // Installs kapps with defined run units
-type RunUnitInstaller struct {
-	provider interfaces.IProvider
-}
+type RunUnitInstaller struct{}
 
 const maxInterpolationRecursions = 5
 
