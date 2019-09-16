@@ -444,13 +444,22 @@ func (g *Dag) walk(down bool, processCh chan<- NamedNode, doneCh chan NamedNode)
 					log.Logger.Debugf("Worker informs the DAG it's finished processing node '%s'", namedNode.name)
 					nodeItem := nodeStatusesById[namedNode.node.ID()]
 					nodeItem.status = finished
+					mutex.Lock()
 					nodeStatusesById[namedNode.node.ID()] = nodeItem
+
+					// copy the node status map with a mutex so we don't hit concurrent map misuse issues
+					nodeStatusesByIdCopy := make(map[int64]nodeStatus)
+
+					for k, v := range nodeStatusesById {
+						nodeStatusesByIdCopy[k] = v
+					}
+					mutex.Unlock()
 
 					go func() {
 						// reprocess nodes again since there's been a state change
 						g.processEligibleNodes(nodeStatusesById, processCh, mutex, down)
 
-						if allDone(nodeStatusesById) {
+						if allDone(nodeStatusesByIdCopy) {
 							log.Logger.Infof("DAG fully processed")
 							// keep track of whether we've closed the channels (possibly in another goroutine)
 							if !channelsClosed {

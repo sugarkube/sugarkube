@@ -7,15 +7,11 @@
 * Add retries around setting up SSH port forwarding (it should make sugarkube abort if no port forwarding can be created - at the moment it always reports success). 
 * Retry setting up SSH port forwarding in case the bastion hostname doesn't resolve
 
-* The `kapps clean` command doesn't work - probably not merging in run units from the global config properly
-
-* Update the cert manager and prometheus-operator kapps to delete CRDs when  deleted
+* Update the prometheus-operator kapps to delete CRDs when  deleted
+* Remove extraneous run units from the terraform-bucket kapp
 
 * Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
 * Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them)
-
-* Rerun with -race to try to find the cause of the intermittent concurrent map iteration and map write error when walking the DAG
-
 
 
 * Find a way of stopping `kapp vars` or `kapps install --dry-run` failing if they refer to outputs from another kapp that don't exist (or if output can't be generated, eg jenkins when the cluster is offline). There is a `--skip-outputs` flag but it's easy to miss - perhaps add it to an error message?)
