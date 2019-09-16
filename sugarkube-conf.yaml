@@ -4,7 +4,7 @@ log_level: none
 #json_logs: false
 #no_color: true
 num_workers: 10     # number of goroutines to use to process kapps in parallel. You probably won't need it much higher
-# than this unless your DAG is enormous
+                    # than this unless your DAG is enormous
 
 programs:
   helm:
@@ -14,6 +14,7 @@ programs:
       namespace: "{{ .kapp.id }}"
       release: "{{ .kapp.id }}"
       kube_context: "{{ .kube_context }}"
+      kubectl: kubectl
       tiller_namespace: kube-system
       helm: helm        # path to the helm binary to run. This allows version pinning if you have multiple versions of helm on your machine.
       run_helm: true    # none of these units will be run for a kapp if this is false because of the associated condition
@@ -81,6 +82,17 @@ programs:
             env_vars:
               KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
             merge_priority: 10         # delete helm charts *before* running terraform (we don't use 0 so you can insert your own steps before this one)
+          - name: delete namespace
+            command: "{{ .kapp.vars.kubectl }}"
+            args:
+              --context={{ .kapp.vars.kube_context }}
+              delete
+              --now
+              namespace
+              {{ .kapp.vars.namespace }}
+            env_vars:
+              KUBECONFIG: "{{ .kapp.vars.kubeconfig }}"
+            merge_priority: 15         # delete
 
   kubectl:
     vars:
@@ -199,9 +211,11 @@ programs:
 # globally defined run units will be used as defaults for each program
 run_units:
   clean:
-    - command: find
+    - name: delete-generated-files
+      command: find
       args: "{{ .kapp.cacheRoot }} -name '_generated_*' -type f -delete"
       ignore_errors: true         # find returns several exit codes; we don't really care about the details
-    - command: find
+    - name: delete-generated-dirs
+      command: find
       args: "{{ .kapp.cacheRoot }} -name '_generated_*' -type d -exec rm -rf {} ';'"
       ignore_errors: true         # find returns several exit codes; we don't really care about the details
