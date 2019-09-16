@@ -27,7 +27,7 @@ func newVersionCommand() *cobra.Command {
 		Use:   "version",
 		Short: "Print the version number of sugarkube",
 		Long:  `All software has versions. This is sugarkube's.`,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(command *cobra.Command, args []string) {
 			fmt.Println("Build Date:", version.BuildDate)
 			fmt.Println("Git Commit:", version.GitCommit)
 			fmt.Println("Version:", version.Version)

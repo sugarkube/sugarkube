@@ -8,3 +8,12 @@ type SilentError struct {
 func (e SilentError) Error() string {
 	return "silent error"
 }
+
+// Simple errors are self-contained. There's no need to suggest viewing a stack trace
+type SimpleError struct {
+	Message string
+}
+
+func (e SimpleError) Error() string {
+	return e.Message
+}

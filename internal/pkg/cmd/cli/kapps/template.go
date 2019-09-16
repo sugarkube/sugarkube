@@ -44,16 +44,16 @@ type templateConfig struct {
 	excludeSelector []string
 }
 
-func newTemplateCmd() *cobra.Command {
+func newTemplateCommand() *cobra.Command {
 	c := &templateConfig{}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "template [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Render templates for kapps"),
 		Long: `Renders configured templates for kapps, useful for e.g. terraform backends 
 configured for the region the target cluster is in, generating Helm 
 'values.yaml' files, etc.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")
 			} else if len(args) > 3 {
@@ -67,7 +67,7 @@ configured for the region the target cluster is in, generating Helm
 		Aliases: []string{"templates"},
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.BoolVar(&c.ignoreErrors, "ignore-errors", false, "ignore errors templating kapps")
@@ -83,7 +83,7 @@ configured for the region the target cluster is in, generating Helm
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
 			constants.WildcardCharacter))
-	return cmd
+	return command
 }
 
 func (c *templateConfig) run() error {

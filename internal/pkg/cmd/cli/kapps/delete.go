@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/constants"
 	"github.com/sugarkube/sugarkube/internal/pkg/plan"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
@@ -27,7 +28,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
 
-type deleteCmd struct {
+type deleteCommand struct {
 	workspaceDir        string
 	dryRun              bool
 	approved            bool
@@ -53,11 +54,13 @@ type deleteCmd struct {
 	excludeSelector     []string
 }
 
-func newDeleteCmd() *cobra.Command {
-	c := &deleteCmd{}
+func newDeleteCommand() *cobra.Command {
+	c := &deleteCommand{}
 
-	cmd := &cobra.Command{
-		Use:   "delete [flags] [stack-file] [stack-name] [workspace-dir]",
+	usage := "delete [flags] [stack-file] [stack-name] [workspace-dir]"
+
+	command := &cobra.Command{
+		Use:   usage,
 		Short: fmt.Sprintf("Delete kapps from a cluster"),
 		Long: `Delete kapps from a target cluster according to manifests.
 
@@ -69,11 +72,10 @@ you may need to pass the '--connect' flag to make Sugarkube go through that
 process before deleting the selected kapps.
 `,
 		Aliases: []string{"uninstall"},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) < 3 {
-				return errors.New("some required arguments are missing")
-			} else if len(args) > 3 {
-				return errors.New("too many arguments supplied")
+		RunE: func(command *cobra.Command, args []string) error {
+			err := cmd.ValidateNumArgs(args, 3, usage)
+			if err != nil {
+				return errors.WithStack(err)
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
@@ -96,7 +98,7 @@ process before deleting the selected kapps.
 		},
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVarP(&c.approved, "yes", "y", false, "actually delete kapps. If false, kapps will be expected to plan "+
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
@@ -123,10 +125,10 @@ process before deleting the selected kapps.
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
 			constants.WildcardCharacter))
-	return cmd
+	return command
 }
 
-func (c *deleteCmd) run() error {
+func (c *deleteCommand) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &structs.StackFile{

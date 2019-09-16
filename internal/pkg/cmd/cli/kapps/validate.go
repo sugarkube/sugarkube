@@ -33,14 +33,14 @@ type validateConfig struct {
 	excludeSelector []string
 }
 
-func newValidateCmd() *cobra.Command {
+func newValidateCommand() *cobra.Command {
 	c := &validateConfig{}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "validate [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Validate you have all the required binaries required by each kapp"),
 		Long:  `Loads all kapps and makes sure the binaries they declare in their 'requires' blocks are in your path`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")
 			} else if len(args) > 3 {
@@ -53,7 +53,7 @@ func newValidateCmd() *cobra.Command {
 		},
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -66,7 +66,7 @@ func newValidateCmd() *cobra.Command {
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted manifest-id:kapp-id or 'manifest-id:%s' for all)",
 			constants.WildcardCharacter))
-	return cmd
+	return command
 }
 
 func (c *validateConfig) run() error {

@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type diffCmd struct {
+type diffCommand struct {
 	extended bool
 }
 
@@ -30,10 +30,10 @@ type diffCmd struct {
 // since we run kapps in a two-phased manner - first planning then applying
 // changes - we won't use the more obvious term 'plan' here to avoid ambiguous
 // terms.
-func newDiffCmd() *cobra.Command {
-	c := &diffCmd{}
+func newDiffCommand() *cobra.Command {
+	c := &diffCommand{}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "diff [flags]",
 		Short: fmt.Sprintf("Diff the state of a cluster with manifests"),
 		Long: `Discovers the differences between the actual kapps installed on a cluster compared 
@@ -51,13 +51,13 @@ a CI/CD system about the secrets that a kapp needs during installation.
 		RunE: c.run,
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVar(&c.extended, "extended", false, "include each kapp's 'sugarkube.yaml' file in output")
 
-	return cmd
+	return command
 }
 
-func (c *diffCmd) run(cmd *cobra.Command, args []string) error {
+func (c *diffCommand) run(command *cobra.Command, args []string) error {
 	// todo the diff should include a timestamp so that we can allow them to
 	// only be valid as inputs to `kapps install` for a certain amount of time.
 

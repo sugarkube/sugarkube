@@ -34,8 +34,8 @@ To configure your bash shell to load completions for each session add to your ba
 # ~/.bashrc or ~/.profile
 . <(sugarkube completion)
 `,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return rootCmd.GenBashCompletion(os.Stdout)
+		RunE: func(command *cobra.Command, args []string) error {
+			return rootCommand.GenBashCompletion(os.Stdout)
 		},
 	}
 

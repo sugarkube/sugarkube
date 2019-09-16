@@ -43,14 +43,14 @@ type varsConfig struct {
 	suppress     []string
 }
 
-func newVarsCmd() *cobra.Command {
+func newVarsCommand() *cobra.Command {
 	c := &varsConfig{}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "vars [flags] [stack-file] [stack-name]",
 		Short: fmt.Sprintf("Display all variables available for a stack"),
 		Long:  `Merges variables from all sources and displays them.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return errors.New("the name of the stack to run, and the path to the stack file are required")
 			} else if len(args) > 2 {
@@ -62,7 +62,7 @@ func newVarsCmd() *cobra.Command {
 		},
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -71,7 +71,7 @@ func newVarsCmd() *cobra.Command {
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
 	f.StringArrayVarP(&c.suppress, "suppress", "s", []string{},
 		"paths to variables to suppress from the output to simplify it (e.g. 'provision.specs')")
-	return cmd
+	return command
 }
 
 func (c *varsConfig) run() error {

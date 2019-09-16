@@ -31,7 +31,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
 
-type installCmd struct {
+type installCommand struct {
 	workspaceDir string
 	dryRun       bool
 	approved     bool
@@ -59,10 +59,10 @@ type installCmd struct {
 	readyTimeout        uint32
 }
 
-func newInstallCmd() *cobra.Command {
-	c := &installCmd{}
+func newInstallCommand() *cobra.Command {
+	c := &installCommand{}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "install [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Install kapps into a cluster"),
 		Long: `Install kapps in a target cluster according to manifests.
@@ -89,7 +89,7 @@ is created or updated by Sugarkube, but if you're installing individual kapps
 you may need to pass the '--connect' flag to make Sugarkube go through that
 process before installing the selected kapps.
 `,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")
 			} else if len(args) > 3 {
@@ -119,7 +119,7 @@ process before installing the selected kapps.
 		},
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVarP(&c.approved, constants.YesFlag, "y", false, "actually install kapps. If false, kapps will be expected to plan "+
 		"their changes but not make any destrucive changes (e.g. should run 'terraform plan', etc. but not apply it).")
@@ -149,10 +149,10 @@ process before installing the selected kapps.
 			constants.WildcardCharacter))
 	f.Uint32Var(&c.onlineTimeout, "online-timeout", 600, "max number of seconds to wait for the cluster to come online")
 	f.Uint32Var(&c.readyTimeout, "ready-timeout", 600, "max number of seconds to wait for the cluster to become ready")
-	return cmd
+	return command
 }
 
-func (c *installCmd) run() error {
+func (c *installCommand) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &structs.StackFile{

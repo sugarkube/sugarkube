@@ -86,7 +86,7 @@ migrated into Kapps. You can migrate a bit at a time to see how it helps you.
 See https://sugarkube.io for more info and documentation.
 `
 
-var rootCmd = &cobra.Command{
+var rootCommand = &cobra.Command{
 	Short: "Sweet cluster dependency management",
 	Long:  longUsage,
 }
@@ -97,21 +97,21 @@ var configFile string
 
 func NewCommand(name string) *cobra.Command {
 
-	rootCmd.Use = name
-	rootCmd.SilenceUsage = true
-	rootCmd.SilenceErrors = true // we'll print errors, Cobra doesn't have to
+	rootCommand.Use = name
+	rootCommand.SilenceUsage = true
+	rootCommand.SilenceErrors = true // we'll print errors, Cobra doesn't have to
 
-	printer.SetOutput(rootCmd.OutOrStdout())
+	printer.SetOutput(rootCommand.OutOrStdout())
 
-	rootCmd.AddCommand(
+	rootCommand.AddCommand(
 		newVersionCommand(),
 		newCompletionsCommand(),
-		cluster.NewClusterCmds(),
-		kapps.NewKappsCmds(),
-		workspace.NewWorkspaceCmds(),
+		cluster.NewClusterCommands(),
+		kapps.NewKappsCommands(),
+		workspace.NewWorkspaceCommands(),
 	)
 
-	return rootCmd
+	return rootCommand
 }
 
 func init() {
@@ -184,14 +184,14 @@ func init() {
 	noColor := false
 	verbose := false
 
-	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|trace|debug|info|warn|error|fatal")
-	rootCmd.PersistentFlags().StringVar(&logFilePath, "log-file", "", "log to the given file")
-	rootCmd.PersistentFlags().StringVar(&configFile, "config", "",
+	rootCommand.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "info", "log level. One of none|trace|debug|info|warn|error|fatal")
+	rootCommand.PersistentFlags().StringVar(&logFilePath, "log-file", "", "log to the given file")
+	rootCommand.PersistentFlags().StringVar(&configFile, "config", "",
 		fmt.Sprintf("path to a config file. If not given, default paths "+
 			"will be searched for a file called '%s.(yaml|json)'", config.ConfigFileName))
-	rootCmd.PersistentFlags().BoolVarP(&jsonLogs, "json-logs", "j", false, "whether to emit JSON-formatted logs")
-	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable coloured output")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "show more output")
+	rootCommand.PersistentFlags().BoolVarP(&jsonLogs, "json-logs", "j", false, "whether to emit JSON-formatted logs")
+	rootCommand.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable coloured output")
+	rootCommand.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "show more output")
 
 	// bind viper to CLI args
 	bindings := map[string]string{
@@ -204,7 +204,7 @@ func init() {
 	viperConfig := config.ViperConfig
 
 	for viperKey, pFlagName := range bindings {
-		err := viperConfig.BindPFlag(viperKey, rootCmd.PersistentFlags().Lookup(pFlagName))
+		err := viperConfig.BindPFlag(viperKey, rootCommand.PersistentFlags().Lookup(pFlagName))
 		if err != nil {
 			if log.Logger.Level == logrus.DebugLevel || log.Logger.Level == logrus.TraceLevel {
 				log.Logger.Fatalf("Error binding to CLI args: %+v", err)

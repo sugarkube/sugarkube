@@ -27,7 +27,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
 
-type outputCmd struct {
+type outputCommand struct {
 	workspaceDir    string
 	dryRun          bool
 	includeParents  bool
@@ -43,14 +43,14 @@ type outputCmd struct {
 	excludeSelector []string
 }
 
-func newOutputCmd() *cobra.Command {
-	c := &outputCmd{}
+func newOutputCommand() *cobra.Command {
+	c := &outputCommand{}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "output [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Generate output for kapps"),
 		Long:  "Makes all selected kapps generate output.\n",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")
 			} else if len(args) > 3 {
@@ -64,7 +64,7 @@ func newOutputCmd() *cobra.Command {
 		},
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
@@ -79,10 +79,10 @@ func newOutputCmd() *cobra.Command {
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all)",
 			constants.WildcardCharacter))
-	return cmd
+	return command
 }
 
-func (c *outputCmd) run() error {
+func (c *outputCommand) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &structs.StackFile{

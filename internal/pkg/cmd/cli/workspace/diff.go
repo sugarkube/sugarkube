@@ -22,13 +22,13 @@ package workspace
 //	"io"
 //)
 //
-//type diffCmd struct {
+//type diffCommand struct {
 //}
 //
-//func newDiffCmd() *cobra.Command {
-//	c := &diffCmd{}
+//func newDiffCommand() *cobra.Command {
+//	c := &diffCommand{}
 //
-//	cmd := &cobra.Command{
+//	command := &cobra.Command{
 //		Use:   "diff [flags]",
 //		Short: fmt.Sprintf("Diff a local kapp workspace against manifests"),
 //		Long: `Diffs a local kapp workspace directory against kapps defined in a
@@ -44,9 +44,9 @@ package workspace
 //		RunE: c.run,
 //	}
 //
-//	return cmd
+//	return command
 //}
 //
-//func (c *diffCmd) run(cmd *cobra.Command, args []string) error {
+//func (c *diffCommand) run(command *cobra.Command, args []string) error {
 //	panic("Not implemented")
 //}

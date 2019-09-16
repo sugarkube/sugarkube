@@ -28,15 +28,15 @@ type varsConfig struct {
 	suppress        []string
 }
 
-func newVarsCmd() *cobra.Command {
+func newVarsCommand() *cobra.Command {
 	c := &varsConfig{}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "vars [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Display all variables available for a kapp"),
 		Long: `Merges variables from all sources and displays them along with each kapp's 
 templated sugarkube.yaml file.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")
 			} else if len(args) > 3 {
@@ -49,7 +49,7 @@ templated sugarkube.yaml file.`,
 		},
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.BoolVar(&c.skipOutputs, "skip-outputs", false, "don't load outputs from parents")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
@@ -66,7 +66,7 @@ templated sugarkube.yaml file.`,
 			constants.WildcardCharacter))
 	f.StringArrayVarP(&c.suppress, "suppress", "s", []string{},
 		"paths to variables to suppress from the output to simplify it (e.g. 'provision.specs')")
-	return cmd
+	return command
 }
 
 func (c *varsConfig) run() error {

@@ -30,7 +30,7 @@ import (
 
 // Launches a cluster, either local or remote.
 
-type createCmd struct {
+type createCommand struct {
 	dryRun        bool
 	stackName     string
 	stackFile     string
@@ -44,9 +44,9 @@ type createCmd struct {
 	readyTimeout  uint32
 }
 
-func newCreateCmd() *cobra.Command {
+func newCreateCommand() *cobra.Command {
 
-	c := &createCmd{}
+	c := &createCommand{}
 
 	command := &cobra.Command{
 		Use:   "create [flags] [stack-file] [stack-name]",
@@ -68,7 +68,7 @@ workspace with 'sugarkube workspace create').
 
 Note: Not all providers require all arguments. See documentation for help.
 `,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return errors.New("some required arguments are missing")
 			} else if len(args) > 2 {
@@ -93,7 +93,7 @@ Note: Not all providers require all arguments. See documentation for help.
 	return command
 }
 
-func (c *createCmd) run() error {
+func (c *createCommand) run() error {
 
 	// CLI overrides - will be merged with and take precedence over values loaded from the stack config file
 	cliStackConfig := &structs.StackFile{

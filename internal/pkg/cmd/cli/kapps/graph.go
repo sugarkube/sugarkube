@@ -33,7 +33,7 @@ import (
 	"os"
 )
 
-type graphCmd struct {
+type graphCommand struct {
 	workspaceDir    string
 	includeParents  bool
 	noOpen          bool
@@ -50,16 +50,16 @@ type graphCmd struct {
 	excludeSelector []string
 }
 
-func newGraphCmd() *cobra.Command {
-	c := &graphCmd{}
+func newGraphCommand() *cobra.Command {
+	c := &graphCommand{}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "graph [flags] [stack-file] [stack-name]",
 		Short: fmt.Sprintf("Graphs local kapps"),
 		Long: `Prints the graph showing which kapps would be processed, renders it as an SVG 
 and opens it using the default SVG application. To disable rendering an SVG pass '--no-open'.
 `,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return errors.New("some required arguments are missing")
 			} else if len(args) > 2 {
@@ -72,7 +72,7 @@ and opens it using the default SVG application. To disable rendering an SVG pass
 		},
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVar(&c.noOpen, "no-open", false, "don't open an SVG visualisation in the default .svg application (requires graphviz)")
 	f.StringVarP(&c.outPath, "out", "o", "", "write an SVG visualisation to the given file path (requires graphviz)")
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
@@ -88,10 +88,10 @@ and opens it using the default SVG application. To disable rendering an SVG pass
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all)",
 			constants.WildcardCharacter))
-	return cmd
+	return command
 }
 
-func (c *graphCmd) run() error {
+func (c *graphCommand) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &structs.StackFile{

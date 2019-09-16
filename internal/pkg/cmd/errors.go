@@ -34,6 +34,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
@@ -53,8 +54,13 @@ func CheckError(err error) {
 				if log.Logger.Level == logrus.DebugLevel || log.Logger.Level == logrus.TraceLevel {
 					_, err2 = printer.Fprintf("[red]An error occurred: %+v\n", err)
 				} else {
-					_, err2 = printer.Fprintf("\n[red][bold]Error[reset][red]: %v\n\n"+
-						"[reset]Run with `-l debug` or `-l trace` for a full stacktrace.\n", err)
+					// don't suggest viewing a stack trace for simple errors
+					if _, simple := errors.Cause(err).(program.SimpleError); simple {
+						_, err2 = printer.Fprintf("\n[red][bold]Error[reset][red]: %v\n", err)
+					} else {
+						_, err2 = printer.Fprintf("\n[red][bold]Error[reset][red]: %v\n\n"+
+							"[reset]Run with `-l debug` or `-l trace` for a full stacktrace.\n", err)
+					}
 				}
 				if err2 != nil {
 					panic(err2)
@@ -63,4 +69,15 @@ func CheckError(err error) {
 		}
 		os.Exit(1)
 	}
+}
+
+// Returns an error containing usage information if the number of args doesn't match what's expected
+func ValidateNumArgs(args []string, numExpected int, usage string) error {
+	if len(args) < numExpected {
+		return program.SimpleError{fmt.Sprintf("some required arguments are missing\nUsage: %s", usage)}
+	} else if len(args) > numExpected {
+		return program.SimpleError{fmt.Sprintf("too many arguments supplied\nUsage: %s", usage)}
+	}
+
+	return nil
 }

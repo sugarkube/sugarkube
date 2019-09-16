@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/sugarkube/sugarkube/internal/pkg/cmd"
 	"github.com/sugarkube/sugarkube/internal/pkg/printer"
 	"github.com/sugarkube/sugarkube/internal/pkg/provisioner"
 	"github.com/sugarkube/sugarkube/internal/pkg/stack"
@@ -29,7 +30,7 @@ import (
 
 // Launches a cluster, either local or remote.
 
-type connectCmd struct {
+type connectCommand struct {
 	dryRun      bool
 	stackName   string
 	stackFile   string
@@ -41,12 +42,14 @@ type connectCmd struct {
 	region      string
 }
 
-func newConnectCmd() *cobra.Command {
+func newConnectCommand() *cobra.Command {
 
-	c := &connectCmd{}
+	c := &connectCommand{}
+
+	usage := "connect [flags] [stack-file] [stack-name]"
 
 	command := &cobra.Command{
-		Use:   "connect [flags] [stack-file] [stack-name]",
+		Use:   usage,
 		Short: fmt.Sprintf("Create a connection to a private Kubernetes API server"),
 		Long: `Ensures an private Kubernetes API server is accessible from the local machine.
 For kops clusters with a private API load balancer and a bastion SSH port forwarding
@@ -54,11 +57,10 @@ will be set up.
 
 Note: Not all providers require all arguments. See documentation for help.
 `,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) < 2 {
-				return errors.New("the name of the stack to run, and the path to the stack file are required")
-			} else if len(args) > 2 {
-				return errors.New("too many arguments supplied")
+		RunE: func(command *cobra.Command, args []string) error {
+			err := cmd.ValidateNumArgs(args, 2, usage)
+			if err != nil {
+				return errors.WithStack(err)
 			}
 			c.stackFile = args[0]
 			c.stackName = args[1]
@@ -91,7 +93,7 @@ Note: Not all providers require all arguments. See documentation for help.
 	return command
 }
 
-func (c *connectCmd) run() error {
+func (c *connectCommand) run() error {
 
 	// CLI overrides - will be merged with and take precedence over values loaded from the stack config file
 	cliStackConfig := &structs.StackFile{

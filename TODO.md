@@ -4,7 +4,6 @@
 * Code of conduct
 
 ## Top priorities
-* Update the prometheus-operator kapps to delete CRDs when  deleted
 * Remove extraneous run units from the terraform-bucket kapp
 
 * Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)

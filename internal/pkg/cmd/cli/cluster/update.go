@@ -30,7 +30,7 @@ import (
 
 // Update a cluster if supported by the provisioner
 
-type updateCmd struct {
+type updateCommand struct {
 	dryRun        bool
 	skipCreate    bool
 	stackName     string
@@ -45,9 +45,9 @@ type updateCmd struct {
 	readyTimeout  uint32
 }
 
-func newUpdateCmd() *cobra.Command {
+func newUpdateCommand() *cobra.Command {
 
-	c := &updateCmd{}
+	c := &updateCommand{}
 
 	command := &cobra.Command{
 		Use:   "update [flags] [stack-file] [stack-name]",
@@ -63,7 +63,7 @@ region, etc.
 
 Note: Not all providers require all arguments. See documentation for help.
 `,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return errors.New("the name of the stack to run, and the path to the stack file are required")
 			} else if len(args) > 2 {
@@ -89,7 +89,7 @@ Note: Not all providers require all arguments. See documentation for help.
 	return command
 }
 
-func (c *updateCmd) run() error {
+func (c *updateCommand) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &structs.StackFile{

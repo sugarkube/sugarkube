@@ -28,13 +28,13 @@ import (
 
 var stackObj interfaces.IStack
 
-func NewKappsCmds() *cobra.Command {
+func NewKappsCommands() *cobra.Command {
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "kapps [command]",
 		Short: fmt.Sprintf("Work with kapps"),
 		Long:  `Install and uninstall kapps`,
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRun: func(command *cobra.Command, args []string) {
 			log.Logger.Debug("Setting up signal handler")
 			// catch termination via CTRL-C
 			signals := make(chan os.Signal)
@@ -54,18 +54,18 @@ func NewKappsCmds() *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(
-		newTemplateCmd(),
-		newInstallCmd(),
-		newDeleteCmd(),
-		newCleanCmd(),
-		newOutputCmd(),
-		newVarsCmd(),
-		newValidateCmd(),
-		newGraphCmd(),
+	command.AddCommand(
+		newTemplateCommand(),
+		newInstallCommand(),
+		newDeleteCommand(),
+		newCleanCommand(),
+		newOutputCommand(),
+		newVarsCommand(),
+		newValidateCommand(),
+		newGraphCommand(),
 	)
 
-	cmd.Aliases = []string{"kapp"}
+	command.Aliases = []string{"kapp"}
 
-	return cmd
+	return command
 }

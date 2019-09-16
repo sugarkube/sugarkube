@@ -30,7 +30,7 @@ import (
 	"path/filepath"
 )
 
-type createCmd struct {
+type createCommand struct {
 	dryRun          bool
 	stackName       string
 	stackFile       string
@@ -46,15 +46,15 @@ type createCmd struct {
 	excludeSelector []string
 }
 
-func newCreateCmd() *cobra.Command {
-	c := &createCmd{}
+func newCreateCommand() *cobra.Command {
+	c := &createCommand{}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "create [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Create a workspace"),
 		Long: `Create/update a local workspace for a given manifest(s), and renders any 
 templates defined by kapps.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")
 			} else if len(args) > 3 {
@@ -67,7 +67,7 @@ templates defined by kapps.`,
 		},
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVarP(&c.renderTemplates, "template", "t", false, "render templates for kapps ignoring any errors")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
@@ -83,10 +83,10 @@ templates defined by kapps.`,
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all)",
 			constants.WildcardCharacter))
 
-	return cmd
+	return command
 }
 
-func (c *createCmd) run() error {
+func (c *createCommand) run() error {
 
 	log.Logger.Debugf("Got CLI args: %#v", c)
 

@@ -28,14 +28,14 @@ import (
 
 var stackObj interfaces.IStack
 
-func NewClusterCmds() *cobra.Command {
+func NewClusterCommands() *cobra.Command {
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:     "cluster [command]",
 		Short:   fmt.Sprintf("Work with clusters"),
 		Long:    `Create and delete clusters`,
 		Aliases: []string{"stack", "stacks", "clusters"},
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRun: func(command *cobra.Command, args []string) {
 			log.Logger.Debug("Setting up signal handler")
 			// catch termination via CTRL-C
 			signals := make(chan os.Signal)
@@ -55,14 +55,14 @@ func NewClusterCmds() *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(
-		newCreateCmd(),
-		newUpdateCmd(),
-		newDiffCmd(),
-		newDeleteCmd(),
-		newVarsCmd(),
-		newConnectCmd(),
+	command.AddCommand(
+		newCreateCommand(),
+		newUpdateCommand(),
+		newDiffCommand(),
+		newDeleteCommand(),
+		newVarsCommand(),
+		newConnectCommand(),
 	)
 
-	return cmd
+	return command
 }

@@ -26,7 +26,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
 
-type deleteCmd struct {
+type deleteCommand struct {
 	dryRun      bool
 	approved    bool
 	stackName   string
@@ -39,14 +39,14 @@ type deleteCmd struct {
 	region      string
 }
 
-func newDeleteCmd() *cobra.Command {
-	c := &deleteCmd{}
+func newDeleteCommand() *cobra.Command {
+	c := &deleteCommand{}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "delete [flags] [stack-file] [stack-name]",
 		Short: fmt.Sprintf("Delete a cluster"),
 		Long:  `Tear down a target cluster.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return errors.New("some required arguments are missing")
 			} else if len(args) > 2 {
@@ -58,7 +58,7 @@ func newDeleteCmd() *cobra.Command {
 		},
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVarP(&c.approved, "yes", "y", false, "actually delete the cluster")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
@@ -67,10 +67,10 @@ func newDeleteCmd() *cobra.Command {
 	f.StringVarP(&c.cluster, "cluster", "c", "", "name of cluster to launch, e.g. dev1, dev2, etc.")
 	f.StringVarP(&c.account, "account", "a", "", "string identifier for the account to launch in (for providers that support it)")
 	f.StringVarP(&c.region, "region", "r", "", "name of region (for providers that support it)")
-	return cmd
+	return command
 }
 
-func (c *deleteCmd) run() error {
+func (c *deleteCommand) run() error {
 	// CLI overrides - will be merged with and take precedence over values loaded from the stack config file
 	cliStackConfig := &structs.StackFile{
 		Provider:    c.provider,

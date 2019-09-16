@@ -27,7 +27,7 @@ import (
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 )
 
-type cleanCmd struct {
+type cleanCommand struct {
 	workspaceDir    string
 	dryRun          bool
 	includeParents  bool
@@ -43,15 +43,15 @@ type cleanCmd struct {
 	excludeSelector []string
 }
 
-func newCleanCmd() *cobra.Command {
-	c := &cleanCmd{}
+func newCleanCommand() *cobra.Command {
+	c := &cleanCommand{}
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "clean [flags] [stack-file] [stack-name] [workspace-dir]",
 		Short: fmt.Sprintf("Cleans local kapps"),
 		Long: `Deletes temporary/generated files for all selected kapps.
 `,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(command *cobra.Command, args []string) error {
 			if len(args) < 3 {
 				return errors.New("some required arguments are missing")
 			} else if len(args) > 3 {
@@ -65,7 +65,7 @@ func newCleanCmd() *cobra.Command {
 		},
 	}
 
-	f := cmd.Flags()
+	f := command.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
@@ -80,10 +80,10 @@ func newCleanCmd() *cobra.Command {
 	f.StringArrayVarP(&c.excludeSelector, "exclude", "x", []string{},
 		fmt.Sprintf("exclude individual kapps (can specify multiple, formatted 'manifest-id:kapp-id' or 'manifest-id:%s' for all)",
 			constants.WildcardCharacter))
-	return cmd
+	return command
 }
 
-func (c *cleanCmd) run() error {
+func (c *cleanCommand) run() error {
 
 	// CLI overrides - will be merged with any loaded from a stack config file
 	cliStackConfig := &structs.StackFile{

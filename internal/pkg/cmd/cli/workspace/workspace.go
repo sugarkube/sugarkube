@@ -21,19 +21,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewWorkspaceCmds() *cobra.Command {
+func NewWorkspaceCommands() *cobra.Command {
 
-	cmd := &cobra.Command{
+	command := &cobra.Command{
 		Use:   "workspace [command]",
 		Short: fmt.Sprintf("Work with workspaces"),
 		Long:  `Create and refresh workspaces`,
 	}
 
-	cmd.AddCommand(
-		newCreateCmd(),
+	command.AddCommand(
+		newCreateCommand(),
 	)
 
-	cmd.Aliases = []string{"cache", "ws"} // for backwards compatibility after renaming cache -> workspace and laziness
+	command.Aliases = []string{"cache", "ws"} // for backwards compatibility after renaming cache -> workspace and laziness
 
-	return cmd
+	return command
 }
