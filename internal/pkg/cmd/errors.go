@@ -74,7 +74,8 @@ func CheckError(err error) {
 // Returns an error containing usage information if the number of args doesn't match what's expected
 func ValidateNumArgs(args []string, numExpected int, usage string) error {
 	if len(args) < numExpected {
-		return program.SimpleError{fmt.Sprintf("some required arguments are missing\nUsage: %s", usage)}
+		return program.SimpleError{fmt.Sprintf("missing %d required argument(s)\nUsage: %s",
+			numExpected-len(args), usage)}
 	} else if len(args) > numExpected {
 		return program.SimpleError{fmt.Sprintf("too many arguments supplied\nUsage: %s", usage)}
 	}
