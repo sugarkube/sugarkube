@@ -31,7 +31,7 @@ func init() {
 }
 
 func TestNewAcquirerError(t *testing.T) {
-	actual, err := New(structs.Source{Id: "nonsense"})
+	actual, err := New(structs.Source{Id: "nonsense"}, "test-id", true)
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
@@ -42,7 +42,7 @@ func TestNewAcquirerFile(t *testing.T) {
 		uri: "file:///tmp/test.txt",
 	}
 
-	actual, err := New(structs.Source{Uri: "file:///tmp/test.txt"})
+	actual, err := New(structs.Source{Uri: "file:///tmp/test.txt"}, "test-id", true)
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual)
 	assert.Equal(t, "/tmp/test.txt", actual.Path())
@@ -59,7 +59,7 @@ func TestNewAcquirerGit(t *testing.T) {
 	actual, err := New(structs.Source{
 		Id:  "",
 		Uri: GoodGitUri,
-	})
+	}, "test-id", true)
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Fully-defined git acquirer incorrectly created")
@@ -75,7 +75,7 @@ func TestNewAcquirerGitHttps(t *testing.T) {
 	actual, err := New(structs.Source{
 		Id:  "",
 		Uri: "https://github.com/sugarkube/sugarkube.git//incubator/tiller#master",
-	})
+	}, "test-id", true)
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Fully-defined HTTPS git acquirer incorrectly created")
@@ -86,7 +86,7 @@ func TestNewAcquirerGitNoBranch(t *testing.T) {
 	actual, err := New(structs.Source{
 		Id:  "",
 		Uri: "git@github.com:sugarkube/kapps.git//incubator/tiller/",
-	})
+	}, "test-id", true)
 	assert.NotNil(t, err)
 	assert.Nil(t, actual)
 }
@@ -105,7 +105,7 @@ func TestNewAcquirerGitWithOptions(t *testing.T) {
 		Options: map[string]interface{}{
 			"branch": "my-branch",
 		},
-	})
+	}, "test-id", true)
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Git acquirer with additional options incorrectly created")
@@ -126,7 +126,7 @@ func TestNewAcquirerGitWithOptionsNoDefault(t *testing.T) {
 		Options: map[string]interface{}{
 			"branch": "my-branch",
 		},
-	})
+	}, "test-id", true)
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Git acquirer with additional options incorrectly created")
@@ -140,7 +140,7 @@ func TestNewAcquirerGitExplicitId(t *testing.T) {
 		path:   "incubator/tiller",
 	}
 
-	actual, err := New(structs.Source{Id: "banana", Uri: GoodGitUri})
+	actual, err := New(structs.Source{Id: "banana", Uri: GoodGitUri}, "test-id", true)
 	assert.Nil(t, err)
 	assert.Equal(t, expectedAcquirer, actual,
 		"Git acquirer with explicitly set ID incorrectly created")

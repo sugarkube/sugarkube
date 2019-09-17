@@ -36,7 +36,7 @@ func TestFullyQualifiedId(t *testing.T) {
 	invalidUriAcquirer, err := newGitAcquirer(
 		structs.Source{
 			Uri: "git@github.com:helm:thing/charts.git//stable/wordpress#master",
-		})
+		}, "test-id", true)
 	assert.Nil(t, invalidUriAcquirer)
 	assert.NotNil(t, err)
 
@@ -44,7 +44,7 @@ func TestFullyQualifiedId(t *testing.T) {
 	invalidUriAcquirer2, err := newGitAcquirer(
 		structs.Source{
 			Uri: "git@github.com:helm:thing/charts.git//stable/wordpress",
-		})
+		}, "test-id", true)
 	assert.Nil(t, invalidUriAcquirer2)
 	assert.NotNil(t, err)
 
@@ -64,7 +64,7 @@ func TestFullyQualifiedId(t *testing.T) {
 					Options: map[string]interface{}{
 						BranchKey: "master",
 					},
-				})),
+				}, "test-id", true)),
 			expectValues: "helm-charts-wordpress",
 		},
 		{
@@ -73,7 +73,7 @@ func TestFullyQualifiedId(t *testing.T) {
 			input: discardErr(newGitAcquirer(
 				structs.Source{
 					Uri: "git@github.com:helm/charts.git///stable/wordpress/#master",
-				})),
+				}, "test-id", true)),
 			expectValues: "helm-charts-wordpress",
 		},
 		{
@@ -82,7 +82,7 @@ func TestFullyQualifiedId(t *testing.T) {
 			input: discardErr(newGitAcquirer(
 				structs.Source{
 					Uri: "git@github.com:helm/charts.git///#master",
-				})),
+				}, "test-id", true)),
 			expectValues: "helm-charts",
 		},
 		{
@@ -92,7 +92,7 @@ func TestFullyQualifiedId(t *testing.T) {
 				structs.Source{
 					Id:  "site1-values",
 					Uri: "git@github.com:sugarkube/sugarkube.git//examples/values/wordpress/site1/#master",
-				})),
+				}, "test-id", true)),
 			expectValues: "sugarkube-sugarkube-site1-values",
 		},
 	}

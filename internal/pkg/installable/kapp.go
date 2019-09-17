@@ -172,6 +172,7 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 			previousLayer := k.descriptorLayers[i]
 			currentLayer := k.descriptorLayers[i+1]
 
+			// initialise maps to avoid an error: reflect.flag.mustBeAssignable using unaddressable value
 			if currentLayer.Sources == nil {
 				currentLayer.Sources = map[string]structs.Source{}
 			}
@@ -193,6 +194,10 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 				if currentSource.Id == "" && previousSource.Id != "" {
 					currentSource.Id = previousSource.Id
 				}
+				if currentSource.Options == nil {
+					currentSource.Options = map[string]interface{}{}
+				}
+
 				for k, v := range previousSource.Options {
 					if _, ok := currentSource.Options[k]; !ok {
 						currentSource.Options[k] = v
@@ -362,7 +367,7 @@ func (k Kapp) GetConfigFileDir() string {
 // instead of caching them so that any manifest overrides will take effect.
 func (k Kapp) Acquirers() (map[string]acquirer.Acquirer, error) {
 
-	acquirers, err := acquirer.GetAcquirersFromSources(k.mergedDescriptor.Sources)
+	acquirers, err := acquirer.GetAcquirersFromSources(k.mergedDescriptor.Sources, k.FullyQualifiedId())
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

@@ -116,7 +116,8 @@ func KappDescriptorWithListsToMap(descriptor structs.KappDescriptorWithLists) (
 
 	// we need to get the ID from the acquirer associated with the source
 	for _, source := range descriptor.Sources {
-		acquirerObj, err := acquirer.New(source)
+		// don't validate sources - we just want the ID
+		acquirerObj, err := acquirer.New(source, descriptor.Id, false)
 		if err != nil {
 			return structs.KappDescriptorWithMaps{}, errors.WithStack(err)
 		}

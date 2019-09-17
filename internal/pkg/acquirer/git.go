@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/sugarkube/sugarkube/internal/pkg/log"
+	"github.com/sugarkube/sugarkube/internal/pkg/program"
 	"github.com/sugarkube/sugarkube/internal/pkg/structs"
 	"github.com/sugarkube/sugarkube/internal/pkg/utils"
 	"os"
@@ -45,9 +46,11 @@ const BranchKey = "branch"
 
 // Returns an instance. This allows us to build objects for testing instead of
 // directly instantiating objects in the acquirer factory.
-func newGitAcquirer(source structs.Source) (*GitAcquirer, error) {
+func newGitAcquirer(source structs.Source, installableId string, validate bool) (*GitAcquirer, error) {
 
 	branchFromOptions := ""
+
+	log.Logger.Debugf("Creating git acquirer for source: %#v", source)
 
 	if len(source.Options) > 0 {
 		_, ok := source.Options[BranchKey]
@@ -80,9 +83,10 @@ func newGitAcquirer(source structs.Source) (*GitAcquirer, error) {
 		branch = branchFromOptions
 	}
 
-	if uri == "" || branch == "" || path == "" {
-		return nil, errors.New("Invalid git parameters. The uri, " +
-			"branch and path are all mandatory.")
+	// only throw errors if we need to be strict
+	if validate && (uri == "" || branch == "" || path == "") {
+		return nil, program.SimpleError{fmt.Sprintf("Invalid git parameters for kapp '%s'. The URI, "+
+			"branch and path are all mandatory (got URI='%s', path='%s' and branch='%s').", installableId, uri, path, branch)}
 	}
 
 	if strings.Count(uri, ":") != 1 {
