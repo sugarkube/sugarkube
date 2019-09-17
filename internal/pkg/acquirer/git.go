@@ -192,7 +192,7 @@ func (a GitAcquirer) clone(dest string) error {
 	}
 
 	// fetch
-	err = utils.ExecCommand(GitPath, []string{"fetch"}, map[string]string{},
+	err = utils.ExecCommand(GitPath, []string{"fetch", "--depth=1", "--tags", "origin", a.branch}, map[string]string{},
 		&stdoutBuf, &stderrBuf, dest, 60, 0, false)
 	if err != nil {
 		return errors.WithStack(err)
