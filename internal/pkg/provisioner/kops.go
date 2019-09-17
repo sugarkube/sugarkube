@@ -969,7 +969,7 @@ func assertInHostsFile(ip string, domain string) error {
 
 // Shutdown SSH port forwarding if it's been set up
 func (p KopsProvisioner) Close() error {
-	if p.sshCommand != nil {
+	if p.sshCommand != nil && p.sshCommand.ProcessState != nil {
 		if p.sshCommand.ProcessState.Exited() {
 			log.Logger.Info("SSH has already exited, so no need to shut it down.")
 			return nil

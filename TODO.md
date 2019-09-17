@@ -4,8 +4,6 @@
 * Code of conduct
 
 ## Top priorities
-* Remove extraneous run units from the terraform-bucket kapp
-
 * Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
 * Source URIs without branches should be ignored (unless an extra flag is set) to make it easy to ignore them in a stack by not setting a branch (it's safest to ignore them) - probably not
 
