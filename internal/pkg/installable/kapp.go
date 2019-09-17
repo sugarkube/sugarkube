@@ -59,12 +59,24 @@ func (k Kapp) ManifestId() string {
 	return k.manifestId
 }
 
-// Returns true if the installable has any pre-/post- actions
+// Returns true if the installable has any pre-/post- actions (but 'skip' actions are ignored)
 func (k Kapp) HasActions() bool {
-	return len(k.PreInstallActions()) > 0 ||
-		len(k.PostInstallActions()) > 0 ||
-		len(k.PreDeleteActions()) > 0 ||
-		len(k.PostDeleteActions()) > 0
+	actionLists := [][]structs.Action{
+		k.PreInstallActions(),
+		k.PostInstallActions(),
+		k.PreDeleteActions(),
+		k.PostDeleteActions(),
+	}
+
+	for _, actionList := range actionLists {
+		for _, action := range actionList {
+			if action.Id != constants.ActionSkip {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // Returns the pre/post install/delete actions
