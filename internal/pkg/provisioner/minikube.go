@@ -68,6 +68,10 @@ func newMinikubeProvisioner(iStack interfaces.IStack,
 	}, nil
 }
 
+func (p MinikubeProvisioner) Binary() string {
+	return p.minikubeConfig.Binary
+}
+
 func (p MinikubeProvisioner) GetStack() interfaces.IStack {
 	return p.stack
 }

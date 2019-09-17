@@ -33,6 +33,8 @@ type IProvisioner interface {
 	// indicating whether connectivity exists (not necessarily if it's been set up, i.e. it
 	// might not be necessary to do anything, or it may have already been set up)
 	EnsureClusterConnectivity() (bool, error)
+	// returns the name of/the path to the underlying binary to use
+	Binary() string
 	// Shutdown any connectivity to the cluster if any was set up
 	Close() error
 }

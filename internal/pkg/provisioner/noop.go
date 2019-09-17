@@ -41,6 +41,10 @@ func (p NoOpProvisioner) GetStack() interfaces.IStack {
 	return p.stack
 }
 
+func (p NoOpProvisioner) Binary() string {
+	return ""
+}
+
 // Doesn't create cluster
 func (p NoOpProvisioner) Create(dryRun bool) error {
 	log.Logger.Infof("Noop provisioner - no cluster will be created")

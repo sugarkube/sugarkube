@@ -115,6 +115,10 @@ func (p KopsProvisioner) GetStack() interfaces.IStack {
 	return p.stack
 }
 
+func (p KopsProvisioner) Binary() string {
+	return p.kopsConfig.Binary
+}
+
 func (p KopsProvisioner) ClusterSot() interfaces.IClusterSot {
 	return p.clusterSot
 }

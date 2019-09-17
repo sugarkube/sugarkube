@@ -96,6 +96,10 @@ func (p EksProvisioner) ClusterSot() interfaces.IClusterSot {
 	return p.clusterSot
 }
 
+func (p EksProvisioner) Binary() string {
+	return p.eksConfig.Binary
+}
+
 // Returns a bool indicating whether the cluster exists (but it may not yet respond to kubectl commands)
 func (p EksProvisioner) clusterExists() (bool, error) {
 

@@ -105,12 +105,12 @@ func (c *validateConfig) run() error {
 	return nil
 }
 
-// Validates kapps
+// Validates kapps and that the provisioner binary exists
 func Validate(stackObj interfaces.IStack, dagObj *plan.Dag) error {
 	numMissing := 0
 	commandsSeen := make([]string, 0)
 
-	_, err := printer.Fprintf("[yellow]Validating kapps...[default]\n")
+	_, err := printer.Fprintf("[yellow]Validating kapps & provisioner...[default]\n")
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -138,18 +138,61 @@ func Validate(stackObj interfaces.IStack, dagObj *plan.Dag) error {
 		}
 	}
 
+	// validate the provisioner binary if it's set (the `none` provisioner doesn't have one)
+	command := stackObj.GetProvisioner().Binary()
+	if command != "" {
+		err = assertProvisionerBinaryExists(command, stackObj, &numMissing)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
 	if numMissing > 0 {
-		_, err := printer.Fprintf("\n[red]%d requirement(s) missing\n", numMissing)
+		_, err := printer.Fprintf("\n[red]%d requirement(s) missing!\n", numMissing)
 		if err != nil {
 			return errors.WithStack(err)
 		}
 
 		return program.SilentError{}
 	} else {
-		_, err := printer.Fprint("\n[green]Kapps successfully validated\n")
+		_, err := printer.Fprint("\n[green]Kapps & provisioner successfully validated!\n")
 		if err != nil {
 			return errors.WithStack(err)
 		}
+	}
+
+	return nil
+}
+
+// Makes sure the provisioner binary exists
+func assertProvisionerBinaryExists(command string, stackObj interfaces.IStack, numMissing *int) error {
+	_, err := printer.Fprintf("* [white][bold]%s provisioner[reset][default] requires: [white]%s\n",
+		stackObj.GetConfig().GetProvisioner(), command)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	path, err := exec.LookPath(command)
+	if err != nil {
+		_, err = printer.Fprintf("  [red][bold]Requirement missing![reset][red] Can't find provisioner binary "+
+			"'[bold]%s[reset][red]'\n", command)
+		*numMissing++
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		log.Logger.Errorf("Requirement missing. Can't find provisioner binary '%s'", command)
+	} else {
+		if config.CurrentConfig.Verbose {
+			if strings.HasPrefix(command, "/") {
+				_, err = printer.Fprintf("[green]Found provisioner binary '[bold]%s[reset][green]'\n", command)
+			} else {
+				_, err = printer.Fprintf("[green]Found provisioner binary '[bold]%s[reset][green]' at '%s'\n", command, path)
+			}
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+		log.Logger.Infof("Found provisioner binary '%s'", path)
 	}
 
 	return nil
