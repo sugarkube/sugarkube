@@ -589,8 +589,6 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 			}
 		}
 
-		skipInstallerMethod := false
-
 		// only execute pre actions if approved==true
 		if approved {
 			if install {
@@ -600,7 +598,8 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 			}
 
 			if skipPreActions {
-				if len(preActions) > 0 {
+				// make sure we don't say we'll skip pre actions if the action was just 'none' anyway...
+				if len(preActions) > 0 && installableObj.HasActions() {
 					_, err = printer.Fprintf("[yellow]Not executing %d pre actions for '[bold][white]%s[reset][yellow]'. Pass "+
 						"`[bold]--%s[reset][yellow]` to execute them\n", len(preActions), installableObj.FullyQualifiedId(), constants.RunPreActions)
 					if err != nil {
@@ -612,19 +611,12 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 				log.Logger.Infof("Will run %d pre %s actions", len(preActions), actionName)
 
 				for _, action := range preActions {
-					switch action.Id {
-					case constants.ActionSkip:
-						log.Logger.Infof("Marking that we should skip running '%s' on installable '%s'",
-							actionName, installableObj.FullyQualifiedId())
-						skipInstallerMethod = true
-					default:
-						executeAction(action, installableObj, stackObj, errCh, ignoreErrors, dryRun)
-					}
+					executeAction(action, installableObj, stackObj, errCh, ignoreErrors, dryRun)
 				}
 			}
 		}
 
-		if approved && !skipInstallerMethod {
+		if approved {
 			var unitName string
 			if install {
 				installerMethod = installerImpl.ApplyInstall
@@ -726,7 +718,8 @@ func installOrDelete(install bool, dagObj *Dag, node NamedNode, installerImpl in
 		}
 
 		if skipPostActions {
-			if len(postActions) > 0 {
+			// make sure we don't say we'll skip post actions if the action was just 'none' anyway...
+			if len(postActions) > 0 && installableObj.HasActions() {
 				_, err = printer.Fprintf("[yellow]Not executing %d post actions for '[bold][white]%s[reset][yellow]'. Pass "+
 					"`[bold]--%s[reset][yellow]` to execute them\n", len(postActions), installableObj.FullyQualifiedId(), constants.RunPostActions)
 				if err != nil {
@@ -1038,6 +1031,8 @@ func executeAction(action structs.Action, installableObj interfaces.IInstallable
 	}
 
 	switch action.Id {
+	case constants.ActionNone:
+		log.Logger.Infof("Not performing any action on installable '%s'", installableObj.FullyQualifiedId())
 	case constants.ActionClusterUpdate:
 		err := cluster.UpdateCluster(stackObj, true, dryRun)
 		if err != nil {

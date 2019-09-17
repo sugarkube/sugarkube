@@ -59,7 +59,7 @@ func (k Kapp) ManifestId() string {
 	return k.manifestId
 }
 
-// Returns true if the installable has any pre-/post- actions (but 'skip' actions are ignored)
+// Returns true if the installable has any pre-/post- actions (but 'none' actions are ignored)
 func (k Kapp) HasActions() bool {
 	actionLists := [][]structs.Action{
 		k.PreInstallActions(),
@@ -70,7 +70,7 @@ func (k Kapp) HasActions() bool {
 
 	for _, actionList := range actionLists {
 		for _, action := range actionList {
-			if action.Id != constants.ActionSkip {
+			if action.Id != constants.ActionNone {
 				return true
 			}
 		}
