@@ -100,9 +100,12 @@ func instantiateInstallables(manifest Manifest) ([]interfaces.IInstallable, erro
 		// add descriptors for any versions declared
 		for key, version := range manifest.descriptor.Versions {
 			splitKey := strings.Split(key, constants.VersionSeparator)
+			log.Logger.Debugf("Testing whether version key '%s' relates to kapp '%s'", key, installableObj.Id())
 			if splitKey[0] != installableObj.Id() {
 				continue
 			}
+
+			log.Logger.Debugf("Updating source version to '%s' for source '%s'", version, splitKey[1])
 
 			descriptor := structs.KappDescriptorWithMaps{
 				Sources: map[string]structs.Source{
@@ -115,6 +118,8 @@ func instantiateInstallables(manifest Manifest) ([]interfaces.IInstallable, erro
 					},
 				},
 			}
+
+			log.Logger.Debugf("Descriptor with updated source version to merge is: %#v", descriptor)
 
 			err = installableObj.AddDescriptor(descriptor, false)
 			if err != nil {

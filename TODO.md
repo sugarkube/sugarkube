@@ -4,9 +4,6 @@
 * Code of conduct
 
 ## Top priorities
-* Setting 'versions' in stacks fails when there are 2 references to the same kapp (but different sources)
-
-
 * Find a way of stopping `kapp vars` or `kapps install --dry-run` failing if they refer to outputs from another kapp that don't exist (or if output can't be generated, eg jenkins when the cluster is offline). There is a `--skip-outputs` flag but it's easy to miss - perhaps add it to an error message?) (e.g. `sugarkube kapps install stacks/ops.yaml local-ops -i 'monitoring:*' --parents workspaces/local-ops/ -n --log-file=log.txt -l debug`). Perhaps we should grep for `{{ .outputs` and create default maps containing placeholder values?. Note: The problem seems to be dry-run more than anything else. E.g. this fails (even with a cluster online):
 ```
 sugarkube kapps delete stacks/ops.yaml local-ops -i 'monitoring:*' workspaces/local-ops/ --log-file=log.txt -l debug -n

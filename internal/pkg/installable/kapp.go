@@ -151,6 +151,8 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 		return errors.WithStack(err)
 	}
 
+	log.Logger.Tracef("Copy of descriptor for kapp '%s' is: %+v", k.FullyQualifiedId(), configCopy)
+
 	// set placeholder values for rendered paths of any templates
 	for k, _ := range config.Templates {
 		template := config.Templates[k]
@@ -164,6 +166,8 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 		k.descriptorLayers = append(configLayers, configCopy)
 	}
 
+	log.Logger.Tracef("Kapp '%s' has %d descriptor layers", k.FullyQualifiedId(), len(k.descriptorLayers))
+
 	// until https://github.com/imdario/mergo/issues/90 is resolved we need to manually propagate
 	// non-empty fields for maps to later layers
 	// todo -  remove this once https://github.com/imdario/mergo/issues/90 is merged
@@ -172,11 +176,16 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 			previousLayer := k.descriptorLayers[i]
 			currentLayer := k.descriptorLayers[i+1]
 
+			log.Logger.Tracef("Manually merging descriptor layers for kapp '%s'. Prev layer's index=%d, current "+
+				"layer's index=%d", k.FullyQualifiedId(), i, i+1)
+
 			// initialise maps to avoid an error: reflect.flag.mustBeAssignable using unaddressable value
 			if currentLayer.Sources == nil {
 				currentLayer.Sources = map[string]structs.Source{}
 			}
 
+			log.Logger.Tracef("Manually merging the previous layer's sources for '%s': %#v into the current "+
+				"layer's sources: %#v", k.FullyQualifiedId(), previousLayer.Sources, currentLayer.Sources)
 			for key, previousSource := range previousLayer.Sources {
 				currentSource, ok := currentLayer.Sources[key]
 				if !ok {
@@ -184,8 +193,6 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 					currentSource = structs.Source{
 						Options: map[string]interface{}{},
 					}
-
-					currentLayer.Sources = make(map[string]structs.Source)
 				}
 
 				if currentSource.Uri == "" && previousSource.Uri != "" {
@@ -204,8 +211,12 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 					}
 				}
 
+				log.Logger.Tracef("Merged '%s' source for kapp '%s' is: %#v", key, k.FullyQualifiedId(), currentSource)
 				currentLayer.Sources[key] = currentSource
+				log.Logger.Tracef("Here current layer sources for '%s' are: %#v", k.FullyQualifiedId(), currentLayer.Sources)
 			}
+
+			log.Logger.Tracef("Current layer sources for '%s' are: %#v", k.FullyQualifiedId(), currentLayer.Sources)
 
 			if currentLayer.Outputs == nil {
 				currentLayer.Outputs = map[string]structs.Output{}
@@ -301,6 +312,7 @@ func (k *Kapp) AddDescriptor(config structs.KappDescriptorWithMaps, prepend bool
 				currentLayer.RunUnits[key] = currentRunUnit
 			}
 
+			log.Logger.Tracef("Setting the descriptor layer at index %d for kapp '%s' to: %#v", i+1, k.FullyQualifiedId(), currentLayer)
 			k.descriptorLayers[i+1] = currentLayer
 		}
 	}
