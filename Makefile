@@ -15,7 +15,8 @@ help:
 	@echo 'Management commands for sugarkube:'
 	@echo
 	@echo 'Usage:'
-	@echo '    make build           Compile the project.'
+	@echo '    make build-darwin    Compile the project to an OSX binary.'
+	@echo '    make build-linux     Compile the project to a linux binary.'
 	@echo '    make build-alpine    Compile optimized for alpine linux.'
 	@echo '    make package         Build final docker image with just the go binary inside'
 	@echo '    make tag             Tag image created by package with latest, git commit and version'
@@ -27,11 +28,11 @@ help:
 fmt:
 	go fmt ./...
 
-build: fmt test
+build-darwin: fmt test
 	@echo "building ${BIN_NAME} version=${VERSION}"
 	@echo "GOPATH=${GOPATH}"
 	@echo "GOBIN=${BINDIR}"
-	GOBIN=$(BINDIR) go build -o bin/sugarkube -ldflags \
+	GOBIN=$(BINDIR) go build -o bin/sugarkube-darwin -ldflags \
 		"-X github.com/sugarkube/sugarkube/internal/pkg/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} \
 		 -X github.com/sugarkube/sugarkube/internal/pkg/version.BuildDate=${BUILD_DATE} \
 		 -X github.com/sugarkube/sugarkube/internal/pkg/version.Version=${VERSION} \
