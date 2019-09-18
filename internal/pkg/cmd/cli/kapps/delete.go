@@ -180,12 +180,32 @@ func (c *deleteCommand) run() error {
 	if c.oneShot {
 		shouldPlan = true
 		approved = true
+
+		_, err = printer.Fprintf("%s[yellow]Running deletions for selected kapps in a single pass "+
+			"([bold]one shot[reset][yellow])\n", dryRunPrefix)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	} else {
 		if c.approved {
 			approved = true
+			_, err = printer.Fprintf("%s[yellow][bold]Applying deletion[reset][yellow] of selected kapps\n", dryRunPrefix)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		} else {
 			shouldPlan = true
+			_, err = printer.Fprintf("%s[yellow][bold]Planning deletion[reset][yellow] of selected kapps\n", dryRunPrefix)
+			if err != nil {
+				return errors.WithStack(err)
+			}
 		}
+	}
+
+	_, err = printer.Fprintf("Enable verbose mode (`-v`) to see the commands being executed (or enable logging " +
+		"for even more information)\n\n")
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	err = dagObj.Execute(constants.DagActionDelete, stackObj, shouldPlan, approved,

@@ -931,19 +931,17 @@ func (k Kapp) GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{
 			}
 		}
 
-		if !dryRun {
-			if _, err = os.Stat(path); err != nil {
-				if ignoreMissing {
-					_, err := printer.Fprintf("[yellow]Ignoring missing output '%s' for kapp "+
-						"'[bold]%s[reset][yellow]'\n", path, k.FullyQualifiedId())
-					if err != nil {
-						return nil, errors.WithStack(err)
-					}
-					outputs[output.Id] = nil
-					continue
-				} else {
+		if _, err = os.Stat(path); err != nil {
+			if ignoreMissing {
+				_, err := printer.Fprintf("[yellow]Ignoring missing output '%s' for kapp "+
+					"'[bold]%s[reset][yellow]'\n", path, k.FullyQualifiedId())
+				if err != nil {
 					return nil, errors.WithStack(err)
 				}
+				outputs[output.Id] = nil
+				continue
+			} else {
+				return nil, errors.WithStack(err)
 			}
 		}
 
@@ -954,37 +952,31 @@ func (k Kapp) GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{
 
 		switch strings.ToLower(output.Format) {
 		case "json":
-			if !dryRun {
-				rawJson, err := ioutil.ReadFile(path)
-				if err != nil {
-					return nil, errors.WithStack(err)
-				}
+			rawJson, err := ioutil.ReadFile(path)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
 
-				err = json.Unmarshal(rawJson, &parsedOutput)
-				if err != nil {
-					return nil, errors.WithStack(err)
-				}
+			err = json.Unmarshal(rawJson, &parsedOutput)
+			if err != nil {
+				return nil, errors.WithStack(err)
 			}
 		case "yaml":
-			if !dryRun {
-				err = utils.LoadYamlFile(path, &parsedOutput)
-				if err != nil {
-					return nil, errors.WithStack(err)
-				}
+			err = utils.LoadYamlFile(path, &parsedOutput)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
 
-				parsedOutput, err = convert.MapInterfaceInterfaceToMapStringInterface(parsedOutput.(map[interface{}]interface{}))
-				if err != nil {
-					return nil, errors.WithStack(err)
-				}
+			parsedOutput, err = convert.MapInterfaceInterfaceToMapStringInterface(parsedOutput.(map[interface{}]interface{}))
+			if err != nil {
+				return nil, errors.WithStack(err)
 			}
 		case "text":
-			if !dryRun {
-				byteOutput, err := ioutil.ReadFile(path)
-				if err != nil {
-					return nil, errors.WithStack(err)
-				}
-				parsedOutput = string(byteOutput)
+			byteOutput, err := ioutil.ReadFile(path)
+			if err != nil {
+				return nil, errors.WithStack(err)
 			}
+			parsedOutput = string(byteOutput)
 		default:
 			return nil, errors.New(fmt.Sprintf("Unsupported output format '%s' for kapp '%s'",
 				output.Format, k.FullyQualifiedId()))

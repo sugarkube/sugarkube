@@ -216,8 +216,8 @@ func (c *installCommand) run() error {
 		shouldPlan = true
 		approved = true
 
-		_, err = printer.Fprintf("[yellow]Running installers for selected kapps in a single pass " +
-			"([bold]one shot[reset][yellow])\n")
+		_, err = printer.Fprintf("%s[yellow]Running installers for selected kapps in a single pass "+
+			"([bold]one shot[reset][yellow])\n", dryRunPrefix)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -225,20 +225,21 @@ func (c *installCommand) run() error {
 		// frig the messaging to hide the details of how one-shot works
 		if c.approved {
 			approved = true
-			_, err = printer.Fprintf("[yellow]Running installers for selected kapps with [bold]APPROVED=true\n")
+			_, err = printer.Fprintf("%s[yellow][bold]Applying installation[reset][yellow] of selected kapps\n", dryRunPrefix)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 		} else {
 			shouldPlan = true
-			_, err = printer.Fprintf("[yellow]Running installers for selected kapps with [bold]APPROVED=false\n")
+			_, err = printer.Fprintf("%s[yellow][bold]Planning installation[reset][yellow] of selected kapps\n", dryRunPrefix)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 		}
 	}
 
-	_, err = printer.Fprintf("Enable logging to see the exact parameters passed to each kapp (with `-l info`)\n\n")
+	_, err = printer.Fprintf("Enable verbose mode (`-v`) to see the commands being executed (or enable logging " +
+		"for even more information)\n\n")
 	if err != nil {
 		return errors.WithStack(err)
 	}
