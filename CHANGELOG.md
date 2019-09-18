@@ -1,5 +1,5 @@
 # Changelog
-## 0.10.0
+## 0.9.0 (18/9/19)
 * Kapp run steps now take a single string argument that's parsed similarly to shell commands for more flexibility. It no longer takes a list of arguments.
 * Add a setting to run steps to control whether the output of it should be printed to the console ('print')
 * Change the flags on `kapps install` and `kapps delete` from `--no-pre-actions` -> `--run-pre-actions` and from `--no-post-actions` -> `--run-post-actions` for safety 
@@ -20,7 +20,7 @@
 * Sugarkube will now try to set up SSH port forwarding several times before failing
 * Breaking change: Replaced the 'skip' pre/post kapp action with 'none'. Conditions should now be used to control whether to install/delete kapps. The 'none' action can be used to prevent actions from running when overriding settings for kapps.
 
-## 0.9.0
+## 0.8.0 (20/8/19)
 * Rename the 'cache' subcommand to 'workspace' because it wasn't clear that users should actually work inside cache directories (i.e. they're not temporary caches).
 * Colourise output messages for clarity
 * Add a `--no-color` option to the main sugarkube command to disable coloured output
@@ -28,8 +28,6 @@
 * Remove the 'make' installer. Everything it could do can be done with run units instead.
 * Remove env vars from the kapp config. Make sure to remove any `env_vars` blocks from `sugarkube.yaml` files.
 * Breaking change: Add run units and completely remove makefiles! Please upgrade all your kapps to use run units instead of Makefiles. Everything that could be done with makefiles can also be done with run units.
-
-## 0.8.0
 * Pinning kapp versions in stacks is now much more concise. See `internal/testdata/stack-pinned.yaml` for an example.
 * Allow kapps to opt out of receiving globally configured defaults via the `ignore_global_defaults` boolean
 * Caches that contain checkouts of tags can now be updated by rerunning `cache create`
