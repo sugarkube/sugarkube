@@ -42,7 +42,7 @@ type createCommand struct {
 	cluster         string
 	region          string
 	workspaceDir    string
-	renderTemplates bool
+	skipTemplates   bool
 	includeSelector []string
 	excludeSelector []string
 }
@@ -70,7 +70,7 @@ templates defined by kapps.`,
 
 	f := command.Flags()
 	f.BoolVarP(&c.dryRun, "dry-run", "n", false, "show what would happen but don't create a cluster")
-	f.BoolVarP(&c.renderTemplates, "template", "t", false, "render templates for kapps ignoring any errors")
+	f.BoolVarP(&c.skipTemplates, "no-template", "t", false, "don't render templates for kapps")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -166,7 +166,12 @@ func (c *createCommand) run() error {
 		return errors.WithStack(err)
 	}
 
-	if c.renderTemplates {
+	if c.skipTemplates {
+		_, err = printer.Fprintln("Skipping rendering templates for kapps")
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	} else {
 		_, err = printer.Fprintln("\nRendering templates for kapps...")
 		if err != nil {
 			return errors.WithStack(err)
@@ -185,11 +190,6 @@ func (c *createCommand) run() error {
 		}
 
 		_, err = printer.Fprintln("[green]Templates successfully rendered")
-		if err != nil {
-			return errors.WithStack(err)
-		}
-	} else {
-		_, err = printer.Fprintln("Skipping rendering templates for kapps")
 		if err != nil {
 			return errors.WithStack(err)
 		}

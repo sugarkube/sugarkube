@@ -23,7 +23,7 @@ import (
 )
 
 type versionConfig struct {
-	concise bool
+	quiet bool
 }
 
 func newVersionCommand() *cobra.Command {
@@ -34,7 +34,7 @@ func newVersionCommand() *cobra.Command {
 		Short: "Print the version number of sugarkube",
 		Long:  `All software has versions. This is sugarkube's.`,
 		Run: func(command *cobra.Command, args []string) {
-			if c.concise {
+			if c.quiet {
 				fmt.Printf(version.Version)
 			} else {
 				fmt.Println("Build Date:", version.BuildDate)
@@ -47,7 +47,7 @@ func newVersionCommand() *cobra.Command {
 	}
 
 	f := command.Flags()
-	f.BoolVarP(&c.concise, "concise", "c", false, "only print the version")
+	f.BoolVarP(&c.quiet, "quiet", "q", false, "only print the version")
 
 	return command
 }

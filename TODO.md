@@ -7,7 +7,6 @@
 
 
 * Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
-* kapps whose conditions are false won't be run even if they are explicitly selected with -i. That's annoying for `kapp vars`. Perhaps explicitly selected kapps should have their conditions overridden? Or add a flag for that?
 * Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 
 * There should be a flag to make sugarkube try to load generated outputs already on disk, but not actually execute the output steps (in case they take a long time)
 
@@ -16,6 +15,8 @@
   * running cluster_update twice for kops seems to kill ssh and make sugarkube lose connectivity. It dies with an error.
 
 * It should be possible to set kapp vars that are maps and lists
+
+* Create workspaces using the DAG to download kapps in parallel
 
 ### Cluster updates
 * It should be easy to see what changes will be applied by kops - perhaps go to a two-stage approach with a '--yes' flag, to make a distinction between --dry-run and staging changes.

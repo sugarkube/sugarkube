@@ -1,4 +1,10 @@
 # Changelog
+## 0.10.0 (19/9/19)
+* Bug fix - Don't process nodes whose conditions have failed in most commands
+* Print vars for nodes regardless of conditions
+* Neaten up console messages around which templates have been rendered
+* Possible breaking change: The default is now to render templates when creating a cache. Renamed the `ws create` flag `--template` to `--no-template`
+
 ## 0.9.0 (18/9/19)
 * Kapp run steps now take a single string argument that's parsed similarly to shell commands for more flexibility. It no longer takes a list of arguments.
 * Add a setting to run steps to control whether the output of it should be printed to the console ('print')
