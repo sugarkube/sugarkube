@@ -42,7 +42,7 @@ build-linux: fmt test
 	@echo "building ${BIN_NAME} version=${VERSION}"
 	@echo "GOPATH=${GOPATH}"
 	@echo "GOBIN=${BINDIR}"
-	GOBIN=$(BINDIR) GOARCH=amd64 GOOS=linux go build -o bin/sugarkube-amd64 -ldflags \
+	GOBIN=$(BINDIR) GOARCH=amd64 GOOS=linux go build -o bin/sugarkube-linux-amd64 -ldflags \
 		"-X github.com/sugarkube/sugarkube/internal/pkg/version.GitCommit=${GIT_COMMIT}${GIT_DIRTY} \
 		 -X github.com/sugarkube/sugarkube/internal/pkg/version.BuildDate=${BUILD_DATE} \
 		 -X github.com/sugarkube/sugarkube/internal/pkg/version.Version=${VERSION} \
