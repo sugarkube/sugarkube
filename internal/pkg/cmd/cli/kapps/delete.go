@@ -36,7 +36,7 @@ type deleteCommand struct {
 	ignoreErrors        bool
 	skipTemplating      bool
 	runActions          bool
-	skipActions         bool
+	noActions           bool
 	runPreActions       bool
 	runPostActions      bool
 	establishConnection bool
@@ -108,7 +108,7 @@ process before deleting the selected kapps.
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before deleting them")
 	f.BoolVar(&c.noValidate, "no-validate", false, "don't validate kapps")
-	f.BoolVar(&c.skipActions, "skip-actions", false, "skip pre- and post-actions in kapps")
+	f.BoolVar(&c.noActions, "no-actions", false, "don't run any pre- and post-actions in kapps")
 	f.BoolVar(&c.runActions, "run-actions", false, "run pre- and post-actions in kapps")
 	f.BoolVar(&c.runPreActions, constants.RunPreActions, false, "run pre actions in kapps")
 	f.BoolVar(&c.runPostActions, constants.RunPostActions, false, "run post actions in kapps")
@@ -162,7 +162,7 @@ func (c *deleteCommand) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = CatchMistakes(stackObj, dagObj, c.runActions, c.skipActions, c.noValidate)
+	err = CatchMistakes(stackObj, dagObj, c.runActions, c.noActions, c.noValidate)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -23,7 +23,7 @@ type varsConfig struct {
 	cluster         string
 	region          string
 	includeParents  bool
-	skipOutputs     bool
+	noOutputs       bool
 	includeSelector []string
 	excludeSelector []string
 	suppress        []string
@@ -52,7 +52,7 @@ templated sugarkube.yaml file.`,
 
 	f := command.Flags()
 	f.BoolVar(&c.includeParents, "parents", false, "process all parents of all selected kapps as well")
-	f.BoolVar(&c.skipOutputs, "skip-outputs", false, "don't load outputs from parents")
+	f.BoolVar(&c.noOutputs, "no-outputs", false, "don't load outputs from parents")
 	f.StringVar(&c.provider, "provider", "", "name of provider, e.g. aws, local, etc.")
 	f.StringVar(&c.provisioner, "provisioner", "", "name of provisioner, e.g. kops, minikube, etc.")
 	f.StringVar(&c.profile, "profile", "", "launch profile, e.g. dev, test, prod, etc.")
@@ -97,7 +97,7 @@ func (c *varsConfig) run() error {
 		return errors.WithStack(err)
 	}
 
-	err = dagObj.ExecuteGetVars(constants.DagActionVars, stackObj, !c.skipOutputs, c.suppress)
+	err = dagObj.ExecuteGetVars(constants.DagActionVars, stackObj, !c.noOutputs, c.suppress)
 	if err != nil {
 		return errors.WithStack(err)
 	}

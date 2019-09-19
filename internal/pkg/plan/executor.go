@@ -191,6 +191,12 @@ func registryWorker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- Named
 	stackObj interfaces.IStack, action string, approved bool, dryRun bool) {
 
 	for node := range processCh {
+		if !node.conditionsValid {
+			log.Logger.Debugf("Not processing node '%s' with failed conditions", node.name)
+			doneCh <- node
+			return
+		}
+
 		installableObj := node.installableObj
 
 		addParentRegistries(dagObj, node, errCh)
@@ -262,6 +268,12 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 	ignoreErrors bool, dryRun bool) {
 
 	for node := range processCh {
+		if !node.conditionsValid {
+			log.Logger.Debugf("Not processing node '%s' with failed conditions", node.name)
+			doneCh <- node
+			return
+		}
+
 		installableObj := node.installableObj
 
 		addParentRegistries(dagObj, node, errCh)
@@ -422,18 +434,12 @@ func worker(dagObj *Dag, processCh <-chan NamedNode, doneCh chan<- NamedNode, er
 	}
 }
 
-// Prints out the variables for each marked node
+// Prints out the variables for each node, marked or not.
 func varsWorker(processCh <-chan NamedNode, doneCh chan<- NamedNode, errCh chan error, stackObj interfaces.IStack,
 	suppress []string) {
 
 	for node := range processCh {
 		installableObj := node.installableObj
-
-		if !node.marked {
-			log.Logger.Debugf("Not printing variables for unmarked node: '%s'", installableObj.FullyQualifiedId())
-			doneCh <- node
-			continue
-		}
 
 		kappRootDir := installableObj.GetCacheDir()
 		log.Logger.Infof("Worker received kapp '%s' in %s for processing", installableObj.FullyQualifiedId(), kappRootDir)
@@ -1231,7 +1237,9 @@ func renderKappTemplates(stackObj interfaces.IStack, installableObj interfaces.I
 
 	templatedPaths := make([]string, 0)
 	for _, template := range installableObj.GetDescriptor().Templates {
-		templatedPaths = append(templatedPaths, template.RenderedPath)
+		if template.RenderedPath != "" && template.RenderedPath != constants.KappGeneratedPlaceholder {
+			templatedPaths = append(templatedPaths, template.RenderedPath)
+		}
 	}
 
 	if config.CurrentConfig.Verbose && printMessage {

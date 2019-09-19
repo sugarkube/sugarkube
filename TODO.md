@@ -4,7 +4,7 @@
 * Code of conduct
 
 ## Top priorities
-
+* Dry-run deletions sometimes fail, e.g. `sugarkube kapps delete stacks/account-setup.yaml account-setup workspaces/account-setup/ -n` even if it exists... It seems outputs aren't loaded during a dry-run so rendering things that use them fails...
 
 * Add flags to selectively skip/include running specific run steps (some steps - e.g. helm install - can be slow, which is annoying if you're debugging a later run step)
 * Add an '--only' option to the 'kapps' subcommands to only process marked nodes. Outputs will not be loaded for unmarked nodes/dependencies. This will speed up kapp development when you're iterating on a specific kapp and don't want to wait for terraform to load outputs for a kapp you don't care about. 

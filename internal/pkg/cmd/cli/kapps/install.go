@@ -40,7 +40,7 @@ type installCommand struct {
 	//force               bool
 	skipTemplating      bool
 	runActions          bool
-	skipActions         bool
+	noActions           bool
 	runPreActions       bool
 	runPostActions      bool
 	establishConnection bool
@@ -132,7 +132,7 @@ process before installing the selected kapps.
 	f.BoolVarP(&c.skipTemplating, "no-template", "t", false, "skip writing templates for kapps before installing them")
 	f.BoolVar(&c.noValidate, "no-validate", false, "don't validate kapps")
 	f.BoolVar(&c.runActions, "run-actions", false, "run pre- and post-actions in kapps")
-	f.BoolVar(&c.skipActions, "skip-actions", false, "skip pre- and post-actions in kapps")
+	f.BoolVar(&c.noActions, "no-actions", false, "don't run any pre- and post-actions in kapps")
 	f.BoolVar(&c.runPreActions, constants.RunPreActions, false, "run pre actions in kapps")
 	f.BoolVar(&c.runPostActions, constants.RunPostActions, false, "run post actions in kapps")
 	f.BoolVar(&c.establishConnection, "connect", false, "establish a connection to the API server if it's not publicly accessible")
@@ -197,7 +197,7 @@ func (c *installCommand) run() error {
 		}
 	}
 
-	err = CatchMistakes(stackObj, dagObj, c.runActions, c.skipActions, c.noValidate)
+	err = CatchMistakes(stackObj, dagObj, c.runActions, c.noActions, c.noValidate)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -306,8 +306,8 @@ func CatchMistakes(stackObj interfaces.IStack, dagObj *plan.Dag, runActions bool
 			if installableObj.HasActions() {
 				_, err := printer.Fprintf("[red]Kapp '[white]%s[reset][red]' has pre-/post- actions. You must "+
 					"explicitly choose whether to run them (with `[bold]--run-actions[reset][red]`, "+
-					"`[bold]--run-pre-actions[reset][red]` or `[bold]--run-post-actions[reset][red]`) or skip them "+
-					"(with `[bold]--skip-actions[reset][red]`).\n", installableObj.FullyQualifiedId())
+					"`[bold]--run-pre-actions[reset][red]` or `[bold]--run-post-actions[reset][red]`) or not "+
+					"(with `[bold]--no-actions[reset][red]`).\n", installableObj.FullyQualifiedId())
 				if err != nil {
 					return errors.WithStack(err)
 				}

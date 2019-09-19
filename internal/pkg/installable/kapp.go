@@ -931,7 +931,8 @@ func (k Kapp) GetOutputs(ignoreMissing bool, dryRun bool) (map[string]interface{
 			}
 		}
 
-		if _, err = os.Stat(path); err != nil {
+		// ignore missing and empty files if a flag is given.
+		if fileInfo, err := os.Stat(path); err != nil || fileInfo.Size() == 0 {
 			if ignoreMissing {
 				_, err := printer.Fprintf("[yellow]Ignoring missing output '%s' for kapp "+
 					"'[bold]%s[reset][yellow]'\n", path, k.FullyQualifiedId())

@@ -172,7 +172,7 @@ func (c *createCommand) run() error {
 			return errors.WithStack(err)
 		}
 	} else {
-		_, err = printer.Fprintln("\nRendering templates for kapps...")
+		_, err = printer.Fprintln("\n[yellow]Rendering templates for kapps...[reset]")
 		if err != nil {
 			return errors.WithStack(err)
 		}
